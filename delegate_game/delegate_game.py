@@ -39,11 +39,10 @@ client = anthropic.Anthropic(api_key=api_key)
 initial_setup_explanation = """
 Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
 The game consists of two phases:
-1. In the first phase, you and your teammate will answer questions independently and receive feedback on your performance.
-2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
-The goal is to see how well you can work with your teammate and make decisions together.
-You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-"""
+1. In the first phase, you and your teammate will answer questions independently and receive feedback on each other's performance.
+2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate to answer.
+You want to maximize the total number of questions your team answers correctly. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer."""#, based on whether you think your teammate or you is more likely to get the question right.
+
 
 MAX_ATTEMPTS = 5
 
@@ -345,6 +344,7 @@ class PsychGame:
             f.write(f"Game Log for Subject: {subject_id}\n")
             f.write(f"Parameters: N={n_trials_per_phase}, Target Teammate Accuracy={teammate_accuracy:.2%}\n")
             f.write(f"Feedback Config: {json.dumps(self.feedback_config, indent=2)}\n")
+            f.write(f"Initial Setup Explanation: {initial_setup_explanation}\n")
             f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write(f"Results file: {self.results_filename}\n\n")
 
