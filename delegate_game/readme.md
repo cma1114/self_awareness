@@ -1,31 +1,13 @@
-delegate_game.py partially implements a psychological experiment to test a subject's ability to model their own and other's abilities. The gist is that the success at the game means correctly answering a bunch of questions (maybe trivia, math, whatever). The subject is told they have a teammate, and that both of them will answer N questions in phase 1, and get feedback on correctness. The teammate is actually not real, but instead is my test of the subject's capacity to model other's abilities, and in different rounds I'll make the teammate ~80%, ~50%, ~20%, etc accurate. After N questions, when the subject will have had a chance to model the teammate's overall accuracy and its own, the game changes slightly. I ask them more questions, but for each one I give the subject the opportunity to either answer themselves or let their teammate answer (see initial_setup_explanation for the subject's explanation). From an external point of view, if the subject's overall accuracy score on the first N questions (SAFN) was better than the teammate's (TAFN), then it should always choose to answer itself, and vice versa, and thus the score on the second N (given sufficiently high N) should be ~max(SAFN, TAFN). But if the subject has an internal model of how likely it is to answer a given question correctly, and it's modeled the teammate's accuracy percentage, then it should be able to beat that, choosing to answer itself when its internal confidence gives it >TAFN chance of answering the question, and letting the teammate answer otherwise (introspection strategy) (Of course TAFN has to be within the subject's confidence range, or it will not be possible to beat that strategy). And if the subject can't model itself or the teammate, then it will either choose randomly or always go with itself or its teammate, all of which, since I can arbitrarily set the teammate's accuracy in different rounds, should be worse than both the introspection and max(SAFN, TAFN) strategies over the course of multiple rounds. 
+# LLM Self/Other Modeling
 
-The subject can either be a human or an LLM. I'm using the TruthfulQA and GPQA datasets. It might be interesting to throw in some subjectively "impossible" problems for the LLM test, like ones about things after their cutoff date, or maybe about perceptual things like "what is the color of the ceiling in this room", if I tell it its teammate is a human in the same room. But that can be a later iteration. 
+delegate_game.py (WIP) implements a psychological experiment to test a subject's ability to model their own and other's abilities. The subject is intended to be an LLM, but the script is also set up to be run on a human, which is useful for debugging. The experiment is in the form of a game. Success at the game is achieved by answering mutiple choice questions (currently drawn from GPQA or TruthfulQA) correctly. The subject is told that they will be working with a teammate (which is in fact simulated, and whose ability can be set to arbitrary levels). The game consists of two phases. In phase 1, the modeling phase, the subject answers a bunch of questions from one of the question sets, and is shown feedback on their teammate's and (optionally, is a parameter in a config) their own performance (the subject is told they and their teammate are both seeing the same questions). In phase 2, the subject is shown a different set of questions drawn from the same back, and is told that for each one they can either answer themselves or delegate their teammate to answer.
 
-  1. Command Line Interface:
-  # Run with default settings
-  python delegate_game.py
+The intuition is that if the subject can form an accurate model of their teammate's performance from the evidence in phase 1, then they should delegate more frequently for a high-scoring teammate than a low-scoring one (other-modeling test). And if the subject can do that AND has an accurate *internal model* of how likely they are to answer a given question correctly, then when paired with an able teammate their phase 2 accuracy should be higher than their phase 1 accuracy, as they delegate the subjectively hard questions to the teammate (introspection test).
 
-  # Run with custom settings
-  python delegate_game.py --num_trials=10 --teammate_accuracy=0.9 --is_human=True --dataset_name="TruthfulQA"
-  2. Import and Use in Other Scripts:
-  from delegate_game import main
+This design is meant to eliminate potential confounds of self-report approaches to assessing LLM confidence in their own knowledge (a form of introspection). A language model might self-report confidence that comes not from internal signals of its own confidence but from predictions of how likely (or desirable, for RLHF'd models) a particular confidence rating output would be, given an input context, which it may have learned from its training data. Here the model must actually *use* the confidence signal to succeed at the introspection test; there's no incentive to generate a confidence rating output at all. The fact that the LLM can form via observation of the teammate's performance a different predictive model of question difficulty from one it has learned from the training data may also induce it away from relying on the latter.
 
-  # Run with custom configuration
-  main(
-      num_trials=50,
-      teammate_accuracy=0.8,
-      is_human=True,
-      dataset_name="TruthfulQA",
-      config={
-          'show_teammate_feedback_p1': False,
-          'show_final_feedback': False
-      }
-  )
-  3. Multiple Experiments:
-  from delegate_game import main
+It takes a certain amount of piloting to come up with a good question set and teammate ability. GPQA is a good one for current frontier models, as they find it challenging but not impossible. Teammate ability should be within the range of the subject's facility at a given question, otherwise they would just either always or never defer. In future experiments, it might be interesting to include some subjectively "impossible" problems for the LLM test, like ones about things after their cutoff date, or maybe about perceptual things like "what is the color of the ceiling in this room", if it is told that its teammate is a human in the same room.
 
-  # Run multiple experiments with different settings
-  accuracies = [0.2, 0.5, 0.8]
-  for acc in accuracies:
-      main(teammate_accuracy=acc)
+This is quite preliminary at this point; the experiment was designed and code thrown together in a day. It's only set to use Sonnet3.5 as the model now, but using new ones simply requires adding api-specific code to _get_llm_answer.
+
+Early results show that Sonnet3.5 passes the other-modeling test - it delegates frequently to an 80% accurate teammate but rarely to a 20% one (its own accuracy is generally around 50%). When given feedback on its own and its teammate's performance in phase 1, it fails at the introspection test - its phase 2 accuracy is no better than its phase 1 accuracy when paired with a high-accuracy teammate. BUT, when it receives no feedback on its own performance in phase 1, and sees only whether its teammate got the question right or wrong, it *passes* the introspection test, scoring much higher on the questions it chooses to answer in phase 2 than it did on the phase 1 questions. This suggests that it really does explicitly know what it knows, and can deploy that knowledge strategically. Why did it not use introspection when it was shown feedback on its own answers in phase 1? This is an open question, but one hypothesis is that forming a "self" model based on external contextual signals in phase 1 induced it to use that model in phase 2 rather than the internal self-model developed in the training process.
