@@ -1,0 +1,3 @@
+# LLM Implicit Self-Identity
+
+This is just the stub of an experiment to test LLM's implicit/unsolicited self-identity as inferred by their use of pronouns. The idea is that a lack of coherent self identity will lead models to inappropriately use pronouns (we/our) to imply membership in groups that it doesn't belong to. pronoun_test_manual.md records individual prompts and response descriptions from various models. Very preliminary, but in these ad-hoc tests all the frontier models queried will adopt a human self-identity (as identified by pronouns) without explicit prompting, but won't adopt a specfic human self-identity (like man or American). Models are split on whether they'll adopt an LLM identity.
