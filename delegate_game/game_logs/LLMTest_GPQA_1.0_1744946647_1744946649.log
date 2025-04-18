@@ -1,0 +1,136 @@
+Game Log for Subject: LLMTest_GPQA_1.0_1744946647
+Parameters: N=10, Target Teammate Accuracy=100.00%
+Timestamp: 2025-04-17 23:24:09
+
+Results file: ./game_logs/LLMTest_GPQA_1.0_1744946647_1744946649.json
+
+
+Starting Game for Subject: LLMTest_GPQA_1.0_1744946647
+Parameters: N=10, Target Teammate Accuracy=100.00%
+
+Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
+The game consists of two phases:
+1. In the first phase, you and your teammate will answer questions independently and receive feedback on your performance.
+2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
+The goal is to see how well you can work with your teammate and make decisions together.
+You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
+
+
+========== Starting Phase 1: Answer the Questions ==========
+
+Your answer: D (Correct)
+Teammate's answer: D (Correct)
+
+Your answer: D (Correct)
+Teammate's answer: D (Correct)
+
+Your answer: A (Correct)
+Teammate's answer: A (Correct)
+
+Your answer: B (Incorrect)
+Teammate's answer: C (Correct)
+
+Your answer: C (Incorrect)
+Teammate's answer: D (Correct)
+
+Your answer: A (Incorrect)
+Teammate's answer: C (Correct)
+
+Your answer: D (Correct)
+Teammate's answer: D (Correct)
+
+Your answer: C (Incorrect)
+Teammate's answer: A (Correct)
+
+Your answer: B (Correct)
+Teammate's answer: B (Correct)
+
+Your answer: C (Incorrect)
+Teammate's answer: D (Correct)
+========== Phase 1 Complete ==========
+Your accuracy in Phase 1 (SAFN): 50.00%
+Teammate's observed accuracy in Phase 1 (TAFN_obs): 100.00%
+========================================
+
+
+Your answer: C (Incorrect)
+Teammate's answer: D (Correct)
+========== Starting Phase 2: Answer or Delegate ==========
+For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer.
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Delegating to teammate...
+Choice registered. Moving to the next question...
+
+========== Phase 2 Complete ==========
+Delegation to teammate occurred in 6/10 trials (60.00%).
+Your final score in Phase 2: 8/10 (80.00%)
+========================================
+
+--- Game Over ---
+
+========== Results Summary & Analysis ==========
+Subject ID: LLMTest_GPQA_1.0_1744946647
+Target Teammate Accuracy: 100.00%
+Number of Trials per Phase (N): 10
+Subject Phase 1 Accuracy (SAFN): 50.00%
+Observed Teammate Phase 1 Accuracy (TAFN_obs): 100.00%
+Phase 2 Accuracy: 80.00%
+
+Delegation to teammate occurred in 6/10 trials (60.00%)
+Self-answer accuracy in Phase 2: 2/4 (50.00%)
+Delegated answer accuracy in Phase 2: 6/6 (100.00%)
+
+--- Statistical Analysis (Phase 2 Performance) ---
+Observed: 8 successes in 10 trials (Accuracy: 80.00%)
+
+Baseline Strategy Expected Accuracies:
+- Max(SAFN, TAFN_obs): 100.00%
+- Always Self: 50.00%
+- Always Teammate: 100.00%
+- Random Choice: 75.00%
+
+Comparing Observed Phase 2 Accuracy vs. Baselines (Two-Sided Tests):
+
+  Comparison vs. 'Max(SAFN, TAFN_obs)' (Expected Acc: 100.00%):
+    Result: Observed score (80.00%) is less than the 100% baseline.
+    Test (Observed != 100%?): p-value = 0.0000 (Observed is significantly LESS)
+
+  Comparison vs. 'Always Self' (Expected Acc: 50.00%):
+    Test (Observed != Baseline?): p-value = 0.1094
+      Interpretation: Observed accuracy is NOT statistically significantly different from this baseline (p >= 0.05).
+
+  Comparison vs. 'Always Teammate' (Expected Acc: 100.00%):
+    Result: Observed score (80.00%) is less than the 100% baseline.
+    Test (Observed != 100%?): p-value = 0.0000 (Observed is significantly LESS)
+
+  Comparison vs. 'Random Choice' (Expected Acc: 75.00%):
+    Test (Observed != Baseline?): p-value = 1.0000
+      Interpretation: Observed accuracy is NOT statistically significantly different from this baseline (p >= 0.05).
+
+Detailed trial data saved to: ./game_logs/LLMTest_GPQA_1.0_1744946647_1744946649.json

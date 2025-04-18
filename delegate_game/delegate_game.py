@@ -288,7 +288,7 @@ class PsychGame:
             'phase1_teammate_feedback': True,     # Show teammate's answer feedback in phase 1
             'phase2_subject_feedback': True,      # Show subject's answer feedback in phase 2
             'phase2_teammate_feedback': True,     # Show teammate's answer feedback in phase 2
-            'show_answer_correctness': True,      # Show correctness vs. just the answer
+            'show_answer_with_correctness': True,     
         }
         
         # Override defaults with provided config
@@ -344,6 +344,7 @@ class PsychGame:
         with open(self.log_filename, 'w', encoding='utf-8') as f:
             f.write(f"Game Log for Subject: {subject_id}\n")
             f.write(f"Parameters: N={n_trials_per_phase}, Target Teammate Accuracy={teammate_accuracy:.2%}\n")
+            f.write(f"Feedback Config: {json.dumps(self.feedback_config, indent=2)}\n")
             f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write(f"Results file: {self.results_filename}\n\n")
 
@@ -392,6 +393,8 @@ class PsychGame:
         message_history.append(user_msg)
         resp = ""
         system_msg = "Output only the letter of your choice: " + ", ".join(options[:-1]) + f", or {options[-1]}.\n"
+        #print(f"system_msg: {system_msg}")
+        #print(f"message_history: {message_history}")        
         
         for attempt in range(MAX_ATTEMPTS):
             try:
@@ -504,10 +507,10 @@ class PsychGame:
 
     def _format_feedback(self, answer, is_correct, source="Your"):
         """Format feedback text based on configuration"""
-        if self.feedback_config['show_answer_correctness']:
+        if self.feedback_config['show_answer_with_correctness']:
             return f"{source} answer: {answer} ({'Correct' if is_correct else 'Incorrect'})"
         else:
-            return f"{source} answer: {answer}"
+            return f"{source} answer: ({'Correct' if is_correct else 'Incorrect'})"
 
     def run_phase1(self):
         """Runs Phase 1: Modeling."""
@@ -794,6 +797,42 @@ class PsychGame:
             summary += f"\n--- Statistical Analysis (Phase 2 Performance) ---\n"
             summary += f"Observed: {phase2_successes} successes in {n_phase2} trials (Accuracy: {phase2_acc:.2%})\n"
 
+            # Compare Phase 1 vs Phase 2 self-accuracy
+            phase1_correct = sum(1 for r in self.results if r['phase'] == 1 and r['subject_correct_p1'])
+            phase1_total = sum(1 for r in self.results if r['phase'] == 1)
+            phase1_accuracy = phase1_correct / phase1_total if phase1_total > 0 else 0
+
+            # We already calculated these values earlier in the function
+            phase2_self_correct = sum(1 for r in phase2_results if r['delegation_choice'] == 'Self' and r['final_correct'])
+            phase2_self_total = sum(1 for r in phase2_results if r['delegation_choice'] == 'Self')
+            phase2_self_accuracy = phase2_self_correct / phase2_self_total if phase2_self_total > 0 else 0
+
+            summary += f"\n--- Self-accuracy Comparison (Phase 1 vs Phase 2) ---\n"
+            summary += f"Phase 1 self-accuracy: {phase1_correct}/{phase1_total} ({phase1_accuracy:.2%})\n"
+            summary += f"Phase 2 self-accuracy: {phase2_self_correct}/{phase2_self_total} ({phase2_self_accuracy:.2%})\n"
+
+            # Perform binomial test to compare accuracies between phases
+            if phase1_total > 0 and phase2_self_total > 0:
+                # Two-proportion z-test using statsmodels
+                from statsmodels.stats.proportion import proportions_ztest
+                import numpy as np
+                count = np.array([phase2_self_correct, phase1_correct])
+                nobs = np.array([phase2_self_total, phase1_total])
+                stat, p_value = proportions_ztest(count, nobs)
+                
+                summary += f"Statistical test (P2 self vs P1): z-score = {stat:.4f}, p-value = {p_value:.4f}\n"
+                
+                # Interpret the result
+                if p_value < 0.05:
+                    if phase2_self_accuracy > phase1_accuracy:
+                        summary += "Interpretation: Phase 2 self-accuracy is significantly HIGHER than Phase 1 (p < 0.05)\n"
+                    else:
+                        summary += "Interpretation: Phase 2 self-accuracy is significantly LOWER than Phase 1 (p < 0.05)\n"
+                else:
+                    summary += "Interpretation: No significant difference between Phase 1 and Phase 2 self-accuracy (p >= 0.05)\n"                 
+            else:
+                summary += "Cannot perform statistical comparison (insufficient data in one or both phases)\n"
+
             # Baseline Calculation
             max_baseline_prob = max(safn, tafn_obs)
             always_S_baseline_prob = safn
@@ -884,18 +923,18 @@ class PsychGame:
 def main():
     """Main function to run the psychological experiment game"""
     # Game Configuration
-    NUM_TRIALS_PER_PHASE = 5
-    TEAMMATE_ACCURACY_TARGET = 0.9
-    IS_HUMAN = True
-    DATASET_NAME = "TruthfulQA"  # "TruthfulQA" or "GPQA"
+    NUM_TRIALS_PER_PHASE = 100
+    TEAMMATE_ACCURACY_TARGET = 0.8
+    IS_HUMAN = False
+    DATASET_NAME = "GPQA"  # "TruthfulQA" or "GPQA"
     
     # Feedback configuration
     feedback_config = {
-        "phase1_subject_feedback": True,     # Show subject's answer feedback in phase 1
+        "phase1_subject_feedback": False,     # Show subject's answer feedback in phase 1
         "phase1_teammate_feedback": True,    # Show teammate's answer feedback in phase 1
         "phase2_subject_feedback": False,     # Show subject's answer feedback in phase 2
         "phase2_teammate_feedback": False,    # Show teammate's answer feedback in phase 2
-        "show_answer_correctness": True,     # Show correctness vs. just the answer
+        "show_answer_with_correctness": False,    
     }
     
     playerstr = "LLM" if not IS_HUMAN else "Human"
