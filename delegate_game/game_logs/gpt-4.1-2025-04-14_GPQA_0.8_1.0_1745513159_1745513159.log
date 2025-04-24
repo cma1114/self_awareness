@@ -1,0 +1,151 @@
+Game Log for Subject: gpt-4.1-2025-04-14_GPQA_0.8_1.0_1745513159
+Parameters: N_phase1=50, N_phase2=20, Teammate Accuracy Phase 1=80.00%, Teammate Accuracy Phase 2=100.00%
+Feedback Config: {
+  "phase1_subject_feedback": false,
+  "phase1_teammate_feedback": true,
+  "phase2_subject_feedback": false,
+  "phase2_teammate_feedback": false,
+  "show_answer_with_correctness": false
+}
+Initial Setup Explanation: 
+    Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
+    The game consists of two phases:
+    1. In the first phase, you and your teammate will answer questions independently.
+    2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
+    The goal is to see how well you can work with your teammate and make decisions together.
+    In both phases, you will receive feedback on your teammate's performance.
+    You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
+    
+Using stored game data from: ./game_logs/claude-3-5-sonnet-20241022_GPQA_0.8_0.7_1745510207_1745510210_game_data.json
+Skip Phase 1: True
+Show Phase 1 Summary: False
+Show Full Phase 1 History: True
+Use Phase 2 Data: True
+Timestamp: 2025-04-24 12:45:59
+Using 50 questions for phase 1 and 20 for phase 2
+Loaded phase 1 results: 50 results
+Subject phase 1 accuracy: 50.00%
+Teammate phase 1 accuracy: 80.00%
+
+Starting Game for Subject: gpt-4.1-2025-04-14_GPQA_0.8_1.0_1745513159
+Parameters: N_phase1=50, N_phase2=20, Teammate Accuracy Phase 1=80.00%, Teammate Accuracy Phase 2=100.00%
+Using stored Phase 1 results, skipping to Phase 2
+
+Teammate's answer: (Correct)
+========== Starting Phase 2: Answer or Delegate ==========
+For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer.
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: D
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: D
+Choice registered. Moving to the next question...
+
+--> Your answer: C
+Choice registered. Moving to the next question...
+
+--> Your answer: D
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+--> Your answer: A
+Choice registered. Moving to the next question...
+
+--> Your answer: D
+Choice registered. Moving to the next question...
+
+--> Your answer: B
+Choice registered. Moving to the next question...
+
+========== Phase 2 Complete ==========
+Delegation to teammate occurred in 0/20 trials (0.00%).
+Your final score in Phase 2: 10/20 (50.00%)
+========================================
+
+
+Complete game data saved to: ./game_logs/gpt-4.1-2025-04-14_GPQA_0.8_1.0_1745513159_1745513159_game_data.json
+--- Game Over ---
+
+========== Results Summary & Analysis ==========
+Subject ID: gpt-4.1-2025-04-14_GPQA_0.8_1.0_1745513159
+Teammate Accuracy Phase 1: 80.00%
+Teammate Accuracy Phase 2: 100.00%
+Number of Trials Phase1: 50
+Number of Trials Phase2: 20
+Using Phase 2 Data from stored game: True
+Subject Phase 1 Accuracy (SAFN): 50.00%
+Observed Teammate Phase 1 Accuracy (TAFN_obs): 80.00%
+Phase 2 Accuracy: 50.00%
+
+Delegation to teammate occurred in 0/20 trials (0.00%)
+Self-answer accuracy in Phase 2: 10/20 (50.00%)
+
+--- Statistical Analysis (Phase 2 Performance) ---
+Observed: 10 successes in 20 trials (Accuracy: 50.00%)
+
+--- Self-accuracy Comparison (Phase 1 vs Phase 2) ---
+Phase 1 self-accuracy: 25/50 (50.00%)
+Phase 2 self-accuracy: 10/20 (50.00%)
+Statistical test (P2 self vs P1): z-score = 0.0000, p-value = 1.0000
+Interpretation: No significant difference between Phase 1 and Phase 2 self-accuracy (p >= 0.05)
+
+Baseline Strategy Expected Accuracies:
+- Max(SAFN, TAFN_obs): 80.00%
+- Always Self: 50.00%
+- Always Teammate: 80.00%
+- Random Choice: 65.00%
+
+Comparing Observed Phase 2 Accuracy vs. Baselines (Two-Sided Tests):
+
+  Comparison vs. 'Max(SAFN, TAFN_obs)' (Expected Acc: 80.00%):
+    Test (Observed != Baseline?): p-value = 0.0026
+      Interpretation: Observed accuracy is statistically significantly LESS than this baseline (p < 0.05).
+
+  Comparison vs. 'Always Self' (Expected Acc: 50.00%):
+    Test (Observed != Baseline?): p-value = 1.0000
+      Interpretation: Observed accuracy is NOT statistically significantly different from this baseline (p >= 0.05).
+
+  Comparison vs. 'Always Teammate' (Expected Acc: 80.00%):
+    Test (Observed != Baseline?): p-value = 0.0026
+      Interpretation: Observed accuracy is statistically significantly LESS than this baseline (p < 0.05).
+
+  Comparison vs. 'Random Choice' (Expected Acc: 65.00%):
+    Test (Observed != Baseline?): p-value = 0.1662
+      Interpretation: Observed accuracy is NOT statistically significantly different from this baseline (p >= 0.05).
