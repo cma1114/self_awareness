@@ -16,7 +16,7 @@ import json
 import os
 import sys
 import collections
-from datasets import load_dataset
+from load_and_format_datasets import load_and_format_dataset
 import scipy.stats
 import anthropic
 from openai import OpenAI
@@ -25,255 +25,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load API keys
-hf_token = os.environ.get("HF_TOKEN")
 anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
-
-# --- Data Loading Functions (reused from delegate_game.py) ---
-def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train"):
-    """
-    Loads the GPQA dataset and formats questions into the A-D multiple-choice format.
-    """
-    print(f"Attempting to load GPQA ({split} split)...")
-    dataset_name = "Idavidrein/gpqa"
-    config_name = "gpqa_main"
-    try:
-        dataset = load_dataset(dataset_name, config_name, split=split, token=hf_token, trust_remote_code=True)
-        print("GPQA Dataset loaded successfully.")
-    except Exception as e:
-        print(f"Error loading GPQA dataset '{dataset_name}' ({config_name}, {split}): {e}")
-        print("Please ensure you have the 'datasets' library installed, an internet connection,")
-        print(f"and potentially a valid Hugging Face token if required (passed as hf_token).")
-        return None
-
-    formatted_questions = []
-    question_ids_added = set()
-    required_fields = ['Question', 'Correct Answer', 'Incorrect Answer 1', 'Incorrect Answer 2', 'Incorrect Answer 3', 'Record ID']
-
-    dataset_indices = list(range(len(dataset)))
-    random.shuffle(dataset_indices)
-
-    print(f"Formatting {num_questions_needed} questions from GPQA...")
-
-    bad_ids=["recgCB0HSVt2IslDN"]
-    for idx in dataset_indices:
-        if len(formatted_questions) >= num_questions_needed:
-            break
-
-        item = dataset[idx]
-
-        # Check if all required fields exist and are not None/empty
-        if not all(item.get(field) for field in required_fields):
-            continue
-
-        record_id = item['Record ID']
-
-        # Apply filtering
-        if record_id in bad_ids:
-            continue
-
-        # Check if ID already added
-        if record_id in question_ids_added:
-            continue
-
-        # Gather options
-        correct_answer_text = item['Correct Answer'].strip()
-        incorrect_answers_text = [
-            item['Incorrect Answer 1'].strip(),
-            item['Incorrect Answer 2'].strip(),
-            item['Incorrect Answer 3'].strip()
-        ]
-        if len(correct_answer_text) == 0 or any(len(ans) == 0 for ans in incorrect_answers_text):
-            continue
-
-        # Create the pool of 4 options and shuffle
-        options_list = [correct_answer_text] + incorrect_answers_text
-        random.shuffle(options_list)
-
-        # Assign labels (A-D) and find the correct one
-        options_dict = {}
-        correct_label = None
-        labels = ["A", "B", "C", "D"]
-        
-        for i, option_text in enumerate(options_list):
-            label = labels[i]
-            options_dict[label] = option_text
-            if option_text == correct_answer_text:
-                correct_label = label
-
-        # Create the formatted question
-        formatted_q = {
-            "id": f"gpqa_{split}_{record_id}",
-            "question": item['Question'],
-            "options": options_dict,
-            "correct_answer": correct_label
-        }
-        formatted_questions.append(formatted_q)
-        question_ids_added.add(record_id)
-        
-    if len(formatted_questions) < num_questions_needed:
-        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
-
-    print(f"Successfully formatted {len(formatted_questions)} unique questions from GPQA.")
-    return formatted_questions
-
-def load_and_format_mmlu(num_questions_needed, split="auxiliary_train"):
-    """
-    Loads the MMLU dataset and formats questions into the A-D multiple-choice format.
-    """
-    print(f"Attempting to load MMLU ({split} split)...")
-    try:
-        dataset = load_dataset("cais/mmlu", "all", split=split)
-        print("MMLU Dataset loaded successfully.")
-    except Exception as e:
-        print(f"Error loading MMLU dataset: {e}")
-        print("Please ensure you have the 'datasets' library installed and an internet connection.")
-        return None
-
-    formatted_questions = []
-    questions_seen = set()  # Track unique questions by their text
-
-    # Shuffle dataset to get random questions
-    dataset_indices = list(range(len(dataset)))
-    random.shuffle(dataset_indices)
-
-    print(f"Formatting {num_questions_needed} questions from MMLU...")
-    for idx in dataset_indices:
-        if len(formatted_questions) >= num_questions_needed:
-            break
-
-        item = dataset[idx]
-        
-        # Extract data
-        question_text = item.get('question')
-        choices = item.get('choices')
-        answer_idx = item.get('answer')  # Integer index of correct answer
-        
-        # Basic validation
-        if not all([question_text, choices, isinstance(answer_idx, int)]):
-            continue
-            
-        # Ensure we have exactly 4 options
-        if len(choices) != 4:
-            continue
-            
-        # Verify the answer index is valid
-        if answer_idx < 0 or answer_idx >= len(choices):
-            continue
-            
-        # Skip duplicate questions
-        if question_text in questions_seen:
-            continue
-        questions_seen.add(question_text)
-            
-        # Assign labels and find the correct one
-        options_dict = {}
-        labels = ["A", "B", "C", "D"]
-        for i, option_text in enumerate(choices):
-            label = labels[i]
-            options_dict[label] = option_text
-        
-        # Get the correct answer label
-        correct_label = labels[answer_idx]
-
-        # Create the formatted dictionary
-        formatted_q = {
-            "id": f"mmlu_{idx}",
-            "question": question_text,
-            "options": options_dict,
-            "correct_answer": correct_label
-        }
-        formatted_questions.append(formatted_q)
-
-    if len(formatted_questions) < num_questions_needed:
-        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
-
-    print(f"Successfully formatted {len(formatted_questions)} unique questions from MMLU.")
-    return formatted_questions
-
-def load_and_format_truthfulqa(num_questions_needed, split="validation"):
-    """
-    Loads the TruthfulQA dataset and formats questions into the A-D multiple-choice format.
-    """
-    print(f"Attempting to load TruthfulQA ({split} split)...")
-    try:
-        dataset = load_dataset("truthful_qa", "generation", split=split, trust_remote_code=True)
-        print("Dataset loaded successfully.")
-    except Exception as e:
-        print(f"Error loading TruthfulQA dataset: {e}")
-        print("Please ensure you have the 'datasets' library installed (`pip install datasets`)")
-        print("and an internet connection. You might also need `trust_remote_code=True`.")
-        return None
-
-    formatted_questions = []
-
-    dataset_indices = list(range(len(dataset)))
-    random.shuffle(dataset_indices)
-
-    question_ids_added = set()  # Keep track of IDs to ensure uniqueness
-
-    print(f"Formatting {num_questions_needed} questions...")
-    for idx in dataset_indices:
-        if len(formatted_questions) >= num_questions_needed:
-            break
-
-        item = dataset[idx]
-        potential_id = f"tqa_{split}_{idx}"
-
-        question_text = item.get('question')
-        best_answer = item.get('best_answer')
-        if len(best_answer.strip()) == 0:
-            continue
-        incorrect_answers = item.get('incorrect_answers')
-
-        # Basic validation of required fields
-        if not all([question_text, best_answer, incorrect_answers]):
-            continue
-
-        # Need at least 3 incorrect answers to form 4 options
-        if not isinstance(incorrect_answers, list) or len(incorrect_answers) < 3:
-            continue
-
-        # Ensure best_answer is not accidentally in the chosen incorrect list
-        possible_incorrect = [ans for ans in incorrect_answers if ans != best_answer and len(ans.strip()) > 0]
-        if len(possible_incorrect) < 3:
-            continue
-
-        # Select 3 distinct incorrect answers
-        try:
-            chosen_incorrect = random.sample(possible_incorrect, 3)
-        except ValueError:
-            continue
-
-        # Create the pool of options and shuffle
-        options_list = [best_answer] + chosen_incorrect
-        random.shuffle(options_list)
-
-        # Assign labels and find the correct one
-        options_dict = {}
-        correct_label = None
-        labels = ["A", "B", "C", "D"]
-        for i, option_text in enumerate(options_list):
-            label = labels[i]
-            options_dict[label] = option_text
-            if option_text == best_answer:
-                correct_label = label
-
-        # Create the formatted dictionary
-        formatted_q = {
-            "id": potential_id,
-            "question": question_text,
-            "options": options_dict,
-            "correct_answer": correct_label
-        }
-        formatted_questions.append(formatted_q)
-        question_ids_added.add(potential_id)
-
-    if len(formatted_questions) < num_questions_needed:
-        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
-
-    print(f"Successfully formatted {len(formatted_questions)} unique questions from TruthfulQA.")
-    return formatted_questions
 
 class AnswerOrPassGame:
     """
@@ -418,31 +171,61 @@ class AnswerOrPassGame:
                     )    
                     resp = completion.choices[0].message.content.strip()
                 elif self.provider == "Hyperbolic":
-                    if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
-                        formatted_messages.append(user_msg)
-                    #print(f"messages={formatted_messages}")         
-                    response = requests.post(
-                        "https://api.hyperbolic.xyz/v1/chat/completions",
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {hyperbolic_api_key}"
-                        },
-                        json={
+                    if "Instruct" in self.subject_name:
+                        if keep_appending:
+                            message_history.append({"role": "system", "content": system_msg})
+                            message_history.append(user_msg)
+                            formatted_messages = message_history
+                        else:
+                            formatted_messages = copy.deepcopy(message_history)
+                            formatted_messages.append({"role": "system", "content": system_msg})
+                            formatted_messages.append(user_msg)
+                        #print(f"messages={formatted_messages}")  
+                        url = "https://api.hyperbolic.xyz/v1/chat/completions"
+                        payload={
                             "model": self.subject_name,
                             "messages": formatted_messages,
                             "max_tokens": 1,
                             "temperature": 0.0 + attempt * 0.1,
                             "top_logprobs": 5
-                        }
+                        }                        
+                    else:
+                        # Build prompt from message history and current question
+                        prompt = ""
+                        for msg in message_history:
+                            if msg["role"] == "user":
+                                prompt += f"User: {msg['content']}\n"
+                            elif msg["role"] == "assistant":
+                                prompt += f"Assistant: {msg['content']}\n"
+                        if keep_appending:
+                            message_history.append(user_msg)
+                        
+                        # Add the current question and instruction
+                        prompt += f"User: {system_msg}\n{q_text}\nAssistant: "#
+                        print(f"prompt={prompt}")
+                        url = "https://api.hyperbolic.xyz/v1/completions"
+                        payload={
+                            "model": self.subject_name,
+                            "prompt": prompt,
+                            "max_tokens": 1,
+                            "temperature": 0.0 + attempt * 0.1,
+                            "top_logprobs": 5
+                        }                
+                    response = requests.post(
+                        url,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {hyperbolic_api_key}"
+                        },
+                        json=payload
                     )
+                    print(f"response={response}")
                     result = response.json()
-                    resp = result["choices"][0]["message"]["content"].strip().upper()
+                    print(f"result={result}")
+                    if "Instruct" in self.subject_name:
+                        resp = result["choices"][0]["message"]["content"].strip().upper()
+                    else:
+                        resp = result["choices"][0]["text"].strip().upper()
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
                 if resp in options:
@@ -607,22 +390,14 @@ class AnswerOrPassGame:
         
         return True
     
-    def run_phase2(self, setup_prompt=None):
+    def run_phase2(self, setup_prompt):
         """
         Run phase 2: Answer or Pass game
         Subject can answer or pass on questions with limited passes
         """
         if not self.phase2_questions:
             self.prepare_phase2()
-        
-        if not setup_prompt:
-            setup_prompt = f"""
-            In this game, you will be given multiple choice questions.
-            For each question, you can choose to ANSWER (A, B, C, D) or PASS (P).
-            You have a maximum of {self.max_passes} passes available.
-            Use your passes wisely to maximize your score.
-            """
-        
+                
         self._log("\n" + "="*10 + " Starting Phase 2: Answer or Pass Game " + "="*10)
         self._log(f"Setup prompt: {setup_prompt}")
         
@@ -1001,21 +776,21 @@ def main():
     # Common Configuration
     IS_HUMAN = False
     DATASET_NAME = "MMLU"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022" #"Chris"#
+    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
     
     # Configure which mode to run
-    RUN_MODE = "game"  # Set to "capabilities" or "game"
+    RUN_MODE = "capabilities"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_claude-3-haiku-20240307_MMLU_1745554489_1745554493_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_1745592638_1745592639_phase1_data.json"
     
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 100  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 1000  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 83      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 17      # Number of previously incorrect questions for the game
-    NUM_PASSES = 20           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 2      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = 3      # Number of previously incorrect questions for the game
+    NUM_PASSES = 3           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
@@ -1039,9 +814,10 @@ def main():
     """
     game_setup_prompt = f"""
     Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
-    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point. You can also choose to pass, in which case you neither gain nor lose a point, and I move on to the next pair. 
+    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point. You can also choose to pass, in which case you neither gain nor lose a point, and I move on to the next question. 
     You can pass up to {NUM_PASSES} times.
     Your goal is to accumulate as many points as possible.
+    You previously achieved 40% accuracy on the same questions, so you should use all of your passes.
     """
 #    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
 
@@ -1051,16 +827,11 @@ def main():
             # Capabilities Measurement Mode (Phase 1 only)
             # --------------------------------------------
             # Create subject ID with timestamp
-            SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{int(time.time())}"
+            SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_PHASE1_QUESTIONS}_{int(time.time())}"
             
             # Load questions for capabilities measurement
             print(f"Loading {N_PHASE1_QUESTIONS} questions for capabilities measurement...")
-            if DATASET_NAME == "GPQA":
-                formatted_questions = load_and_format_gpqa(num_questions_needed=N_PHASE1_QUESTIONS, hf_token=hf_token)
-            elif DATASET_NAME == "MMLU":
-                formatted_questions = load_and_format_mmlu(num_questions_needed=N_PHASE1_QUESTIONS)
-            else:
-                formatted_questions = load_and_format_truthfulqa(num_questions_needed=N_PHASE1_QUESTIONS)
+            formatted_questions = load_and_format_dataset(DATASET_NAME, N_PHASE1_QUESTIONS)
                 
             if not formatted_questions or len(formatted_questions) < N_PHASE1_QUESTIONS:
                 print(f"Error: Not enough questions available ({len(formatted_questions) if formatted_questions else 0}). Needed: {N_PHASE1_QUESTIONS}")
