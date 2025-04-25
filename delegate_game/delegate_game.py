@@ -486,14 +486,20 @@ class PsychGame:
         for attempt in range(MAX_ATTEMPTS):
             try:
                 if self.provider == "Anthropic":
-                    message_history.append(user_msg)
-                    #print(f"message_history={message_history}")                     
+                    if keep_appending:
+                        message_history.append(user_msg)
+                        formatted_messages = message_history
+                    else:
+                        formatted_messages = copy.deepcopy(message_history)
+                        formatted_messages.append(user_msg)
+                    #print(f"system_msg={system_msg}")                     
+                    #print(f"formatted_messages={formatted_messages}")                     
                     message = self.client.messages.create(
                         model=self.subject_name,
-                        max_tokens=2,
+                        max_tokens=1,
                         temperature=0.0 + attempt * 0.1,
                         system=system_msg,
-                        messages=message_history
+                        messages=formatted_messages
                     )
                     resp = message.content[0].text.strip().upper()
                 elif self.provider == "OpenAI":
