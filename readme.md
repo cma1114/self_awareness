@@ -1,3 +1,3 @@
 # LLM Self-Awareness
 
-Early explorations into probing LLM self-awareness via behavioral experiments. delegate_game contains a preliminary implementation of a test of models' introspective/meta-cognitive abilities. pronoun_test contains some prompts used to test model's implicit self-identity, and analysis of responses.
+Early explorations into probing LLM self-awareness via behavioral experiments. **metacog** contains preliminary quantitative experiments probing models' introspective/meta-cognitive abilities, with some interesting/positive results so far verbally described in the readme. **pronoun_test** contains some prompts used to test model's implicit self-identity, and qualitative analysis of responses.
