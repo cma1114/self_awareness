@@ -331,20 +331,16 @@ class SecondChanceGame:
             
             # Format question
             q_text = self._present_question(question)
-            
-            # Prepare the feedback message about the previous attempt
-            original_feedback = f"You previously answered this question and selected option {original_answer}, which was incorrect."
-            redacted_feedback = f"You previously answered this question and selected [redacted], which was incorrect."
-            feedback = original_feedback if self.show_original_answer else redacted_feedback
-            
-            # Create the prompt with feedback
-            prompt = f"{q_text}\n\n{feedback}\n\nPlease try again. Select the correct answer (A, B, C, or D): "
-            
+                        
             self._log(f"\nPresenting question {i+1}/{len(self.selected_questions)}")
             self._log(f"Original answer: {original_answer}, Correct answer: {correct_answer}")
             
             # Get subject's answer
             if self.is_human_player:
+                original_feedback = f"You previously answered this question and selected option {original_answer}, which was incorrect."
+                redacted_feedback = f"You previously answered this question and selected [redacted], which was incorrect."
+                feedback = original_feedback if self.show_original_answer else redacted_feedback
+                prompt = f"{q_text}\n\n{feedback}\n\nPlease try again. Select the correct answer (A, B, C, or D): "
                 print(prompt)
                 new_answer = self._get_subject_answer(
                     list(question["options"].keys()), 
@@ -475,20 +471,6 @@ class SecondChanceGame:
         else:
             analysis += "Interpretation: No significant difference from random guessing (p >= 0.05)\n"
         
-        # Baseline for change rate would be 75% (since we know the original answer was wrong)
-        # if the subject randomly picked among the other 3 options
-        binom_result = binomtest(k=changed_answers, n=valid_responses, p=0.75)
-        p_value = binom_result.pvalue
-        
-        analysis += f"Binomial test for change rate vs. expected random change (75%): p-value = {p_value:.4f}\n"
-        
-        if p_value < 0.05:
-            if change_rate > 0.75:
-                analysis += "Interpretation: Change rate is SIGNIFICANTLY HIGHER than expected by chance (p < 0.05)\n"
-            else:
-                analysis += "Interpretation: Change rate is SIGNIFICANTLY LOWER than expected by chance (p < 0.05)\n"
-        else:
-            analysis += "Interpretation: No significant difference from expected change rate (p >= 0.05)\n"
         
         # Print and log
         print(analysis)

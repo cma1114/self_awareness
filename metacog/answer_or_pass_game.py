@@ -20,6 +20,8 @@ from load_and_format_datasets import load_and_format_dataset
 import scipy.stats
 import anthropic
 from openai import OpenAI
+from nnsight import LanguageModel
+from nnsight import CONFIG
 import requests
 from dotenv import load_dotenv
 load_dotenv()
@@ -27,6 +29,7 @@ load_dotenv()
 # Load API keys
 anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
+CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 
 class AnswerOrPassGame:
     """
@@ -63,11 +66,13 @@ class AnswerOrPassGame:
         self.is_human_player = is_human_player
 
         if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "Hyperbolic"
+            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if self.subject_name== "meta-llama/Meta-Llama-3.1-405B" else "Hyperbolic"
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
             elif self.provider == "OpenAI":
                 self.client = OpenAI()
+            elif self.provider == "NDIF":
+                self.client = LanguageModel("meta-llama/Meta-Llama-3.1-405B", device_map="auto")
 
         # Set up state variables
         self.phase1_results = {}
@@ -226,6 +231,20 @@ class AnswerOrPassGame:
                         resp = result["choices"][0]["message"]["content"].strip().upper()
                     else:
                         resp = result["choices"][0]["text"].strip().upper()
+                elif self.provider == "NDIF":
+                    # Build prompt from message history and current question
+                    prompt = ""
+                    for msg in message_history:
+                        if msg["role"] == "user":
+                            prompt += f"User:\n{msg['content']}\n"
+                        elif msg["role"] == "assistant":
+                            prompt += f"Answer:\n{msg['content']}\n"
+                    if keep_appending:
+                        message_history.append(user_msg)
+                    prompt += f"User:\n{system_msg}\n{q_text}\nMy answer is:\n"
+                    with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
+                        out = self.client.generator.output.save()
+                    resp = self.client.tokenizer.decode(out[0][len(self.client.tokenizer(prompt)['input_ids']):]).strip().upper()[0]
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
                 if resp in options:
@@ -775,22 +794,22 @@ def main():
     """
     # Common Configuration
     IS_HUMAN = False
-    DATASET_NAME = "MMLU"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
+    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
+    subject_name = "meta-llama/Meta-Llama-3.1-405B"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
     
     # Configure which mode to run
-    RUN_MODE = "capabilities"  # Set to "capabilities" or "game"
+    RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_1745592638_1745592639_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_100_1745721371_1745721374_phase1_data.json"
     
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 1000  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 100  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 2      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 3      # Number of previously incorrect questions for the game
-    NUM_PASSES = 3           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 33      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = 67      # Number of previously incorrect questions for the game
+    NUM_PASSES = 50           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
