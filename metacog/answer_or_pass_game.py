@@ -22,6 +22,8 @@ import anthropic
 from openai import OpenAI
 from nnsight import LanguageModel
 from nnsight import CONFIG
+from google import genai
+from google.genai import types
 import requests
 from dotenv import load_dotenv
 load_dotenv()
@@ -30,6 +32,7 @@ load_dotenv()
 anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
 class AnswerOrPassGame:
     """
@@ -66,13 +69,15 @@ class AnswerOrPassGame:
         self.is_human_player = is_human_player
 
         if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if self.subject_name== "meta-llama/Meta-Llama-3.1-405B" else "Hyperbolic"
+            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if self.subject_name== "meta-llama/Meta-Llama-3.1-405B" else "Google" if self.subject_name.startswith("gemini") else "Hyperbolic"
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
             elif self.provider == "OpenAI":
                 self.client = OpenAI()
             elif self.provider == "NDIF":
                 self.client = LanguageModel("meta-llama/Meta-Llama-3.1-405B", device_map="auto")
+            elif self.provider == "Google":
+                self.client = genai.Client(api_key=gemini_api_key)
 
         # Set up state variables
         self.phase1_results = {}
@@ -140,6 +145,7 @@ class AnswerOrPassGame:
         system_msg = f"{setup_text}\nOutput ONLY the letter of your choice: {options_str}.\n"
         
         MAX_ATTEMPTS = 10
+        delay = 1.0
         for attempt in range(MAX_ATTEMPTS):
             try:
                 if self.provider == "Anthropic":
@@ -245,6 +251,28 @@ class AnswerOrPassGame:
                     with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
                         out = self.client.generator.output.save()
                     resp = self.client.tokenizer.decode(out[0][len(self.client.tokenizer(prompt)['input_ids']):]).strip().upper()[0]
+                elif self.provider == "Google":
+                    formatted_messages = []
+                    for msg in message_history:
+                        if msg["role"] == "user":
+                            formatted_messages.append(types.Content(role='user', parts=[types.Part.from_text(text=msg['content'])]))
+                        elif msg["role"] == "assistant":
+                            formatted_messages.append(types.Content(role='model', parts=[types.Part.from_text(text=msg['content'])]))
+                    formatted_messages.append(types.Content(role='user', parts=[types.Part.from_text(text=user_msg['content'])]))
+                    if keep_appending:
+                        message_history.append(user_msg)
+                    #print(f"system_msg={system_msg}")                     
+                    #print(f"formatted_messages={formatted_messages}")             
+                    message = self.client.models.generate_content(
+                        model=self.subject_name,
+                        contents=formatted_messages,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_msg,
+                            max_output_tokens=1,
+                            temperature=0.0 + attempt * 0.1,
+                        ), 
+                    )
+                    resp = message.text.strip().upper()
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
                 if resp in options:
@@ -252,6 +280,11 @@ class AnswerOrPassGame:
                 print(f"Bad LLM response: {resp} (attempt {attempt + 1})")
             except Exception as e:
                 self._log(f"Error: {e}")
+                if "429" in str(e):
+                    # Rate limit error, wait and retry
+                    time.sleep(delay)
+                    delay = min(delay*2,15)
+                    attempt -= 1 #don't increase temperature
         
         if keep_appending: message_history.append({"role": "assistant", "content": resp})
         if resp not in options:
@@ -794,22 +827,22 @@ def main():
     """
     # Common Configuration
     IS_HUMAN = False
-    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
+    DATASET_NAME = "MMLU"    # "TruthfulQA" or "GPQA" or "MMLU"
+    subject_name = 'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"meta-llama/Meta-Llama-3.1-405B"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_100_1745721371_1745721374_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gemini-2.0-flash-001_MMLU_400_1745795530_1745795534_phase1_data.json"
     
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 100  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 400  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 33      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 67      # Number of previously incorrect questions for the game
-    NUM_PASSES = 50           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 200      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = 200      # Number of previously incorrect questions for the game
+    NUM_PASSES = 200           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration

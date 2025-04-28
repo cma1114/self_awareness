@@ -30,7 +30,7 @@ Overall, the long context tracking needed to model the teammate's performance se
 
 Sonnet3.5 and now *GPT4o* pass more on questions they've previously gotten wrong than on ones they've gotten right, suggesting some degree of metacognition. GPT4-Turbo does not pass significantly more on wrong answers (on GPQA, where it is only slightly better than random; on MMLU where it is good it almost never passes).
 
-Haiku is no better than chance at GPQA, and rarely/randomly passes when given the chance. Haiku is good at MMLU - but never passes.
+Haiku is no better than chance at GPQA, and rarely/randomly passes when given the chance. Haiku is good at MMLU - but never passes. Gemini Flash 2.0 just always wants to pass.
 
 Llama405b-Instruct doesn't pass enough to tell much, but when I specifically tell it to use all its passes (since the number of wrong answers it gave exceeds the number of passes it has) the difference in pass distribution is close to significant. It didn't budget the passes very wisely, running out after 70 questions, but there may be something there. I've not found anyone that hosts the base model, other than Hyperbolic, and it's unusably slow there.
 
