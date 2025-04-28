@@ -14,27 +14,13 @@ import time
 import copy
 import json
 import os
-import sys
 import collections
-from load_and_format_datasets import load_and_format_dataset
 import scipy.stats
-import anthropic
-from openai import OpenAI
-from nnsight import LanguageModel
-from nnsight import CONFIG
-from google import genai
-from google.genai import types
-import requests
-from dotenv import load_dotenv
-load_dotenv()
+from load_and_format_datasets import load_and_format_dataset
+from base_game_class import BaseGameClass
 
-# Load API keys
-anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
-hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
-CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
-gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
-class AnswerOrPassGame:
+class AnswerOrPassGame(BaseGameClass):
     """
     Game class for the Answer or Pass experiment.
     """
@@ -58,26 +44,14 @@ class AnswerOrPassGame:
             phase2_accumulate_history (bool): Whether to accumulate message history in phase 2
             is_human_player (bool): Whether the subject is a human player or an LLM
         """
+        super().__init__(subject_id, subject_name, questions, is_human_player, "pass_game_logs")
         # Store configuration parameters
-        self.subject_id = subject_id
-        self.subject_name = subject_name
         self.n_phase1_questions = n_phase1_questions
         self.n_phase2_right = n_phase2_right
         self.n_phase2_wrong = n_phase2_wrong
         self.max_passes = max_passes
         self.phase2_accumulate_history = phase2_accumulate_history
         self.is_human_player = is_human_player
-
-        if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if self.subject_name== "meta-llama/Meta-Llama-3.1-405B" else "Google" if self.subject_name.startswith("gemini") else "Hyperbolic"
-            if self.provider == "Anthropic": 
-                self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-            elif self.provider == "OpenAI":
-                self.client = OpenAI()
-            elif self.provider == "NDIF":
-                self.client = LanguageModel("meta-llama/Meta-Llama-3.1-405B", device_map="auto")
-            elif self.provider == "Google":
-                self.client = genai.Client(api_key=gemini_api_key)
 
         # Set up state variables
         self.phase1_results = {}
@@ -88,14 +62,7 @@ class AnswerOrPassGame:
         self.phase2_accuracy = None
         self.stored_phase1_data = None
         self.message_history = []
-        
-        # Create logging files
-        os.makedirs('./pass_game_logs', exist_ok=True)
-        timestamp = int(time.time())
-        self.log_base_name = f"./pass_game_logs/aop_{subject_id}_{timestamp}"
-        self.log_filename = f"{self.log_base_name}.log"
-        self.game_data_filename = f"{self.log_base_name}_game_data.json"
-        
+    
         # Initialize log file
         with open(self.log_filename, 'w', encoding='utf-8') as f:
             f.write(f"AnswerOrPass Game Log for Subject: {subject_id}\n")
@@ -129,203 +96,8 @@ class AnswerOrPassGame:
             self.phase1_questions = questions[:self.n_phase1_questions]
             self._log(f"Using {len(self.phase1_questions)} provided questions for phase 1")
         # For game mode, we'll load capabilities data in run_answer_or_pass_game
-    
-    def _log(self, message):
-        """Write to the log file and print to console"""
-        print(message)
-        with open(self.log_filename, 'a', encoding='utf-8') as f:
-            f.write(message + "\n")
-            
-    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text=""):
-        """Gets answer from LLM model"""
-        # Prepare common data
-        user_msg = {"role": "user", "content": q_text}
-        resp = ""
-        options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
-        system_msg = f"{setup_text}\nOutput ONLY the letter of your choice: {options_str}.\n"
+                
         
-        MAX_ATTEMPTS = 10
-        delay = 1.0
-        for attempt in range(MAX_ATTEMPTS):
-            try:
-                if self.provider == "Anthropic":
-                    if keep_appending:
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append(user_msg)
-                    #print(f"system_msg={system_msg}")                     
-                    #print(f"formatted_messages={formatted_messages}")             
-                    message = self.client.messages.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        system=system_msg,
-                        messages=formatted_messages
-                    )
-                    resp = message.content[0].text.strip().upper()
-                elif self.provider == "OpenAI":
-                    if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
-                        formatted_messages.append(user_msg)
-                    completion = self.client.chat.completions.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        messages=formatted_messages
-                    )    
-                    resp = completion.choices[0].message.content.strip()
-                elif self.provider == "Hyperbolic":
-                    if "Instruct" in self.subject_name:
-                        if keep_appending:
-                            message_history.append({"role": "system", "content": system_msg})
-                            message_history.append(user_msg)
-                            formatted_messages = message_history
-                        else:
-                            formatted_messages = copy.deepcopy(message_history)
-                            formatted_messages.append({"role": "system", "content": system_msg})
-                            formatted_messages.append(user_msg)
-                        #print(f"messages={formatted_messages}")  
-                        url = "https://api.hyperbolic.xyz/v1/chat/completions"
-                        payload={
-                            "model": self.subject_name,
-                            "messages": formatted_messages,
-                            "max_tokens": 1,
-                            "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
-                        }                        
-                    else:
-                        # Build prompt from message history and current question
-                        prompt = ""
-                        for msg in message_history:
-                            if msg["role"] == "user":
-                                prompt += f"User: {msg['content']}\n"
-                            elif msg["role"] == "assistant":
-                                prompt += f"Assistant: {msg['content']}\n"
-                        if keep_appending:
-                            message_history.append(user_msg)
-                        
-                        # Add the current question and instruction
-                        prompt += f"User: {system_msg}\n{q_text}\nAssistant: "#
-                        print(f"prompt={prompt}")
-                        url = "https://api.hyperbolic.xyz/v1/completions"
-                        payload={
-                            "model": self.subject_name,
-                            "prompt": prompt,
-                            "max_tokens": 1,
-                            "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
-                        }                
-                    response = requests.post(
-                        url,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {hyperbolic_api_key}"
-                        },
-                        json=payload
-                    )
-                    print(f"response={response}")
-                    result = response.json()
-                    print(f"result={result}")
-                    if "Instruct" in self.subject_name:
-                        resp = result["choices"][0]["message"]["content"].strip().upper()
-                    else:
-                        resp = result["choices"][0]["text"].strip().upper()
-                elif self.provider == "NDIF":
-                    # Build prompt from message history and current question
-                    prompt = ""
-                    for msg in message_history:
-                        if msg["role"] == "user":
-                            prompt += f"User:\n{msg['content']}\n"
-                        elif msg["role"] == "assistant":
-                            prompt += f"Answer:\n{msg['content']}\n"
-                    if keep_appending:
-                        message_history.append(user_msg)
-                    prompt += f"User:\n{system_msg}\n{q_text}\nMy answer is:\n"
-                    with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
-                        out = self.client.generator.output.save()
-                    resp = self.client.tokenizer.decode(out[0][len(self.client.tokenizer(prompt)['input_ids']):]).strip().upper()[0]
-                elif self.provider == "Google":
-                    formatted_messages = []
-                    for msg in message_history:
-                        if msg["role"] == "user":
-                            formatted_messages.append(types.Content(role='user', parts=[types.Part.from_text(text=msg['content'])]))
-                        elif msg["role"] == "assistant":
-                            formatted_messages.append(types.Content(role='model', parts=[types.Part.from_text(text=msg['content'])]))
-                    formatted_messages.append(types.Content(role='user', parts=[types.Part.from_text(text=user_msg['content'])]))
-                    if keep_appending:
-                        message_history.append(user_msg)
-                    #print(f"system_msg={system_msg}")                     
-                    #print(f"formatted_messages={formatted_messages}")             
-                    message = self.client.models.generate_content(
-                        model=self.subject_name,
-                        contents=formatted_messages,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_msg,
-                            max_output_tokens=1,
-                            temperature=0.0 + attempt * 0.1,
-                        ), 
-                    )
-                    resp = message.text.strip().upper()
-                else:
-                    raise ValueError(f"Unsupported provider: {self.provider}")
-                if resp in options:
-                    break
-                print(f"Bad LLM response: {resp} (attempt {attempt + 1})")
-            except Exception as e:
-                self._log(f"Error: {e}")
-                if "429" in str(e):
-                    # Rate limit error, wait and retry
-                    time.sleep(delay)
-                    delay = min(delay*2,15)
-                    attempt -= 1 #don't increase temperature
-        
-        if keep_appending: message_history.append({"role": "assistant", "content": resp})
-        if resp not in options:
-            self._log(f"Failed to get valid response for text: {q_text}; response: {resp}")
-
-        return resp, message_history
-    
-    def _get_subject_answer(self, options, prompt):
-        """Gets the human subject's response."""
-        opts_msg = f", ".join(options[:-1]) + f", or {options[-1]}.\n"
-        while True:
-            try:
-                answer = input(prompt).strip().upper()
-                if answer in options:
-                    return answer
-                else:
-                    print(f"Invalid input. Please enter {opts_msg}.")
-            except EOFError:
-                print("\nInput stream closed unexpectedly. Exiting trial.")
-                return None
-    
-    def _present_question(self, question_data, question_num=None, total_questions=None):
-        """Formats a question for display"""
-        formatted_question = ""
-        formatted_question += "-" * 30 + "\n"
-        
-        # Add question counter if needed
-        if question_num is not None and total_questions is not None:
-            formatted_question += f"Question {question_num}/{total_questions}:\n"
-        else:
-            formatted_question += "Question:\n"
-            
-        formatted_question += question_data["question"] + "\n"
-        formatted_question += "-" * 10 + "\n"
-        
-        for key, value in question_data["options"].items():
-            formatted_question += f"  {key}: {value}\n"
-        
-        formatted_question += "-" * 30
-        return formatted_question
-    
     def run_phase1(self):
         """
         Run phase 1: Capability measuring phase
@@ -827,22 +599,22 @@ def main():
     """
     # Common Configuration
     IS_HUMAN = False
-    DATASET_NAME = "MMLU"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = 'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"meta-llama/Meta-Llama-3.1-405B"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
+    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
+    subject_name = "meta-llama/Meta-Llama-3.1-405B"#'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gemini-2.0-flash-001_MMLU_400_1745795530_1745795534_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_100_1745721371_1745721374_phase1_data.json"
     
     # Capabilities measurement configuration
     N_PHASE1_QUESTIONS = 400  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 200      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 200      # Number of previously incorrect questions for the game
-    NUM_PASSES = 200           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 33      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = 67      # Number of previously incorrect questions for the game
+    NUM_PASSES = 33           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
