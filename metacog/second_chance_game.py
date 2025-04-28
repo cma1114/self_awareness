@@ -10,22 +10,13 @@ Features:
 
 import random
 import time
-import copy
 import json
-import os
-import sys
-from load_and_format_datasets import *
+from base_game_class import BaseGameClass
 from scipy.stats import binomtest
-import anthropic
-from openai import OpenAI
-import requests
 from dotenv import load_dotenv
 load_dotenv()
 
-anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
-hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
-
-class SecondChanceGame:
+class SecondChanceGame(BaseGameClass):
     """
     Game class for the Second-Chance experiment.
     """
@@ -42,49 +33,26 @@ class SecondChanceGame:
             show_original_answer (bool): Whether to show the original answer or redact it
             is_human_player (bool): Whether the subject is a human player or an LLM
         """
+        super().__init__(subject_id, subject_name, None, is_human_player, "secondchance_game_logs")
         # Store configuration parameters
-        self.subject_id = subject_id
-        self.subject_name = subject_name
         self.capabilities_file_path = capabilities_file_path
         self.num_questions = num_questions
         self.show_original_answer = show_original_answer
         self.is_human_player = is_human_player
-        
-        # Initialize API client based on model name
-        if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "Hyperbolic"
-            if self.provider == "Anthropic": 
-                self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-            elif self.provider == "OpenAI":
-                self.client = OpenAI()
-        
+                
         # Initialize state variables
         self.capabilities_data = None
         self.wrong_questions = []
         self.selected_questions = []
         self.game_results = {}
         self.message_history = []
-        
-        # Create logging files
-        os.makedirs('./secondchance_game_logs', exist_ok=True)
-        timestamp = int(time.time())
-        redaction_status = "shown" if show_original_answer else "redacted"
-        self.log_base_name = f"./secondchance_game_logs/{subject_name.replace('/', '-')}_{redaction_status}_{timestamp}"
-        self.log_filename = f"{self.log_base_name}.log"
-        self.game_data_filename = f"{self.log_base_name}_game_data.json"
-        
+                
         # Initialize log file
         with open(self.log_filename, 'w', encoding='utf-8') as f:
             f.write(f"Second-Chance Game Log for Subject: {subject_id}\n")
             f.write(f"Configuration: Questions={num_questions}, Show Original Answer={show_original_answer}\n")
             f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    
-    def _log(self, message):
-        """Write to the log file and print to console"""
-        print(message)
-        with open(self.log_filename, 'a', encoding='utf-8') as f:
-            f.write(message + "\n")
-    
+        
     def load_capabilities_data(self):
         """
         Load capabilities data from the provided file path
@@ -144,159 +112,6 @@ class SecondChanceGame:
         self._log(f"Selected {len(self.selected_questions)} questions for the game")
         
         return True
-    
-    def _get_llm_answer(self, options, q_text, message_history=None, keep_appending=False):
-        """Gets answer from LLM model"""
-        if message_history is None:
-            message_history = []
-            
-        # Prepare common data
-        user_msg = {"role": "user", "content": q_text} if q_text != "" else None
-        resp = ""
-        options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
-        system_msg = f"Output ONLY the letter of your choice: {options_str}.\n"
-        
-        MAX_ATTEMPTS = 10
-        for attempt in range(MAX_ATTEMPTS):
-            try:
-                if self.provider == "Anthropic":
-                    if keep_appending:
-                        if user_msg: message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        if user_msg: formatted_messages.append(user_msg)
-                    #print(f"formatted_messages={formatted_messages}")       
-                    message = self.client.messages.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        system=system_msg,
-                        messages=formatted_messages
-                    )
-                    resp = message.content[0].text.strip().upper()
-                elif self.provider == "OpenAI":
-                    if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
-                        if user_msg: message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
-                        if user_msg: formatted_messages.append(user_msg)
-                    completion = self.client.chat.completions.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        messages=formatted_messages
-                    )    
-                    resp = completion.choices[0].message.content.strip()
-                elif self.provider == "Hyperbolic":
-                    if "Instruct" in self.subject_name:
-                        if keep_appending:
-                            message_history.append({"role": "system", "content": system_msg})
-                            if user_msg: message_history.append(user_msg)
-                            formatted_messages = message_history
-                        else:
-                            formatted_messages = copy.deepcopy(message_history)
-                            formatted_messages.append({"role": "system", "content": system_msg})
-                            if user_msg: formatted_messages.append(user_msg)
-                        #print(f"messages={formatted_messages}")  
-                        url = "https://api.hyperbolic.xyz/v1/chat/completions"
-                        payload={
-                            "model": self.subject_name,
-                            "messages": formatted_messages,
-                            "max_tokens": 1,
-                            "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
-                        }                        
-                    else:
-                        # Build prompt from message history and current question
-                        prompt = ""
-                        for msg in message_history:
-                            if msg["role"] == "user":
-                                prompt += f"User: {msg['content']}\n"
-                            elif msg["role"] == "assistant":
-                                prompt += f"Assistant: {msg['content']}\n"
-                        if keep_appending and user_msg:
-                            message_history.append(user_msg)
-                        
-                        # Add the current question and instruction
-                        prompt += f"User: {system_msg}\n{q_text}\nAssistant: "#
-                        print(f"prompt={prompt}")
-                        url = "https://api.hyperbolic.xyz/v1/completions"
-                        payload={
-                            "model": self.subject_name,
-                            "prompt": prompt,
-                            "max_tokens": 1,
-                            "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
-                        }                
-                    response = requests.post(
-                        url,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {hyperbolic_api_key}"
-                        },
-                        json=payload
-                    )
-                    print(f"response={response}")
-                    result = response.json()
-                    print(f"result={result}")
-                    if "Instruct" in self.subject_name:
-                        resp = result["choices"][0]["message"]["content"].strip().upper()
-                    else:
-                        resp = result["choices"][0]["text"].strip().upper()
-                else:
-                    raise ValueError(f"Unsupported provider: {self.provider}")
-                
-                if resp in options:
-                    break
-                print(f"Bad LLM response: {resp} (attempt {attempt + 1})")
-            except Exception as e:
-                self._log(f"Error: {e}")
-        
-        if keep_appending: 
-            message_history.append({"role": "assistant", "content": resp})
-        
-        if resp not in options:
-            self._log(f"Failed to get valid response from LLM; response: {resp}")
-        
-        return resp, message_history
-    
-    def _get_subject_answer(self, options, prompt):
-        """Gets the human subject's response."""
-        opts_msg = f", ".join(options[:-1]) + f", or {options[-1]}.\n"
-        while True:
-            try:
-                answer = input(prompt).strip().upper()
-                if answer in options:
-                    return answer
-                else:
-                    print(f"Invalid input. Please enter {opts_msg}.")
-            except EOFError:
-                print("\nInput stream closed unexpectedly. Exiting trial.")
-                return None
-    
-    def _present_question(self, question_data, question_num=None, total_questions=None):
-        """Formats a question for display"""
-        formatted_question = ""
-        formatted_question += "-" * 30 + "\n"
-        
-        # Add question counter if needed
-        if question_num is not None and total_questions is not None:
-            formatted_question += f"Question {question_num}/{total_questions}:\n"
-        else:
-            formatted_question += "Question:\n"
-            
-        formatted_question += question_data["question"] + "\n"
-        formatted_question += "-" * 10 + "\n"
-        
-        for key, value in question_data["options"].items():
-            formatted_question += f"  {key}: {value}\n"
-        
-        formatted_question += "-" * 30
-        return formatted_question
     
     def run_game(self):
         """

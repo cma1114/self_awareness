@@ -9,8 +9,6 @@ Features:
 - Phase 2: Subject chooses to answer (A-D) or delegate ('T') for each question.
 """
 
-import anthropic
-from openai import OpenAI
 import requests
 import random
 import time
@@ -19,7 +17,7 @@ import json
 import sys
 import os
 from load_and_format_datasets import load_and_format_dataset
-from datasets import load_dataset
+from base_game_class import BaseGameClass
 import scipy.stats
 import collections
 from dotenv import load_dotenv
@@ -30,11 +28,11 @@ hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 
 
 # --- Core Game Logic ---
-class PsychGame:
+class PsychGame(BaseGameClass):
     """
     Manages the psychological experiment game flow.
     """
-    def __init__(self, subject_id, subject_name, questions=None, n_trials_phase1=None, n_trials_phase2=None, 
+    def __init__(self, subject_id, subject_name, is_human_player=True, questions=None, n_trials_phase1=None, n_trials_phase2=None, 
                  teammate_accuracy_phase1=None, teammate_accuracy_phase2=None, feedback_config=None, stored_game_path=None, 
                  skip_phase1=False, show_phase1_summary=False, show_full_phase1_history=False,
                  phase1_summary=None, initial_setup_explanation="", use_phase2_data=True):
@@ -59,9 +57,8 @@ class PsychGame:
                                      If not provided or key is missing, that accuracy line won't be shown.
             use_phase2_data (bool): If False, don't use phase2 questions from stored game data. Default is True.
         """
+        super().__init__(subject_id, subject_name, questions, is_human_player, "delegate_game_logs")
 
-        self.subject_id = subject_id
-        self.subject_name = subject_name
         self.skip_phase1 = skip_phase1
         self.show_phase1_summary = show_phase1_summary  
         self.show_full_phase1_history = show_full_phase1_history
@@ -69,13 +66,6 @@ class PsychGame:
         self.stored_game_data = None
         self.initial_setup_explanation = initial_setup_explanation
         self.use_phase2_data = use_phase2_data
-        
-        # Create logging files
-        os.makedirs('./game_logs', exist_ok=True)
-        timestamp = int(time.time())
-        self.log_base_name = f"./game_logs/{subject_id}_{timestamp}"
-        self.log_filename = f"{self.log_base_name}.log"
-        self.game_data_filename = f"{self.log_base_name}_game_data.json"
         
         # Load stored game data if provided
         if stored_game_path:
@@ -165,7 +155,6 @@ class PsychGame:
         self.teammate_accuracy_phase1_observed = None
         self.phase2_score = None
         self.phase2_accuracy = None
-        self.is_human_player = True  
         self.stored_message_history = []
         self.stored_feedback_text = ""
         
@@ -267,12 +256,6 @@ class PsychGame:
                 self._log(f"Subject phase 1 accuracy: {self.subject_accuracy_phase1:.2%}")
                 self._log(f"Teammate phase 1 accuracy: {self.teammate_accuracy_phase1_observed:.2%}")
 
-    def _log(self, message):
-        """Write to the log file and print to console"""
-        print(message)
-        with open(self.log_filename, 'a', encoding='utf-8') as f:
-            f.write(message + "\n")
-
     def _predetermine_teammate_answers(self, questions):
         """
         Pre-determines teammate answers to ensure exact match with target accuracy.
@@ -301,104 +284,6 @@ class PsychGame:
                 answers[q_id] = (incorrect_answer, False)
         
         return answers
-
-    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True):
-        """Gets answer from LLM model"""
-        # Prepare common data
-        user_msg = {"role": "user", "content": q_text}
-        resp = ""
-        options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
-        system_msg = f"Output only the letter of your choice: {options_str}.\n"
-        
-        MAX_ATTEMPTS = 10
-        for attempt in range(MAX_ATTEMPTS):
-            try:
-                if self.provider == "Anthropic":
-                    if keep_appending:
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append(user_msg)
-                    #print(f"system_msg={system_msg}")                     
-                    #print(f"formatted_messages={formatted_messages}")                     
-                    message = self.client.messages.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        system=system_msg,
-                        messages=formatted_messages
-                    )
-                    resp = message.content[0].text.strip().upper()
-                elif self.provider == "OpenAI":
-                    if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
-                        formatted_messages.append(user_msg)
-                    completion = self.client.chat.completions.create(
-                        model=self.subject_name,
-                        max_tokens=1,
-                        temperature=0.0 + attempt * 0.1,
-                        messages=formatted_messages
-                    )    
-                    resp = completion.choices[0].message.content.strip()
-                elif self.provider == "Hyperbolic":
-                    if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
-                        message_history.append(user_msg)
-                        formatted_messages = message_history
-                    else:
-                        formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
-                        formatted_messages.append(user_msg)
-                    #print(f"messages={formatted_messages}")         
-                    response = requests.post(
-                        "https://api.hyperbolic.xyz/v1/chat/completions",
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {hyperbolic_api_key}"
-                        },
-                        json={
-                            "model": self.subject_name,
-                            "messages": formatted_messages,
-                            "max_tokens": 1,
-                            "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
-                        }
-                    )
-                    result = response.json()
-                    resp = result["choices"][0]["message"]["content"].strip().upper()
-                else:
-                    raise ValueError(f"Unsupported provider: {self.provider}")
-                if resp in options:
-                    break
-                print(f"Bad LLM response: {resp} (attempt {attempt + 1})")
-            except Exception as e:
-                self._log(f"Error: {e}, response={response}")
-        
-        if keep_appending: message_history.append({"role": "assistant", "content": resp})
-        if resp not in options:
-            self._log(f"Failed to get valid response for text: {q_text}; response: {resp}")
-
-        return resp, message_history
-        
-    def _get_subject_answer(self, options, prompt):
-        """Gets the human subject's response."""
-        opts_msg = f", ".join(options[:-1]) + f", or {options[-1]}.\n"
-        while True:
-            try:
-                answer = input(prompt).strip().upper()
-                if answer in options:
-                    return answer
-                else:
-                    print(f"Invalid input. Please enter {opts_msg}.")
-            except EOFError:
-                print("\nInput stream closed unexpectedly. Exiting trial.")
-                return None
 
     def _get_teammate_answer(self, question_data, phase=1):
         """
@@ -486,7 +371,7 @@ class PsychGame:
         
         for i, q_data in enumerate(self.phase1_questions):
             self.current_trial_in_phase = i
-            formatted_question = self._present_question(q_data)
+            formatted_question = self._present_question(q_data, self.current_trial_in_phase + 1, None)
             prompt = "Your answer (A, B, C, D): "
 
             # Get Subject Answer
@@ -562,7 +447,7 @@ class PsychGame:
         
         for i, q_data in enumerate(self.phase2_questions):
             self.current_trial_in_phase = i
-            formatted_question = self._present_question(q_data)
+            formatted_question = self._present_question(q_data, self.current_trial_in_phase + 1, None)
 
             options = q_data["options"]
             valid_inputs = list(options.keys()) + ['T']  # A, B, C, D, T
@@ -1094,6 +979,7 @@ def main():
         game = PsychGame(
             subject_id=SUBJECT_ID,
             subject_name=subject_name,
+            is_human_player = IS_HUMAN
             questions=formatted_questions,
             n_trials_phase1=NUM_TRIALS_PHASE1,
             n_trials_phase2=NUM_TRIALS_PHASE2,
@@ -1108,10 +994,6 @@ def main():
             initial_setup_explanation=initial_setup_explanation,
             use_phase2_data=USE_PHASE2_DATA
         )
-
-        # Set player type
-        game.is_human_player = IS_HUMAN
-        print(f"Player type set to: {'Human' if IS_HUMAN else 'LLM'}")
 
         # Run the game
         all_results = game.run_game()
