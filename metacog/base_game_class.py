@@ -1,3 +1,4 @@
+import torch
 import os
 import time
 import re
@@ -62,6 +63,7 @@ class BaseGameClass:
         # Prepare common data
         user_msg = {"role": "user", "content": q_text}
         resp = ""
+        token_probs = None
         options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
         system_msg = f"{setup_text}\nOutput ONLY the letter of your choice: {options_str}.\n"
         
@@ -99,9 +101,16 @@ class BaseGameClass:
                         model=self.subject_name,
                         max_tokens=1,
                         temperature=0.0 + attempt * 0.1,
-                        messages=formatted_messages
+                        messages=formatted_messages,
+                        logprobs=True,
+                        top_logprobs=len(options)                     
                     )    
                     resp = completion.choices[0].message.content.strip()
+                    entry = completion.choices[0].logprobs.content[0]
+                    tokens = [tl.token for tl in entry.top_logprobs]
+                    logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
+                    prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
+                    token_probs = dict(zip(tokens, prob_tensor.tolist()))
                 elif self.provider == "Hyperbolic":
                     if "Instruct" in self.subject_name:
                         if keep_appending:
@@ -165,10 +174,11 @@ class BaseGameClass:
                         if msg["role"] == "user":
                             prompt += f"User:\n{msg['content']}\n"
                         elif msg["role"] == "assistant":
-                            prompt += f"Answer:\n{msg['content']}\n"
+                            prompt += f"My answer is:\n{msg['content']}\n"
                     if keep_appending:
                         message_history.append(user_msg)
-                    prompt += f"User:\n{system_msg}\n{q_text}\nMy answer is:\n"
+                    prompt += f"User:\n{system_msg}\nYou are an Assistant.\n{q_text}\nThe Assistant responds only with {options_str}\nMy answer is:\n"
+                    print(f"prompt={prompt}")
                     with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
                         out = self.client.generator.output.save()
                     resp = self.client.tokenizer.decode(out[0][len(self.client.tokenizer(prompt)['input_ids']):]).strip().upper()[0]
@@ -211,7 +221,7 @@ class BaseGameClass:
         if resp not in options:
             self._log(f"Failed to get valid response for text: {q_text}; response: {resp}")
 
-        return resp, message_history
+        return resp, message_history, token_probs
 
     def _get_subject_answer(self, options, prompt):
         """Gets the human subject's response."""

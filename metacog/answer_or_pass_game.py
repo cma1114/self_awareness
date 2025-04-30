@@ -109,6 +109,7 @@ class AnswerOrPassGame(BaseGameClass):
         phase1_accuracy = 0
         correct_count = 0
         message_history = []
+        probs = None
         
         # Process each question
         for i, question in enumerate(self.phase1_questions):
@@ -131,7 +132,7 @@ class AnswerOrPassGame(BaseGameClass):
                 # For LLM subject - never accumulate history in phase 1
                 llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
                 setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                subject_answer, _ = self._get_llm_answer(
+                subject_answer, _, probs = self._get_llm_answer(
                     list(question["options"].keys()),
                     setup_prompt + "\n\n" + llm_prompt,
                     [], # Always empty for phase 1
@@ -148,6 +149,7 @@ class AnswerOrPassGame(BaseGameClass):
                 "question": question,
                 "subject_answer": subject_answer,
                 "is_correct": is_correct,
+                "probs": probs 
             }
                 
             print(f"Completed question {i+1}/{len(self.phase1_questions)}")
@@ -230,6 +232,7 @@ class AnswerOrPassGame(BaseGameClass):
         correct_count = 0
         incorrect_count = 0
         message_history = []
+        probs = None
         
         # Process each question
         for i, question in enumerate(self.phase2_questions):
@@ -280,7 +283,7 @@ class AnswerOrPassGame(BaseGameClass):
                     llm_prompt = q_text + "\nYour choice (A, B, C, D, or P=Pass): "
                 
                 # Pass the keep_appending flag based on phase2_accumulate_history setting
-                subject_decision, message_history = self._get_llm_answer(
+                subject_decision, message_history, probs = self._get_llm_answer(
                     options,
                     setup_prompt + "\n\n" + llm_prompt,
                     message_history if self.phase2_accumulate_history else [],
@@ -289,17 +292,9 @@ class AnswerOrPassGame(BaseGameClass):
             
             # Process decision
             if subject_decision == "P":
-                # Subject passed
-                if passes_used >= self.max_passes:
-                    # Shouldn't happen due to UI constraints, but just in case
-                    self._log("Error: Subject tried to pass but no passes remaining")
-                    subject_decision = random.choice(list(question["options"].keys()))
-                    feedback = f"No passes remaining. Random answer selected: {subject_decision}"
-                    print(feedback)
-                else:
-                    passes_used += 1
-                    feedback = f"Pass recorded. {self.max_passes - passes_used} passes remaining."
-                    print(feedback)
+                passes_used += 1
+                feedback = f"Pass recorded. {self.max_passes - passes_used} passes remaining."
+                print(feedback)
                     
                 # Record pass result
                 self.phase2_results[question["id"]] = {
@@ -307,7 +302,8 @@ class AnswerOrPassGame(BaseGameClass):
                     "decision": "pass",
                     "subject_answer": None,
                     "is_correct": None,
-                    "question_type": self.phase2_question_types[question["id"]]
+                    "question_type": self.phase2_question_types[question["id"]],
+                    "probs": probs
                 }
             else:
                 # Subject answered
@@ -323,7 +319,8 @@ class AnswerOrPassGame(BaseGameClass):
                     "decision": "answer",
                     "subject_answer": subject_decision,
                     "is_correct": is_correct,
-                    "question_type": self.phase2_question_types[question["id"]]
+                    "question_type": self.phase2_question_types[question["id"]],
+                    "probs": probs
                 }
                 
                 # Provide feedback if configured
@@ -600,21 +597,21 @@ def main():
     # Common Configuration
     IS_HUMAN = False
     DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B"#'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"Chris"#
+    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B"#'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B_GPQA_100_1745721371_1745721374_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gpt-4o-2024-08-06_GPQA_100_1745984840_1745984841_phase1_data.json"
     
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 400  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 100  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 33      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 67      # Number of previously incorrect questions for the game
-    NUM_PASSES = 33           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 45      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = 55      # Number of previously incorrect questions for the game
+    NUM_PASSES = N_PHASE2_WRONG           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
@@ -636,12 +633,12 @@ def main():
     Use your passes wisely to maximize your total score.
     The goal is to answer as many questions correctly as possible.
     """
-    game_setup_prompt = f"""
+    game_setup_prompt_obv = f"""
     Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
     If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point. You can also choose to pass, in which case you neither gain nor lose a point, and I move on to the next question. 
     You can pass up to {NUM_PASSES} times.
     Your goal is to accumulate as many points as possible.
-    You previously achieved 40% accuracy on the same questions, so you should use all of your passes.
+    You previously achieved {round(N_PHASE2_RIGHT/(N_PHASE2_RIGHT+N_PHASE2_WRONG)*100)}% accuracy on the same questions, so you should use all of your passes.
     """
 #    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
 

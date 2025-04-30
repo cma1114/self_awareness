@@ -13,8 +13,7 @@ import time
 import json
 from base_game_class import BaseGameClass
 from scipy.stats import binomtest
-from dotenv import load_dotenv
-load_dotenv()
+
 
 class SecondChanceGame(BaseGameClass):
     """
@@ -131,6 +130,7 @@ class SecondChanceGame(BaseGameClass):
         
         # Initialize state
         message_history = []
+        probs = None
         changed_answers = 0
         correct_after_feedback = 0
         
@@ -174,7 +174,7 @@ class SecondChanceGame(BaseGameClass):
                 message_history.append({"role": "user", "content": content})
                 
                 # Get the answer without accumulating history
-                new_answer, _ = self._get_llm_answer(
+                new_answer, _, probs = self._get_llm_answer(
                     list(question["options"].keys()),
                     "",
                     message_history,
@@ -199,6 +199,7 @@ class SecondChanceGame(BaseGameClass):
                 "correct_answer": correct_answer,
                 "answer_changed": answer_changed,
                 "is_correct": is_correct,
+                "probs": probs
             }
             
             self._log(f"New answer: {new_answer}, Changed: {answer_changed}, Correct: {is_correct}")
