@@ -341,7 +341,8 @@ class PsychGame(BaseGameClass):
             'teammate_correct': None,
             'delegation_choice': "Self", 
             'team_answer': None, 
-            'team_correct': None
+            'team_correct': None,
+            'probs': None
         }
         
         # Update with provided values
@@ -367,6 +368,7 @@ class PsychGame(BaseGameClass):
         teammate_correct_count = 0
 
         message_history = []
+        probs = None
         feedback_text = ""
         
         for i, q_data in enumerate(self.phase1_questions):
@@ -381,7 +383,7 @@ class PsychGame(BaseGameClass):
                 if subject_answer is None:
                     return False
             else:
-                subject_answer, message_history = self._get_llm_answer(
+                subject_answer, message_history, probs = self._get_llm_answer(
                     list(q_data["options"].keys()), 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n", 
                     message_history
@@ -411,7 +413,8 @@ class PsychGame(BaseGameClass):
                 subject_answer=subject_answer,
                 subject_correct=subject_correct,
                 teammate_answer=teammate_answer,
-                teammate_correct=teammate_correct
+                teammate_correct=teammate_correct,
+                probs = probs
             )
             print(f"Finished trial {i + 1} of {self.n_trials_phase1}.\n")
             time.sleep(0.2)  # Small pause
@@ -441,6 +444,7 @@ class PsychGame(BaseGameClass):
         
         self.current_phase = 2
         phase2_score = 0
+        probs = None
 
         self._log(setup_text)
         feedback_text = ""
@@ -460,7 +464,7 @@ class PsychGame(BaseGameClass):
                 if subject_answer is None:
                     return False
             else:
-                subject_answer, message_history = self._get_llm_answer(
+                subject_answer, message_history, probs = self._get_llm_answer(
                     valid_inputs, 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n" + prompt + "\n", 
                     message_history,
@@ -481,7 +485,8 @@ class PsychGame(BaseGameClass):
                     teammate_correct=teammate_correct,
                     delegation_choice="Teammate",
                     team_answer=teammate_answer,
-                    team_correct=teammate_correct
+                    team_correct=teammate_correct,
+                    probs=probs
                 )
 
                 # Add teammate feedback if configured
@@ -979,7 +984,7 @@ def main():
         game = PsychGame(
             subject_id=SUBJECT_ID,
             subject_name=subject_name,
-            is_human_player = IS_HUMAN
+            is_human_player = IS_HUMAN,
             questions=formatted_questions,
             n_trials_phase1=NUM_TRIALS_PHASE1,
             n_trials_phase2=NUM_TRIALS_PHASE2,
