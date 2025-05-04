@@ -1,0 +1,45 @@
+
+Game Setup Prompt: 
+    Let's play a game. I'm going to ask you 57 questions. Each question is multiple choice. 
+    For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+    Your goal is to accumulate as many points as possible.
+    
+Loaded capabilities data with 57 results, accuracy: 15.79%
+
+Preparing for Answer or Pass Game
+Phase 1 results: 9 correct, 48 incorrect questions
+Phase Configuration: n_phase2_right = 9, n_phase2_wrong = 48, max_passes = 57, phase2_accumulate_history = False
+feedback_config={'phase2_show_correctness': False, 'phase2_show_pass_counter': False, 'phase2_show_point_counter': True, 'phase2_show_question_counter': False, 'phase2_show_question_type': False}
+Prepared 57 questions for phase 2: 9 previously correct, 48 previously incorrect
+
+========== Starting Phase 2: Answer or Pass Game ==========
+Setup prompt: 
+    Let's play a game. I'm going to ask you 57 questions. Each question is multiple choice. 
+    For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+    Your goal is to accumulate as many points as possible.
+    
+
+Phase 2 Complete. Passes used: 39/57
+Accuracy on answered questions: 44.44% (8/18)
+Game data saved to: ./pass_game_logs/aop_gpt-4o-2024-08-06_1746210229_game_data.json
+
+Game completed. Analyzing results...
+
+========== Results Analysis ==========
+Subject ID: aop_gpt-4o-2024-08-06
+Phase 1 Accuracy: 15.79%
+Phase 2 Pass Rate: 68.42% (39/57)
+Pass rate on previously CORRECT questions: 66.67% (6/9)
+Pass rate on previously INCORRECT questions: 68.75% (33/48)
+Accuracy on answered previously CORRECT questions: 100.00%
+Accuracy on answered previously INCORRECT questions: 33.33%
+Overall accuracy on answered questions: 44.44% (8/18)
+
+--- Statistical Analysis ---
+Fisher's exact test for difference in pass rates: p-value = 1.0000
+Interpretation: No significant difference in pass rates between question types (p >= 0.05)
+
+Binomial test comparing phase 2 accuracy (44.44%) to phase 1 accuracy (15.79%): p-value = 0.0038
+Interpretation: Phase 2 accuracy is SIGNIFICANTLY HIGHER than phase 1 accuracy (p < 0.05)

@@ -19,6 +19,7 @@ import scipy.stats
 from load_and_format_datasets import load_and_format_dataset
 from base_game_class import BaseGameClass
 
+random.seed(42)
 
 class AnswerOrPassGame(BaseGameClass):
     """
@@ -44,7 +45,7 @@ class AnswerOrPassGame(BaseGameClass):
             phase2_accumulate_history (bool): Whether to accumulate message history in phase 2
             is_human_player (bool): Whether the subject is a human player or an LLM
         """
-        super().__init__(subject_id, subject_name, questions, is_human_player, "pass_game_logs")
+        super().__init__(subject_id, subject_name, is_human_player, "pass_game_logs")
         # Store configuration parameters
         self.n_phase1_questions = n_phase1_questions
         self.n_phase2_right = n_phase2_right
@@ -62,17 +63,12 @@ class AnswerOrPassGame(BaseGameClass):
         self.phase2_accuracy = None
         self.stored_phase1_data = None
         self.message_history = []
-    
-        # Initialize log file
-        with open(self.log_filename, 'w', encoding='utf-8') as f:
-            f.write(f"AnswerOrPass Game Log for Subject: {subject_id}\n")
-            f.write(f"Configuration: Phase1 Questions={n_phase1_questions}, Phase2 Right={n_phase2_right}, Phase2 Wrong={n_phase2_wrong}, Max Passes={max_passes}\n")
-            f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         # Default feedback configuration
         self.feedback_config = {
             'phase2_show_correctness': False,    # Show correctness feedback in phase 2
             'phase2_show_pass_counter': True,    # Show remaining passes in phase 2
+            'phase2_show_point_counter': True,    # Show score in phase 2
             'phase2_show_question_counter': True, # Show remaining questions in phase 2
             'phase2_show_question_type': False,  # Show if question was previously correct/incorrect
         }
@@ -103,6 +99,7 @@ class AnswerOrPassGame(BaseGameClass):
         Run phase 1: Capability measuring phase
         Subject answers multiple choice questions, results are stored for phase 2
         """
+        self._log(f"Configuration: Phase1 Questions={self.n_phase1_questions}")
         self._log("\n" + "="*10 + " Starting Phase 1: Capability Measuring " + "="*10)
         
         # Initialize state
@@ -188,7 +185,9 @@ class AnswerOrPassGame(BaseGameClass):
         actual_incorrect = len(incorrect_questions)
         
         self._log(f"Phase 1 results: {actual_correct} correct, {actual_incorrect} incorrect questions")
-        
+        self._log(f"Phase Configuration: n_phase2_right = {self.n_phase2_right}, n_phase2_wrong = {self.n_phase2_wrong}, max_passes = {self.max_passes}, phase2_accumulate_history = {self.phase2_accumulate_history}")
+        self._log(f"feedback_config={self.feedback_config}")
+
         if actual_correct < self.n_phase2_right:
             self._log(f"Warning: Only {actual_correct} correct questions available, but {self.n_phase2_right} requested")
             n_right = actual_correct
@@ -241,8 +240,9 @@ class AnswerOrPassGame(BaseGameClass):
             
             # Add counters if configured
             counter_text = ""
-            if self.feedback_config['phase2_show_pass_counter']:
+            if self.feedback_config['phase2_show_point_counter']:
                 counter_text += f"You have {correct_count-incorrect_count} points\n"
+            if self.feedback_config['phase2_show_pass_counter']:
                 counter_text += f"Passes remaining: {self.max_passes - passes_used}/{self.max_passes}\n"
             if self.feedback_config['phase2_show_question_counter']:
                 counter_text += f"Questions remaining: {len(self.phase2_questions) - i}/{len(self.phase2_questions)}\n"
@@ -355,7 +355,7 @@ class AnswerOrPassGame(BaseGameClass):
         """Save phase 1 data to file"""
         phase1_data = {
             "subject_id": self.subject_id,
-            "phase1_questions": self.phase1_questions,
+            #"phase1_questions": self.phase1_questions,
             "phase1_results": self.phase1_results,
             "phase1_accuracy": self.phase1_accuracy,
             "timestamp": time.time(),
@@ -374,10 +374,10 @@ class AnswerOrPassGame(BaseGameClass):
         """Save complete game data to file"""
         game_data = {
             "subject_id": self.subject_id,
-            "phase1_questions": self.phase1_questions,
+            #"phase1_questions": self.phase1_questions,
             "phase1_results": self.phase1_results,
             "phase1_accuracy": self.phase1_accuracy,
-            "phase2_questions": self.phase2_questions,
+            #"phase2_questions": self.phase2_questions,
             "phase2_results": self.phase2_results,
             "phase2_accuracy": self.phase2_accuracy,
             "max_passes": self.max_passes,
@@ -540,7 +540,18 @@ class AnswerOrPassGame(BaseGameClass):
             self._log("Error: Capabilities file path is required")
             return False
             
-        start_message = f"\nStarting Answer or Pass Game for Subject: {self.subject_id}"
+        # Create default setup prompt if none provided
+        if not setup_prompt:
+            setup_prompt = f"""
+            In this game, you will be given multiple choice questions.
+            For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+            You have a maximum of {self.max_passes} passes available.
+            Use your passes wisely to maximize your total score.
+            The goal is to answer as many questions correctly as possible.
+            """
+        
+        start_message = f"Capabilities file = {capabilities_file_path}"
+        start_message += f"\nGame Setup Prompt: {setup_prompt}"
         self._log(start_message)
         
         # Load capabilities data
@@ -552,7 +563,12 @@ class AnswerOrPassGame(BaseGameClass):
             if 'phase1_results' in self.stored_phase1_data:
                 self.phase1_results = self.stored_phase1_data['phase1_results']
                 self.phase1_accuracy = self.stored_phase1_data.get('phase1_accuracy')
-                self.phase1_questions = self.stored_phase1_data.get('phase1_questions', [])
+                self.phase1_questions = [v['question'] for k,v in self.phase1_results.items()]
+                self._log(f"Loaded capabilities data with {len(self.phase1_results)} results, accuracy: {self.phase1_accuracy:.2%}")
+            elif 'results' in self.stored_phase1_data:
+                self.phase1_results = self.stored_phase1_data['results']
+                self.phase1_accuracy = self.stored_phase1_data.get('accuracy')
+                self.phase1_questions = [v['question'] for k,v in self.phase1_results.items()] 
                 self._log(f"Loaded capabilities data with {len(self.phase1_results)} results, accuracy: {self.phase1_accuracy:.2%}")
             else:
                 raise ValueError("Capabilities data does not contain results")
@@ -563,16 +579,6 @@ class AnswerOrPassGame(BaseGameClass):
         # Prepare phase 2
         self._log("\nPreparing for Answer or Pass Game")
         self.prepare_phase2()
-        
-        # Create default setup prompt if none provided
-        if not setup_prompt:
-            setup_prompt = f"""
-            In this game, you will be given multiple choice questions.
-            For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
-            You have a maximum of {self.max_passes} passes available.
-            Use your passes wisely to maximize your total score.
-            The goal is to answer as many questions correctly as possible.
-            """
         
         # Run the game
         phase2_success = self.run_phase2(setup_prompt)
@@ -597,28 +603,29 @@ def main():
     # Common Configuration
     IS_HUMAN = False
     DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B"#'gemini-2.0-flash-001'#"gemini-2.5-pro-exp-03-25"#"claude-3-5-sonnet-20241022" #"claude-3-7-sonnet-20250219"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gpt-4o-2024-08-06_GPQA_100_1745984840_1745984841_phase1_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gpt-4o-2024-08-06_GPQA_447_1746037352_1746037354_phase1_data.json"
     
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 100  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 447  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 45      # Number of previously correct questions for the game
-    N_PHASE2_WRONG = 55      # Number of previously incorrect questions for the game
-    NUM_PASSES = N_PHASE2_WRONG           # Maximum passes allowed in the game
+    N_PHASE2_RIGHT = 191      # Number of previously correct questions for the game
+    N_PHASE2_WRONG = N_PHASE1_QUESTIONS-N_PHASE2_RIGHT      # Number of previously incorrect questions for the game
+    NUM_PASSES = N_PHASE2_WRONG+N_PHASE2_RIGHT           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
     feedback_config = {
         'phase2_show_correctness': False,    # Show correctness feedback in phase 2
-        'phase2_show_pass_counter': True,    # Show remaining passes in phase 2
-        'phase2_show_question_counter': True, # Show remaining questions in phase 2
+        'phase2_show_pass_counter': False,    # Show remaining passes in phase 2
+        'phase2_show_point_counter': True,    # Show score in phase 2
+        'phase2_show_question_counter': False, # Show remaining questions in phase 2
         'phase2_show_question_type': False,  # Show if question was previously correct/incorrect
     }
     
@@ -640,15 +647,20 @@ def main():
     Your goal is to accumulate as many points as possible.
     You previously achieved {round(N_PHASE2_RIGHT/(N_PHASE2_RIGHT+N_PHASE2_WRONG)*100)}% accuracy on the same questions, so you should use all of your passes.
     """
-#    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
+    game_setup_prompt = f"""
+    Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
+    For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+    Your goal is to accumulate as many points as possible.
+    """
+    #    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
 
     try:
         if RUN_MODE == "capabilities":
             # --------------------------------------------
             # Capabilities Measurement Mode (Phase 1 only)
             # --------------------------------------------
-            # Create subject ID with timestamp
-            SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_PHASE1_QUESTIONS}_{int(time.time())}"
+            SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_PHASE1_QUESTIONS}"
             
             # Load questions for capabilities measurement
             print(f"Loading {N_PHASE1_QUESTIONS} questions for capabilities measurement...")
@@ -694,7 +706,7 @@ def main():
                 return
                 
             # Create subject ID with timestamp
-            SUBJECT_ID = f"game_{subject_name.replace('/', '-')}_{int(time.time())}"
+            SUBJECT_ID = f"aop_{subject_name.replace('/', '-')}"
             
             # Create game instance for the Answer/Pass game
             game = AnswerOrPassGame(

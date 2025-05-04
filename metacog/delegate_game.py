@@ -57,7 +57,7 @@ class PsychGame(BaseGameClass):
                                      If not provided or key is missing, that accuracy line won't be shown.
             use_phase2_data (bool): If False, don't use phase2 questions from stored game data. Default is True.
         """
-        super().__init__(subject_id, subject_name, questions, is_human_player, "delegate_game_logs")
+        super().__init__(subject_id, subject_name, is_human_player, "delegate_game_logs")
 
         self.skip_phase1 = skip_phase1
         self.show_phase1_summary = show_phase1_summary  

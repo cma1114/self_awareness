@@ -14,6 +14,7 @@ import json
 from base_game_class import BaseGameClass
 from scipy.stats import binomtest
 
+random.seed(42)
 
 class SecondChanceGame(BaseGameClass):
     """
@@ -32,7 +33,7 @@ class SecondChanceGame(BaseGameClass):
             show_original_answer (bool): Whether to show the original answer or redact it
             is_human_player (bool): Whether the subject is a human player or an LLM
         """
-        super().__init__(subject_id, subject_name, None, is_human_player, "secondchance_game_logs")
+        super().__init__(subject_id, subject_name, is_human_player, "secondchance_game_logs")
         # Store configuration parameters
         self.capabilities_file_path = capabilities_file_path
         self.num_questions = num_questions
@@ -308,7 +309,7 @@ def main():
     SHOW_ORIGINAL_ANSWER = True
     
     DATASET_NAME = "GPQA" if "GPQA" in CAPABILITIES_FILE.upper() else "MMLU" if "MMLU" in CAPABILITIES_FILE.upper() else "TruthfulQA"
-    SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{int(time.time())}"
+    SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}"
     try:
         
         # Create game instance
