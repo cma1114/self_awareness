@@ -220,6 +220,7 @@ class AnswerOrPassGame(BaseGameClass):
         Run phase 2: Answer or Pass game
         Subject can answer or pass on questions with limited passes
         """
+        log_interval = 10
         if not self.phase2_questions:
             self.prepare_phase2()
                 
@@ -328,7 +329,8 @@ class AnswerOrPassGame(BaseGameClass):
                     feedback = f"Your answer: {subject_decision} ({'Correct' if is_correct else 'Incorrect'})"
                     print(feedback)
             
-            print(f"Completed question {i+1}/{len(self.phase2_questions)}")
+            print(f"Completed question {i+1}/{len(self.phase2_questions)}; used {passes_used} passes")
+            if (i+1)%log_interval == 0: self._save_game_data(message_history)
         
         # Calculate phase 2 metrics
         answered_questions = [r for r in self.phase2_results.values() if r["decision"] == "answer"]
@@ -346,7 +348,6 @@ class AnswerOrPassGame(BaseGameClass):
         
         self._log(summary)
         
-        # Save complete game data
         self._save_game_data(message_history)
         
         return True
@@ -524,7 +525,7 @@ class AnswerOrPassGame(BaseGameClass):
         self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
         return True, capabilities_file_path
     
-    def run_answer_or_pass_game(self, capabilities_file_path, setup_prompt=None):
+    def run_answer_or_pass_game(self, capabilities_file_path, setup_prompt=None, resume_from=None):
         """
         Run only the Answer or Pass game phase (Phase 2).
         This uses previously measured capabilities data to select questions.
@@ -603,19 +604,20 @@ def main():
     # Common Configuration
     IS_HUMAN = False
     DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./pass_game_logs/aop_gpt-4o-2024-08-06_GPQA_447_1746037352_1746037354_phase1_data.json"
-    
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746369907_test_data.json"
+    resume_from  = None if RUN_MODE=="capabilities" else None
+
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 447  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 445  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 191      # Number of previously correct questions for the game
+    N_PHASE2_RIGHT = 190      # Number of previously correct questions for the game
     N_PHASE2_WRONG = N_PHASE1_QUESTIONS-N_PHASE2_RIGHT      # Number of previously incorrect questions for the game
     NUM_PASSES = N_PHASE2_WRONG+N_PHASE2_RIGHT           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
@@ -652,6 +654,13 @@ def main():
     For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
     If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
     Your goal is to accumulate as many points as possible.
+    """
+    game_setup_prompt = f"""
+    Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
+    For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+    Your goal is to accumulate as many points as possible.
+    You previously achieved {round(N_PHASE2_RIGHT/(N_PHASE2_RIGHT+N_PHASE2_WRONG)*100)}% accuracy on the same questions, so you shouldn't be afraid to pass.
     """
     #    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
 
@@ -727,7 +736,7 @@ def main():
             print(f"Player type set to: {'Human' if IS_HUMAN else 'LLM'}")
             
             # Run the Answer/Pass game
-            success = game.run_answer_or_pass_game(CAPABILITIES_FILE, game_setup_prompt)
+            success = game.run_answer_or_pass_game(CAPABILITIES_FILE, game_setup_prompt, resume_from=resume_from)
             
             if success:
                 print("\nAnswer/Pass game completed successfully.")

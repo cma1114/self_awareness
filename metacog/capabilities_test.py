@@ -98,7 +98,7 @@ class CapabilitiesTest(BaseGameClass):
                 # For LLM subject
                 llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
                 setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                if question['id'] == "gpqa_train_rec42yAdAZnQgoibP": 
+                if question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
                     subject_answer = ""
                     probs = None
                 else:
@@ -145,7 +145,7 @@ def main():
     IS_HUMAN = False
     DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
     subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
-    resume_from = "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746323711_test_data.json" 
+    resume_from = "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
     N_QUESTIONS = 447  # Number of questions for capabilities measurement
     
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
