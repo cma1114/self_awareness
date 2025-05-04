@@ -88,7 +88,7 @@ class BaseGameClass:
         system_msg = f"{setup_text}\nOutput ONLY the letter of your choice: {options_str}.\n"
         
         MAX_ATTEMPTS = 10 #for bad resp format
-        MAX_CALL_ATTEMPTS = 30 #for rate limit/timeout/server errors
+        MAX_CALL_ATTEMPTS = 40 #for rate limit/timeout/server errors
         delay = 1.0
         attempt = 0
         resp = ""
@@ -256,9 +256,9 @@ class BaseGameClass:
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
             try:
-                resp, token_probs = self._call_with_timeout(model_call, timeout=60)
+                resp, token_probs = self._call_with_timeout(model_call, timeout=90)
             except TimeoutError:
-                self._log(f"Timeout (60s) on attempt {callctr+1}, retrying…")
+                self._log(f"Timeout on attempt {callctr+1}, retrying…")
                 continue
             except Exception as e:
                 attempt += 1
