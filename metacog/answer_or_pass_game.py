@@ -11,13 +11,11 @@ Features:
 
 import random
 import time
-import copy
 import json
-import os
-import collections
-import scipy.stats
+from scipy.stats import fisher_exact, binomtest
 from load_and_format_datasets import load_and_format_dataset
 from base_game_class import BaseGameClass
+from capabilities_test import CapabilitiesTest
 
 random.seed(42)
 
@@ -93,75 +91,6 @@ class AnswerOrPassGame(BaseGameClass):
             self._log(f"Using {len(self.phase1_questions)} provided questions for phase 1")
         # For game mode, we'll load capabilities data in run_answer_or_pass_game
                 
-        
-    def run_phase1(self):
-        """
-        Run phase 1: Capability measuring phase
-        Subject answers multiple choice questions, results are stored for phase 2
-        """
-        self._log(f"Configuration: Phase1 Questions={self.n_phase1_questions}")
-        self._log("\n" + "="*10 + " Starting Phase 1: Capability Measuring " + "="*10)
-        
-        # Initialize state
-        phase1_accuracy = 0
-        correct_count = 0
-        message_history = []
-        probs = None
-        
-        # Process each question
-        for i, question in enumerate(self.phase1_questions):
-            q_text = self._present_question(question, i+1, len(self.phase1_questions))
-            """
-            q_text = question["question"] + "\n"#self._present_question(question, i+1, len(self.phase1_questions))
-            for key, value in question["options"].items():
-                q_text += f"  {key}: {value}\n"
-            """
-            # Get subject's answer
-            if self.is_human_player:
-                print(q_text)
-                subject_answer = self._get_subject_answer(
-                    list(question["options"].keys()), 
-                    "Your answer (A, B, C, or D): "
-                )
-                if subject_answer is None:
-                    return False
-            else:
-                # For LLM subject - never accumulate history in phase 1
-                llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
-                setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                subject_answer, _, probs = self._get_llm_answer(
-                    list(question["options"].keys()),
-                    setup_prompt + "\n\n" + llm_prompt,
-                    [], # Always empty for phase 1
-                    keep_appending=False # Never accumulate history in phase 1
-                )
-            
-            # Check correctness
-            is_correct = (subject_answer == question["correct_answer"])
-            if is_correct:
-                correct_count += 1
-            
-            # Store result
-            self.phase1_results[question["id"]] = {
-                "question": question,
-                "subject_answer": subject_answer,
-                "is_correct": is_correct,
-                "probs": probs 
-            }
-                
-            print(f"Completed question {i+1}/{len(self.phase1_questions)}")
-            
-        # Calculate phase 1 accuracy
-        self.phase1_accuracy = correct_count / len(self.phase1_questions)
-        
-        # Summary
-        summary = f"\nPhase 1 Complete. Accuracy: {self.phase1_accuracy:.2%} ({correct_count}/{len(self.phase1_questions)})"
-        self._log(summary)
-        
-        # Save phase 1 data - no message history for phase 1
-        self._save_phase1_data()
-        
-        return True
     
     def prepare_phase2(self):
         """
@@ -352,25 +281,6 @@ class AnswerOrPassGame(BaseGameClass):
         
         return True
     
-    def _save_phase1_data(self):
-        """Save phase 1 data to file"""
-        phase1_data = {
-            "subject_id": self.subject_id,
-            #"phase1_questions": self.phase1_questions,
-            "phase1_results": self.phase1_results,
-            "phase1_accuracy": self.phase1_accuracy,
-            "timestamp": time.time(),
-            "feedback_config": self.feedback_config,
-        }
-        
-        # No message history in phase 1
-            
-        phase1_filename = f"{self.log_base_name}_phase1_data.json"
-        with open(phase1_filename, 'w', encoding='utf-8') as f:
-            json.dump(phase1_data, f, indent=2, ensure_ascii=False)
-            
-        self._log(f"Phase 1 data saved to: {phase1_filename}")
-    
     def _save_game_data(self, message_history=None):
         """Save complete game data to file"""
         game_data = {
@@ -378,7 +288,7 @@ class AnswerOrPassGame(BaseGameClass):
             #"phase1_questions": self.phase1_questions,
             "phase1_results": self.phase1_results,
             "phase1_accuracy": self.phase1_accuracy,
-            #"phase2_questions": self.phase2_questions,
+            "phase2_questions": self.phase2_questions,
             "phase2_results": self.phase2_results,
             "phase2_accuracy": self.phase2_accuracy,
             "max_passes": self.max_passes,
@@ -450,9 +360,7 @@ class AnswerOrPassGame(BaseGameClass):
         if correct_type_questions and incorrect_type_questions and correct_passes + incorrect_passes > 0:
             analysis += "\n--- Statistical Analysis ---\n"
             
-            # Test if pass rates are significantly different between question types
-            from scipy.stats import fisher_exact
-            
+            # Test if pass rates are significantly different between question types            
             # Create contingency table:
             # [previously correct passed, previously correct answered]
             # [previously incorrect passed, previously incorrect answered]
@@ -475,7 +383,6 @@ class AnswerOrPassGame(BaseGameClass):
             
             # Compare accuracy between phases
             if answered_questions:
-                from scipy.stats import binomtest
                 
                 # Compare phase 2 accuracy to phase 1 accuracy
                 phase2_correct = sum(1 for r in answered_questions if r["is_correct"])
@@ -499,31 +406,6 @@ class AnswerOrPassGame(BaseGameClass):
             
         # Return for further use
         return analysis
-
-    def run_capabilities_measurement(self):
-        """
-        Run only the capabilities measurement phase (Phase 1).
-        This measures a subject's performance on multiple choice questions
-        and saves the results to a file for later use in the game phase.
-        
-        Returns:
-            bool: True if completed successfully, False otherwise
-            str: Path to the capabilities data file
-        """
-        start_message = f"\nStarting Capabilities Measurement for Subject: {self.subject_id}"
-        self._log(start_message)
-                
-        # Run Phase 1: Capabilities Measurement
-        self._log("\nRunning Capabilities Measurement Phase")
-        phase1_success = self.run_phase1()
-        if not phase1_success:
-            self._log("Capabilities measurement aborted due to error.")
-            return False, None
-            
-        # Return the path to the capabilities data file
-        capabilities_file_path = f"{self.log_base_name}_phase1_data.json"
-        self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
-        return True, capabilities_file_path
     
     def run_answer_or_pass_game(self, capabilities_file_path, setup_prompt=None, resume_from=None):
         """
@@ -555,6 +437,8 @@ class AnswerOrPassGame(BaseGameClass):
         start_message += f"\nGame Setup Prompt: {setup_prompt}"
         self._log(start_message)
         
+        if resume_from: capabilities_file_path = resume_from
+
         # Load capabilities data
         try:
             with open(capabilities_file_path, 'r', encoding='utf-8') as f:
@@ -574,12 +458,16 @@ class AnswerOrPassGame(BaseGameClass):
             else:
                 raise ValueError("Capabilities data does not contain results")
         except Exception as e:
-            self._log(f"Error loading capabilities data: {e}")
+            self._log(f"Error loading capabilities data from {capabilities_file_path}: {e}")
             return False
                 
-        # Prepare phase 2
-        self._log("\nPreparing for Answer or Pass Game")
-        self.prepare_phase2()
+        if resume_from:
+            self.phase2_questions = self.stored_phase1_data['phase2_questions']
+            self.phase2_question_types = self.stored_phase1_data['phase2_question_types']
+        else:
+            # Prepare phase 2
+            self._log("\nPreparing for Answer or Pass Game")
+            self.prepare_phase2()
         
         # Run the game
         phase2_success = self.run_phase2(setup_prompt)
@@ -611,7 +499,7 @@ def main():
     
     # Path to capabilities data file (required when RUN_MODE="game")
     CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746369907_test_data.json"
-    resume_from  = None if RUN_MODE=="capabilities" else None
+    resume_from  = None ###if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B-Instruct_1746375122_game_data.json"
 
     # Capabilities measurement configuration
     N_PHASE1_QUESTIONS = 445  # Number of questions for capabilities measurement
@@ -680,18 +568,13 @@ def main():
                 return
             
             # Create game instance for capabilities measurement
-            game = AnswerOrPassGame(
+            game = CapabilitiesTest(
                 subject_id=SUBJECT_ID,
                 subject_name=subject_name,
                 questions=formatted_questions,
-                n_phase1_questions=N_PHASE1_QUESTIONS,
-                n_phase2_right=0,
-                n_phase2_wrong=0,
-                max_passes=0,
-                stored_phase1_path=None,
-                feedback_config=feedback_config,
-                phase2_accumulate_history=PHASE2_ACCUMULATE_HISTORY,
-                is_human_player=IS_HUMAN
+                n_questions=N_PHASE1_QUESTIONS,
+                is_human_player=IS_HUMAN,
+                resume_from=resume_from
             )
                         
             # Run capabilities measurement

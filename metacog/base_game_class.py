@@ -35,7 +35,7 @@ class BaseGameClass:
     def _setup_provider(self):
         """Determine provider based on model name."""
         if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if re.match(r"meta-llama/Meta-Llama-3\.1-\d+B.*", self.subject_name) else "Google" if self.subject_name.startswith("gemini") else "Hyperbolic"
+            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "NDIF" if re.match(r"meta-llama/Meta-Llama-3\.1-\d+B$", self.subject_name) else "Google" if self.subject_name.startswith("gemini") else "Hyperbolic"
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
             elif self.provider == "OpenAI":
@@ -155,7 +155,8 @@ class BaseGameClass:
                             "messages": formatted_messages,
                             "max_tokens": 1,
                             "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
+                            "logprobs": True,
+                            "top_logprobs": len(options)
                         }                        
                     else:
                         # Build prompt from message history and current question
@@ -177,7 +178,8 @@ class BaseGameClass:
                             "prompt": prompt,
                             "max_tokens": 1,
                             "temperature": 0.0 + attempt * 0.1,
-                            "top_logprobs": 5
+                            "logprobs": True,
+                            "top_logprobs": len(options)
                         }                
                     response = requests.post(
                         url,
@@ -187,14 +189,16 @@ class BaseGameClass:
                         },
                         json=payload
                     )
-                    print(f"response={response}")
                     result = response.json()
-                    print(f"result={result}")
-                    if "Instruct" in self.subject_name:
-                        resp = result["choices"][0]["message"]["content"].strip().upper()
-                    else:
-                        resp = result["choices"][0]["text"].strip().upper()
-                    return resp, token_probs
+                    if not result["choices"][0]['logprobs']: raise ValueError("logprobs not returned")
+                    lp_dict_arr=result["choices"][0]['logprobs']['content'][0]['top_logprobs']
+                    tokens, probs = [], []
+                    for lp_dict in lp_dict_arr:
+                        tokens.append(lp_dict['token'].strip().upper())
+                        probs.append(lp_dict['logprob'])
+                    probs = torch.nn.functional.softmax(torch.tensor(probs),dim=-1)
+                    token_probs = dict((zip(tokens,probs.tolist())))
+                    return tokens[0], token_probs
                 elif self.provider == "NDIF":
                     prompt = ""
                     # Build prompt from message history and current question
@@ -227,9 +231,8 @@ class BaseGameClass:
                     probs = torch.nn.functional.softmax(output["logits"][0,-1,:],dim=-1)
                     values,indices=torch.torch.topk(probs,k=len(options))
                     tokens = [self.client.tokenizer.decode(i) for i in indices]
-                    resp = tokens[0]
                     token_probs = dict(sorted(zip(tokens,values.tolist())))
-                    return resp, token_probs
+                    return tokens[0], token_probs
                 elif self.provider == "Google":
                     formatted_messages = []
                     for msg in message_history:
@@ -262,8 +265,8 @@ class BaseGameClass:
                 continue
             except Exception as e:
                 attempt += 1
-                self._log(f"Error: {e}")
-                if "429" in str(e) or "503" in str(e):
+                self._log(f"Error in llm processing: {e}")
+                if "429" in str(e) or "503" in str(e) or "not returned" in str(e):
                     # Rate limit error, wait and retry
                     time.sleep(delay)
                     delay = min(delay*2,15)
