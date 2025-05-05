@@ -52,5 +52,5 @@ If the confidence signal is a basis for decision-making, it might not be the onl
 
 All this analysis was on GPT4o. If 405B-Instruct does succeed at the task, then I can look inside the model to try to identify when exactly this signal emerges, and possibly how it is constructed.
 
-
+- Update: L405B-Instruct unambiguously succeeds at the pass game, replicates all the findings above (not exact numbers, but qualititive pattern and statistical significance)
 
