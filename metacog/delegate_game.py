@@ -9,22 +9,15 @@ Features:
 - Phase 2: Subject chooses to answer (A-D) or delegate ('T') for each question.
 """
 
-import requests
 import random
 import time
 import copy
 import json
-import sys
 import os
 from load_and_format_datasets import load_and_format_dataset
 from base_game_class import BaseGameClass
 import scipy.stats
-import collections
-from dotenv import load_dotenv
-load_dotenv()
 
-anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
-hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 
 
 # --- Core Game Logic ---
@@ -32,16 +25,16 @@ class PsychGame(BaseGameClass):
     """
     Manages the psychological experiment game flow.
     """
-    def __init__(self, subject_id, subject_name, is_human_player=True, questions=None, n_trials_phase1=None, n_trials_phase2=None, 
+    def __init__(self, subject_id, subject_name, dataset_name, is_human_player=True, n_trials_phase1=None, n_trials_phase2=None, 
                  teammate_accuracy_phase1=None, teammate_accuracy_phase2=None, feedback_config=None, stored_game_path=None, 
                  skip_phase1=False, show_phase1_summary=False, show_full_phase1_history=False,
-                 phase1_summary=None, initial_setup_explanation="", use_phase2_data=True):
+                 phase1_summary=None, initial_setup_explanation="", use_phase2_data=True,
+                 override_subject_accuracy=None, override_teammate_accuracy=None, redact_phase1_answers=False):
         """
         Initializes the game instance.
 
         Args:
             subject_id (str): Identifier for the current subject/session.
-            questions (list, optional): A list of formatted question dictionaries.
             n_trials_phase1 (int, optional): Number of trials (N) in Phase 1.
             n_trials_phase2 (int, optional): Number of trials (N) in Phase 2.
             teammate_accuracy_phase1 (float, optional): The teammate's target accuracy in Phase 1 (probability, 0.0 to 1.0).
@@ -56,6 +49,11 @@ class PsychGame(BaseGameClass):
                                      Include 't_acc' key to show teammate accuracy (same value behavior). 
                                      If not provided or key is missing, that accuracy line won't be shown.
             use_phase2_data (bool): If False, don't use phase2 questions from stored game data. Default is True.
+            override_subject_accuracy (float, optional): If not None, modifies the message history to show this accuracy rate
+                                     for the subject in phase 1. Value should be between 0.0 and 1.0.
+            override_teammate_accuracy (float, optional): If not None, modifies the message history to show this accuracy rate
+                                     for the teammate in phase 1. Value should be between 0.0 and 1.0.
+            redact_phase1_answers (bool): If True, replaces the subject's phase 1 answers with "[redacted]" in the message history.
         """
         super().__init__(subject_id, subject_name, is_human_player, "delegate_game_logs")
 
@@ -66,28 +64,62 @@ class PsychGame(BaseGameClass):
         self.stored_game_data = None
         self.initial_setup_explanation = initial_setup_explanation
         self.use_phase2_data = use_phase2_data
+        self.override_subject_accuracy = override_subject_accuracy
+        self.override_teammate_accuracy = override_teammate_accuracy
+        self.redact_phase1_answers = redact_phase1_answers
+        self.dataset_name = dataset_name
+
+        # Default feedback configuration
+        self.feedback_config = {
+            'phase1_subject_feedback': True,      # Show subject's answer feedback in phase 1
+            'phase1_teammate_feedback': True,     # Show teammate's answer feedback in phase 1
+            'phase2_subject_feedback': False,      # Show subject's answer feedback in phase 2
+            'phase2_teammate_feedback': False,     # Show teammate's answer feedback in phase 2
+            'show_answer_with_correctness': True,     
+        }
+        # Initialize state and results storage
+        self.results = []
+        self.current_phase = 0
+        self.current_trial_in_phase = 0
+        self.subject_accuracy_phase1 = None
+        self.teammate_accuracy_phase1 = None
+        self.phase2_score = None
+        self.phase2_accuracy = None
+        self.stored_message_history = []
+        self.orig_phase1_message_history = None
+        self.stored_feedback_text = ""
         
         # Load stored game data if provided
         if stored_game_path:
             try:
                 with open(stored_game_path, 'r', encoding='utf-8') as f:
                     self.stored_game_data = json.load(f)
-                print(f"Loaded stored game data from: {stored_game_path}")  # Use print instead of _log
+                self._log(f"Loaded stored game data from: {stored_game_path}") 
             except Exception as e:
                 raise ValueError(f"Error loading stored game data: {e}")
         
-        # Set parameters, with trial counts from stored data when appropriate
-        if self.stored_game_data:
+            ## Set trial counts and teammate accuracy from stored data when appropriate, load questions if needed
             # Always use phase1 trials count from stored data
             self.n_trials_phase1 = min(self.stored_game_data.get('n_trials_phase1'), n_trials_phase1)
+            self.phase1_questions = self.stored_game_data.get('phase1_questions', [])[:self.n_trials_phase1]
             
-            # For phase2, use provided value if USE_PHASE2_DATA=False, otherwise use stored value
-            if hasattr(self, 'use_phase2_data') and not self.use_phase2_data:
-                # Use the provided n_trials_phase2 value directly, ignoring stored value
+            # For phase2, use provided trial count from stored data unless overridden by USE_PHASE2_DATA=False
+            if self.use_phase2_data == False:
+                # Use the provided n_trials_phase2 value directly, ignoring stored value, since you're going to generate new questions
                 self.n_trials_phase2 = n_trials_phase2
+                self._log(f"Loading {self.n_trials_phase2} questions for phase 2...")
+                print("-" * 50)
+                phase1_questions = [q["question"] for q in self.phase1_questions]
+                self.phase2_questions = load_and_format_dataset(self.dataset_name, self.n_trials_phase2, skip_questions=phase1_questions)
+                print("-" * 50)
+
             else:
-                # Use minimum of stored and provided values
-                self.n_trials_phase2 = min(self.stored_game_data.get('n_trials_phase2'), n_trials_phase2)
+                if n_trials_phase2 is None:
+                    self.n_trials_phase2 = self.stored_game_data.get('n_trials_phase2')
+                else:
+                    # Use minimum of stored and provided values
+                    self.n_trials_phase2 = min(self.stored_game_data.get('n_trials_phase2'), n_trials_phase2)
+                self.phase2_questions = self.stored_game_data.get('phase2_questions', [])[:self.n_trials_phase2]
             
             # For teammate accuracy, prioritize provided values over stored ones
             if teammate_accuracy_phase1 is not None:
@@ -99,6 +131,45 @@ class PsychGame(BaseGameClass):
                 self.teammate_accuracy_phase2 = teammate_accuracy_phase2
             else:
                 self.teammate_accuracy_phase2 = self.stored_game_data.get('teammate_accuracy_phase2')
+            ##
+
+            if 'feedback_config' in self.stored_game_data: self.feedback_config.update(self.stored_game_data['feedback_config'])
+
+            self.game_questions = self.phase1_questions + self.phase2_questions
+            if self.skip_phase1:
+                self.teammate_phase1_answers = self.stored_game_data.get('teammate_phase1_answers', {})
+                # Load phase 1 results if skipping phase 1
+                if 'phase1_results' not in self.stored_game_data:
+                    raise ValueError("Cannot skip phase 1 without phase1_results in stored game data")
+                
+                # Load phase 1 results and metrics
+                self.results.extend(self.stored_game_data.get('phase1_results', []))
+                self.subject_accuracy_phase1 = self.stored_game_data.get('subject_accuracy_phase1')
+                self.teammate_accuracy_phase1 = self.stored_game_data.get('teammate_accuracy_phase1')
+                
+                # Store message history for LLM subjects
+                if 'phase1_message_history' in self.stored_game_data:
+                    self.stored_message_history = self.stored_game_data.get('phase1_message_history', [])
+                    self.orig_phase1_message_history = copy.deepcopy(self.stored_message_history)
+                    self.stored_feedback_text = self.stored_game_data.get('phase1_feedback_text', "")
+                else:
+                    self.stored_message_history = self.stored_game_data.get('message_history', [])
+                    self.stored_feedback_text = self.stored_game_data.get('final_feedback', "")
+                
+                # Log the loaded phase 1 data
+                self._log(f"Loaded phase 1 results: {len(self.results)} results")
+                if len(self.results) > 0:
+                    self._log(f"Subject phase 1 accuracy: {self.subject_accuracy_phase1:.2%}")
+                    self._log(f"Teammate phase 1 accuracy: {self.teammate_accuracy_phase1:.2%}")
+                    
+                    # If message history exists and we need to override accuracy values or redact answers
+                    if self.stored_message_history and (self.override_subject_accuracy is not None or 
+                                                        self.override_teammate_accuracy is not None or
+                                                        self.redact_phase1_answers):
+                        self._modify_message_history()
+            else:
+                self.teammate_phase1_answers = self._predetermine_teammate_answers(self.phase1_questions)
+            
         else:
             # Not using stored data, so all parameters must be provided
             if n_trials_phase1 is None or n_trials_phase2 is None:
@@ -110,17 +181,34 @@ class PsychGame(BaseGameClass):
             self.n_trials_phase2 = n_trials_phase2
             self.teammate_accuracy_phase1 = teammate_accuracy_phase1
             self.teammate_accuracy_phase2 = teammate_accuracy_phase2
-            
+
+            questions_needed = self.n_trials_phase1 + self.n_trials_phase2
+            if questions_needed > 0:
+                print(f"Loading {questions_needed} questions for both phases...")
+                print("-" * 50)
+                self.game_questions = load_and_format_dataset(self.dataset_name, questions_needed)
+                print("-" * 50)
+
+            self.phase1_questions = self.game_questions[:self.n_trials_phase1]
+            self.phase2_questions = self.game_questions[self.n_trials_phase1:]
+
+            # Pre-determine teammate's answers for phase 1 to ensure exact probability match
+            self.teammate_phase1_answers = self._predetermine_teammate_answers(self.phase1_questions)
+
+        # Override defaults - and what's in stored data - with provided config
+        if feedback_config:
+            self.feedback_config.update(feedback_config)
+
         # Validate parameters
         if self.skip_phase1 and not stored_game_path and not self.phase1_summary and (show_phase1_summary or show_full_phase1_history):
             raise ValueError("Cannot skip Phase 1 without providing stored_game_path or phase1_summary")
             
-        if self.show_full_phase1_history and not stored_game_path:
+        if self.skip_phase1 and self.show_full_phase1_history and not stored_game_path:
             raise ValueError("Cannot show full phase 1 history without providing stored_game_path")
             
-        # Ensure at least one of the phase1 display options is enabled when skipping phase 1
-        #if self.skip_phase1 and not (self.show_phase1_summary or self.show_full_phase1_history):
-        #    raise ValueError("When skipping Phase 1, must enable either show_phase1_summary or show_full_phase1_history")
+        # Ensure at least one of the phase1 display options is enabled when skipping phase 1, or warn (just doing phase2 is okay if, eg, you're showing feedback and want to see if model can model ability on the fly)
+        if self.skip_phase1 and not (self.show_phase1_summary or self.show_full_phase1_history):
+            self._log("Skipping Phase 1 without show_phase1_summary or show_full_phase1_history")
             
         # Parameter validation
         if not (0.0 <= self.teammate_accuracy_phase1 <= 1.0):
@@ -131,130 +219,117 @@ class PsychGame(BaseGameClass):
             raise ValueError("Number of trials for Phase 1 must be a positive integer.")
         if not isinstance(self.n_trials_phase2, int) or self.n_trials_phase2 < 0:
             raise ValueError("Number of trials for Phase 2 must be a nonnegative integer.")
-        
-        # Default feedback configuration
-        self.feedback_config = {
-            'phase1_subject_feedback': True,      # Show subject's answer feedback in phase 1
-            'phase1_teammate_feedback': True,     # Show teammate's answer feedback in phase 1
-            'phase2_subject_feedback': False,      # Show subject's answer feedback in phase 2
-            'phase2_teammate_feedback': False,     # Show teammate's answer feedback in phase 2
-            'show_answer_with_correctness': True,     
-        }
-        
-        # Override defaults with provided config
-        if feedback_config:
-            self.feedback_config.update(feedback_config)
-        elif self.stored_game_data and 'feedback_config' in self.stored_game_data:
-            self.feedback_config.update(self.stored_game_data['feedback_config'])
-
-        # Initialize state and results storage
-        self.results = []
-        self.current_phase = 0
-        self.current_trial_in_phase = 0
-        self.subject_accuracy_phase1 = None
-        self.teammate_accuracy_phase1_observed = None
-        self.phase2_score = None
-        self.phase2_accuracy = None
-        self.stored_message_history = []
-        self.stored_feedback_text = ""
-        
+                
         # Initialize log file
-        with open(self.log_filename, 'w', encoding='utf-8') as f:
-            f.write(f"Game Log for Subject: {subject_id}\n")
-            f.write(f"Parameters: N_phase1={self.n_trials_phase1}, N_phase2={self.n_trials_phase2}, Teammate Accuracy Phase 1={self.teammate_accuracy_phase1:.2%}, Teammate Accuracy Phase 2={self.teammate_accuracy_phase2:.2%}\n")
-            f.write(f"Feedback Config: {json.dumps(self.feedback_config, indent=2)}\n")
-            f.write(f"Initial Setup Explanation: {self.initial_setup_explanation}\n")
+        setup_log_str = f"Game Log for Subject: {subject_id}\n"
+        setup_log_str += f"Parameters: N_phase1={self.n_trials_phase1}, N_phase2={self.n_trials_phase2}, Teammate Accuracy Phase 1={self.teammate_accuracy_phase1:.2%}, Teammate Accuracy Phase 2={self.teammate_accuracy_phase2:.2%}\n"
+        setup_log_str += f"Feedback Config: {json.dumps(self.feedback_config, indent=2)}\n"
+        setup_log_str += f"Initial Setup Explanation: {self.initial_setup_explanation}\n"
+        if stored_game_path:
+            setup_log_str += f"Using stored game data from: {stored_game_path}\n"
+            setup_log_str += f"Skip Phase 1: {self.skip_phase1}\n"
+            setup_log_str += f"Show Phase 1 Summary: {self.show_phase1_summary}\n"
+            setup_log_str += f"Show Full Phase 1 History: {self.show_full_phase1_history}\n"
+            setup_log_str += f"Use Phase 2 Data: {self.use_phase2_data}\n"
             
-            # Write experiment configuration
-            if stored_game_path:
-                f.write(f"Using stored game data from: {stored_game_path}\n")
-                f.write(f"Skip Phase 1: {self.skip_phase1}\n")
-                f.write(f"Show Phase 1 Summary: {self.show_phase1_summary}\n")
-                f.write(f"Show Full Phase 1 History: {self.show_full_phase1_history}\n")
-                f.write(f"Use Phase 2 Data: {self.use_phase2_data}\n")
-                
-                if self.phase1_summary:
-                    f.write(f"Custom Phase 1 Summary values: {json.dumps(self.phase1_summary)}\n")
-            
-            f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            if self.phase1_summary:
+                setup_log_str += f"Custom Phase 1 Summary values: {json.dumps(self.phase1_summary)}\n"      
+        setup_log_str += f"Using {len(self.phase1_questions)} questions for phase 1 and {len(self.phase2_questions)} for phase 2\n"
+        setup_log_str += f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        self._log(setup_log_str)
         
-        # Handle question setup based on configuration
-        if self.stored_game_data:
-            # Always use phase1 questions from stored game data
-            self.phase1_questions = self.stored_game_data.get('phase1_questions', [])[:self.n_trials_phase1]
+                            
+    def _modify_message_history(self):
+        """
+        Modifies the stored message history based on configuration:
+        1. Can override subject/teammate accuracy by changing (Correct)/(Incorrect) markers
+        2. Can redact subject's original answers by replacing them with "[redacted]"
+        """
+        # Find user messages with feedback
+        subject_feedback_indices = []
+        teammate_feedback_indices = []
+        
+        for i, msg in enumerate(self.stored_message_history):
+            if msg.get("role") == "user":
+                content = msg.get("content", "")
+                if "Your answer: (" in content:
+                    subject_feedback_indices.append(i)
+                if "Teammate's answer: (" in content:
+                    teammate_feedback_indices.append(i)
+        
+        # Modify subject accuracy if specified
+        if self.override_subject_accuracy is not None and subject_feedback_indices:
+            self._log(f"Modifying subject accuracy in message history to: {self.override_subject_accuracy:.2%}")
+            target_correct = int(round(self.override_subject_accuracy * len(subject_feedback_indices)))
             
-            # Check if we should use phase2 data from the stored game
-            if hasattr(self, 'use_phase2_data') and not self.use_phase2_data and self.n_trials_phase2 > 0:
-                # Use fresh questions for phase2
-                if questions and len(questions) >= self.n_trials_phase2:
-                    self._log(f"Using fresh questions for phase 2 (not from stored data)")
-                    self.phase2_questions = questions[:self.n_trials_phase2]
+            # Randomly select which responses should be correct
+            correct_indices = random.sample(range(len(subject_feedback_indices)), target_correct)
+            
+            # Modify each message
+            for i, msg_idx in enumerate(subject_feedback_indices):
+                content = self.stored_message_history[msg_idx]["content"]
+                is_correct = i in correct_indices
+                
+                # Replace feedback markers
+                if is_correct:
+                    content = content.replace("Your answer: (Incorrect)", "Your answer: (Correct)")
                 else:
-                    # Sanity check - we should have questions from main() if USE_PHASE2_DATA=False
-                    phase2_q_count = len(questions) if questions else 0
-                    raise ValueError(f"Expected fresh phase2 questions when use_phase2_data=False, but got {phase2_q_count} (need {self.n_trials_phase2})")
-            else:
-                # Use phase2 questions from stored data
-                self.phase2_questions = self.stored_game_data.get('phase2_questions', [])[:self.n_trials_phase2]
+                    content = content.replace("Your answer: (Correct)", "Your answer: (Incorrect)")
                 
-            # Set game questions and determine teammate answers
-            self.game_questions = self.phase1_questions + self.phase2_questions
-            if self.skip_phase1:
-                self.teammate_phase1_answers = self.stored_game_data.get('teammate_phase1_answers', {})
-            else:
-                self.teammate_phase1_answers = self._predetermine_teammate_answers(self.phase1_questions)
-            
-            self._log(f"Using {len(self.phase1_questions)} questions for phase 1 and {len(self.phase2_questions)} for phase 2")
-        else:
-            # Use new questions
-            if not questions:
-                raise ValueError("Questions must be provided if not using stored questions")
-                
-            # Calculate required question count
-            total_questions_needed = self.n_trials_phase1 + self.n_trials_phase2
-
-            # Check for sufficient questions
-            if len(questions) < total_questions_needed:
-                raise ValueError(f"Not enough questions provided ({len(questions)}) for the required {total_questions_needed}.")
-
-            # Check uniqueness
-            unique_q_ids = {q['id'] for q in questions}
-            if len(unique_q_ids) < total_questions_needed:
-                print(f"Warning: Input question list has only {len(unique_q_ids)} unique IDs, but {total_questions_needed} are required.")
-
-            # Select exactly the total number of questions needed
-            self.game_questions = questions[:total_questions_needed]
-
-            # Split questions into phases
-            self.phase1_questions = self.game_questions[:self.n_trials_phase1]
-            self.phase2_questions = self.game_questions[self.n_trials_phase1:]
-
-            # Pre-determine teammate's answers for phase 1 to ensure exact probability match
-            self.teammate_phase1_answers = self._predetermine_teammate_answers(self.phase1_questions)
+                self.stored_message_history[msg_idx]["content"] = content
         
-        # Load phase 1 results if skipping phase 1
-        if self.stored_game_data and self.skip_phase1:
-            if 'phase1_results' not in self.stored_game_data:
-                raise ValueError("Cannot skip phase 1 without phase1_results in stored game data")
+        # Modify teammate accuracy if specified
+        if self.override_teammate_accuracy is not None and teammate_feedback_indices:
+            self._log(f"Modifying teammate accuracy in message history to: {self.override_teammate_accuracy:.2%}")
+            target_correct = int(round(self.override_teammate_accuracy * len(teammate_feedback_indices)))
             
-            # Load phase 1 results and metrics
-            self.results.extend(self.stored_game_data.get('phase1_results', []))
-            self.subject_accuracy_phase1 = self.stored_game_data.get('subject_accuracy_phase1')
-            self.teammate_accuracy_phase1_observed = self.stored_game_data.get('teammate_accuracy_phase1_observed')
+            # Randomly select which responses should be correct
+            correct_indices = random.sample(range(len(teammate_feedback_indices)), target_correct)
             
-            # Store message history for LLM subjects
-            if 'phase1_message_history' in self.stored_game_data:
-                self.stored_message_history = self.stored_game_data.get('phase1_message_history', [])
-                self.stored_feedback_text = self.stored_game_data.get('phase1_feedback_text', "")
-            else:
-                self.stored_message_history = self.stored_game_data.get('message_history', [])
-                self.stored_feedback_text = self.stored_game_data.get('final_feedback', "")
+            # Modify each message
+            for i, msg_idx in enumerate(teammate_feedback_indices):
+                content = self.stored_message_history[msg_idx]["content"]
+                is_correct = i in correct_indices
+                
+                # Replace feedback markers
+                if is_correct:
+                    content = content.replace("Teammate's answer: (Incorrect)", "Teammate's answer: (Correct)")
+                else:
+                    content = content.replace("Teammate's answer: (Correct)", "Teammate's answer: (Incorrect)")
+                
+                self.stored_message_history[msg_idx]["content"] = content
+        
+        # Also update stored_feedback_text if it exists
+        if self.stored_feedback_text:
+            # Apply the same modifications to the stored feedback text
+            if self.override_subject_accuracy is not None:
+                if self.override_subject_accuracy == 1.0:
+                    self.stored_feedback_text = self.stored_feedback_text.replace("Your answer: (Incorrect)", "Your answer: (Correct)")
+                elif self.override_subject_accuracy == 0.0:
+                    self.stored_feedback_text = self.stored_feedback_text.replace("Your answer: (Correct)", "Your answer: (Incorrect)")
             
-            # Log the loaded phase 1 data
-            self._log(f"Loaded phase 1 results: {len(self.results)} results")
-            if len(self.results) > 0:
-                self._log(f"Subject phase 1 accuracy: {self.subject_accuracy_phase1:.2%}")
-                self._log(f"Teammate phase 1 accuracy: {self.teammate_accuracy_phase1_observed:.2%}")
+            if self.override_teammate_accuracy is not None:
+                if self.override_teammate_accuracy == 1.0:
+                    self.stored_feedback_text = self.stored_feedback_text.replace("Teammate's answer: (Incorrect)", "Teammate's answer: (Correct)")
+                elif self.override_teammate_accuracy == 0.0:
+                    self.stored_feedback_text = self.stored_feedback_text.replace("Teammate's answer: (Correct)", "Teammate's answer: (Incorrect)")
+        
+        # Redact subject's answers if requested
+        if self.redact_phase1_answers:
+            self._log("Redacting subject's phase 1 answers in message history")
+            
+            # Find all assistant messages (these contain the answers)
+            for i, msg in enumerate(self.stored_message_history):
+                if msg.get("role") == "assistant":
+                    # Replace the content with "[redacted]"
+                    self.stored_message_history[i]["content"] = "[redacted]"
+        
+        # Update the accuracy values to match the modified message history
+        if self.override_subject_accuracy is not None:
+            self.subject_accuracy_phase1 = self.override_subject_accuracy
+        
+        if self.override_teammate_accuracy is not None:
+            self.teammate_accuracy_phase1 = self.override_teammate_accuracy
 
     def _predetermine_teammate_answers(self, questions):
         """
@@ -309,19 +384,6 @@ class PsychGame(BaseGameClass):
                 incorrect_options = [opt for opt in possible_answers if opt != correct_answer]
                 chosen_incorrect_answer = random.choice(incorrect_options)
                 return chosen_incorrect_answer, False
-
-    def _present_question(self, question_data):
-        """Formats a question for display"""
-        formatted_question = ""
-        formatted_question += "-" * 30 + "\n"
-        formatted_question += f"Question {self.current_trial_in_phase + 1}:\n"
-        formatted_question += question_data["question"] + "\n"
-        formatted_question += "-" * 10 + "\n"
-        for key, value in question_data["options"].items():
-            formatted_question += f"  {key}: {value}\n"
-        
-        formatted_question += "-" * 30
-        return formatted_question
 
     def _record_trial(self, phase, trial_num, q_data, **kwargs):
         """Records the data for a single trial."""
@@ -386,7 +448,8 @@ class PsychGame(BaseGameClass):
                 subject_answer, message_history, probs = self._get_llm_answer(
                     list(q_data["options"].keys()), 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n", 
-                    message_history
+                    setup_text=message_history,
+                    MAX_TOKENS=1
                 )
 
             subject_correct = (subject_answer == q_data["correct_answer"])
@@ -421,11 +484,11 @@ class PsychGame(BaseGameClass):
 
         # Calculate Phase 1 accuracies
         self.subject_accuracy_phase1 = subject_correct_count / self.n_trials_phase1
-        self.teammate_accuracy_phase1_observed = teammate_correct_count / self.n_trials_phase1
+        self.teammate_accuracy_phase1 = teammate_correct_count / self.n_trials_phase1
         
         phase1_summary = "="*10 + " Phase 1 Complete " + "="*10
         phase1_summary += f"\nYour accuracy in Phase 1 (SAFN): {self.subject_accuracy_phase1:.2%}"
-        phase1_summary += f"\nTeammate's observed accuracy in Phase 1 (TAFN_obs): {self.teammate_accuracy_phase1_observed:.2%}"
+        phase1_summary += f"\nTeammate's accuracy in Phase 1 (TAFN): {self.teammate_accuracy_phase1:.2%}"
         phase1_summary += "\n" + "="*40 + "\n"
         
         self._log(phase1_summary)
@@ -467,8 +530,9 @@ class PsychGame(BaseGameClass):
                 subject_answer, message_history, probs = self._get_llm_answer(
                     valid_inputs, 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n" + prompt + "\n", 
-                    message_history,
-                    keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] and i>0 else True)
+                    setup_text=message_history,
+                    keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] and i>0 else True),
+                    MAX_TOKENS=1
                 )
 
             # Process choice
@@ -505,7 +569,8 @@ class PsychGame(BaseGameClass):
                     subject_correct=subject_correct,
                     delegation_choice="Self",
                     team_answer=subject_answer,
-                    team_correct=subject_correct
+                    team_correct=subject_correct,
+                    probs=probs
                 )
                 
                 # Add subject feedback if configured
@@ -546,13 +611,6 @@ class PsychGame(BaseGameClass):
         start_message += f"\nParameters: N_phase1={self.n_trials_phase1}, N_phase2={self.n_trials_phase2}, Teammate Accuracy Phase 1={self.teammate_accuracy_phase1:.2%}, Teammate Accuracy Phase 2={self.teammate_accuracy_phase2:.2%}"
         self._log(start_message)
         
-        if not self.is_human_player:
-            self.provider = "Anthropic" if self.subject_name.startswith("claude") else "OpenAI" if "gpt" in self.subject_name else "Hyperbolic"
-            if self.provider == "Anthropic": 
-                self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-            elif self.provider == "OpenAI":
-                self.client = OpenAI()
-
         def summary_screen_text_template(s_acc=None, t_acc=None):
             """Generate summary screen text with optional accuracy values."""
             summary_text = "\n\n" + "="*10 + " Phase 1 Summary " + "="*10
@@ -592,7 +650,7 @@ class PsychGame(BaseGameClass):
             # Default behavior if phase1_summary is None: show both with real values
             if self.phase1_summary is None:
                 s_acc = self.subject_accuracy_phase1
-                t_acc = self.teammate_accuracy_phase1_observed
+                t_acc = self.teammate_accuracy_phase1
             else:
                 # Check if we should show subject accuracy and with what value
                 if 's_acc' in self.phase1_summary:
@@ -600,7 +658,7 @@ class PsychGame(BaseGameClass):
                 
                 # Check if we should show teammate accuracy and with what value
                 if 't_acc' in self.phase1_summary:
-                    t_acc = self.phase1_summary['t_acc'] if self.phase1_summary['t_acc'] is not None else self.teammate_accuracy_phase1_observed
+                    t_acc = self.phase1_summary['t_acc'] if self.phase1_summary['t_acc'] is not None else self.teammate_accuracy_phase1
                 
                 # Warn if trying to show a summary with no data
                 if self.phase1_summary == {} or (s_acc is None and t_acc is None):
@@ -663,17 +721,20 @@ class PsychGame(BaseGameClass):
             "teammate_phase1_answers": self.teammate_phase1_answers,
             "initial_setup_explanation": self.initial_setup_explanation,
             "use_phase2_data": getattr(self, 'use_phase2_data', True),
+            "override_subject_accuracy": getattr(self, 'override_subject_accuracy', None),
+            "override_teammate_accuracy": getattr(self, 'override_teammate_accuracy', None),
+            "redact_phase1_answers": getattr(self, 'redact_phase1_answers', False),
         })
         
         # Add phase 1 specific data
-        if phase == 1:
+        if phase == 1 or (phase == 2 and self.skip_phase1):
             phase1_results = [r for r in self.results if r["phase"] == 1]
             game_data["phase1_results"] = phase1_results
             game_data["subject_accuracy_phase1"] = self.subject_accuracy_phase1
-            game_data["teammate_accuracy_phase1_observed"] = self.teammate_accuracy_phase1_observed
+            game_data["teammate_accuracy_phase1"] = self.teammate_accuracy_phase1
             
             # Store phase 1 message history in a separate key ONLY in phase 1
-            if message_history:
+            if phase == 1 and message_history:
                 game_data["phase1_message_history"] = message_history
                 game_data["phase1_feedback_text"] = final_feedback
         
@@ -688,6 +749,8 @@ class PsychGame(BaseGameClass):
             if message_history:
                 game_data["message_history"] = message_history
                 game_data["final_feedback"] = final_feedback
+            if self.skip_phase1:
+                game_data["phase1_message_history"] = self.orig_phase1_message_history
         
         try:
             with open(self.game_data_filename, 'w', encoding='utf-8') as f:
@@ -726,11 +789,6 @@ class PsychGame(BaseGameClass):
         else:
             summary += "Subject Phase 1 Accuracy (SAFN): Not Calculated (Phase 1 likely incomplete)\n"
             
-        if hasattr(self, 'teammate_accuracy_phase1_observed') and self.teammate_accuracy_phase1_observed is not None:
-            summary += f"Observed Teammate Phase 1 Accuracy (TAFN_obs): {self.teammate_accuracy_phase1_observed:.2%}\n"
-        else:
-            summary += "Observed Teammate Phase 1 Accuracy (TAFN_obs): Not Calculated (Phase 1 likely incomplete)\n"
-            
         if hasattr(self, 'phase2_accuracy') and self.phase2_accuracy is not None:
             summary += f"Phase 2 Accuracy: {self.phase2_accuracy:.2%}\n"
         else:
@@ -762,7 +820,7 @@ class PsychGame(BaseGameClass):
         
         # Statistical tests
         safn = getattr(self, 'subject_accuracy_phase1', None)
-        tafn_obs = getattr(self, 'teammate_accuracy_phase1_observed', None)
+        tafn_obs = getattr(self, 'teammate_accuracy_phase1', None)
         phase2_acc = getattr(self, 'phase2_accuracy', None)
         phase2_successes = getattr(self, 'phase2_score', None)
         n_phase2 = getattr(self, 'n_trials_phase2', 0)
@@ -897,28 +955,32 @@ class PsychGame(BaseGameClass):
 def main():
     """Main function to run the psychological experiment game"""
     # Game Configuration
-    NUM_TRIALS_PHASE1 = 50
-    NUM_TRIALS_PHASE2 = 50  
+    NUM_TRIALS_PHASE1 = 100
+    NUM_TRIALS_PHASE2 = 100  
     TEAMMATE_ACCURACY_PHASE1 = 0.7
-    TEAMMATE_ACCURACY_PHASE2 = 1.0
+    TEAMMATE_ACCURACY_PHASE2 = 0.7
+    # Set to override stored message history accuracy (set to None to use original)
+    OVERRIDE_SUBJECT_ACCURACY = None#0.51  # Set to a value between 0.0 and 1.0 to override
+    OVERRIDE_TEAMMATE_ACCURACY = None  # Set to a value between 0.0 and 1.0 to override
+    REDACT_PHASE1_ANSWERS = False      # Set to True to replace subject's phase 1 answers with "[redacted]"
     IS_HUMAN = False
     DATASET_NAME = "GPQA"  # "TruthfulQA" or "GPQA"
-    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4.1-2025-04-14"#"gpt-4-turbo-2024-04-09"#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-7-sonnet-20250219"#
+    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"gemini-2.5-flash-preview-04-17"#"claude-3-sonnet-20240229"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4.1-2025-04-14"#
 
-    START_FROM = "./game_logs/claude-3-5-sonnet-20241022_GPQA_0.8_0.7_1745510207_1745510210_game_data.json" # if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
+    START_FROM = "./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_0.7_0.7_100_200_1746732043_game_data.json" # if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
     SKIP_PHASE1 = False 
     SHOW_PHASE1_SUMMARY = False # Whether to show phase 1 summary stats before phase 2
     PHASE1_SUMMARY = None#{"s_acc": 0.5, "t_acc": 0.4} #Optional format for phase 1 summary screen; can control whether to show self and/or teammate accuracy, and specify arbitrary vaules for each
-    SHOW_FULL_PHASE1_HISTORY = False # Whether to show full stored phase 1 history when skipping phase 1
-    USE_PHASE2_DATA = False # Set to False to use only phase1 data when skipping phase 1 (ie, generate a new set of phase 2 questions)
+    SHOW_FULL_PHASE1_HISTORY = True # Whether to show full stored phase 1 history when skipping phase 1
+    USE_PHASE2_DATA = True # Set to False to use only phase1 data from start_from file when skipping phase 1 (ie, generate a new set of phase 2 questions)
 
     # Feedback configuration
     feedback_config = {
-        "phase1_subject_feedback": False,     # Show subject's answer feedback in phase 1
+        "phase1_subject_feedback": True,     # Show subject's answer feedback in phase 1
         "phase1_teammate_feedback": True,    # Show teammate's answer feedback in phase 1
         "phase2_subject_feedback": False,     # Show subject's answer feedback in phase 2
         "phase2_teammate_feedback": False,    # Show teammate's answer feedback in phase 2
-        "show_answer_with_correctness": False,    
+        "show_answer_with_correctness": False, # Show teammate's answer in feedback
     }
 
     initial_setup_explanation = """
@@ -934,7 +996,7 @@ def main():
     1. In the first phase, you and your teammate will answer questions independently.
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
     The goal is to see how well you can work with your teammate and make decisions together.
-    In both phases, you will receive feedback on your teammate's performance.
+    In both phases, you will receive feedback on your and your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """
     initial_setup_explanation_single = """
@@ -945,47 +1007,25 @@ def main():
     You want to maximize your total score. That means, for each question, either answering as best you can or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """
     # - keep track of how skilled they are and use that to inform your delegation decisions.
-
-    SUBJECT_ID = f"{subject_name.replace("/","-")}_{DATASET_NAME}_{TEAMMATE_ACCURACY_PHASE1}_{TEAMMATE_ACCURACY_PHASE2}_{int(time.time())}"
-
-    # Determine if we need to load questions
-    formatted_questions = None
     
-    # Calculate how many questions we need
-    if not START_FROM:
-        # No stored data, need questions for both phases
-        questions_needed = NUM_TRIALS_PHASE1 + NUM_TRIALS_PHASE2
-        load_reason = "both phases"
-    elif not USE_PHASE2_DATA and NUM_TRIALS_PHASE2 > 0:
-        # Using stored data but need fresh phase2 questions
-        questions_needed = NUM_TRIALS_PHASE2
-        load_reason = "fresh phase 2"
-    else:
-        # Using stored data for everything
-        questions_needed = 0
-        load_reason = "none (using stored)"
+    # Include overrides in the subject ID if they're used
+    override_suffix = ""
+    if OVERRIDE_SUBJECT_ACCURACY is not None:
+        override_suffix += f"_subj{OVERRIDE_SUBJECT_ACCURACY}"
+    if OVERRIDE_TEAMMATE_ACCURACY is not None:
+        override_suffix += f"_team{OVERRIDE_TEAMMATE_ACCURACY}"
+    if REDACT_PHASE1_ANSWERS:
+        override_suffix += "_redacted"
         
-    # Load questions if needed
-    if questions_needed > 0:
-        print(f"Loading {questions_needed} questions for {load_reason}...")
-        print("-" * 50)
-        formatted_questions = load_and_format_dataset(DATASET_NAME, questions_needed)
-        print("-" * 50)
-        
-        # Check if we have enough questions
-        if not formatted_questions or len(formatted_questions) < questions_needed:
-            print(f"\nFATAL: Game setup failed - Could not load or format sufficient questions.")
-            print(f"Need {questions_needed} questions for {load_reason}, but got {len(formatted_questions) if formatted_questions else 0}.")
-            print("Please check dataset availability/connection, required number of questions vs N, and dataset split.")
-            return
+    SUBJECT_ID = f"{subject_name.replace("/","-")}_{DATASET_NAME}_{TEAMMATE_ACCURACY_PHASE1}_{TEAMMATE_ACCURACY_PHASE2}_{NUM_TRIALS_PHASE1}_{NUM_TRIALS_PHASE2}{override_suffix}"
 
     # Create and Run Game Instance
     try:
         game = PsychGame(
             subject_id=SUBJECT_ID,
             subject_name=subject_name,
+            dataset_name=DATASET_NAME,
             is_human_player = IS_HUMAN,
-            questions=formatted_questions,
             n_trials_phase1=NUM_TRIALS_PHASE1,
             n_trials_phase2=NUM_TRIALS_PHASE2,
             teammate_accuracy_phase1=TEAMMATE_ACCURACY_PHASE1,
@@ -997,7 +1037,10 @@ def main():
             show_full_phase1_history=SHOW_FULL_PHASE1_HISTORY,
             phase1_summary=PHASE1_SUMMARY,
             initial_setup_explanation=initial_setup_explanation,
-            use_phase2_data=USE_PHASE2_DATA
+            use_phase2_data=USE_PHASE2_DATA,
+            override_subject_accuracy=OVERRIDE_SUBJECT_ACCURACY,
+            override_teammate_accuracy=OVERRIDE_TEAMMATE_ACCURACY,
+            redact_phase1_answers=REDACT_PHASE1_ANSWERS     
         )
 
         # Run the game

@@ -2,28 +2,34 @@ from datasets import load_dataset
 import random
 import os
 
+random.seed(42)  # For reproducibility
 hf_token = os.environ.get("HF_TOKEN")
 
-def load_and_format_dataset(dataset_name, num_questions_needed, split=None):
+def load_and_format_dataset(dataset_name, num_questions_needed, split=None, skip_questions=None):
     if dataset_name=="GPQA":
         if split is None:
-            return load_and_format_gpqa(num_questions_needed, hf_token=hf_token)
+            return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, skip_questions=skip_questions)
         else:
-            return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, split=split)
+            return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, split=split, skip_questions=skip_questions)
     elif dataset_name=="MMLU":
         if split is None:
-            return load_and_format_mmlu(num_questions_needed)
+            return load_and_format_mmlu(num_questions_needed, skip_questions=skip_questions)
         else:
-            return load_and_format_mmlu(num_questions_needed, split=split)
+            return load_and_format_mmlu(num_questions_needed, split=split, skip_questions=skip_questions)
     elif dataset_name=="TruthfulQA":
         if split is None:
-            return load_and_format_truthfulqa(num_questions_needed)
+            return load_and_format_truthfulqa(num_questions_needed, skip_questions=skip_questions)
         else:
-            return load_and_format_truthfulqa(num_questions_needed, split=split)
+            return load_and_format_truthfulqa(num_questions_needed, split=split, skip_questions=skip_questions)
+    elif dataset_name=="SimpleQA":
+        if split is None:
+            return load_and_format_simpleqa(num_questions_needed, skip_questions=skip_questions)
+        else:
+            return load_and_format_simpleqa(num_questions_needed, split=split, skip_questions=skip_questions)
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}. Supported datasets are: GPQA, MMLU, TruthfulQA.")
 
-def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train"):
+def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train", skip_questions=None):
     """
     Loads the GPQA dataset and formats questions into the A-D multiple-choice format.
     """
@@ -54,6 +60,9 @@ def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train"):
             break
 
         item = dataset[idx]
+        if skip_questions and item['Question'] in skip_questions:
+            print(f"DEBUG: Skipping question '{item['Question'][:50]}...' as it's in skip_questions")
+            continue
 
         # Check if all required fields exist and are not None/empty
         if not all(item.get(field) for field in required_fields):
@@ -110,7 +119,7 @@ def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train"):
     print(f"Successfully formatted {len(formatted_questions)} unique questions from GPQA.")
     return formatted_questions
 
-def load_and_format_mmlu(num_questions_needed, split="auxiliary_train"):
+def load_and_format_mmlu(num_questions_needed, split="auxiliary_train", skip_questions=None):
     """
     Loads the MMLU dataset and formats questions into the A-D multiple-choice format.
     """
@@ -139,6 +148,8 @@ def load_and_format_mmlu(num_questions_needed, split="auxiliary_train"):
         
         # Extract data
         question_text = item.get('question')
+        if skip_questions is not None and question_text in skip_questions:
+            continue
         choices = item.get('choices')
         answer_idx = item.get('answer')  # Integer index of correct answer
         
@@ -184,7 +195,7 @@ def load_and_format_mmlu(num_questions_needed, split="auxiliary_train"):
     print(f"Successfully formatted {len(formatted_questions)} unique questions from MMLU.")
     return formatted_questions
 
-def load_and_format_truthfulqa(num_questions_needed, split="validation"):
+def load_and_format_truthfulqa(num_questions_needed, split="validation", skip_questions=None):
     """
     Loads the TruthfulQA dataset and formats questions into the A-D multiple-choice format.
     """
@@ -214,6 +225,8 @@ def load_and_format_truthfulqa(num_questions_needed, split="validation"):
         potential_id = f"tqa_{split}_{idx}"
 
         question_text = item.get('question')
+        if skip_questions is not None and question_text in skip_questions:
+            continue
         best_answer = item.get('best_answer')
         if len(best_answer.strip()) == 0:
             continue
@@ -266,4 +279,50 @@ def load_and_format_truthfulqa(num_questions_needed, split="validation"):
         print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
 
     print(f"Successfully formatted {len(formatted_questions)} unique questions from TruthfulQA.")
+    return formatted_questions
+
+def load_and_format_simpleqa(num_questions_needed, split="test", skip_questions=None):
+    print(f"Attempting to load SimpleQA ({split} split)...")
+    try:
+        dataset = load_dataset("basicv8vc/SimpleQA", split=split)
+        print("Dataset loaded successfully.")
+    except Exception as e:
+        print(f"Error loading SimpleQA dataset: {e}")
+        return None
+
+    formatted_questions = []
+
+    dataset_indices = list(range(len(dataset)))
+    random.shuffle(dataset_indices)
+
+    question_ids_added = set()  # Keep track of IDs to ensure uniqueness
+
+    print(f"Formatting {num_questions_needed} questions...")
+    for idx in dataset_indices:
+        if len(formatted_questions) >= num_questions_needed:
+            break
+
+        item = dataset[idx]
+        potential_id = f"sqa_{split}_{idx}"
+
+        question_text = item.get('problem')
+        if skip_questions is not None and question_text in skip_questions:
+            continue
+        best_answer = item.get('answer')
+        if len(best_answer.strip()) == 0:
+            continue
+
+        # Create the formatted dictionary
+        formatted_q = {
+            "id": potential_id,
+            "question": question_text,
+            "correct_answer": best_answer
+        }
+        formatted_questions.append(formatted_q)
+        question_ids_added.add(potential_id)
+
+    if len(formatted_questions) < num_questions_needed:
+        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
+
+    print(f"Successfully formatted {len(formatted_questions)} unique questions from SimpleQA.")
     return formatted_questions
