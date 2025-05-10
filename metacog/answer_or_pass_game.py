@@ -218,6 +218,7 @@ class AnswerOrPassGame(BaseGameClass):
                     setup_prompt + "\n\n" + llm_prompt,
                     message_history if self.phase2_accumulate_history else [],
                     keep_appending=self.phase2_accumulate_history
+                    MAX_TOKENS=1
                 )
             
             # Process decision

@@ -5,7 +5,7 @@ from base_game_class import BaseGameClass
 
 class CapabilitiesTest(BaseGameClass):
     """
-    Just ask independent multiple-choice questions and record answers.
+    Just ask independent multiple-choice or short answer questions and record responses.
     """
     def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None):
         """
@@ -98,7 +98,7 @@ class CapabilitiesTest(BaseGameClass):
                 # For LLM subject
                 llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
                 setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                if question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
+                if False:#question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
                     subject_answer = ""
                     probs = None
                 else:
@@ -106,7 +106,8 @@ class CapabilitiesTest(BaseGameClass):
                         list(question["options"].keys()),
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
-                        keep_appending=False
+                        keep_appending=False,
+                        MAX_TOKENS=1
                     )
             
             # Check correctness
@@ -141,12 +142,82 @@ class CapabilitiesTest(BaseGameClass):
         self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
         return True, capabilities_file_path
 
+    def run_capabilities_measurement_sa(self):
+        """
+        This measures a subject's performance on short answer questions and saves the results to a file.
+        
+        Returns:
+            bool: True if completed successfully, False otherwise
+            str: Path to the capabilities data file
+        """
+        start_message = f"\nStarting Capabilities Measurement for Subject: {self.subject_id}"
+        self._log(start_message)
+        self._log(f"Configuration: Questions={self.n_questions}")
+        self._log("\n" + "="*10 + " Starting Capability Measuring " + "="*10)
+        
+        # Initialize state
+        probs = None
+        log_interval = 10
+        self.accuracy = None
+        
+        # Process each question
+        for i, question in enumerate(self.questions):
+            q_text = self._present_question(question)
+
+            # Get subject's answer
+            if self.is_human_player:
+                print(q_text)
+                subject_answer = self._get_subject_answer(
+                    list(question["options"].keys()), 
+                    "Your answer: "
+                )
+                if subject_answer is None:
+                    return False
+            else:
+                # For LLM subject
+                llm_prompt = q_text + "\nYour answer: "
+                setup_prompt = "I'm going to ask you a series of short answer questions. For each one, respond as succinctly as possible."
+                if False:#question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
+                    subject_answer = ""
+                    probs = None
+                else:
+                    subject_answer, _, probs = self._get_llm_answer(
+                        None,
+                        setup_prompt + "\n\n" + llm_prompt,
+                        [], # no history
+                        keep_appending=False,
+                        MAX_TOKENS=None
+                    )
+                        
+            # Store result
+            if subject_answer != "":
+                self.results[question["id"]] = {
+                    "question": question,
+                    "subject_answer": subject_answer,
+                    "is_correct": None,
+                    "probs": probs 
+                }
+            self.total_count += 1
+            print(f"Completed question {self.total_count}/{len(self.questions)}")
+            if (i+1)%log_interval == 0: self._save_data()
+            
+        # Summary
+        summary = f"\nCapabilities Test Complete."
+        self._log(summary)
+        
+        self._save_data()
+                    
+        # Return the path to the capabilities data file
+        capabilities_file_path = f"{self.log_base_name}{self.log_suffix}.json"
+        self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
+        return True, capabilities_file_path
+
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
-    resume_from = "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    N_QUESTIONS = 447  # Number of questions for capabilities measurement
+    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA"
+    subject_name = "claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
+    N_QUESTIONS = 500#447  # Number of questions for capabilities measurement
     
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
     try:
@@ -169,7 +240,8 @@ def main():
         )
                     
         # Run capabilities measurement
-        success, capabilities_file = game.run_capabilities_measurement()
+        if DATASET_NAME == "SimpleQA": success, capabilities_file = game.run_capabilities_measurement_sa()
+        else: success, capabilities_file = game.run_capabilities_measurement()
         
         if success:
             print(f"\nCapabilities measurement completed successfully.")

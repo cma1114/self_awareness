@@ -48,10 +48,10 @@ class SecondChanceGame(BaseGameClass):
         self.message_history = []
                 
         # Initialize log file
-        with open(self.log_filename, 'w', encoding='utf-8') as f:
-            f.write(f"Second-Chance Game Log for Subject: {subject_id}\n")
-            f.write(f"Configuration: Questions={num_questions}, Show Original Answer={show_original_answer}\n")
-            f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        setup_log_str = f"Second-Chance Game Log for Subject: {subject_id}\n"
+        setup_log_str += f"Configuration: Questions={num_questions}, Show Original Answer={show_original_answer}\n"
+        setup_log_str += f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        self._log(setup_log_str)
         
     def load_capabilities_data(self):
         """
@@ -178,8 +178,9 @@ class SecondChanceGame(BaseGameClass):
                 new_answer, _, probs = self._get_llm_answer(
                     list(question["options"].keys()),
                     "",
-                    message_history,
-                    False  # No accumulation
+                    setup_text=message_history,
+                    keep_appending=False,
+                    MAX_TOKENS=1
                 )
             
             # Check if answer was changed

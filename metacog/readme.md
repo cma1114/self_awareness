@@ -26,6 +26,8 @@ GPT4.1 seems to delegete randomly (and only with a summary screen)
 
 Overall, the long context tracking needed to model the teammate's performance seems to confuse non-Claude models, and they fail at the modeling other task. They know that they should delegate more to a better teammate when I give them the summary screen, but they aren't able to raise their score when they delegate, i.e., they also fail the introspection task.
 
+Update - Opus-20240229 succeeds, but sonnet-20240229 does not. So it seems to require both Anthropic special-sauce RLHF and scale.
+
 **Pass game** is a simplified version - no modeling of other's abilities, so no need for long context. First do a capabilities measurement phase, where I ask the models a bunch of Qs from GPQA and MMLU, and keep track of which they get right and wrong. Then from that I create a new set of questions that are a mix of both, and present them as a game, where the model can answer or pass, and gets 1 point for a correct answer -1 for an incorrect answer, and zero for a pass. The passes are limited (usually to about the number of incorrct original responses).
 
 Sonnet3.5 and now *GPT4o* pass more on questions they've previously gotten wrong than on ones they've gotten right, suggesting some degree of metacognition. GPT4-Turbo does not pass significantly more on wrong answers (on GPQA, where it is only slightly better than random; on MMLU where it is good it almost never passes).
