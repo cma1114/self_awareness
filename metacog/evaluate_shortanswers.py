@@ -13,6 +13,7 @@ import sys
 import time
 from collections import Counter
 from base_game_class import BaseGameClass
+import random
 
 # For normalizing text
 def normalize_text(text):
@@ -73,14 +74,14 @@ class ShortAnswerEvaluator:
         with open(self.cache_file, 'w', encoding='utf-8') as f:
             json.dump(self.ratings_cache, f, indent=2)
     
-    def _get_cache_key(self, question_id, question_text, correct_answer, subject_answer):
+    def _make_cache_key(self, question_id, subject_answer):
         """Create a unique key for the cache based on question and answer."""
         norm_subject_answer = normalize_text(subject_answer)
         return f"{question_id}:{norm_subject_answer}"
     
-    def _get_cached_rating(self, question_id, question_text, correct_answer, subject_answer, judge_model):
+    def _get_cached_rating(self, question_id, subject_answer, judge_model):
         """Get cached rating if it exists."""
-        cache_key = self._get_cache_key(question_id, question_text, correct_answer, subject_answer)
+        cache_key = self._make_cache_key(question_id, subject_answer)
         
         if cache_key in self.ratings_cache:
             for rating in self.ratings_cache[cache_key].get("ratings", []):
@@ -91,7 +92,7 @@ class ShortAnswerEvaluator:
     
     def _add_to_cache(self, question_id, question_text, correct_answer, subject_answer, judge_model, rating):
         """Add a rating to the cache."""
-        cache_key = self._get_cache_key(question_id, question_text, correct_answer, subject_answer)
+        cache_key = self._make_cache_key(question_id, subject_answer)
         
         if cache_key not in self.ratings_cache:
             self.ratings_cache[cache_key] = {
@@ -117,54 +118,64 @@ class ShortAnswerEvaluator:
         # Save cache after each update
         self._save_cache()
     
-    def get_llm_judgment(self, question_id, question_text, correct_answer, subject_answer, judge_model):
+    def get_llm_judgment(self, question_text, correct_answer, subject_answer, judge_model):
         """Get LLM judgment on answer correctness."""
-        # Check cache first
-        cached_rating = self._get_cached_rating(
-            question_id, question_text, correct_answer, subject_answer, judge_model
-        )
         
-        if cached_rating is not None:
-            print(f"Using cached rating from {judge_model}: {cached_rating}")
-            return cached_rating
+        # Fixed labels and randomized judgment assignments
+        option_labels = ["A", "B", "C"]  # Fixed order
+        judgments = ["YES", "NO", "NOT ATTEMPTED"]
+        
+        # Randomize the assignment of judgments to labels
+        shuffled_judgments = random.sample(judgments, len(judgments))
+        label_to_judgment = dict(zip(option_labels, shuffled_judgments))
+        
+        # Display names for options
+        option_displays = {
+            "YES": "Correct (the subject response is semantically equivalent to the gold standard answer)",
+            "NO": "Incorrect (the subject response is wrong, incomplete, or contains inaccurate information)",
+            "NOT ATTEMPTED": "Not attempted (the subject response is not an attempt to answer the question)",
+        }
+        
+        options_text = "\n".join([
+            f"{label}: {option_displays[label_to_judgment[label]]}" 
+            for label in option_labels
+        ])
         
         # Prepare prompt for LLM
         prompt = f"""
-You are evaluating whether a given answer is correct for a question.
+I want you to help me evaluate responses to short-answer questions about factual information that I've given to a subject. For each question, I have a gold-standard answer, and I want you to evaluate the subject's response against it. Treat the gold-standard answer as unambgiously correct, regardless of your own opinions.
+
+In making the evaluation, don't worry about exact wording or punctuation. Instead, focus on whether the subject's response is semantically equivalent to the gold-standard answer. 
+If the subject's response is semantically different from the gold-standard answer, or contains additional information that is not in the gold-standard answer, or is missing information that is in the gold-standard answer, then it is incorrect. 
+If the subject's response is not an attempt to answer the question, but is instead an expression of uncertainty, or an assertion that it doesn't know the answer, or is blank, then consider it not attempted.
+Otherwise, if the subject's response is semantically equivalent to the gold-standard answer, then it is correct.
 
 Question: {question_text}
-Correct answer: {correct_answer}
-User answer: {subject_answer}
+Gold-standard answer: {correct_answer}
+Subject response: {subject_answer}
 
-Is the user answer correct? Consider semantic equivalence, not just exact matches.
-Respond with EXACTLY ONE of these options:
-- YES (if the answer is correct or equivalent to the correct answer)
-- NO (if the answer is incorrect)
-- UNCERTAIN (if you cannot confidently determine correctness)
-
-Your judgment:
+{options_text}
 """
         
         # Get model's judgment
         client = self.model_clients[judge_model]
-        options = ["YES", "NO", "UNCERTAIN"]
+        options = option_labels
         
         try:
             # Call the LLM through BaseGameClass
-            judgment, _, _ = client._get_llm_answer(
+            label_response, _, _ = client._get_llm_answer(
                 options=options,
                 q_text=prompt,
                 message_history=[],
-                keep_appending=False,
-                setup_text="Evaluate the answer's correctness based solely on factual accuracy."
+                keep_appending=False
             )
             
-            # Add to cache
-            self._add_to_cache(
-                question_id, question_text, correct_answer, subject_answer, judge_model, judgment
-            )
-            
-            return judgment
+            # Convert the label back to a judgment
+            if label_response in label_to_judgment:
+                judgment = label_to_judgment[label_response]
+                return judgment
+            else:
+                return None
         
         except Exception as e:
             print(f"Error getting judgment from {judge_model}: {e}")
@@ -188,16 +199,27 @@ Your judgment:
             output_file = f"{base}_evaluated{ext}"
         
         # Track statistics
-        total_questions = len(test_data["results"])
+        results = test_data["results"] if "results" in test_data else test_data["phase2_results"] if "phase2_results" in test_data else test_data["phase1_results"]
+        total_questions = len(results)
         exact_matches = 0
-        majority_votes = 0
+        plurality_decisions = 0
         no_consensus = 0
         
         # Process each question
-        for question_id, result in test_data["results"].items():
+        for question_id, result in results.items():
             question_data = result["question"]
             subject_answer = result["subject_answer"]
             correct_answer = question_data["correct_answer"]
+            
+            # Skip questions that have already been evaluated (based on having an evaluation_method)
+            if "evaluation_method" in result:
+                if result.get("evaluation_method") == "exact_match":
+                    exact_matches += 1
+                elif result.get("evaluation_method") == "llm_plurality":
+                    plurality_decisions += 1
+                elif result.get("evaluation_method") == "tie":
+                    no_consensus += 1
+                continue
             
             # Step 1: Check for exact match
             if answers_match(subject_answer, correct_answer):
@@ -207,13 +229,41 @@ Your judgment:
                 print(f"Question {question_id}: Exact match")
                 continue
             
-            # Step 2: Get judgments from all models
+            # Step 2: Get judgments from all models (or use cached ones)
             print(f"Evaluating question {question_id} using LLM panel...")
-            judgments = []
+            model_judgments = {}  # Dictionary to store model:judgment pairs
             
-            for judge_model in self.judge_models:
+            # Get the subject_id from the top-level of the test data
+            file_subject_id = test_data.get("subject_id", "")
+            
+            # Check which models should be excluded to avoid self-judging
+            self_judging_models = []
+            for model in self.judge_models:
+                # Check if model name appears in the file's subject_id
+                if model.lower() in file_subject_id.lower():
+                    self_judging_models.append(model)
+                    print(f"Excluding {model} from judging because it's part of subject_id: {file_subject_id}")
+            
+            # Filter to only valid judge models (those not in self_judging_models)
+            valid_judge_models = [m for m in self.judge_models if m not in self_judging_models]
+            
+            if not valid_judge_models:
+                print(f"Warning: No valid judges available after excluding self-judging models from {file_subject_id}")
+                continue
+            
+            # First check if we already have judgments in the cache for this question
+            cache_key = self._make_cache_key(question_id, subject_answer)
+            if cache_key in self.ratings_cache:
+                # Extract existing ratings from cache
+                for rating in self.ratings_cache[cache_key].get("ratings", []):
+                    if rating["rater"] in valid_judge_models:
+                        model_judgments[rating["rater"]] = rating["label"]
+                        print(f"Using cached rating from {rating['rater']}: {rating['label']}")
+            
+            # Get judgments from models not found in cache
+            missing_models = [model for model in valid_judge_models if model not in model_judgments]
+            for judge_model in missing_models:
                 judgment = self.get_llm_judgment(
-                    question_id, 
                     question_data["question"], 
                     correct_answer, 
                     subject_answer, 
@@ -221,52 +271,53 @@ Your judgment:
                 )
                 
                 if judgment:
-                    judgments.append(judgment)
+                    model_judgments[judge_model] = judgment
+                    # Add to cache
+                    self._add_to_cache(
+                        question_id, question_data["question"], correct_answer, subject_answer, judge_model, judgment
+                    )
             
-            # Step 3: Determine majority vote
-            if judgments:
+            # Step 3: Determine plurality decision
+            if model_judgments:
+                judgments = list(model_judgments.values())
                 judgment_counts = Counter(judgments)
-                most_common = judgment_counts.most_common(1)[0]
-                most_common_judgment, count = most_common
+                most_common_items = judgment_counts.most_common()
+                most_common_judgment, count = most_common_items[0]
                 
-                # Check if there's a clear majority
-                if count > len(judgments) / 2:  # More than 50%
+                # Check for ties
+                is_tie = len(most_common_items) > 1 and most_common_items[0][1] == most_common_items[1][1]
+                
+                # Store judgments in the result
+                result["judgments"] = model_judgments
+                
+                if is_tie:
+                    # If there's a tie for most common judgment, we don't have consensus
+                    result["is_correct"] = None
+                    result["evaluation_method"] = "tie"
+                    no_consensus += 1
+                    print(f"Question {question_id}: Tie in judgments: {dict(judgment_counts)}")
+                else:
+                    # Use the plurality judgment (most common)
                     if most_common_judgment == "YES":
                         result["is_correct"] = True
                     elif most_common_judgment == "NO":
                         result["is_correct"] = False
-                    else:  # UNCERTAIN
+                    else:  # NOT ATTEMPTED
                         result["is_correct"] = None
                     
-                    result["evaluation_method"] = "llm_majority"
-                    result["judgments"] = {model: self.get_llm_judgment(
-                        question_id, question_data["question"], correct_answer, 
-                        subject_answer, model
-                    ) for model in self.judge_models}
-                    
-                    majority_votes += 1
-                    print(f"Question {question_id}: Majority vote: {most_common_judgment} ({count}/{len(judgments)})")
-                else:
-                    # No clear majority
-                    result["is_correct"] = None
-                    result["evaluation_method"] = "no_consensus"
-                    result["judgments"] = {model: self.get_llm_judgment(
-                        question_id, question_data["question"], correct_answer, 
-                        subject_answer, model
-                    ) for model in self.judge_models}
-                    
-                    no_consensus += 1
-                    print(f"Question {question_id}: No consensus: {dict(judgment_counts)}")
+                    result["evaluation_method"] = "llm_plurality"
+                    plurality_decisions += 1
+                    print(f"Question {question_id}: Plurality vote: {most_common_judgment} ({count}/{len(judgments)})")
             else:
                 # No judgments received
                 print(f"Question {question_id}: No judgments received")
-                result["evaluation_method"] = "no_judgments"
         
         # Calculate overall accuracy
         correct_count = sum(1 for result in test_data["results"].values() 
                             if result.get("is_correct") is True)
         total_evaluated = sum(1 for result in test_data["results"].values() 
-                            if result.get("is_correct") is not None)
+                            #if result.get("is_correct") is not None)
+                            if result.get("is_correct") is True or result.get("is_correct") is False)
         
         if total_evaluated > 0:
             test_data["accuracy"] = correct_count / total_evaluated
@@ -279,7 +330,7 @@ Your judgment:
         print("\nEvaluation Summary:")
         print(f"Total questions: {total_questions}")
         print(f"Exact matches: {exact_matches}")
-        print(f"Majority votes: {majority_votes}")
+        print(f"Plurality decisions: {plurality_decisions}")
         print(f"No consensus: {no_consensus}")
         print(f"Accuracy: {test_data['accuracy'] if 'accuracy' in test_data else 'N/A'}")
         print(f"Results saved to: {output_file}")
@@ -287,18 +338,14 @@ Your judgment:
         return output_file
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python evaluate_shortanswers.py <test_data_file> <judge_model1,judge_model2,...> [output_file]")
-        sys.exit(1)
     
-    test_data_file = sys.argv[1]
-    judge_models = sys.argv[2].split(',')
-    output_file = sys.argv[3] if len(sys.argv) > 3 else None
+    test_data_file = "./capabilities_test_logs/gpt-4o-2024-08-06_SimpleQA_500_1747014117_test_data.json"#"./pass_game_logs/aop_gpt-4o-2024-08-06_1746999717_game_data.json"#
+    judge_models = ["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
     
     print(f"Evaluating {test_data_file} using models: {judge_models}")
     
     evaluator = ShortAnswerEvaluator(judge_models)
-    evaluator.evaluate_test_results(test_data_file, output_file)
+    evaluator.evaluate_test_results(test_data_file)
 
 if __name__ == "__main__":
     main()
