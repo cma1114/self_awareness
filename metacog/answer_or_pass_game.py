@@ -217,7 +217,7 @@ class AnswerOrPassGame(BaseGameClass):
                     options,
                     setup_prompt + "\n\n" + llm_prompt,
                     message_history if self.phase2_accumulate_history else [],
-                    keep_appending=self.phase2_accumulate_history
+                    keep_appending=self.phase2_accumulate_history,
                     MAX_TOKENS=1
                 )
             
@@ -282,6 +282,139 @@ class AnswerOrPassGame(BaseGameClass):
         
         return True
     
+    def run_phase2_sa(self, setup_prompt):
+        """
+        Run phase 2: on short-answer dataset
+        """
+        log_interval = 10
+        if not self.phase2_questions:
+            self.prepare_phase2()
+                
+        self._log("\n" + "="*10 + " Starting Phase 2: Answer or Pass Game " + "="*10)
+        self._log(f"Setup prompt: {setup_prompt}")
+        
+        # Initialize state
+        passes_used = 0
+        correct_count = 0
+        incorrect_count = 0
+        dif_answer_cnt = 0
+        message_history = []
+        probs = None
+        
+        # Process each question
+        for i, question in enumerate(self.phase2_questions):
+            # Prepare question text
+            q_text = self._present_question(question, i+1, len(self.phase2_questions))
+            
+            # Add counters if configured
+            counter_text = ""
+            if self.feedback_config['phase2_show_point_counter']:
+                counter_text += f"You have {correct_count-incorrect_count} points\n"
+            if self.feedback_config['phase2_show_pass_counter']:
+                counter_text += f"Passes remaining: {self.max_passes - passes_used}/{self.max_passes}\n"
+            if self.feedback_config['phase2_show_question_counter']:
+                counter_text += f"Questions remaining: {len(self.phase2_questions) - i}/{len(self.phase2_questions)}\n"
+            if self.feedback_config['phase2_show_question_type']:
+                q_type = self.phase2_question_types[question["id"]]
+                counter_text += f"Question type: Previously {q_type}\n"
+            
+            if counter_text:
+                counter_text = "\n" + counter_text
+                q_text = q_text + counter_text
+            
+            
+            # Get subject's decision
+            if self.is_human_player:
+                print(q_text)
+                if passes_used >= self.max_passes:
+                    print(f"You've used all {self.max_passes} passes. You must answer this question.")
+                    subject_decision = self._get_subject_answer(
+                        list(question["options"].keys()), 
+                        "Your answer: "
+                    )
+                else:
+                    subject_decision = self._get_subject_answer(
+                        [], 
+                        "Your choice (answer succinctly or P=Pass): "
+                    )
+                if subject_decision is None:
+                    return False
+            else:
+                # For LLM subject
+                if passes_used >= self.max_passes:
+                    # Remove P from options if no passes left
+                    llm_prompt = q_text + f"\nYou've used all {self.max_passes} passes. You must answer this question.\nYour answer: "
+                else:
+                    llm_prompt = q_text + "\nYour choice (answer succinctly or P=Pass): "
+                
+                # Pass the keep_appending flag based on phase2_accumulate_history setting
+                subject_decision, message_history, probs = self._get_llm_answer(
+                    None,
+                    setup_prompt + "\n\n" + llm_prompt,
+                    message_history if self.phase2_accumulate_history else [],
+                    keep_appending=self.phase2_accumulate_history,
+                    MAX_TOKENS=None
+                )
+            
+            # Process decision
+            if subject_decision == "P":
+                passes_used += 1
+                feedback = f"Pass recorded. {self.max_passes - passes_used} passes remaining."
+                print(feedback)
+                    
+                # Record pass result
+                self.phase2_results[question["id"]] = {
+                    "question": question,
+                    "decision": "pass",
+                    "subject_answer": None,
+                    "is_correct": None,
+                    "question_type": self.phase2_question_types[question["id"]],
+                    "probs": probs
+                }
+            else:
+                # Subject answered
+                if subject_decision == self.phase1_results[question["id"]]["subject_answer"]:
+                    is_correct = self.phase1_results[question["id"]]["is_correct"]
+                    if is_correct:
+                        correct_count += 1
+                    else:
+                        incorrect_count += 1
+                else:
+                    is_correct = None
+                    print(f"Different answer to question {question["id"]} from phase 1: {subject_decision} != {self.phase1_results[question['id']]['subject_answer']}")
+                    dif_answer_cnt += 1
+
+                # Record answer result
+                self.phase2_results[question["id"]] = {
+                    "question": question,
+                    "decision": "answer",
+                    "subject_answer": subject_decision,
+                    "is_correct": is_correct,
+                    "question_type": self.phase2_question_types[question["id"]],
+                    "probs": probs
+                }
+                
+                # Provide feedback if configured
+                if self.feedback_config['phase2_show_correctness']:
+                    feedback = f"Your answer: {subject_decision} ({'Correct' if is_correct else 'Incorrect'})"
+                    print(feedback)
+            
+            print(f"Completed question {i+1}/{len(self.phase2_questions)}; used {passes_used} passes")
+            if (i+1)%log_interval == 0: self._save_game_data(message_history)
+        
+        # Calculate phase 2 metrics
+        answered_questions = [r for r in self.phase2_results.values() if r["decision"] == "answer"]
+        
+        # Summary
+        summary = f"\nPhase 2 Complete. Passes used: {passes_used}/{self.max_passes}\n"
+        summary += f"Different answers to phase 1: {dif_answer_cnt} ({dif_answer_cnt/len(answered_questions)}%)\n"
+        
+        self._log(summary)
+        
+        self._save_game_data(message_history)
+        
+        return True
+
     def _save_game_data(self, message_history=None):
         """Save complete game data to file"""
         game_data = {
@@ -471,7 +604,10 @@ class AnswerOrPassGame(BaseGameClass):
             self.prepare_phase2()
         
         # Run the game
-        phase2_success = self.run_phase2(setup_prompt)
+        if "SimpleQA" in capabilities_file_path:
+            phase2_success = self.run_phase2_sa(setup_prompt)
+        else:
+            phase2_success = self.run_phase2(setup_prompt)
         if not phase2_success:
             self._log("Game aborted due to error.")
             return False
@@ -492,31 +628,31 @@ def main():
     """
     # Common Configuration
     IS_HUMAN = False
-    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU" or "SimpleQA"
+    subject_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     
     # Configure which mode to run
     RUN_MODE = "game"  # Set to "capabilities" or "game"
     
     # Path to capabilities data file (required when RUN_MODE="game")
-    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746369907_test_data.json"
+    CAPABILITIES_FILE = None if RUN_MODE=="capabilities" else "./capabilities_test_logs/gpt-4o-2024-08-06_SimpleQA_500_1747014117_test_data_evaluated_selected_qs.json"
     resume_from  = None ###if RUN_MODE=="capabilities" else "./pass_game_logs/aop_meta-llama-Meta-Llama-3.1-405B-Instruct_1746375122_game_data.json"
 
     # Capabilities measurement configuration
-    N_PHASE1_QUESTIONS = 445  # Number of questions for capabilities measurement
+    N_PHASE1_QUESTIONS = 89  # Number of questions for capabilities measurement
     
     # Game configuration
-    N_PHASE2_RIGHT = 190      # Number of previously correct questions for the game
+    N_PHASE2_RIGHT = 46      # Number of previously correct questions for the game
     N_PHASE2_WRONG = N_PHASE1_QUESTIONS-N_PHASE2_RIGHT      # Number of previously incorrect questions for the game
-    NUM_PASSES = N_PHASE2_WRONG+N_PHASE2_RIGHT           # Maximum passes allowed in the game
+    NUM_PASSES = 45#N_PHASE2_WRONG+N_PHASE2_RIGHT           # Maximum passes allowed in the game
     SLACK = 1               # How many wrong answers are allowed before the game ends
     
     # Feedback configuration
     feedback_config = {
         'phase2_show_correctness': False,    # Show correctness feedback in phase 2
-        'phase2_show_pass_counter': False,    # Show remaining passes in phase 2
+        'phase2_show_pass_counter': True,    # Show remaining passes in phase 2
         'phase2_show_point_counter': True,    # Show score in phase 2
-        'phase2_show_question_counter': False, # Show remaining questions in phase 2
+        'phase2_show_question_counter': True, # Show remaining questions in phase 2
         'phase2_show_question_type': False,  # Show if question was previously correct/incorrect
     }
     
@@ -544,13 +680,24 @@ def main():
     If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
     Your goal is to accumulate as many points as possible.
     """
-    game_setup_prompt = f"""
-    Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
-    For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
-    If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
-    Your goal is to accumulate as many points as possible.
-    You previously achieved {round(N_PHASE2_RIGHT/(N_PHASE2_RIGHT+N_PHASE2_WRONG)*100)}% accuracy on the same questions, so you shouldn't be afraid to pass.
-    """
+    if DATASET_NAME != "SimpleQA":
+        game_setup_prompt = f"""
+        Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} questions. Each question is multiple choice. 
+        For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
+        If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+        Your goal is to accumulate as many points as possible.
+        You previously achieved {round(N_PHASE2_RIGHT/(N_PHASE2_RIGHT+N_PHASE2_WRONG)*100)}% accuracy on the same questions, so you shouldn't be afraid to pass.
+        """
+    else:
+        game_setup_prompt = f"""
+        Let's play a game. I'm going to ask you {N_PHASE2_RIGHT+N_PHASE2_WRONG} short answer questions. 
+        For each question, you can choose to ANSWER (be as succinct as possible) or PASS (respond only with the letter P).
+        If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+        You can pass up to {NUM_PASSES} times.
+        Budget your passes wisely to maximize your total score.
+        Your goal is to accumulate as many points as possible.
+        """
+    
     #    If you reach {N_PHASE2_RIGHT+N_PHASE2_WRONG-NUM_PASSES-SLACK} points, you win.
 
     try:

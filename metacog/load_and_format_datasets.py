@@ -5,7 +5,7 @@ import os
 random.seed(42)  # For reproducibility
 hf_token = os.environ.get("HF_TOKEN")
 
-def load_and_format_dataset(dataset_name, num_questions_needed, split=None, skip_questions=None):
+def load_and_format_dataset(dataset_name, num_questions_needed=None, split=None, skip_questions=None):
     if dataset_name=="GPQA":
         if split is None:
             return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, skip_questions=skip_questions)
@@ -29,7 +29,7 @@ def load_and_format_dataset(dataset_name, num_questions_needed, split=None, skip
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}. Supported datasets are: GPQA, MMLU, TruthfulQA.")
 
-def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train", skip_questions=None):
+def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train", skip_questions=None):
     """
     Loads the GPQA dataset and formats questions into the A-D multiple-choice format.
     """
@@ -52,6 +52,7 @@ def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train", ski
     dataset_indices = list(range(len(dataset)))
     random.shuffle(dataset_indices)
 
+    if not num_questions_needed: num_questions_needed = len(dataset)
     print(f"Formatting {num_questions_needed} questions from GPQA...")
 
     bad_ids=["recgCB0HSVt2IslDN"]
@@ -119,7 +120,7 @@ def load_and_format_gpqa(num_questions_needed, hf_token=None, split="train", ski
     print(f"Successfully formatted {len(formatted_questions)} unique questions from GPQA.")
     return formatted_questions
 
-def load_and_format_mmlu(num_questions_needed, split="auxiliary_train", skip_questions=None):
+def load_and_format_mmlu(num_questions_needed=None, split="auxiliary_train", skip_questions=None):
     """
     Loads the MMLU dataset and formats questions into the A-D multiple-choice format.
     """
@@ -139,6 +140,7 @@ def load_and_format_mmlu(num_questions_needed, split="auxiliary_train", skip_que
     dataset_indices = list(range(len(dataset)))
     random.shuffle(dataset_indices)
 
+    if not num_questions_needed: num_questions_needed = len(dataset)
     print(f"Formatting {num_questions_needed} questions from MMLU...")
     for idx in dataset_indices:
         if len(formatted_questions) >= num_questions_needed:
@@ -195,7 +197,7 @@ def load_and_format_mmlu(num_questions_needed, split="auxiliary_train", skip_que
     print(f"Successfully formatted {len(formatted_questions)} unique questions from MMLU.")
     return formatted_questions
 
-def load_and_format_truthfulqa(num_questions_needed, split="validation", skip_questions=None):
+def load_and_format_truthfulqa(num_questions_needed=None, split="validation", skip_questions=None):
     """
     Loads the TruthfulQA dataset and formats questions into the A-D multiple-choice format.
     """
@@ -216,6 +218,7 @@ def load_and_format_truthfulqa(num_questions_needed, split="validation", skip_qu
 
     question_ids_added = set()  # Keep track of IDs to ensure uniqueness
 
+    if not num_questions_needed: num_questions_needed = len(dataset)
     print(f"Formatting {num_questions_needed} questions...")
     for idx in dataset_indices:
         if len(formatted_questions) >= num_questions_needed:
@@ -281,7 +284,7 @@ def load_and_format_truthfulqa(num_questions_needed, split="validation", skip_qu
     print(f"Successfully formatted {len(formatted_questions)} unique questions from TruthfulQA.")
     return formatted_questions
 
-def load_and_format_simpleqa(num_questions_needed, split="test", skip_questions=None):
+def load_and_format_simpleqa(num_questions_needed=None, split="test", skip_questions=None):
     print(f"Attempting to load SimpleQA ({split} split)...")
     try:
         dataset = load_dataset("basicv8vc/SimpleQA", split=split)
@@ -297,6 +300,7 @@ def load_and_format_simpleqa(num_questions_needed, split="test", skip_questions=
 
     question_ids_added = set()  # Keep track of IDs to ensure uniqueness
 
+    if not num_questions_needed: num_questions_needed = len(dataset)
     print(f"Formatting {num_questions_needed} questions...")
     for idx in dataset_indices:
         if len(formatted_questions) >= num_questions_needed:

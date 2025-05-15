@@ -448,7 +448,7 @@ class PsychGame(BaseGameClass):
                 subject_answer, message_history, probs = self._get_llm_answer(
                     list(q_data["options"].keys()), 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n", 
-                    setup_text=message_history,
+                    message_history=message_history,
                     MAX_TOKENS=1
                 )
 
@@ -530,7 +530,7 @@ class PsychGame(BaseGameClass):
                 subject_answer, message_history, probs = self._get_llm_answer(
                     valid_inputs, 
                     (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n" + prompt + "\n", 
-                    setup_text=message_history,
+                    message_history=message_history,
                     keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] and i>0 else True),
                     MAX_TOKENS=1
                 )
@@ -814,10 +814,6 @@ class PsychGame(BaseGameClass):
                 self_accuracy = self_correct / self_answers
                 summary += f"Self-answer accuracy in Phase 2: {self_correct}/{self_answers} ({self_accuracy:.2%})\n"
             
-            if team_delegations > 0:
-                team_accuracy = team_correct / team_delegations
-                summary += f"Delegated answer accuracy in Phase 2: {team_correct}/{team_delegations} ({team_accuracy:.2%})\n"
-        
         # Statistical tests
         safn = getattr(self, 'subject_accuracy_phase1', None)
         tafn_obs = getattr(self, 'teammate_accuracy_phase1', None)
@@ -954,21 +950,22 @@ class PsychGame(BaseGameClass):
     
 def main():
     """Main function to run the psychological experiment game"""
+    
     # Game Configuration
     NUM_TRIALS_PHASE1 = 100
-    NUM_TRIALS_PHASE2 = 100  
-    TEAMMATE_ACCURACY_PHASE1 = 0.7
-    TEAMMATE_ACCURACY_PHASE2 = 0.7
+    NUM_TRIALS_PHASE2 = 200  
+    TEAMMATE_ACCURACY_PHASE1 = 0.75
+    TEAMMATE_ACCURACY_PHASE2 = 0.75
     # Set to override stored message history accuracy (set to None to use original)
-    OVERRIDE_SUBJECT_ACCURACY = None#0.51  # Set to a value between 0.0 and 1.0 to override
-    OVERRIDE_TEAMMATE_ACCURACY = None  # Set to a value between 0.0 and 1.0 to override
+    OVERRIDE_SUBJECT_ACCURACY = None#0.38  # Set to a value between 0.0 and 1.0 to override
+    OVERRIDE_TEAMMATE_ACCURACY = 0.65  # Set to a value between 0.0 and 1.0 to override
     REDACT_PHASE1_ANSWERS = False      # Set to True to replace subject's phase 1 answers with "[redacted]"
     IS_HUMAN = False
     DATASET_NAME = "GPQA"  # "TruthfulQA" or "GPQA"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"gemini-2.5-flash-preview-04-17"#"claude-3-sonnet-20240229"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"gpt-4.1-2025-04-14"#
+    subject_name = "deepseek-chat"#"gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"# "meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-3-sonnet-20240229"#"claude-3-opus-20240229"#'gemini-2.0-flash-001'#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#
 
-    START_FROM = "./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_0.7_0.7_100_200_1746732043_game_data.json" # if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
-    SKIP_PHASE1 = False 
+    START_FROM = "./delegate_game_logs/gemini-2.5-flash-preview-04-17_GPQA_0.75_0.75_100_200_1747143756_game_data.json"#"./delegate_game_logs/grok-3-latest_GPQA_0.75_0.75_100_200_1747079573_game_data.json"#"./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_0.7_0.7_100_200_1746732043_game_data.json" #"./delegate_game_logs/grok-3-latest_GPQA_0.7_0.7_100_200_1747055497_game_data.json"# if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
+    SKIP_PHASE1 = True 
     SHOW_PHASE1_SUMMARY = False # Whether to show phase 1 summary stats before phase 2
     PHASE1_SUMMARY = None#{"s_acc": 0.5, "t_acc": 0.4} #Optional format for phase 1 summary screen; can control whether to show self and/or teammate accuracy, and specify arbitrary vaules for each
     SHOW_FULL_PHASE1_HISTORY = True # Whether to show full stored phase 1 history when skipping phase 1
@@ -976,13 +973,14 @@ def main():
 
     # Feedback configuration
     feedback_config = {
-        "phase1_subject_feedback": True,     # Show subject's answer feedback in phase 1
+        "phase1_subject_feedback": False,     # Show subject's answer feedback in phase 1
         "phase1_teammate_feedback": True,    # Show teammate's answer feedback in phase 1
         "phase2_subject_feedback": False,     # Show subject's answer feedback in phase 2
         "phase2_teammate_feedback": False,    # Show teammate's answer feedback in phase 2
         "show_answer_with_correctness": False, # Show teammate's answer in feedback
     }
-
+    fbstr= "your and " if feedback_config['phase1_subject_feedback'] else ""
+    phasestr = "both phases" if feedback_config['phase1_subject_feedback'] and feedback_config['phase2_subject_feedback'] else "phase 1"
     initial_setup_explanation = """
     Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
     The game consists of two phases:
@@ -990,15 +988,15 @@ def main():
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate to answer.
     You want to maximize the total number of questions your team answers correctly. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """
-    initial_setup_explanation = """
+    initial_setup_explanation = (f"""
     Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
     The game consists of two phases:
     1. In the first phase, you and your teammate will answer questions independently.
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
     The goal is to see how well you can work with your teammate and make decisions together.
-    In both phases, you will receive feedback on your and your teammate's performance.
+    In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-    """
+    """)
     initial_setup_explanation_single = """
     Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
     The goal is to see how well you can work with your teammate to achieve the highest score.
@@ -1051,6 +1049,7 @@ def main():
         all_results = None
 
     print("\nScript finished.")
+    
 
 # Execute main function when script is run directly
 if __name__ == "__main__":

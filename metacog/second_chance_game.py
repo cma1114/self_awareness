@@ -178,7 +178,7 @@ class SecondChanceGame(BaseGameClass):
                 new_answer, _, probs = self._get_llm_answer(
                     list(question["options"].keys()),
                     "",
-                    setup_text=message_history,
+                    message_history=message_history,
                     keep_appending=False,
                     MAX_TOKENS=1
                 )

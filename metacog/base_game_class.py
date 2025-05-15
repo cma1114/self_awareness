@@ -2,6 +2,7 @@ import torch
 import os
 import time
 import re
+import math
 import copy
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import anthropic
@@ -20,7 +21,8 @@ hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
 xai_api_key = os.environ.get("XAI_API_KEY")
-    
+deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY")    
+
 class BaseGameClass:
     """Base class for all games with common functionality."""
 
@@ -46,6 +48,8 @@ class BaseGameClass:
                 self.provider = "xAI"
             elif re.match(r"meta-llama/Meta-Llama-3\.1-\d+B", self.subject_name):
                 self.provider = "NDIF"
+            elif "deepseek" in self.subject_name:
+                self.provider = "DeepSeek"
             else:
                 self.provider = "Hyperbolic"
 
@@ -56,9 +60,12 @@ class BaseGameClass:
             elif self.provider == "Google":
                 self.client = genai.Client(api_key=gemini_api_key)
             elif self.provider == "xAI":
-                self.client = OpenAI(api_key=os.environ.get("XAI_API_KEY"), base_url="https://api.x.ai/v1",)
+                self.client = OpenAI(api_key=xai_api_key, base_url="https://api.x.ai/v1",)
             elif self.provider == "NDIF":
                 self.client = LanguageModel(self.subject_name, device_map="auto")
+            elif self.provider == "DeepSeek":
+                self.client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
+
             self._log(f"Provider: {self.provider}")
 
     def _setup_logging(self, log_dir):
@@ -79,21 +86,26 @@ class BaseGameClass:
         """
         Run `fn()` in a worker thread and return its result.
         Raises TimeoutError if fn() doesn't finish in `timeout` seconds.
+        
+        Note: This implementation avoids context managers which can hang on timeout.
         """
-#        with ThreadPoolExecutor(max_workers=1) as exe:
-#            future = exe.submit(fn)
-#        return future.result(timeout=timeout)
+        # Create executor and submit the task
         executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(fn)        
+        future = executor.submit(fn)
+        
         try:
+            # Wait for the result with timeout
             result = future.result(timeout=timeout)
+            # Only if we get here, shutdown with wait=True is safe
             executor.shutdown(wait=True)
             return result
-        except TimeoutError:
+        except (TimeoutError, Exception) as e:
+            # For any exception, attempt to cancel future and shutdown without waiting
+            future.cancel()
             executor.shutdown(wait=False)
-            raise
-        except Exception as e:
-            executor.shutdown(wait=False)
+            # Log the error for debugging
+            self._log(f"Thread execution error: {type(e).__name__}: {e}")
+            # Re-raise for retry handling
             raise
 
     def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1):
@@ -108,7 +120,7 @@ class BaseGameClass:
             options = " " #just to have len(options) be 1 for number of logprobs to return in short answer case
         
         MAX_ATTEMPTS = 10 #for bad resp format
-        MAX_CALL_ATTEMPTS = 2 #for rate limit/timeout/server errors
+        MAX_CALL_ATTEMPTS = 4 #for rate limit/timeout/server errors
         delay = 1.0
         attempt = 0
         resp = ""
@@ -124,8 +136,8 @@ class BaseGameClass:
                     else:
                         formatted_messages = copy.deepcopy(message_history)
                         formatted_messages.append(user_msg)
-                    #print(f"system_msg={system_msg}")                     
-                    #print(f"formatted_messages={formatted_messages}")             
+                    print(f"\nsystem_msg={system_msg}")                     
+                    print(f"\nformatted_messages={formatted_messages}\n")             
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
@@ -135,7 +147,7 @@ class BaseGameClass:
                     )
                     resp = message.content[0].text.strip().upper()
                     return resp, None
-                elif self.provider == "OpenAI" or self.provider == "xAI":
+                elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":
                     if keep_appending:
                         message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -153,11 +165,22 @@ class BaseGameClass:
                         top_logprobs=len(options)                     
                     )    
                     resp = completion.choices[0].message.content.strip().upper()
-                    entry = completion.choices[0].logprobs.content[0]
-                    tokens = [tl.token.strip().upper() for tl in entry.top_logprobs]
-                    logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
-                    prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
-                    token_probs = dict(zip(tokens, prob_tensor.tolist()))
+                    if len(options) == 1: #short answer, just average
+                        token_logprobs=completion.choices[0].logprobs.content
+                        top_probs = []
+                        for token_logprob in token_logprobs:
+                            top_logprob_value = token_logprob.top_logprobs[0].logprob
+                            top_prob = math.exp(top_logprob_value)
+                            top_probs.append(top_prob)
+                        token_probs = {resp: sum(top_probs)/len(top_probs)}
+                    else:
+                        entry = completion.choices[0].logprobs.content[0]
+                        tokens = [tl.token.strip().upper() for tl in entry.top_logprobs]
+                        probs = [math.exp(tl.logprob) for tl in entry.top_logprobs]
+                        token_probs = dict(zip(tokens, probs))
+                        #logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
+                        #prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
+                        #token_probs = dict(zip(tokens, prob_tensor.tolist()))
                     return resp, token_probs
                 elif self.provider == "Hyperbolic":
                     if "Instruct" in self.subject_name:
@@ -216,9 +239,8 @@ class BaseGameClass:
                     tokens, probs = [], []
                     for lp_dict in lp_dict_arr:
                         tokens.append(lp_dict['token'].strip().upper())
-                        probs.append(lp_dict['logprob'])
-                    probs = torch.nn.functional.softmax(torch.tensor(probs),dim=-1)
-                    token_probs = dict((zip(tokens,probs.tolist())))
+                        probs.append(math.exp(lp_dict['logprob']))
+                    token_probs = dict((zip(tokens,probs)))
                     return tokens[0], token_probs
                 elif self.provider == "NDIF":
                     prompt = ""
@@ -275,14 +297,15 @@ class BaseGameClass:
                             temperature=0.0 + attempt * 0.1,
                         ), 
                     )
-                    resp = message.text.strip().upper()[-1]
+                    resp = message.text.strip().upper()
                     return resp, None
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
             try:
-                resp, token_probs = self._call_with_timeout(model_call, timeout=240)
+                resp, token_probs = self._call_with_timeout(model_call, timeout=150)
             except TimeoutError:
                 self._log(f"Timeout on attempt {callctr+1}, retrying…")
+                attempt += 1
                 continue
             except Exception as e:
                 attempt += 1
