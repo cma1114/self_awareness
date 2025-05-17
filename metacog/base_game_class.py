@@ -136,8 +136,8 @@ class BaseGameClass:
                     else:
                         formatted_messages = copy.deepcopy(message_history)
                         formatted_messages.append(user_msg)
-                    print(f"\nsystem_msg={system_msg}")                     
-                    print(f"\nformatted_messages={formatted_messages}\n")             
+                    #print(f"\nsystem_msg={system_msg}")                     
+                    #print(f"\nformatted_messages={formatted_messages}\n")             
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
@@ -156,6 +156,7 @@ class BaseGameClass:
                         formatted_messages = copy.deepcopy(message_history)
                         formatted_messages.append({"role": "system", "content": system_msg})
                         formatted_messages.append(user_msg)
+                    #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
                         model=self.subject_name,
                         max_tokens=MAX_TOKENS,
@@ -259,12 +260,13 @@ class BaseGameClass:
                     else:
                         for msg in message_history:
                             if msg["role"] == "user":
-                                prompt += f"User:\n{msg['content']}\n"
+                                prompt += f"User: {msg['content']}\n"
                             elif msg["role"] == "assistant":
                                 prompt += f"Assistant:\n{msg['content']}\n"
                         if keep_appending:
                             message_history.append(user_msg)
                         prompt += f"User:\n{system_msg}\nYou are an Assistant.\n{q_text}\nThe Assistant responds only with {options_str}\nAssistant:\n"
+                        prompt = prompt.replace("\nYour choice (A, B, C, or D): ", "")
                     print(f"prompt={prompt}")
                     #with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
                     #    out = self.client.generator.output.save()
