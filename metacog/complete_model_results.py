@@ -27,7 +27,7 @@ OUTPUT_DIR = "./capabilities_test_logs"
 def load_compiled_results(model_name, dataset="GPQA"):
     """Load the model's compiled results file."""
     compiled_dir = f"./compiled_results_{dataset.lower()}"
-    result_file = os.path.join(compiled_dir, f"{model_name}_phase1_compiled.json")
+    result_file = os.path.join(compiled_dir, f"{model_name.replace("/","-")}_phase1_compiled.json")
     
     if not os.path.exists(result_file):
         print(f"No compiled results file found for {model_name} for dataset {dataset}. Creating a new one.")
@@ -77,7 +77,7 @@ def run_capabilities_test(model_name, questions, dataset="GPQA"):
     
     print(f"Running CapabilitiesTest for {model_name} with {len(questions)} {dataset} questions...")
     
-    subject_id = f"{model_name}_{dataset}_completion"
+    subject_id = f"{model_name.replace("/","-")}_{dataset}_completion"
     
     # Initialize and run CapabilitiesTest
     test = CapabilitiesTest(
@@ -231,7 +231,7 @@ def complete_model_results(model_name, dataset="GPQA"):
 
 def main():
     # Hard-coded model and dataset names
-    model_name = "claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"claude-3-opus-20240229"#"claude-3-5-sonnet-20241022"#"claude-3-7-sonnet-20250219"
+    model_name = "grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-1.5-pro"#"gpt-3.5-turbo-0125"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"claude-3-opus-20240229"#"claude-3-5-sonnet-20241022"#"claude-3-7-sonnet-20250219"
     dataset = "GPQA"  # Change this to run on different datasets: GPQA, SimpleQA, MMLU, TruthfulQA
     
     start_time = time.time()

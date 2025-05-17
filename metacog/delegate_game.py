@@ -366,7 +366,6 @@ class PsychGame(BaseGameClass):
         or simulated on-the-fly (phase 2).
         """
         if phase == 1:
-            # Use pre-determined answer for phase 1
             return self.teammate_phase1_answers[question_data["id"]]
         else:
             # Simulate for phase 2
@@ -952,20 +951,20 @@ def main():
     """Main function to run the psychological experiment game"""
     
     # Game Configuration
-    NUM_TRIALS_PHASE1 = 100
-    NUM_TRIALS_PHASE2 = 200  
+    NUM_TRIALS_PHASE1 = 2
+    NUM_TRIALS_PHASE2 = 3  
     TEAMMATE_ACCURACY_PHASE1 = 0.75
     TEAMMATE_ACCURACY_PHASE2 = 0.75
     # Set to override stored message history accuracy (set to None to use original)
     OVERRIDE_SUBJECT_ACCURACY = None#0.38  # Set to a value between 0.0 and 1.0 to override
-    OVERRIDE_TEAMMATE_ACCURACY = 0.65  # Set to a value between 0.0 and 1.0 to override
+    OVERRIDE_TEAMMATE_ACCURACY = None  # Set to a value between 0.0 and 1.0 to override
     REDACT_PHASE1_ANSWERS = False      # Set to True to replace subject's phase 1 answers with "[redacted]"
     IS_HUMAN = False
     DATASET_NAME = "GPQA"  # "TruthfulQA" or "GPQA"
-    subject_name = "deepseek-chat"#"gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"# "meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-3-sonnet-20240229"#"claude-3-opus-20240229"#'gemini-2.0-flash-001'#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#
+    subject_name = "claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-7-sonnet-20250219"# "meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-3-sonnet-20240229"#"claude-3-opus-20240229"#'gemini-2.0-flash-001'#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#
 
-    START_FROM = "./delegate_game_logs/gemini-2.5-flash-preview-04-17_GPQA_0.75_0.75_100_200_1747143756_game_data.json"#"./delegate_game_logs/grok-3-latest_GPQA_0.75_0.75_100_200_1747079573_game_data.json"#"./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_0.7_0.7_100_200_1746732043_game_data.json" #"./delegate_game_logs/grok-3-latest_GPQA_0.7_0.7_100_200_1747055497_game_data.json"# if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
-    SKIP_PHASE1 = True 
+    START_FROM = None#"./delegate_game_logs/gemini-2.5-flash-preview-04-17_GPQA_0.75_0.75_100_200_1747143756_game_data.json"#"./delegate_game_logs/grok-3-latest_GPQA_0.75_0.75_100_200_1747079573_game_data.json"#"./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_0.7_0.7_100_200_1746732043_game_data.json" #"./delegate_game_logs/grok-3-latest_GPQA_0.7_0.7_100_200_1747055497_game_data.json"# if None will randomly pick Qs, otherwise will get questions and (if skipping phase 1) phase 1 history/summary stats from file
+    SKIP_PHASE1 = False 
     SHOW_PHASE1_SUMMARY = False # Whether to show phase 1 summary stats before phase 2
     PHASE1_SUMMARY = None#{"s_acc": 0.5, "t_acc": 0.4} #Optional format for phase 1 summary screen; can control whether to show self and/or teammate accuracy, and specify arbitrary vaules for each
     SHOW_FULL_PHASE1_HISTORY = True # Whether to show full stored phase 1 history when skipping phase 1

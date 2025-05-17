@@ -317,23 +317,27 @@ class DelegateGameFromCapabilities(BaseGameClass):
         This constructs the message history that would have been generated if Phase 1 had been run.
         """
         message_history = []
+        # Initialize pending feedback storage to prevent consecutive user messages
+        self.pending_feedback = ""
         
-        # Add initial setup explanation
-        if self.initial_setup_explanation:
-            user_msg = {
-                "role": "user", 
-                "content": self.initial_setup_explanation + "\n\n" + "="*10 + " Starting Phase 1: Answer the Questions " + "="*10
-            }
-            message_history.append(user_msg)
+        startup_string = self.initial_setup_explanation + "\n\n" + "="*10 + " Starting Phase 1: Answer the Questions " + "="*10 + "\n"
+        prompt = "Your answer (A, B, C, D): "
         
         # Process each question in Phase 1 only if we're using phase1_history
         if self.use_phase1_history:
             for i, question in enumerate(self.phase1_questions):
                 q_id = question["id"]
                     
-                # Create question message
-                q_text = self._present_question(question, i+1, len(self.phase1_questions))
-                user_msg = {"role": "user", "content": q_text}
+                # Create question message, incorporating any pending feedback
+                q_text = self._present_question(question, i+1, len(self.phase1_questions)) + "\n" + prompt
+                
+                # If there's pending feedback from the previous question, add it to this question
+                if self.pending_feedback:
+                    q_text = self.pending_feedback + "\n\n" + q_text
+                    self.pending_feedback = ""  # Clear pending feedback
+                    
+                user_msg = {"role": "user", "content": startup_string + q_text}
+                startup_string = ""  # Clear startup string after first question
                 
                 # Create subject's answer message (or redacted)
                 if self.redact_phase1_answers:
@@ -364,9 +368,13 @@ class DelegateGameFromCapabilities(BaseGameClass):
                     else:
                         feedback_text += f"\nTeammate's answer: ({'Correct' if teammate_correct else 'Incorrect'})"
                 
+                # If there's feedback, add it to the next question's message instead of as a separate message
+                # This prevents consecutive user messages in the history
                 if feedback_text:
-                    feedback_msg = {"role": "user", "content": feedback_text}
-                    message_history.append(feedback_msg)
+                    # Store the feedback to combine with the next question
+                    # (since this is the last question, it won't be used for Phase 1)
+                    self.pending_feedback = feedback_text
+                    print(f"Pending feedback: {self.pending_feedback}")
         
         # The Phase 1 summary should NOT be added to message_history
         # In delegate_game.py it's added to final_feedback, not message_history
@@ -416,36 +424,68 @@ class DelegateGameFromCapabilities(BaseGameClass):
 
     def run_delegate_game(self):
         """
-        Run the delegate game (Phase 2 only) using the simulated Phase 1 history.
+        Run the delegate game using simulated Phase 1 history and then Phase 2.
+        Designed to work exactly like delegate_game.py with skip_phase1=True.
         """
-        # Initialize variables (matching delegate_game.py run_game)
+        start_message = f"\nStarting Game for Subject: {self.subject_id}"
+        start_message += f"\nParameters: N_phase1={self.n_trials_phase1}, N_phase2={self.n_trials_phase2}, Teammate Accuracy Phase 1={self.teammate_accuracy_phase1:.2%}, Teammate Accuracy Phase 2={self.teammate_accuracy_phase2:.2%}"
+        self._log(start_message)
+        
+        # Initialize variables - exactly like in delegate_game.py run_game
         final_feedback = ""
         message_history = []
         
-        # Determine how to set up phase 1 history/summary
+        # Handle Phase 1 - similar to delegate_game.py with skip_phase1=True
+        self._log("Using simulated Phase 1 results")
+        
         if self.use_phase1_history:
-            # Use the full simulated history for Phase 1
+            # This is like show_full_phase1_history=True in delegate_game.py
             message_history = self._create_simulated_phase1_history()
-        elif self.use_phase1_summary:
-            # Just include the Phase 1 summary in final_feedback
+            final_feedback = self.pending_feedback  # Use the pending feedback from Phase 1
+            print(f"final_feedback: {final_feedback}")
+            # No need to set final_feedback - it will be empty as in delegate_game.py
+        elif not self.use_phase1_summary:
+            # This is like skip_phase1=True, show_phase1_summary=False in delegate_game.py
+            final_feedback = self.initial_setup_explanation
+            
+        # Handle Phase 1 summary if needed - like in delegate_game.py
+        if self.use_phase1_summary:
+            # Generate summary text - like summary_screen_text_template in delegate_game.py
             summary_text = "\n\n" + "="*10 + " Phase 1 Summary " + "="*10
             summary_text += f"\nIn Phase 1, you answered {self.subject_accuracy_phase1:.1%} of the questions correctly."
             summary_text += f"\nYour teammate answered {self.teammate_accuracy_phase1:.1%} of the questions correctly."
             summary_text += "\n" + "="*40 + "\n"
             
-            # In delegate_game.py, when showing summary but not history, it adds initial_setup_explanation
+            # Add to final_feedback
+            final_feedback += summary_text
+            
+            # Like in delegate_game.py: When skipping phase 1 without showing history, add initial setup
             if not self.use_phase1_history and self.initial_setup_explanation:
-                final_feedback = self.initial_setup_explanation + "\n\n" + summary_text
-            else:
-                final_feedback = summary_text
-        else:
-            # No Phase 1 history or summary
-            final_feedback = self.initial_setup_explanation
+                final_feedback = self.initial_setup_explanation + "\n\n" + final_feedback
         
-        # Setup Phase 2 - match the format from delegate_game.py run_phase2
-        # Determine if we're showing a single phase (like delegate_game.py with single_phase=True)
+        # Run Phase 2 - like the call to run_phase2 in delegate_game.py
         single_phase = not self.use_phase1_summary and not self.use_phase1_history
-        setup_text = final_feedback + "\n" + "="*10 + " Starting " + ("Game" if single_phase else "Phase 2") + ": Answer or Delegate " + "="*10 + "\n"
+        phase2_success = self._run_phase2(final_feedback, message_history, single_phase)
+        
+        if not phase2_success:
+            self._log("Game aborted due to error in Phase 2.")
+            return self.get_results()
+            
+        self._log("--- Game Over ---")
+        
+        return self.get_results()
+        
+    def _run_phase2(self, final_feedback="", message_history=None, single_phase=False):
+        """Internal method to run Phase 2 - equivalent to run_phase2 in delegate_game.py"""
+        if message_history is None:
+            message_history = []
+            
+        # Store a copy of the original Phase 1 history to use for each question
+        # This is critical to avoid previous questions accumulating
+        original_phase1_history = message_history.copy()
+            
+        # Setup Phase 2 text - exactly like in delegate_game.py run_phase2
+        setup_text = final_feedback + "\n\n" + "="*10 + (" Game" if single_phase else " Phase 2") + ": Answer or Delegate " + "="*10 + "\n"
         if self.is_short_answer:
             setup_text += "For each question, enter your answer or 'T' to let your teammate answer."
         else:
@@ -482,12 +522,26 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 if subject_decision is None:
                     return False
             else:
-                # For LLM subject - match delegate_game.py behavior exactly
-                subject_decision, message_history, probs = self._get_llm_answer(
+                # For each question, start with a fresh copy of the original Phase 1 history
+                # This is crucial to prevent accumulation of previous questions
+                current_message_history = original_phase1_history.copy()
+                
+                # For simplicity, just use the original history without modifications
+                # This avoids issues with manipulating message content
+                
+                # Create a phase header for every question
+                phase_header = final_feedback + "\n\n" + "="*10 + (" Game" if single_phase else " Phase 2") + ": Answer or Delegate " + "="*10 + "\n"
+                phase_header += "For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer."
+                
+                # Determine the question text - include full setup with feedback/summary only for first question
+                question_text = (final_feedback + "\n" if i == 0 else "") + phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
+                
+                # Get the answer using a fresh message history for each question
+                subject_decision, _, probs = self._get_llm_answer(
                     valid_inputs if not self.is_short_answer else None, 
-                    (setup_text if i==0 else "") + feedback_text + "\n" + formatted_question + "\n" + prompt + "\n", 
-                    message_history=message_history,
-                    keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] and i>0 else True),
+                    question_text, 
+                    message_history=current_message_history,
+                    keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] else True),
                     MAX_TOKENS=1 if not self.is_short_answer else None
                 )
             
@@ -583,7 +637,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         # Run statistical analysis
         self._log_summary()
         
-        return self.get_results()
+        return True
 
     def _check_short_answer(self, subject_answer, correct_answer):
         """
@@ -869,17 +923,17 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    CAPABILITES_TEST_FILE = "./completed_results_gpqa/claude-3-5-sonnet-20241022_phase1_completed.json"
-    SUBJECT_NAME = "claude-3-5-sonnet-20241022"
     DATASET = "GPQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
+    SUBJECT_NAME = "grok-3-latest"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"
+    CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME}_phase1_completed.json"
     IS_HUMAN = False
     
     
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
-    N_TRIALS_PHASE2 = 100  # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.7  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.7  # Teammate accuracy for Phase 2
+    N_TRIALS_PHASE2 = 200 # Number of questions for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.8  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.8  # Teammate accuracy for Phase 2
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
@@ -889,7 +943,7 @@ def main():
     
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2
