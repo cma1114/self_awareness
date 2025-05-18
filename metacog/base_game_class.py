@@ -242,6 +242,7 @@ class BaseGameClass:
                         tokens.append(lp_dict['token'].strip().upper())
                         probs.append(math.exp(lp_dict['logprob']))
                     token_probs = dict((zip(tokens,probs)))
+                    #print(f"tokens[0]={tokens[0]}, token_probs={token_probs}")
                     return tokens[0], token_probs
                 elif self.provider == "NDIF":
                     prompt = ""
@@ -267,7 +268,7 @@ class BaseGameClass:
                             message_history.append(user_msg)
                         prompt += f"User:\n{system_msg}\nYou are an Assistant.\n{q_text}\nThe Assistant responds only with {options_str}\nAssistant:\n"
                         prompt = prompt.replace("\nYour choice (A, B, C, or D): ", "")
-                    print(f"prompt={prompt}")
+                    #print(f"prompt={prompt}")
                     #with self.client.generate(prompt, max_new_tokens=2, temperature=0, remote=True) as tracer:
                     #    out = self.client.generator.output.save()
                     #resp = self.client.tokenizer.decode(out[0][len(self.client.tokenizer(prompt)['input_ids']):]).strip().upper()[0]
@@ -277,6 +278,7 @@ class BaseGameClass:
                     values,indices=torch.torch.topk(probs,k=len(options))
                     tokens = [self.client.tokenizer.decode(i) for i in indices]
                     token_probs = dict(sorted(zip(tokens,values.tolist())))
+                    print(f"tokens[0]={tokens[0]}, token_probs={token_probs}")
                     return tokens[0], token_probs
                 elif self.provider == "Google":
                     formatted_messages = []

@@ -924,16 +924,16 @@ def main():
     
     # Model and dataset configuration
     DATASET = "GPQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = "grok-3-latest"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"
-    CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME}_phase1_completed.json"
+    SUBJECT_NAME = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"
+    CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
     IS_HUMAN = False
     
     
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
-    N_TRIALS_PHASE2 = 200 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.8  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.8  # Teammate accuracy for Phase 2
+    N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.85  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.85  # Teammate accuracy for Phase 2
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
