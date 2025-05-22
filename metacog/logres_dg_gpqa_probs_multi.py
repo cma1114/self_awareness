@@ -82,7 +82,8 @@ def get_s_i_from_capabilities_map(q_id, capabilities_s_i_map):
 def prepare_regression_data_for_model(game_file_paths_list,
                                       gpqa_feature_lookup,
                                       p_i_map_for_this_model,
-                                      entropy_map_for_this_model): # Added entropy map
+                                      entropy_map_for_this_model,
+                                      s_i_map_for_this_model): # Added s_i map
     """
     Prepares a DataFrame for a model's game file(s).
     
@@ -91,6 +92,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
         gpqa_feature_lookup (dict): Maps q_id to {'difficulty': score, 'domain': str, 'q_text': str}.
         p_i_map_for_this_model (dict): Maps q_id to P_i (prob of subject_answer) for THIS model.
         entropy_map_for_this_model (dict): Maps q_id to entropy of capabilities probs.
+        s_i_map_for_this_model (dict): Maps q_id to S_i (1 if correct, 0 if incorrect in capabilities).
     Returns:
         pandas.DataFrame or None, phase1_subject_feedback
     """
@@ -186,10 +188,13 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
             gpqa_features = gpqa_feature_lookup.get(q_id)
             p_i_capability = p_i_map_for_this_model.get(q_id)
-            capabilities_entropy = entropy_map_for_this_model.get(q_id) # Get entropy
+            capabilities_entropy = entropy_map_for_this_model.get(q_id)
+            s_i_capability = s_i_map_for_this_model.get(q_id) # Get s_i
             domain = gpqa_features.get('domain', 'unknown').replace(' ', '_').lower()
 
-            # Ensure p_i_capability OR capabilities_entropy is present for the trial to be included
+            # Ensure p_i_capability OR capabilities_entropy is present for the trial to be included.
+            # s_i_capability will be carried along if present for these trials, but its absence alone won't exclude a trial
+            # if probability data is available.
             if gpqa_features and gpqa_features.get('difficulty') is not None and \
                (p_i_capability is not None or capabilities_entropy is not None):
                 delegate_choice_numeric = 1 if delegation_choice_str == "Teammate" else 0
@@ -197,8 +202,9 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 trial_data_dict = {
                     'q_id': q_id,
                     'delegate_choice': delegate_choice_numeric,
-                    'p_i_capability': p_i_capability, # Directly use the value (can be None)
-                    'capabilities_entropy': capabilities_entropy, # Directly use the value (can be None)
+                    'p_i_capability': p_i_capability,
+                    'capabilities_entropy': capabilities_entropy,
+                    's_i_capability': s_i_capability, # Add s_i
                     'human_difficulty': gpqa_features['difficulty'],
                     'q_length': len(gpqa_features.get('q_text', '')),
                     'domain': ("Biology" if domain == "biology" else "NonBiology"),
@@ -274,13 +280,15 @@ if __name__ == "__main__":
 
         # Load P_i and calculate Entropy from capabilities file
         p_i_map_for_this_model = {}
-        entropy_map_for_this_model = {} # New map for entropy
+        entropy_map_for_this_model = {}
+        s_i_map_for_this_model = {} # New map for S_i
         try:
             with open(capabilities_file_path, 'r', encoding='utf-8') as f_cap:
                 cap_data = json.load(f_cap)
             for q_id, res_info in cap_data.get("results", {}).items():
                 subject_answer = res_info.get("subject_answer")
-                probs_dict = res_info.get("probs") # Renamed to avoid conflict
+                correct_answer = res_info.get("correct_answer") # Get correct_answer
+                probs_dict = res_info.get("probs")
 
                 # Populate p_i_map_for_this_model
                 if subject_answer is not None and isinstance(probs_dict, dict):
@@ -290,24 +298,24 @@ if __name__ == "__main__":
                 
                 # Calculate and populate entropy_map_for_this_model
                 if isinstance(probs_dict, dict) and probs_dict:
-                    prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9] # Ensure p > 0 for log
-                    if prob_values: # Ensure there are valid probabilities
-                        # Normalize if they don't sum to 1 (optional, but good practice for entropy if they are raw scores)
-                        # sum_probs = sum(prob_values)
-                        # if sum_probs > 0 and not np.isclose(sum_probs, 1.0):
-                        #     prob_values = [p/sum_probs for p in prob_values]
-                        
-                        # Calculate entropy (assuming probs are already normalized or represent a distribution)
-                        entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) # Re-check p_val > 0
+                    prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
+                    if prob_values:
+                        entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9])
                         entropy_map_for_this_model[q_id] = entropy
+                
+                # Populate s_i_map_for_this_model (using the 'is_correct' field)
+                if res_info.get("is_correct") is not None:
+                    s_i_map_for_this_model[q_id] = 1 if res_info["is_correct"] else 0
+                # If "is_correct" is not present, s_i_map_for_this_model will not have an entry for this q_id,
+                # and s_i_capability will be None for that trial, which is handled by statsmodels.
 
         except Exception as e:
             print(f"  Error loading or processing capabilities file {capabilities_file_path}: {e}. Skipping model.")
             continue
         
-        # Check if at least one of the maps has data, otherwise skip
-        if not p_i_map_for_this_model and not entropy_map_for_this_model:
-            print(f"  No P_i or Entropy data loaded from {capabilities_file_path}. Skipping model.")
+        # Check if at least one of the primary maps has data, otherwise skip
+        if not p_i_map_for_this_model and not entropy_map_for_this_model and not s_i_map_for_this_model:
+            print(f"  No P_i, Entropy, or S_i data loaded from {capabilities_file_path}. Skipping model.")
             continue
 
         # Prepare data for this model
@@ -320,7 +328,8 @@ if __name__ == "__main__":
         df_model, phase1_subject_feedback = prepare_regression_data_for_model(game_file_paths_list,
                                                                             gpqa_feature_lookup,
                                                                             p_i_map_for_this_model,
-                                                                            entropy_map_for_this_model) # Pass new map
+                                                                            entropy_map_for_this_model,
+                                                                            s_i_map_for_this_model) # Pass s_i map
 
         if df_model is None or df_model.empty:
             print(f"  No data for regression analysis for model {model_name_part}.")
@@ -344,108 +353,119 @@ if __name__ == "__main__":
 
         # Run Logistic Regressions
         try:
-            log_output("\n  Model 1: Delegate_Choice ~ p_i_capability")
-            logit_model1 = smf.logit('delegate_choice ~ p_i_capability', data=df_model).fit(disp=0)
-            log_output(logit_model1.summary())
-
-            log_output("\n  Model 2: Delegate_Choice ~ human_difficulty")
-            logit_model2 = smf.logit('delegate_choice ~ human_difficulty', data=df_model).fit(disp=0)
-            log_output(logit_model2.summary())
-
-            log_output("\n  Model 3: Delegate_Choice ~ p_i_capability + human_difficulty")
-            logit_model3 = smf.logit('delegate_choice ~ p_i_capability + human_difficulty', data=df_model).fit(disp=0)
-            log_output(logit_model3.summary())
-
-            log_output("\n  Model 4: Delegate_Choice ~ capabilities_entropy")
-            logit_model4 = smf.logit('delegate_choice ~ capabilities_entropy', data=df_model).fit(disp=0)
-            log_output(logit_model4.summary())
-
-            log_output("\n  Model 5: Delegate_Choice ~ capabilities_entropy + human_difficulty")
-            logit_model5 = smf.logit('delegate_choice ~ capabilities_entropy + human_difficulty', data=df_model).fit(disp=0)
-            log_output(logit_model5.summary())
+            # --- Common Control Variables & Fit Arguments ---
+            common_control_terms = [
+                'q_length', 'domain', 'overlap_ratio', 'avg_word_length', 'percent_non_alphabetic_whitespace'
+            ]
+            conditional_regressors = [
+                'teammate_skill_ratio', 'phase1_subject_feedback', 'nobio', 'noeasy', 'noctr'
+            ]
+            active_controls = [term for term in common_control_terms if term in df_model.columns]
+            for regressor in conditional_regressors:
+                if regressor in df_model.columns:
+                    active_controls.append(regressor)
             
-            log_output("\n  Model 6: Delegate_Choice ~ p_i_capability + capabilities_entropy + human_difficulty")
-            logit_model6 = smf.logit('delegate_choice ~ p_i_capability + capabilities_entropy + human_difficulty', data=df_model).fit(disp=0)
-            log_output(logit_model6.summary())
-            
-            # Optional: Full model with controls like q_length and domain
-            # Ensure domain has enough categories and data points
-            if df_model['domain'].nunique() > 1 and len(df_model) > 20 : # Heuristic checks
-                base_model_terms = [
-                    'p_i_capability',
-                    'capabilities_entropy', # Added entropy
-                    'human_difficulty',
-                    'q_length',
-                    'domain',
-                    'overlap_ratio',
-                    'avg_word_length',
-                    'percent_non_alphabetic_whitespace'
-                ]
-                
-                # Check for newly added conditional regressors in df_model
-                conditional_regressors_to_check = [
-                    'teammate_skill_ratio',
-                    'phase1_subject_feedback',
-                    'nobio',
-                    'noeasy',
-                    'noctr'
-                ]
-                
-                final_model_terms = list(base_model_terms) # Start with a copy
-                for regressor in conditional_regressors_to_check:
-                    if regressor in df_model.columns:
-                        final_model_terms.append(regressor)
-                        # Add interaction term with p_i_capability
-                        ###final_model_terms.append(f"p_i_capability:{regressor}") # Changed from s_i_capability
-                
-                has_duplicate_qids = df_model['q_id'].duplicated().any()
-                fit_kwargs = {'disp': 0}
-
-                if has_duplicate_qids:
-                    # Only set up clustering, do NOT add C(q_id) to model terms
-                    fit_kwargs['cov_type'] = 'cluster'
-                    fit_kwargs['cov_kwds'] = {'groups': df_model['q_id']}
-                    log_output("    Model 7 (Full Model): Using clustered standard errors by q_id due to duplicate question IDs.")
-                # else: fit_kwargs remains {'disp': 0}
-                        
-                model_def_str = 'delegate_choice ~ ' + ' + '.join(final_model_terms) # final_model_terms does not include C(q_id)
-                
-                log_output(f"\n  Model 7 (Full Model): {model_def_str}")
+            # --- P_i Capability Model Path ---
+            log_output("\n\n  --- P_i Capability Models ---")
+            if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
+                # Model 1: p_i_capability alone
+                log_output("\n  Model 1: Delegate_Choice ~ p_i_capability")
                 try:
-                    logit_model_full = smf.logit(model_def_str, data=df_model).fit(**fit_kwargs)
-                    log_output(logit_model_full.summary())
-                    
-                    # Check if p_i_capability is in the model before trying to get its stats
-                    if 'p_i_capability' in logit_model_full.params:
-                        coef_p_i = logit_model_full.params.get('p_i_capability')
-                        pval_p_i = logit_model_full.pvalues.get('p_i_capability')
-                        # Odds ratio interpretation for a continuous predictor like probability is different.
-                        # For a one-unit increase in p_i_capability, the odds of delegate_choice=1 change by exp(coef_p_i).
-                        # The previous odds ratio was for S_i=0 vs S_i=1.
-                        # For now, just log the coefficient and p-value.
-                        log_output(f"\n--- Coefficient for p_i_capability on Delegation (Adjusted) ---")
-                        log_output(f"Coefficient for p_i_capability: {coef_p_i:.4f}")
-                        log_output(f"P-value for p_i_capability: {pval_p_i:.4g}")
-                        # conf_int_p_i_log_odds = logit_model_full.conf_int().loc['p_i_capability']
-                        # log_output(f"95% CI for p_i_capability coefficient: [{conf_int_p_i_log_odds.iloc[0]:.4f}, {conf_int_p_i_log_odds.iloc[1]:.4f}]")
-                    else:
-                        log_output(f"p_i_capability not in the final Model 7 (Full Model) terms or parameters.")
-                    
-                    if 'capabilities_entropy' in logit_model_full.params:
-                        coef_entropy = logit_model_full.params.get('capabilities_entropy')
-                        pval_entropy = logit_model_full.pvalues.get('capabilities_entropy')
-                        log_output(f"\n--- Coefficient for capabilities_entropy on Delegation (Adjusted) ---")
-                        log_output(f"Coefficient for capabilities_entropy: {coef_entropy:.4f}")
-                        log_output(f"P-value for capabilities_entropy: {pval_entropy:.4g}")
-                    else:
-                        log_output(f"capabilities_entropy not in the final Model 7 (Full Model) terms or parameters.")
+                    logit_m1 = smf.logit('delegate_choice ~ p_i_capability', data=df_model.dropna(subset=['p_i_capability', 'delegate_choice'])).fit(disp=0)
+                    log_output(logit_m1.summary())
+                except Exception as e_m1:
+                    log_output(f"    Could not fit Model 1: {e_m1}")
 
-                except Exception as e_full:
-                    log_output(f"    Could not fit Model 7 (Full Model): {e_full}")
+                # Model 3: p_i_capability + human_difficulty
+                log_output("\n  Model 3: Delegate_Choice ~ p_i_capability + human_difficulty")
+                try:
+                    logit_m3 = smf.logit('delegate_choice ~ p_i_capability + human_difficulty', data=df_model.dropna(subset=['p_i_capability', 'human_difficulty', 'delegate_choice'])).fit(disp=0)
+                    log_output(logit_m3.summary())
+                except Exception as e_m3:
+                    log_output(f"    Could not fit Model 3: {e_m3}")
+
+                # Model 5: P_i Full Model
+                base_terms_p_i_full = ['p_i_capability', 's_i_capability', 'human_difficulty']
+                final_terms_p_i_full = base_terms_p_i_full + active_controls
+                
+                df_model_m5_subset = df_model[['q_id', 'delegate_choice'] + final_terms_p_i_full].copy()
+                df_model_m5_subset.dropna(inplace=True)
+
+                if (len(df_model_m5_subset) > len(final_terms_p_i_full) and
+                    ('domain' not in final_terms_p_i_full or df_model_m5_subset['domain'].nunique() > 1) and
+                    df_model_m5_subset['s_i_capability'].notna().any()):
+                    
+                    model_def_p_i_full = 'delegate_choice ~ ' + ' + '.join(final_terms_p_i_full)
+                    log_output(f"\n  Model 5 (P_i Full Model): {model_def_p_i_full}")
+                    
+                    fit_kwargs_m5 = {'disp': 0}
+                    if df_model_m5_subset['q_id'].duplicated().any():
+                        fit_kwargs_m5['cov_type'] = 'cluster'
+                        fit_kwargs_m5['cov_kwds'] = {'groups': df_model_m5_subset['q_id']}
+                        log_output("    Model 5: Using clustered standard errors by q_id.")
+                    try:
+                        logit_p_i_full = smf.logit(model_def_p_i_full, data=df_model_m5_subset).fit(**fit_kwargs_m5)
+                        log_output(logit_p_i_full.summary())
+                        if 'p_i_capability' in logit_p_i_full.params: log_output(f"    P_i Full Model - p_i_capability coef: {logit_p_i_full.params['p_i_capability']:.4f}, p-val: {logit_p_i_full.pvalues['p_i_capability']:.4g}")
+                        if 's_i_capability' in logit_p_i_full.params: log_output(f"    P_i Full Model - s_i_capability coef: {logit_p_i_full.params['s_i_capability']:.4f}, p-val: {logit_p_i_full.pvalues['s_i_capability']:.4g}")
+                    except Exception as e_p_i_full:
+                        log_output(f"    Could not fit Model 5 (P_i Full Model): {e_p_i_full}")
+                else:
+                    log_output("\n  Skipping Model 5 (P_i Full Model) due to insufficient data after NaN removal for model-specific columns, missing s_i_capability, or domain variance issues.")
             else:
-                log_output("\n  Skipping Model 7 (Full Model) (full controls) due to insufficient domain variance or data points.", print_to_console=True)
+                log_output("\n  Skipping P_i Capability Models (1, 3, 5) as 'p_i_capability' column has no valid data or is missing.")
+
+            # --- Capabilities Entropy Model Path ---
+            log_output("\n\n  --- Capabilities Entropy Models ---")
+            if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
+                # Model 2: capabilities_entropy alone
+                log_output("\n  Model 2: Delegate_Choice ~ capabilities_entropy")
+                try:
+                    logit_m2 = smf.logit('delegate_choice ~ capabilities_entropy', data=df_model.dropna(subset=['capabilities_entropy', 'delegate_choice'])).fit(disp=0)
+                    log_output(logit_m2.summary())
+                except Exception as e_m2:
+                    log_output(f"    Could not fit Model 2: {e_m2}")
+
+                # Model 4: capabilities_entropy + human_difficulty
+                log_output("\n  Model 4: Delegate_Choice ~ capabilities_entropy + human_difficulty")
+                try:
+                    logit_m4 = smf.logit('delegate_choice ~ capabilities_entropy + human_difficulty', data=df_model.dropna(subset=['capabilities_entropy', 'human_difficulty', 'delegate_choice'])).fit(disp=0)
+                    log_output(logit_m4.summary())
+                except Exception as e_m4:
+                    log_output(f"    Could not fit Model 4: {e_m4}")
+
+                # Model 6: Entropy Full Model
+                base_terms_entropy_full = ['capabilities_entropy', 's_i_capability', 'human_difficulty']
+                final_terms_entropy_full = base_terms_entropy_full + active_controls
+
+                df_model_m6_subset = df_model[['q_id', 'delegate_choice'] + final_terms_entropy_full].copy()
+                df_model_m6_subset.dropna(inplace=True)
+                
+                if (len(df_model_m6_subset) > len(final_terms_entropy_full) and
+                    ('domain' not in final_terms_entropy_full or df_model_m6_subset['domain'].nunique() > 1) and
+                    df_model_m6_subset['s_i_capability'].notna().any()):
+
+                    model_def_entropy_full = 'delegate_choice ~ ' + ' + '.join(final_terms_entropy_full)
+                    log_output(f"\n  Model 6 (Entropy Full Model): {model_def_entropy_full}")
+                    
+                    fit_kwargs_m6 = {'disp': 0}
+                    if df_model_m6_subset['q_id'].duplicated().any():
+                        fit_kwargs_m6['cov_type'] = 'cluster'
+                        fit_kwargs_m6['cov_kwds'] = {'groups': df_model_m6_subset['q_id']}
+                        log_output("    Model 6: Using clustered standard errors by q_id.")
+                    try:
+                        logit_entropy_full = smf.logit(model_def_entropy_full, data=df_model_m6_subset).fit(**fit_kwargs_m6)
+                        log_output(logit_entropy_full.summary())
+                        if 'capabilities_entropy' in logit_entropy_full.params: log_output(f"    Entropy Full Model - capabilities_entropy coef: {logit_entropy_full.params['capabilities_entropy']:.4f}, p-val: {logit_entropy_full.pvalues['capabilities_entropy']:.4g}")
+                        if 's_i_capability' in logit_entropy_full.params: log_output(f"    Entropy Full Model - s_i_capability coef: {logit_entropy_full.params['s_i_capability']:.4f}, p-val: {logit_entropy_full.pvalues['s_i_capability']:.4g}")
+                    except Exception as e_entropy_full:
+                        log_output(f"    Could not fit Model 6 (Entropy Full Model): {e_entropy_full}")
+                else:
+                    log_output("\n  Skipping Model 6 (Entropy Full Model) due to insufficient data after NaN removal for model-specific columns, missing s_i_capability, or domain variance issues.")
+            else:
+                log_output("\n  Skipping Capabilities Entropy Models (2, 4, 6) as 'capabilities_entropy' column has no valid data or is missing.")
 
         except Exception as e:
-            print(f"  Error during logistic regression for model {model_name_part}: {e}")
+            print(f"  Overall error during logistic regression section for model {model_name_part}: {e}")
         
         print("-" * 40)
