@@ -1,0 +1,410 @@
+
+--- Analyzing Model: gpt-4-turbo-2024-04-09 (2 game files, feedback=False) ---
+  Delegation to teammate occurred: 147/200 trials (73.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 93/247 (37.58%)
+  Phase 2 self-accuracy: 31/53 (58.49%)
+  Statistical test (P2 self vs P1): z-score = 2.7954, p-value = 0.0052
+
+  Model 1: Delegate_Choice ~ p_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      322
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:               5.561e-05
+Time:                        22:27:02   Log-Likelihood:                -152.24
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                    0.8965
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.4498      0.578      2.506      0.012       0.316       2.584
+p_i_capability     0.0864      0.662      0.131      0.896      -1.210       1.383
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      322
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:               6.855e-05
+Time:                        22:27:02   Log-Likelihood:                -152.23
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                    0.8851
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.6054      0.589      2.727      0.006       0.452       2.759
+human_difficulty    -0.0356      0.246     -0.145      0.885      -0.518       0.447
+====================================================================================
+
+  Model 3: Delegate_Choice ~ p_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      321
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:               0.0001349
+Time:                        22:27:02   Log-Likelihood:                -152.22
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                    0.9797
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.5316      0.783      1.957      0.050      -0.002       3.065
+p_i_capability       0.0947      0.663      0.143      0.886      -1.205       1.394
+human_difficulty    -0.0383      0.247     -0.155      0.876      -0.522       0.445
+====================================================================================
+
+  Model 4: Delegate_Choice ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      322
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.1317
+Time:                        22:27:02   Log-Likelihood:                -132.19
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                 2.404e-10
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.7568      0.178      4.254      0.000       0.408       1.106
+capabilities_entropy     2.8381      0.605      4.694      0.000       1.653       4.023
+========================================================================================
+
+  Model 5: Delegate_Choice ~ capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      321
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.1327
+Time:                        22:27:02   Log-Likelihood:                -132.04
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                 1.682e-09
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.4297      0.623      0.690      0.490      -0.791       1.650
+capabilities_entropy     2.8641      0.608      4.709      0.000       1.672       4.056
+human_difficulty         0.1381      0.253      0.546      0.585      -0.358       0.634
+========================================================================================
+
+  Model 6: Delegate_Choice ~ p_i_capability + capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      320
+Method:                           MLE   Df Model:                            3
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.1586
+Time:                        22:27:02   Log-Likelihood:                -128.10
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:            nonrobust   LLR p-value:                 1.849e-10
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.3132      0.940     -1.398      0.162      -3.155       0.528
+p_i_capability           1.8991      0.730      2.603      0.009       0.469       3.329
+capabilities_entropy     3.1507      0.596      5.287      0.000       1.983       4.319
+human_difficulty         0.1249      0.259      0.483      0.629      -0.382       0.632
+========================================================================================
+    Model 7 (Full Model): Using clustered standard errors by q_id due to duplicate question IDs.
+
+  Model 7 (Full Model): delegate_choice ~ p_i_capability + capabilities_entropy + human_difficulty + q_length + domain + overlap_ratio + avg_word_length + percent_non_alphabetic_whitespace + phase1_subject_feedback
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  324
+Model:                          Logit   Df Residuals:                      314
+Method:                           MLE   Df Model:                            9
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.3545
+Time:                        22:27:02   Log-Likelihood:                -98.269
+converged:                       True   LL-Null:                       -152.25
+Covariance Type:              cluster   LLR p-value:                 3.838e-19
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -9.7172      2.486     -3.909      0.000     -14.590      -4.845
+domain[T.NonBiology]                  2.1835      0.616      3.544      0.000       0.976       3.391
+p_i_capability                        2.5992      0.847      3.069      0.002       0.939       4.259
+capabilities_entropy                  3.4620      0.626      5.530      0.000       2.235       4.689
+human_difficulty                      0.4273      0.308      1.389      0.165      -0.176       1.030
+q_length                              0.0018      0.001      1.701      0.089      -0.000       0.004
+overlap_ratio                         0.0101      0.135      0.075      0.941      -0.255       0.275
+avg_word_length                       0.6791      0.378      1.799      0.072      -0.061       1.419
+percent_non_alphabetic_whitespace     0.0795      0.037      2.175      0.030       0.008       0.151
+phase1_subject_feedback               2.1601      0.388      5.571      0.000       1.400       2.920
+=====================================================================================================
+
+--- Coefficient for p_i_capability on Delegation (Adjusted) ---
+Coefficient for p_i_capability: 2.5992
+P-value for p_i_capability: 0.002147
+
+--- Coefficient for capabilities_entropy on Delegation (Adjusted) ---
+Coefficient for capabilities_entropy: 3.4620
+P-value for capabilities_entropy: 3.195e-08
+
+--- Analyzing Model: grok-3-latest (5 game files, feedback=False) ---
+  Delegation to teammate occurred: 169/200 trials (84.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 112/247 (45.41%)
+  Phase 2 self-accuracy: 20/31 (64.52%)
+  Statistical test (P2 self vs P1): z-score = 2.0149, p-value = 0.0439
+
+  Model 1: Delegate_Choice ~ p_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                 1050
+Model:                          Logit   Df Residuals:                     1048
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                0.007315
+Time:                        22:27:02   Log-Likelihood:                -489.83
+converged:                       True   LL-Null:                       -493.44
+Covariance Type:            nonrobust   LLR p-value:                  0.007212
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.8843      0.239      3.698      0.000       0.416       1.353
+p_i_capability     0.7612      0.274      2.782      0.005       0.225       1.298
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                 1050
+Model:                          Logit   Df Residuals:                     1048
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.01160
+Time:                        22:27:02   Log-Likelihood:                -487.72
+converged:                       True   LL-Null:                       -493.44
+Covariance Type:            nonrobust   LLR p-value:                 0.0007167
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.3868      0.346      1.118      0.264      -0.291       1.065
+human_difficulty     0.4924      0.149      3.304      0.001       0.200       0.784
+====================================================================================
+
+  Model 3: Delegate_Choice ~ p_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                 1050
+Model:                          Logit   Df Residuals:                     1047
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.01799
+Time:                        22:27:02   Log-Likelihood:                -484.56
+converged:                       True   LL-Null:                       -493.44
+Covariance Type:            nonrobust   LLR p-value:                 0.0001392
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -0.1779      0.409     -0.435      0.664      -0.980       0.624
+p_i_capability       0.7175      0.276      2.596      0.009       0.176       1.259
+human_difficulty     0.4764      0.150      3.175      0.001       0.182       0.770
+====================================================================================
+
+  Model 4: Delegate_Choice ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  999
+Model:                          Logit   Df Residuals:                      997
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.07083
+Time:                        22:27:02   Log-Likelihood:                -418.98
+converged:                       True   LL-Null:                       -450.91
+Covariance Type:            nonrobust   LLR p-value:                 1.326e-15
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                1.1100      0.100     11.075      0.000       0.914       1.306
+capabilities_entropy     2.3969      0.386      6.206      0.000       1.640       3.154
+========================================================================================
+
+  Model 5: Delegate_Choice ~ capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  999
+Model:                          Logit   Df Residuals:                      996
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.08473
+Time:                        22:27:02   Log-Likelihood:                -412.71
+converged:                       True   LL-Null:                       -450.91
+Covariance Type:            nonrobust   LLR p-value:                 2.557e-17
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.2005      0.386     -0.520      0.603      -0.957       0.556
+capabilities_entropy     2.5315      0.396      6.388      0.000       1.755       3.308
+human_difficulty         0.5549      0.161      3.450      0.001       0.240       0.870
+========================================================================================
+
+  Model 6: Delegate_Choice ~ p_i_capability + capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  999
+Model:                          Logit   Df Residuals:                      995
+Method:                           MLE   Df Model:                            3
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.09890
+Time:                        22:27:02   Log-Likelihood:                -406.32
+converged:                       True   LL-Null:                       -450.91
+Covariance Type:            nonrobust   LLR p-value:                 3.270e-19
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.8262      0.606     -3.013      0.003      -3.014      -0.638
+p_i_capability           1.7642      0.503      3.507      0.000       0.778       2.750
+capabilities_entropy     2.9379      0.407      7.226      0.000       2.141       3.735
+human_difficulty         0.5168      0.163      3.179      0.001       0.198       0.835
+========================================================================================
+    Model 7 (Full Model): Using clustered standard errors by q_id due to duplicate question IDs.
+
+  Model 7 (Full Model): delegate_choice ~ p_i_capability + capabilities_entropy + human_difficulty + q_length + domain + overlap_ratio + avg_word_length + percent_non_alphabetic_whitespace + teammate_skill_ratio + phase1_subject_feedback
+    Could not fit Model 7 (Full Model): The weights and list don't have the same length.
+
+--- Analyzing Model: meta-llama-Meta-Llama-3.1-405B-Instruct (1 game files, feedback=True) ---
+  Delegation to teammate occurred: 3/100 trials (3.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 143/338 (42.24%)
+  Phase 2 self-accuracy: 43/97 (44.33%)
+  Statistical test (P2 self vs P1): z-score = 0.3549, p-value = 0.7227
+
+  Model 1: Delegate_Choice ~ p_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                0.002519
+Time:                        22:27:02   Log-Likelihood:                -13.440
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.7944
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -4.0920      2.512     -1.629      0.103      -9.015       0.831
+p_i_capability     0.7822      3.048      0.257      0.797      -5.191       6.755
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.01369
+Time:                        22:27:02   Log-Likelihood:                -13.290
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.5436
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -2.0863      2.310     -0.903      0.366      -6.614       2.442
+human_difficulty    -0.5969      1.003     -0.595      0.552      -2.562       1.368
+====================================================================================
+
+  Model 3: Delegate_Choice ~ p_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       97
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.01701
+Time:                        22:27:02   Log-Likelihood:                -13.245
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.7952
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -2.7838      3.317     -0.839      0.401      -9.285       3.717
+p_i_capability       0.9206      3.136      0.294      0.769      -5.227       7.068
+human_difficulty    -0.6084      0.991     -0.614      0.539      -2.551       1.334
+====================================================================================
+
+  Model 4: Delegate_Choice ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                0.002577
+Time:                        22:27:02   Log-Likelihood:                -13.439
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.7921
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -3.6940      1.050     -3.518      0.000      -5.752      -1.636
+capabilities_entropy     0.2595      0.986      0.263      0.792      -1.674       2.193
+========================================================================================
+
+  Model 5: Delegate_Choice ~ capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       97
+Method:                           MLE   Df Model:                            2
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                 0.01533
+Time:                        22:27:02   Log-Likelihood:                -13.268
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.8133
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.2986      2.545     -0.903      0.366      -7.287       2.689
+capabilities_entropy     0.2139      1.017      0.210      0.833      -1.780       2.208
+human_difficulty        -0.5832      1.014     -0.575      0.565      -2.570       1.403
+========================================================================================
+
+  Model 6: Delegate_Choice ~ p_i_capability + capabilities_entropy + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       96
+Method:                           MLE   Df Model:                            3
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.2039
+Time:                        22:27:02   Log-Likelihood:                -10.727
+converged:                       True   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.1390
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept              -51.7115     31.232     -1.656      0.098    -112.925       9.502
+p_i_capability          45.1296     28.401      1.589      0.112     -10.535     100.794
+capabilities_entropy    13.7415      8.255      1.665      0.096      -2.437      29.920
+human_difficulty         0.3664      1.237      0.296      0.767      -2.059       2.791
+========================================================================================
+
+  Model 7 (Full Model): delegate_choice ~ p_i_capability + capabilities_entropy + human_difficulty + q_length + domain + overlap_ratio + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       91
+Method:                           MLE   Df Model:                            8
+Date:                Wed, 21 May 2025   Pseudo R-squ.:                  0.4890
+Time:                        22:27:02   Log-Likelihood:                -6.8847
+converged:                      False   LL-Null:                       -13.474
+Covariance Type:            nonrobust   LLR p-value:                    0.1058
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                          -117.2186   2.02e+04     -0.006      0.995   -3.97e+04    3.94e+04
+domain[T.NonBiology]                 28.4995   2.02e+04      0.001      0.999   -3.95e+04    3.96e+04
+p_i_capability                       76.0100     55.831      1.361      0.173     -33.416     185.436
+capabilities_entropy                 21.5308     14.636      1.471      0.141      -7.155      50.216
+human_difficulty                      0.8106      2.062      0.393      0.694      -3.231       4.852
+q_length                             -0.0043      0.008     -0.530      0.596      -0.020       0.011
+overlap_ratio                         1.6196      2.715      0.597      0.551      -3.701       6.940
+avg_word_length                       1.2383      1.369      0.905      0.366      -1.444       3.921
+percent_non_alphabetic_whitespace    -0.1477      0.240     -0.615      0.539      -0.619       0.323
+=====================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.45 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Coefficient for p_i_capability on Delegation (Adjusted) ---
+Coefficient for p_i_capability: 76.0100
+P-value for p_i_capability: 0.1734
+
+--- Coefficient for capabilities_entropy on Delegation (Adjusted) ---
+Coefficient for capabilities_entropy: 21.5308
+P-value for capabilities_entropy: 0.1413

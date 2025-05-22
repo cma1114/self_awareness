@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load API keys
-anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")##os.environ.get("ANTHROPIC_SPAR_API_KEY")
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
@@ -108,7 +108,7 @@ class BaseGameClass:
             # Re-raise for retry handling
             raise
 
-    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1):
+    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1, temp=0.0):
         """Gets answer from LLM model"""
         # Prepare common data
         user_msg = {"role": "user", "content": q_text}
@@ -123,6 +123,7 @@ class BaseGameClass:
         MAX_CALL_ATTEMPTS = 4 #for rate limit/timeout/server errors
         delay = 1.0
         attempt = 0
+        temp_inc = -0.05 if temp > 0.5 else 0.05
         resp = ""
         token_probs = None
         for callctr in range(MAX_CALL_ATTEMPTS):
@@ -141,30 +142,31 @@ class BaseGameClass:
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
-                        temperature=0.0 + attempt * 0.1,
-                        system=system_msg,
+                        temperature=temp + attempt * temp_inc,
+                        **({"system": system_msg} if system_msg != "" else {}),
                         messages=formatted_messages
                     )
                     resp = message.content[0].text.strip().upper()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":
                     if keep_appending:
-                        message_history.append({"role": "system", "content": system_msg})
+                        if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
                         formatted_messages = message_history
                     else:
                         formatted_messages = copy.deepcopy(message_history)
-                        formatted_messages.append({"role": "system", "content": system_msg})
+                        if system_msg != "": formatted_messages.append({"role": "system", "content": system_msg})
                         formatted_messages.append(user_msg)
                     #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
                         model=self.subject_name,
                         max_tokens=MAX_TOKENS,
-                        temperature=0.0 + attempt * 0.1,
+                        temperature=temp + attempt * temp_inc,
                         messages=formatted_messages,
                         logprobs=True,
                         top_logprobs=len(options)                     
-                    )    
+                    )   
+                    print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip().upper()
                     if len(options) == 1: #short answer, just average
                         token_logprobs=completion.choices[0].logprobs.content
@@ -182,6 +184,7 @@ class BaseGameClass:
                         #logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
                         #prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
                         #token_probs = dict(zip(tokens, prob_tensor.tolist()))
+                    #print(f"resp={resp}, token_probs={token_probs}")
                     return resp, token_probs
                 elif self.provider == "Hyperbolic":
                     if "Instruct" in self.subject_name:
@@ -199,7 +202,7 @@ class BaseGameClass:
                             "model": self.subject_name,
                             "messages": formatted_messages,
                             "max_tokens": MAX_TOKENS,
-                            "temperature": 0.0 + attempt * 0.1,
+                            "temperature": temp + attempt * temp_inc,
                             "logprobs": True,
                             "top_logprobs": len(options)
                         }                        
@@ -222,7 +225,7 @@ class BaseGameClass:
                             "model": self.subject_name,
                             "prompt": prompt,
                             "max_tokens": MAX_TOKENS,
-                            "temperature": 0.0 + attempt * 0.1,
+                            "temperature": temp + attempt * temp_inc,
                             "logprobs": True,
                             "top_logprobs": len(options)
                         }                
@@ -296,9 +299,9 @@ class BaseGameClass:
                         model=self.subject_name,
                         contents=formatted_messages,
                         config=types.GenerateContentConfig(
-                            system_instruction=system_msg,
+                            **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
-                            temperature=0.0 + attempt * 0.1,
+                            temperature=temp + attempt * temp_inc,
                         ), 
                     )
                     resp = message.text.strip().upper()

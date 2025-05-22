@@ -22,11 +22,12 @@ import sys
 from collections import defaultdict
 
 # Constants
-LOG_DIRS = [
-    "./delegate_game_logs",
-    "./pass_game_logs",
-    "./capabilities_test_logs"
-]
+LOG_DIRS = {
+#    "delegate_game_logs": "./delegate_game_logs",
+#    "pass_game_logs": "./pass_game_logs",
+    "capabilities_test_logs": "./capabilities_test_logs"
+}
+
 VALID_DATASETS = ["GPQA", "SimpleQA", "MMLU", "TruthfulQA"]
 CUTOFF_DATE = datetime.datetime(2025, 4, 24).timestamp()  # April 24, 2025
 
@@ -255,16 +256,16 @@ def process_capabilities_test_file(file_path, dataset="GPQA"):
         print(f"Error processing {file_path}: {e}")
         return None, None, []
 
-def process_all_files(dataset="GPQA"):
+def process_all_files(dataset="GPQA", targ_model=None):
     """Process all game data files and compile results per model for the specified dataset."""
     # Create output directory if it doesn't exist
     output_dir = f"./compiled_results_{dataset.lower()}"
     os.makedirs(output_dir, exist_ok=True)
     
     # Get all relevant files
-    delegate_files = glob.glob(os.path.join(LOG_DIRS[0], "*_game_data.json"))
-    pass_files = glob.glob(os.path.join(LOG_DIRS[1], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS[1], "*_phase1_data.json"))
-    capabilities_files = glob.glob(os.path.join(LOG_DIRS[2], "*_test_data.json"))
+    delegate_files = glob.glob(os.path.join(LOG_DIRS["delegate_game_logs"], "*_game_data.json")) if "delegate_game_logs" in LOG_DIRS else []
+    pass_files = glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS[1], "*_phase1_data.json")) if "pass_game_logs" in LOG_DIRS else []
+    capabilities_files = glob.glob(os.path.join(LOG_DIRS["capabilities_test_logs"], "*_test_data.json")) if "capabilities_test_logs" in LOG_DIRS else []
     
     # Filter files by date
     recent_delegate_files = [f for f in delegate_files if get_file_timestamp(f) >= CUTOFF_DATE]
@@ -282,6 +283,8 @@ def process_all_files(dataset="GPQA"):
     # Process delegate game files
     for file_path in recent_delegate_files:
         model_name, file_path, results = process_delegate_game_file(file_path, dataset)
+        if targ_model and model_name != targ_model:
+            continue
         if model_name and results:
             model_results[model_name]["files"].append(file_path)
             model_results[model_name]["results"].extend(results)
@@ -289,6 +292,8 @@ def process_all_files(dataset="GPQA"):
     # Process pass game files
     for file_path in recent_pass_files:
         model_name, file_path, results = process_pass_game_file(file_path, dataset)
+        if targ_model and model_name != targ_model:
+            continue
         if model_name and results:
             model_results[model_name]["files"].append(file_path)
             model_results[model_name]["results"].extend(results)
@@ -296,6 +301,8 @@ def process_all_files(dataset="GPQA"):
     # Process capabilities test files
     for file_path in recent_capabilities_files:
         model_name, file_path, results = process_capabilities_test_file(file_path, dataset)
+        if targ_model and model_name != targ_model:
+            continue
         if model_name and results:
             model_results[model_name]["files"].append(file_path)
             model_results[model_name]["results"].extend(results)
@@ -405,7 +412,7 @@ def main():
     # Hard-coded dataset - change this value to compile different datasets
     dataset = "GPQA"
     
-    process_all_files(dataset)
+    process_all_files(dataset, targ_model="gpt-4o-2024-08-06")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

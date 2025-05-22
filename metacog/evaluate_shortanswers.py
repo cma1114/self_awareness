@@ -339,8 +339,8 @@ Subject response: {subject_answer}
 
 def main():
     
-    test_data_file = "./capabilities_test_logs/gpt-4o-2024-08-06_SimpleQA_500_1747014117_test_data.json"#"./pass_game_logs/aop_gpt-4o-2024-08-06_1746999717_game_data.json"#
-    judge_models = ["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
+    test_data_file = "./capabilities_test_logs/gpt-4o-2024-08-06_SimpleQA_500_1747675946_test_data.json"#"./pass_game_logs/aop_gpt-4o-2024-08-06_1746999717_game_data.json"#
+    judge_models = ["grok-3-latest", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
     
     print(f"Evaluating {test_data_file} using models: {judge_models}")
     

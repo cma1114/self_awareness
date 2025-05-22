@@ -49,6 +49,90 @@ def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train"
     question_ids_added = set()
     required_fields = ['Question', 'Correct Answer', 'Incorrect Answer 1', 'Incorrect Answer 2', 'Incorrect Answer 3', 'Record ID']
 
+    difficulty_rubric = {
+        'Easy undergraduate level (or easier)': 1,
+        'Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)': 2,
+        'Hard graduate level (could be a question on a hard graduate exam for PhD students in the domain)': 3,
+        'Post-graduate level or harder (only individuals with years of highly specialized expertise could reliably answer correctly)': 4
+    }
+
+    difficulty_fields = [
+        "Writer's Difficulty Estimate",
+        "Question Difficulty_EV_1",
+        "Question Difficulty_EV_2"
+    ]
+
+    def get_numeric_difficulty(difficulty_string):
+        """Converts a difficulty string to its numeric value based on the rubric."""
+        return difficulty_rubric.get(difficulty_string) # Returns None if string not in rubric
+
+    def calculate_average_difficulty(item):
+        """
+        Calculates the average numeric difficulty for a dataset item (dictionary).
+        Handles missing values as per specifications.
+        """
+        numeric_difficulties = []
+        for field in difficulty_fields:
+            difficulty_str = item.get(field)
+            if difficulty_str: # Check if the string is not None or empty
+                numeric_val = get_numeric_difficulty(difficulty_str)
+                if numeric_val is not None:
+                    numeric_difficulties.append(numeric_val)
+        
+        if not numeric_difficulties: # All fields were missing or invalid
+            return 2.5 # Default average difficulty
+        else:
+            return sum(numeric_difficulties)/len(numeric_difficulties)
+
+    STOPWORDS = set([
+        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "have", 
+        "he", "her", "here", "him", "his", "how", "i", "if", "in", "is", "it", "its", 
+        "of", "on", "or", "she", "so", "that", "the", "their", "them", "then", "there", 
+        "these", "they", "this", "to", "was", "what", "when", "where", "which", "while", 
+        "who", "whom", "why", "will", "with", "you", "your"
+    ])
+    import re
+    def get_unique_alphanumeric_words(text_string):
+        """
+        Extracts unique alphanumeric words from a string.
+        Converts to lowercase before finding unique words.
+        """
+        if not isinstance(text_string, str):
+            return set()
+        words = re.findall(r'\b\w+\b', text_string.lower()) # \w+ finds alphanumeric sequences
+        filtered_words = [word for word in words if word not in STOPWORDS]
+        return set(filtered_words)
+
+    def calculate_option_question_word_overlap_ratio(question_item):
+        """
+        Calculates the ratio of unique words in combined options to unique words in the question.
+        Returns the ratio, or np.nan if either word set is empty.
+        """
+        question_text = question_item.get("Question", "")
+        
+        correct_ans_text = question_item.get("Correct Answer", "")
+        incorrect_ans1_text = question_item.get("Incorrect Answer 1", "")
+        incorrect_ans2_text = question_item.get("Incorrect Answer 2", "")
+        incorrect_ans3_text = question_item.get("Incorrect Answer 3", "")
+
+        combined_options_text = " ".join(filter(None, [
+            correct_ans_text, 
+            incorrect_ans1_text, 
+            incorrect_ans2_text, 
+            incorrect_ans3_text
+        ]))
+
+        unique_words_question = get_unique_alphanumeric_words(question_text)
+        unique_words_options = get_unique_alphanumeric_words(combined_options_text)
+
+        num_unique_words_question = len(unique_words_question)
+        num_unique_words_options = len(unique_words_options)
+
+        if num_unique_words_question == 0: # Avoid division by zero
+            return 0
+        
+        return num_unique_words_options / num_unique_words_question
+
     dataset_indices = list(range(len(dataset)))
     random.shuffle(dataset_indices)
 
@@ -104,12 +188,16 @@ def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train"
             if option_text == correct_answer_text:
                 correct_label = label
 
+
         # Create the formatted question
         formatted_q = {
             "id": f"gpqa_{split}_{record_id}",
             "question": item['Question'],
             "options": options_dict,
-            "correct_answer": correct_label
+            "correct_answer": correct_label,
+            "difficulty_score": calculate_average_difficulty(item),
+            "high_level_domain": item["High-level domain"],
+            "overlap_ratio": calculate_option_question_word_overlap_ratio(item)
         }
         formatted_questions.append(formatted_q)
         question_ids_added.add(record_id)

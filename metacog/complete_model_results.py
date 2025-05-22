@@ -231,7 +231,7 @@ def complete_model_results(model_name, dataset="GPQA"):
 
 def main():
     # Hard-coded model and dataset names
-    model_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"gemini-1.5-pro"#"gpt-3.5-turbo-0125"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"claude-3-opus-20240229"#"claude-3-5-sonnet-20241022"#"claude-3-7-sonnet-20250219"
+    model_name = "gpt-4o-2024-08-06"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"gemini-1.5-pro"#"gpt-3.5-turbo-0125"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"claude-3-opus-20240229"#"claude-3-5-sonnet-20241022"#"claude-3-7-sonnet-20250219"
     dataset = "GPQA"  # Change this to run on different datasets: GPQA, SimpleQA, MMLU, TruthfulQA
     
     start_time = time.time()

@@ -15,9 +15,9 @@ import copy
 import json
 import os
 import re
-from load_and_format_datasets import load_and_format_dataset
 from base_game_class import BaseGameClass
 import scipy.stats
+import glob
 
 class DelegateGameFromCapabilities(BaseGameClass):
     """
@@ -29,7 +29,8 @@ class DelegateGameFromCapabilities(BaseGameClass):
                  teammate_accuracy_phase1=0.7, teammate_accuracy_phase2=0.7,
                  feedback_config=None, override_subject_accuracy=None,
                  use_phase1_summary=True, use_phase1_history=True,
-                 redact_phase1_answers=False, initial_setup_explanation=""):
+                 redact_phase1_answers=False, initial_setup_explanation="",
+                 seed=None, temperature=0.0):
         """
         Initializes the game instance using completed results data.
 
@@ -49,8 +50,17 @@ class DelegateGameFromCapabilities(BaseGameClass):
             use_phase1_history (bool): Whether to include the full phase 1 history.
             redact_phase1_answers (bool): If True, replaces subject's phase 1 answers with "[redacted]".
             initial_setup_explanation (str): Explanation text to show at the beginning.
+            seed (int, optional): Seed for random number generation. Defaults to None.
         """
         super().__init__(subject_id, subject_name, is_human_player, "delegate_game_logs")
+
+        # Seed random number generator if a seed is provided
+        self.seed = seed
+        if self.seed is not None:
+            self._log(f"Using random seed: {self.seed}")
+            random.seed(self.seed)
+
+        self.temperature = temperature
 
         # Store parameters
         self.completed_results_file = completed_results_file
@@ -161,32 +171,79 @@ class DelegateGameFromCapabilities(BaseGameClass):
         return self.is_short_answer
         
     def _separate_questions_by_correctness(self):
-        """Separate questions into correct and incorrect lists."""
+        """Separate questions into correct and incorrect lists,
+           adapting to different JSON structures based on whether it's short answer."""
         self.all_correct_questions = []
         self.all_incorrect_questions = []
         
-        for q_id, result in self.completed_data["results"].items():
-            # Create a question object with all necessary information
-            question = {
-                "id": q_id,
-                "question": result["question"],
-                "options": result.get("options", {}),
-                "correct_answer": result["correct_answer_label"],
-                "subject_answer": result["subject_answer"],
-                "is_correct": result["is_correct"]
-            }
+        if not self.completed_data or "results" not in self.completed_data:
+            self._log("Error: Completed data is missing or has no 'results' field in _separate_questions_by_correctness.")
+            return
+
+        if self.dataset == "GPQA":
+            from load_and_format_datasets import load_and_format_dataset
+            gpqa_questions_with_features = load_and_format_dataset("GPQA") 
+
+        for q_id, result_item in self.completed_data["results"].items():
+
+            if self.dataset == "GPQA":
+                feature_lookup = {
+                    item['id']: {
+                        'difficulty': item['difficulty_score'],
+                        'overlap_ratio': item.get('overlap_ratio', 0),
+                        'domain': item['high_level_domain'],
+                        'question_text': item['question'] 
+                    } 
+                    for item in gpqa_questions_with_features if item.get('id') 
+                }
+                domain = feature_lookup.get(q_id, {}).get("domain")
+                if "_nobio" in self.subject_id and domain and domain.lower() == "biology": continue
+                difficulty = feature_lookup.get(q_id, {}).get("difficulty", 0)
+                if "_noeasy" in self.subject_id and difficulty and difficulty < 2: continue
+
+            question_data_for_list = {"id": q_id}
+
+            current_is_correct = result_item.get("is_correct")
+
+            # Skip questions where correctness cannot be determined (e.g., null, "NOT ATTEMPTED")
+            if current_is_correct is not True and current_is_correct is not False:
+                self._log(f"Question {q_id} has 'is_correct' as '{current_is_correct}'. Skipping for correct/incorrect separation.")
+                continue
+
+            question_data_for_list["is_correct"] = current_is_correct
+            question_data_for_list["subject_answer"] = result_item.get("subject_answer", "N/A")
+            # Store probabilities if available, might be useful for other analyses or extensions
+            question_data_for_list["probs"] = result_item.get("probs")
+
+            if self.is_short_answer:
+                # Handle short answer format (e.g., from capabilities_test_logs)
+                # 'question' is an object containing details
+                question_details_obj = result_item.get("question", {})
+                question_data_for_list["question"] = question_details_obj.get("question", "N/A") # Actual question text
+                question_data_for_list["options"] = {} # No options for short answer
+                # For short answer, 'correct_answer' field stores the actual answer string
+                question_data_for_list["correct_answer"] = question_details_obj.get("correct_answer", "N/A")
+            else:
+                # Handle MCQ format (e.g., from completed_results_gpqa)
+                # 'question' is expected to be a string (the question text itself)
+                question_data_for_list["question"] = result_item.get("question", "N/A")
+                question_data_for_list["options"] = result_item.get("options", {})
+                # For MCQ, 'correct_answer' field stores the option label (e.g., 'A', 'B')
+                question_data_for_list["correct_answer"] = result_item.get("correct_answer_label", "N/A")
             
             # Add to the appropriate list
-            if result["is_correct"]:
-                self.all_correct_questions.append(question)
-            else:
-                self.all_incorrect_questions.append(question)
+            if question_data_for_list["is_correct"]:
+                self.all_correct_questions.append(question_data_for_list)
+            else: # is_correct is False
+                self.all_incorrect_questions.append(question_data_for_list)
         
         self._log(f"Separated questions: {len(self.all_correct_questions)} correct, {len(self.all_incorrect_questions)} incorrect")
         
         # Shuffle both lists to ensure random selection
-        random.shuffle(self.all_correct_questions)
-        random.shuffle(self.all_incorrect_questions)
+        if self.all_correct_questions: # Avoid error if list is empty
+            random.shuffle(self.all_correct_questions)
+        if self.all_incorrect_questions: # Avoid error if list is empty
+            random.shuffle(self.all_incorrect_questions)
 
     def _prepare_phase1_questions(self):
         """
@@ -231,45 +288,91 @@ class DelegateGameFromCapabilities(BaseGameClass):
 
     def _prepare_phase2_questions(self):
         """
-        Select questions for Phase 2 based on the true accuracy from the completed results.
+        Select questions for Phase 2 based on the true accuracy from the completed results,
+        targeting the actual number of trials for the run (self.n_trials_phase2).
         
         Phase 2 questions are selected to:
-        1. Be distinct from Phase 1 questions
-        2. Have a proportion of correct questions matching the true subject accuracy
+        1. Be distinct from Phase 1 questions.
+        2. Have a proportion of correct questions matching self.true_subject_accuracy
+           for the self.n_trials_phase2 questions, as much as possible.
         """
-        # First, filter out questions already used in Phase 1
-        remaining_correct = [q for q in self.all_correct_questions if q["id"] not in self.phase1_question_ids]
-        remaining_incorrect = [q for q in self.all_incorrect_questions if q["id"] not in self.phase1_question_ids]
+        # Filter out questions already used in Phase 1
+        remaining_correct_ordered = [q for q in self.all_correct_questions if q["id"] not in self.phase1_question_ids]
+        remaining_incorrect_ordered = [q for q in self.all_incorrect_questions if q["id"] not in self.phase1_question_ids]
+
+        total_remaining_questions = len(remaining_correct_ordered) + len(remaining_incorrect_ordered)
         
-        # Calculate how many correct and incorrect questions we need
-        num_correct_needed = int(round(self.true_subject_accuracy * self.n_trials_phase2))
-        num_incorrect_needed = self.n_trials_phase2 - num_correct_needed
+        num_questions_for_this_run = self.n_trials_phase2
+
+        if num_questions_for_this_run == 0:
+            self._log("Phase 2 has 0 trials. No questions will be selected.")
+            self.phase2_questions = []
+            return
+
+        if num_questions_for_this_run > total_remaining_questions:
+            self._log(f"Warning: Requested {num_questions_for_this_run} questions for Phase 2, but only {total_remaining_questions} are available after Phase 1. Using all {total_remaining_questions} available questions.")
+            num_questions_for_this_run = total_remaining_questions
         
-        self._log(f"Selecting {num_correct_needed} correct and {num_incorrect_needed} incorrect questions for Phase 2")
+        self.n_trials_phase2 = num_questions_for_this_run # Update instance variable to actual number
+
+        if self.n_trials_phase2 == 0: # Can happen if total_remaining_questions was 0
+            self._log("No questions available or selected for Phase 2.")
+            self.phase2_questions = []
+            return
+
+        # Calculate target number of correct and incorrect questions for the run
+        target_correct_for_run = int(round(self.true_subject_accuracy * self.n_trials_phase2))
+        target_incorrect_for_run = self.n_trials_phase2 - target_correct_for_run
+
+        selected_correct_qs = []
+        selected_incorrect_qs = []
+
+        # Try to meet the targets
+        actual_correct_to_select = min(target_correct_for_run, len(remaining_correct_ordered))
+        selected_correct_qs = remaining_correct_ordered[:actual_correct_to_select]
+
+        actual_incorrect_to_select = min(target_incorrect_for_run, len(remaining_incorrect_ordered))
+        selected_incorrect_qs = remaining_incorrect_ordered[:actual_incorrect_to_select]
         
-        # Check if we have enough questions of each type
-        if num_correct_needed > len(remaining_correct):
-            self._log(f"Warning: Not enough correct questions remaining. Using all {len(remaining_correct)} correct questions.")
-            num_correct_needed = len(remaining_correct)
-            num_incorrect_needed = min(self.n_trials_phase2 - num_correct_needed, len(remaining_incorrect))
-            
-        if num_incorrect_needed > len(remaining_incorrect):
-            self._log(f"Warning: Not enough incorrect questions remaining. Using all {len(remaining_incorrect)} incorrect questions.")
-            num_incorrect_needed = len(remaining_incorrect)
-            num_correct_needed = min(self.n_trials_phase2 - num_incorrect_needed, len(remaining_correct))
+        # If we haven't selected enough questions, fill up to self.n_trials_phase2
+        current_total_selected = len(selected_correct_qs) + len(selected_incorrect_qs)
+        still_needed = self.n_trials_phase2 - current_total_selected
+
+        if still_needed > 0:
+            # Try to fill with more correct questions if available and we took fewer than available
+            can_add_more_correct = len(remaining_correct_ordered) - len(selected_correct_qs)
+            add_c = min(still_needed, can_add_more_correct)
+            if add_c > 0:
+                selected_correct_qs.extend(remaining_correct_ordered[len(selected_correct_qs) : len(selected_correct_qs) + add_c])
+                still_needed -= add_c
         
-        # Select the questions
-        phase2_correct_questions = remaining_correct[:num_correct_needed]
-        phase2_incorrect_questions = remaining_incorrect[:num_incorrect_needed]
-        
-        # Combine and shuffle
-        self.phase2_questions = phase2_correct_questions + phase2_incorrect_questions
+        if still_needed > 0:
+            # Try to fill with more incorrect questions if available and we took fewer than available
+            can_add_more_incorrect = len(remaining_incorrect_ordered) - len(selected_incorrect_qs)
+            add_i = min(still_needed, can_add_more_incorrect)
+            if add_i > 0:
+                selected_incorrect_qs.extend(remaining_incorrect_ordered[len(selected_incorrect_qs) : len(selected_incorrect_qs) + add_i])
+                # still_needed -= add_i # Not strictly necessary to update still_needed here as it's the last fill attempt
+
+        self.phase2_questions = selected_correct_qs + selected_incorrect_qs
         random.shuffle(self.phase2_questions)
         
-        # Set the actual number of trials
+        # Ensure self.n_trials_phase2 reflects the true number of questions in self.phase2_questions
+        # This should already be the case if logic above is correct, but as a safeguard:
         self.n_trials_phase2 = len(self.phase2_questions)
-        
-        self._log(f"Selected {self.n_trials_phase2} questions for Phase 2 with expected accuracy {self.true_subject_accuracy:.2%}")
+
+        if self.n_trials_phase2 > 0:
+            actual_correct_count_in_run = sum(1 for q in self.phase2_questions if q["is_correct"])
+            actual_accuracy_for_run = actual_correct_count_in_run / self.n_trials_phase2
+            
+            self._log(f"Selected {self.n_trials_phase2} questions for Phase 2. Target accuracy for run: {self.true_subject_accuracy:.2%}, Actual selected accuracy for this run: {actual_accuracy_for_run:.2%}")
+
+            accuracy_diff = abs(actual_accuracy_for_run - self.true_subject_accuracy)
+            # Using a threshold of 0.005 (0.5%) for "significant" deviation
+            if accuracy_diff > 0.0051: # Add a tiny bit to avoid floating point issues with exact 0.005
+                self._log(f"WARNING: Phase 2 actual accuracy ({actual_accuracy_for_run:.2%}) deviates significantly from target ({self.true_subject_accuracy:.2%}). Difference: {accuracy_diff:.2%}")
+        else:
+            self._log("No questions were ultimately selected for Phase 2.")
 
     def _predetermine_teammate_answers(self, phase=1):
         """
@@ -321,7 +424,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         self.pending_feedback = ""
         
         startup_string = self.initial_setup_explanation + "\n\n" + "="*10 + " Starting Phase 1: Answer the Questions " + "="*10 + "\n"
-        prompt = "Your answer (A, B, C, D): "
+        prompt = "Your answer (A, B, C, D): " if not self.is_short_answer else "Your answer: "
         
         # Process each question in Phase 1 only if we're using phase1_history
         if self.use_phase1_history:
@@ -500,7 +603,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         # Process each question
         for i, question in enumerate(self.phase2_questions):
             # Prepare question text
-            formatted_question = self._present_question(question, i+1, len(self.phase2_questions))
+            formatted_question = self._present_question(question)###, i+1, len(self.phase2_questions))
             
             if self.is_short_answer:
                 # Short answer
@@ -531,18 +634,22 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 
                 # Create a phase header for every question
                 phase_header = final_feedback + "\n\n" + "="*10 + (" Game" if single_phase else " Phase 2") + ": Answer or Delegate " + "="*10 + "\n"
-                phase_header += "For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer."
+                if self.is_short_answer:
+                    phase_header += "For each question, answer as succinctly as possible or respond with 'T' to let your teammate answer."
+                else:
+                    phase_header += "For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer."
                 
                 # Determine the question text - include full setup with feedback/summary only for first question
                 question_text = (final_feedback + "\n" if i == 0 else "") + phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
                 
                 # Get the answer using a fresh message history for each question
                 subject_decision, _, probs = self._get_llm_answer(
-                    valid_inputs if not self.is_short_answer else None, 
-                    question_text, 
+                    valid_inputs if not self.is_short_answer else None,
+                    question_text,
                     message_history=current_message_history,
                     keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] else True),
-                    MAX_TOKENS=1 if not self.is_short_answer else None
+                    MAX_TOKENS=1 if not self.is_short_answer else None,
+                    temp=self.temperature
                 )
             
             # Process decision
@@ -919,21 +1026,80 @@ class DelegateGameFromCapabilities(BaseGameClass):
             
         return summary
 
+LOG_DIR = "./capabilities_test_logs"
+
+def get_latest_capabilities_file(subject_name, dataset):
+    """
+    Finds the capabilities test file with the largest timestamp in its name
+    for a given subject and dataset.
+    The filename pattern is expected to be:
+    {LOG_DIR}/{subject_name_formatted}_{dataset}_500_{timestamp}_test_data_evaluated.json
+    """
+    subject_name_formatted = subject_name.replace("/", "-")
+    # Pattern for glob to find all relevant files
+    glob_pattern = f"{subject_name_formatted}_{dataset}_500_*_test_data_evaluated.json"
+    search_path = os.path.join(LOG_DIR, glob_pattern)
+    
+    matching_files = glob.glob(search_path)
+    
+    if not matching_files:
+        raise FileNotFoundError(f"No matching files found for pattern: {search_path} in directory {os.path.abspath(LOG_DIR)}")
+
+    latest_file = None
+    max_timestamp = -1
+
+    # Regex to extract the timestamp from the filename.
+    # Example filename part: claude-3-5-sonnet-20241022_SimpleQA_500_1746844605_test_data_evaluated.json
+    # We want to capture '1746844605'.
+    filename_regex = re.compile(
+        rf"^{re.escape(subject_name_formatted)}_{re.escape(dataset)}_500_(\d+)_test_data_evaluated\.json$"
+    )
+
+    for filepath in matching_files:
+        filename = os.path.basename(filepath) # Apply regex to the filename only
+        match = filename_regex.match(filename)
+        if match:
+            timestamp_str = match.group(1)
+            try:
+                timestamp = int(timestamp_str)
+                if timestamp > max_timestamp:
+                    max_timestamp = timestamp
+                    latest_file = filepath
+            except ValueError:
+                print(f"Warning: Could not parse timestamp from filename: {filename} in path {filepath}")
+                continue
+        else:
+            # This warning helps debug if glob returns unexpected files or regex is off
+            print(f"Warning: Filename {filename} (from path {filepath}) did not match expected pattern for timestamp extraction.")
+
+
+    if latest_file is None:
+        # This occurs if files were found by glob, but none matched the detailed regex pattern
+        # or failed timestamp parsing.
+        raise FileNotFoundError(
+            f"No files matching the expected naming pattern and containing a valid "
+            f"timestamp were found for subject '{subject_name}', dataset '{dataset}' "
+            f"using glob pattern '{glob_pattern}' in directory {os.path.abspath(LOG_DIR)}. "
+            f"Checked {len(matching_files)} potential files."
+        )
+        
+    return latest_file
+
 def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
     DATASET = "GPQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"grok-3-latest"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#'gemini-2.0-flash-001'#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"claude-3-5-sonnet-20241022"
-    CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
+    SUBJECT_NAME = 'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"#"gpt-4o-2024-08-06"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
-    
-    
+
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
-    N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.85  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.85  # Teammate accuracy for Phase 2
+    N_TRIALS_PHASE2 = 200 # Number of questions for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
+    TEMPERATURE = 0.0  # Temperature for LLM responses
+    SEED = 42  # Random seed for reproducibility
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
@@ -943,16 +1109,22 @@ def main():
     
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2
         'show_answer_with_correctness': False, # Only show correctness, not the answer itself
     }
     
+    if DATASET == "SimpleQA":
+        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
+    else:
+        CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
+
     # Initial setup explanation
     fbstr= "your and " if feedback_config['phase1_subject_feedback'] else ""
     phasestr = "both phases" if feedback_config['phase1_subject_feedback'] and feedback_config['phase2_subject_feedback'] else "phase 1"
+    qtypestr = "multiple choice" if not DATASET == "SimpleQA" else "short answer"
     initial_setup_explanation = """
     Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
     The game consists of two phases:
@@ -961,7 +1133,7 @@ def main():
     You want to maximize the total number of questions your team answers correctly. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """
     initial_setup_explanation = (f"""
-    Let's play a game! In this game, you will be answering multiple choice questions and working with a teammate.
+    Let's play a game! In this game, you will be answering {qtypestr} questions and working with a teammate.
     The game consists of two phases:
     1. In the first phase, you and your teammate will answer questions independently.
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
@@ -969,7 +1141,6 @@ def main():
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """)
-    
     # Include settings in the subject ID
     settings_suffix = ""
     if OVERRIDE_SUBJECT_ACCURACY is not None:
@@ -979,8 +1150,9 @@ def main():
     if REDACT_PHASE1_ANSWERS:
         settings_suffix += "_redacted"
     settings_suffix += f"_team{TEAMMATE_ACCURACY_PHASE2}"
+    settings_suffix += f"_temp{TEMPERATURE}"
         
-    SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}_{N_TRIALS_PHASE1}_{N_TRIALS_PHASE2}{settings_suffix}"
+    SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}_{N_TRIALS_PHASE1}_{N_TRIALS_PHASE2}{settings_suffix}_noeasy"
     
     try:
         # Create game instance
@@ -999,7 +1171,9 @@ def main():
             use_phase1_summary=USE_PHASE1_SUMMARY,
             use_phase1_history=USE_PHASE1_HISTORY,
             redact_phase1_answers=REDACT_PHASE1_ANSWERS,
-            initial_setup_explanation=initial_setup_explanation
+            initial_setup_explanation=initial_setup_explanation,
+            seed=SEED,
+            temperature=TEMPERATURE
         )
         
         # Run the game
