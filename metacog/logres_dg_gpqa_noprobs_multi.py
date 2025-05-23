@@ -72,11 +72,6 @@ def get_percent_non_alphabetic_whitespace(question_text):
     non_alphabetic_whitespace_chars = re.findall(r'[^a-zA-Z\s]', question_text)
     return (len(non_alphabetic_whitespace_chars) / len(question_text)) * 100
 
-def get_s_i_from_capabilities_map(q_id, capabilities_s_i_map):
-    """
-    Looks up S_i (1 if model knew it in capabilities test, 0 if not)
-    """
-    return capabilities_s_i_map.get(q_id)
 
 
 def prepare_regression_data_for_model(game_file_paths_list,
@@ -84,7 +79,6 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       capabilities_s_i_map_for_model):
     """
     Prepares a DataFrame for a model's game file(s).
-    Currently processes only the FIRST file in the provided list.
     
     Args:
         game_file_paths_list (list): List of paths to _game_data.json files.

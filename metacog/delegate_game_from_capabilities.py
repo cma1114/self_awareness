@@ -166,7 +166,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         first_result = next(iter(self.completed_data["results"].values()))
         
         # If it has options, it's multiple choice
-        self.is_short_answer = not ("options" in first_result and isinstance(first_result["options"], dict))
+        self.is_short_answer = not ("options" in first_result and isinstance(first_result["options"], dict) and len(first_result["options"]) > 0)
         
         return self.is_short_answer
         
@@ -215,7 +215,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
             # Store probabilities if available, might be useful for other analyses or extensions
             question_data_for_list["probs"] = result_item.get("probs")
 
-            if self.is_short_answer:
+            if False:###self.is_short_answer: #both are using the same format now
                 # Handle short answer format (e.g., from capabilities_test_logs)
                 # 'question' is an object containing details
                 question_details_obj = result_item.get("question", {})
@@ -1089,27 +1089,27 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASET = "GPQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = 'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"#"gpt-4o-2024-08-06"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASET = "SimpleQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
+    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"gpt-4o-2024-08-06"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
-    N_TRIALS_PHASE2 = 200 # Number of questions for Phase 2
+    N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
     TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
     TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 42  # Random seed for reproducibility
     
     # Optional settings
-    OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
+    OVERRIDE_SUBJECT_ACCURACY = 0.7  # Override subject's Phase 1 accuracy (None = use true accuracy)
     USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
     USE_PHASE1_HISTORY = True  # Include full Phase 1 history (set to False for shorter context)
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2
@@ -1117,7 +1117,8 @@ def main():
     }
     
     if DATASET == "SimpleQA":
-        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
+#        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
+        CAPABILITES_TEST_FILE = f"./compiled_results_sqa/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
     else:
         CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
 
@@ -1152,7 +1153,7 @@ def main():
     settings_suffix += f"_team{TEAMMATE_ACCURACY_PHASE2}"
     settings_suffix += f"_temp{TEMPERATURE}"
         
-    SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}_{N_TRIALS_PHASE1}_{N_TRIALS_PHASE2}{settings_suffix}_noeasy"
+    SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}_{N_TRIALS_PHASE1}_{N_TRIALS_PHASE2}{settings_suffix}"
     
     try:
         # Create game instance

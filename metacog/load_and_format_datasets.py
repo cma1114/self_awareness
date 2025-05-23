@@ -1,6 +1,7 @@
 from datasets import load_dataset
 import random
 import os
+import ast
 
 random.seed(42)  # For reproducibility
 hf_token = os.environ.get("HF_TOKEN")
@@ -404,11 +405,17 @@ def load_and_format_simpleqa(num_questions_needed=None, split="test", skip_quest
         if len(best_answer.strip()) == 0:
             continue
 
+        parsed_metadata = ast.literal_eval(item['metadata'])
+        topic=parsed_metadata['topic']
+        answer_type=parsed_metadata['answer_type']
+
         # Create the formatted dictionary
         formatted_q = {
             "id": potential_id,
             "question": question_text,
-            "correct_answer": best_answer
+            "correct_answer": best_answer,
+            "answer_type": answer_type,
+            "topic": topic
         }
         formatted_questions.append(formatted_q)
         question_ids_added.add(potential_id)

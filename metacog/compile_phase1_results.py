@@ -25,11 +25,19 @@ from collections import defaultdict
 LOG_DIRS = {
 #    "delegate_game_logs": "./delegate_game_logs",
 #    "pass_game_logs": "./pass_game_logs",
-    "capabilities_test_logs": "./capabilities_test_logs"
+#    "capabilities_test_logs": "./capabilities_test_logs",
+    "capabilities_results_sqa": "./capabilities_results_sqa",
 }
 
 VALID_DATASETS = ["GPQA", "SimpleQA", "MMLU", "TruthfulQA"]
 CUTOFF_DATE = datetime.datetime(2025, 4, 24).timestamp()  # April 24, 2025
+
+id_prefix_map = {
+    "GPQA": "gpqa_",
+    "MMLU": "mmlu_",
+    "TruthfulQA": "tqa_",
+    "SimpleQA": "sqa_"
+}
 
 def get_file_timestamp(file_path):
     """Get the file's modification timestamp from the OS."""
@@ -87,12 +95,6 @@ def extract_dataset_from_question_id(question_id):
 def is_dataset_file(file_path, dataset="GPQA", file_content=None):
     """Determine if a file contains questions from the specified dataset."""
     # Get the prefix for question IDs based on the dataset
-    id_prefix_map = {
-        "GPQA": "gpqa_",
-        "MMLU": "mmlu_",
-        "TruthfulQA": "tqa_",
-        "SimpleQA": "sqa_"
-    }
     id_prefix = id_prefix_map.get(dataset, "gpqa_")
     
     # Check filename pattern
@@ -178,13 +180,6 @@ def process_pass_game_file(file_path, dataset="GPQA"):
         # Process phase1 results
         results = []
         
-        # Get the prefix for question IDs based on the dataset
-        id_prefix_map = {
-            "GPQA": "gpqa_",
-            "MMLU": "mmlu_",
-            "TruthfulQA": "tqa_",
-            "SimpleQA": "sqa_"
-        }
         id_prefix = id_prefix_map.get(dataset, "gpqa_")
         
         # In pass_game_logs, phase1_results is a dictionary
@@ -225,13 +220,6 @@ def process_capabilities_test_file(file_path, dataset="GPQA"):
         # Process results
         results = []
         
-        # Get the prefix for question IDs based on the dataset
-        id_prefix_map = {
-            "GPQA": "gpqa_",
-            "MMLU": "mmlu_",
-            "TruthfulQA": "tqa_",
-            "SimpleQA": "sqa_"
-        }
         id_prefix = id_prefix_map.get(dataset, "gpqa_")
         
         # In capabilities_test_logs, it's called "results" and is a dictionary
@@ -247,7 +235,9 @@ def process_capabilities_test_file(file_path, dataset="GPQA"):
                         "correct_answer_label": result.get("question", {}).get("correct_answer", ""),
                         "subject_answer": result.get("subject_answer", ""),
                         "subject_correct": result.get("is_correct"),
-                        "probs": result.get("probs", None)
+                        "probs": result.get("probs", None),
+                        "judgments": result.get("judgments", None),
+                        "evaluation_method": result.get("evaluation_method", None)
                     }
                     results.append(result_obj)
         
@@ -259,13 +249,14 @@ def process_capabilities_test_file(file_path, dataset="GPQA"):
 def process_all_files(dataset="GPQA", targ_model=None):
     """Process all game data files and compile results per model for the specified dataset."""
     # Create output directory if it doesn't exist
-    output_dir = f"./compiled_results_{dataset.lower()}"
+    output_dir = f"./compiled_results_{id_prefix_map[dataset].replace('_', '')}"
     os.makedirs(output_dir, exist_ok=True)
     
     # Get all relevant files
     delegate_files = glob.glob(os.path.join(LOG_DIRS["delegate_game_logs"], "*_game_data.json")) if "delegate_game_logs" in LOG_DIRS else []
     pass_files = glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS[1], "*_phase1_data.json")) if "pass_game_logs" in LOG_DIRS else []
     capabilities_files = glob.glob(os.path.join(LOG_DIRS["capabilities_test_logs"], "*_test_data.json")) if "capabilities_test_logs" in LOG_DIRS else []
+    if "capabilities_results_sqa" in LOG_DIRS: capabilities_files += glob.glob(os.path.join(LOG_DIRS["capabilities_results_sqa"], "*_test_data_evaluated.json"))
     
     # Filter files by date
     recent_delegate_files = [f for f in delegate_files if get_file_timestamp(f) >= CUTOFF_DATE]
@@ -338,7 +329,9 @@ def compile_model_results(model, file_paths, all_results, output_dir, dataset="G
                     "correct_answer_label": result["correct_answer_label"],
                     "subject_answer": result["subject_answer"],
                     "is_correct": result["subject_correct"],
-                    "probs": result["probs"]
+                    "probs": result["probs"],
+                    "judgments": result.get("judgments", None),
+                    "evaluation_method": result.get("evaluation_method", None)
                 }
             }
         
@@ -371,7 +364,9 @@ def compile_model_results(model, file_paths, all_results, output_dir, dataset="G
                 "correct_answer_label": data["fields"]["correct_answer_label"],
                 "subject_answer": data["fields"]["subject_answer"],
                 "is_correct": responses[0]["is_correct"],
-                "probs": data["fields"]["probs"]  # Store probs from first entry
+                "probs": data["fields"]["probs"],  # Store probs from first entry
+                "judgments": data["fields"]["judgments"],
+                "evaluation_method": data["fields"]["evaluation_method"]
             }
             
             # Count correct responses for accuracy calculation
@@ -410,9 +405,9 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "GPQA"
+    dataset = "SimpleQA"# "GPQA"
     
-    process_all_files(dataset, targ_model="gpt-4o-2024-08-06")
+    process_all_files(dataset)#, targ_model="gpt-4o-2024-08-06")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

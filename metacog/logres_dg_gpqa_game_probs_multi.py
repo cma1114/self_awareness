@@ -72,12 +72,6 @@ def get_percent_non_alphabetic_whitespace(question_text):
     non_alphabetic_whitespace_chars = re.findall(r'[^a-zA-Z\s]', question_text)
     return (len(non_alphabetic_whitespace_chars) / len(question_text)) * 100
 
-def get_s_i_from_capabilities_map(q_id, capabilities_s_i_map):
-    """
-    Looks up S_i (1 if model knew it in capabilities test, 0 if not)
-    """
-    return capabilities_s_i_map.get(q_id)
-
 
 def prepare_regression_data_for_model(game_file_paths_list,
                                       gpqa_feature_lookup,

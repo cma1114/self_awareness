@@ -321,9 +321,9 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    delegate_game_file = "./delegate_game_logs/gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_temp0.0_1747758328_game_data.json"
+    delegate_game_file = "./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_100_subj0.7_team0.5_temp0.0_1747970647_game_data.json"
     
-    judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
+    judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
     
     print(f"Evaluating delegate game file: {delegate_game_file} using judges: {judge_models}")
     
