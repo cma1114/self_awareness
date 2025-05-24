@@ -113,7 +113,7 @@ class BaseGameClass:
         # Prepare common data
         user_msg = {"role": "user", "content": q_text}
         if options: 
-            options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
+            options_str = " or ".join(options) if len(options) == 2 else ", ".join(options[:-1]) + f", or {options[-1]}"
             system_msg = f"{setup_text}\nOutput ONLY the letter of your choice: {options_str}.\n"
         else:
             system_msg = f"{setup_text}"
