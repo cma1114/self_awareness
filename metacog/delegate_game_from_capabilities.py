@@ -18,6 +18,10 @@ import re
 from base_game_class import BaseGameClass
 import scipy.stats
 import glob
+from load_and_format_datasets import load_and_format_dataset
+
+PHASE1_TYPES = None#["Number", "Other", "Place"]
+PHASE2_TYPES = None#["Date", "Person"]
 
 class DelegateGameFromCapabilities(BaseGameClass):
     """
@@ -27,7 +31,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                  completed_results_file=None, dataset="GPQA",
                  n_trials_phase1=100, n_trials_phase2=100,
                  teammate_accuracy_phase1=0.7, teammate_accuracy_phase2=0.7,
-                 feedback_config=None, override_subject_accuracy=None,
+                 feedback_config=None, override_subject_accuracy=None, randomize_phase1_answers=False,
                  use_phase1_summary=True, use_phase1_history=True,
                  redact_phase1_answers=False, initial_setup_explanation="",
                  seed=None, temperature=0.0):
@@ -46,6 +50,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
             teammate_accuracy_phase2 (float): The teammate's target accuracy in Phase 2 (0.0 to 1.0).
             feedback_config (dict): Configuration for feedback options.
             override_subject_accuracy (float): If not None, overrides subject accuracy in phase 1.
+            randomize_phase1_answers (bool): If True, randomizes the subject's answers/correctness in Phase 1.
             use_phase1_summary (bool): Whether to include a summary of phase 1 in the history.
             use_phase1_history (bool): Whether to include the full phase 1 history.
             redact_phase1_answers (bool): If True, replaces subject's phase 1 answers with "[redacted]".
@@ -70,6 +75,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         self.teammate_accuracy_phase1 = teammate_accuracy_phase1
         self.teammate_accuracy_phase2 = teammate_accuracy_phase2
         self.override_subject_accuracy = override_subject_accuracy
+        self.randomize_phase1_answers = randomize_phase1_answers
         self.use_phase1_summary = use_phase1_summary
         self.use_phase1_history = use_phase1_history
         self.redact_phase1_answers = redact_phase1_answers
@@ -269,9 +275,24 @@ class DelegateGameFromCapabilities(BaseGameClass):
             num_incorrect_needed = len(self.all_incorrect_questions)
             num_correct_needed = min(self.n_trials_phase1 - num_incorrect_needed, len(self.all_correct_questions))
         
-        # Select the questions
-        phase1_correct_questions = self.all_correct_questions[:num_correct_needed]
-        phase1_incorrect_questions = self.all_incorrect_questions[:num_incorrect_needed]
+        #Filter to phase1 types if needed
+        if PHASE1_TYPES and self.dataset == "SimpleQA":
+            print("Loading main SimpleQA dataset for features...")
+            sqa_all_questions = load_and_format_dataset("SimpleQA") # This should have id, Question, high_level_domain, difficulty_score
+
+            sqa_feature_lookup = {
+                item['id']: {
+                    'answer_type': item.get('answer_type', 0),
+                    'topic': item['topic'],
+                    'q_text': item['question']
+                } for item in sqa_all_questions
+            }
+            phase1_correct_questions = [q for q in self.all_correct_questions if sqa_feature_lookup.get(q["id"], {}).get("answer_type") in PHASE1_TYPES][:num_correct_needed]
+            phase1_incorrect_questions = [q for q in self.all_incorrect_questions if sqa_feature_lookup.get(q["id"], {}).get("answer_type") in PHASE1_TYPES][:num_incorrect_needed]
+        else:
+            # Select the questions
+            phase1_correct_questions = self.all_correct_questions[:num_correct_needed]
+            phase1_incorrect_questions = self.all_incorrect_questions[:num_incorrect_needed]
         
         # Combine and shuffle
         self.phase1_questions = phase1_correct_questions + phase1_incorrect_questions
@@ -296,9 +317,24 @@ class DelegateGameFromCapabilities(BaseGameClass):
         2. Have a proportion of correct questions matching self.true_subject_accuracy
            for the self.n_trials_phase2 questions, as much as possible.
         """
-        # Filter out questions already used in Phase 1
-        remaining_correct_ordered = [q for q in self.all_correct_questions if q["id"] not in self.phase1_question_ids]
-        remaining_incorrect_ordered = [q for q in self.all_incorrect_questions if q["id"] not in self.phase1_question_ids]
+        #Filter to phase1 types if needed
+        if PHASE2_TYPES and self.dataset == "SimpleQA":
+            print("Loading main SimpleQA dataset for features...")
+            sqa_all_questions = load_and_format_dataset("SimpleQA") # This should have id, Question, high_level_domain, difficulty_score
+
+            sqa_feature_lookup = {
+                item['id']: {
+                    'answer_type': item.get('answer_type', 0),
+                    'topic': item['topic'],
+                    'q_text': item['question']
+                } for item in sqa_all_questions
+            }
+            remaining_correct_ordered = [q for q in self.all_correct_questions if sqa_feature_lookup.get(q["id"], {}).get("answer_type") in PHASE2_TYPES and q["id"] not in self.phase1_question_ids]
+            remaining_incorrect_ordered = [q for q in self.all_incorrect_questions if sqa_feature_lookup.get(q["id"], {}).get("answer_type") in PHASE2_TYPES and q["id"] not in self.phase1_question_ids]
+        else:
+            # Filter out questions already used in Phase 1
+            remaining_correct_ordered = [q for q in self.all_correct_questions if q["id"] not in self.phase1_question_ids]
+            remaining_incorrect_ordered = [q for q in self.all_incorrect_questions if q["id"] not in self.phase1_question_ids]
 
         total_remaining_questions = len(remaining_correct_ordered) + len(remaining_incorrect_ordered)
         
@@ -428,6 +464,9 @@ class DelegateGameFromCapabilities(BaseGameClass):
         
         # Process each question in Phase 1 only if we're using phase1_history
         if self.use_phase1_history:
+            if self.randomize_phase1_answers:
+                dummy_corrects = [0] * int(self.n_trials_phase1 * (1-self.subject_accuracy_phase1)) + [1] * int(self.n_trials_phase1 * self.subject_accuracy_phase1)
+                random.shuffle(dummy_corrects)
             for i, question in enumerate(self.phase1_questions):
                 q_id = question["id"]
                     
@@ -455,7 +494,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 
                 # Add feedback message if configured
                 feedback_text = ""
-                subject_correct = question.get("is_correct", False)
+                subject_correct = question.get("is_correct", False) if not self.randomize_phase1_answers else dummy_corrects[i]
                 
                 if self.feedback_config['phase1_subject_feedback']:
                     subject_answer = question.get("subject_answer", "")
@@ -545,6 +584,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
             # This is like show_full_phase1_history=True in delegate_game.py
             message_history = self._create_simulated_phase1_history()
             final_feedback = self.pending_feedback  # Use the pending feedback from Phase 1
+            print(f"Message history: {message_history}")
             print(f"final_feedback: {final_feedback}")
             # No need to set final_feedback - it will be empty as in delegate_game.py
         elif not self.use_phase1_summary:
@@ -1096,16 +1136,18 @@ def main():
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.0  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.0  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 42  # Random seed for reproducibility
+    SEED = 333  # Random seed for reproducibility
+    FILTERED = False
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = 0.7  # Override subject's Phase 1 accuracy (None = use true accuracy)
     USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
     USE_PHASE1_HISTORY = True  # Include full Phase 1 history (set to False for shorter context)
-    REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
+    REDACT_PHASE1_ANSWERS = True  # Redact subject's Phase 1 answers
+    RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
     
     # Feedback configuration
     feedback_config = {
@@ -1148,8 +1190,14 @@ def main():
         settings_suffix += f"_subj{OVERRIDE_SUBJECT_ACCURACY}"
     if not USE_PHASE1_HISTORY:
         settings_suffix += "_nohistory"
+    if USE_PHASE1_SUMMARY:
+        settings_suffix += "_summary"
     if REDACT_PHASE1_ANSWERS:
         settings_suffix += "_redacted"
+    if RANDOMIZE_PHASE1_ANSWERS:
+        settings_suffix += "_randomized"
+    if FILTERED:
+        settings_suffix += "_filtered"
     settings_suffix += f"_team{TEAMMATE_ACCURACY_PHASE2}"
     settings_suffix += f"_temp{TEMPERATURE}"
         
@@ -1169,6 +1217,7 @@ def main():
             teammate_accuracy_phase2=TEAMMATE_ACCURACY_PHASE2,
             feedback_config=feedback_config,
             override_subject_accuracy=OVERRIDE_SUBJECT_ACCURACY,
+            randomize_phase1_answers=RANDOMIZE_PHASE1_ANSWERS,
             use_phase1_summary=USE_PHASE1_SUMMARY,
             use_phase1_history=USE_PHASE1_HISTORY,
             redact_phase1_answers=REDACT_PHASE1_ANSWERS,
