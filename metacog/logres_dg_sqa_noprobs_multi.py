@@ -101,7 +101,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
         return None
 
     for game_file_path in game_file_paths_list:
-        judgment_data_for_file = {}
+        judgment_data, teammate_judgment_data = {}, {}
         try:
             with open(game_file_path, 'r', encoding='utf-8') as f:
                 game_data = json.load(f)
@@ -114,9 +114,20 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     if isinstance(judgment_content, dict) and "results" in judgment_content and isinstance(judgment_content["results"], dict):
                         for qid, q_data in judgment_content["results"].items():
                             if isinstance(q_data, dict) and "delegate" in q_data:
-                                judgment_data_for_file[qid] = q_data["delegate"]
+                                judgment_data[qid] = q_data["delegate"]
                 except Exception as e_judge:
                     print(f"Error loading or parsing judgment file {judgment_file_path}: {e_judge}")
+            judgment_file_path = game_file_path.replace("_game_data_evaluated.json", "_game_data_evaluated_teammatejudgment_judge_data.json")
+            if os.path.exists(judgment_file_path):
+                try:
+                    with open(judgment_file_path, 'r', encoding='utf-8') as jf:
+                        judgment_content = json.load(jf)
+                    if isinstance(judgment_content, dict) and "results" in judgment_content and isinstance(judgment_content["results"], dict):
+                        for qid, q_data in judgment_content["results"].items():
+                            if isinstance(q_data, dict) and "delegate" in q_data:
+                                teammate_judgment_data[qid] = q_data["delegate"]
+                except Exception as e_judge:
+                    print(f"Error loading or parsing teammate judgment file {judgment_file_path}: {e_judge}")
         except Exception as e:
             print(f"Error loading game file {game_file_path}: {e}")
             continue
@@ -133,8 +144,9 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 "nobio_file": "_nobio_" in filename_base,
                 "noeasy_file": "_noeasy_" in filename_base,
                 "noctr_file": "_noctr_" in filename_base,
-                "judgment_data": judgment_data_for_file
-            })
+                "judgment_data": judgment_data,
+                "teammate_judgment_data": teammate_judgment_data
+                })
 
     if not file_level_features_cache:
         print(f"No valid game data found in the provided files.")
@@ -154,7 +166,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
     create_noeasy_reg = len(set(f["noeasy_file"] for f in file_level_features_cache)) > 1
     create_noctr_reg = len(set(f["noctr_file"] for f in file_level_features_cache)) > 1
 
-    for file_data in file_level_features_cache:
+    for file_id, file_data in enumerate(file_level_features_cache):
         for trial in file_data["trials"]:
             q_id = trial.get("question_id")
             delegation_choice_str = trial.get("delegation_choice")
@@ -182,8 +194,12 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'answer_type': sqa_features['answer_type'],
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
-                    'judge_delegate': file_data.get("judgment_data", {}).get(q_id, np.nan)
+                    'judge_delegate': file_data.get("judgment_data", {}).get(q_id, np.nan),
+                    'teammate_judge_delegate': file_data.get("teammate_judgment_data", {}).get(q_id, np.nan),
+                    'experiment_id': file_id,
                 }
+                if not np.isnan(trial_data_dict['judge_delegate']) and not np.isnan(trial_data_dict['teammate_judge_delegate']):
+                    trial_data_dict['judge_delegate_combined'] = 0 if trial_data_dict['judge_delegate'] == 0 and trial_data_dict['teammate_judge_delegate'] == 1 else 1
 
                 if create_teammate_skill_ratio_reg and file_data["teammate_accuracy_phase1_file"] is not None:
                     trial_data_dict['teammate_skill_ratio'] = file_data["teammate_accuracy_phase1_file"] / subject_acc_for_ratio_calc
@@ -202,6 +218,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
     if 'judge_delegate' in df_to_return.columns and not df_to_return['judge_delegate'].notna().any():
         df_to_return = df_to_return.drop(columns=['judge_delegate'])
+    if 'teammate_judge_delegate' in df_to_return.columns and not df_to_return['teammate_judge_delegate'].notna().any():
+        df_to_return = df_to_return.drop(columns=['teammate_judge_delegate'])
     
     return df_to_return
 
@@ -283,8 +301,13 @@ if __name__ == "__main__":
         print(f"Error: Ensure directories exist: {game_logs_dir}, {capabilities_dir}")
         exit()
 
+    skip_files = []#['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.1_temp0.0_1748028564_game_data_evaluated.json', 'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.2_temp0.0_1748028190_game_data_evaluated.json',  'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746405_game_data_evaluated.json']
+
     model_game_files = defaultdict(list)
     for game_filename in sorted(os.listdir(game_logs_dir)):
+        if game_filename in skip_files:
+            continue
+
         if game_filename.endswith("_game_data_evaluated.json") and "_SimpleQA_" in game_filename:
             model_name_part = game_filename.split("_SimpleQA_")[0]
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
@@ -426,7 +449,7 @@ if __name__ == "__main__":
                     log_output("                  topic+answer_type By delegate:\n")
                     log_output(proportions)
 
-                    conditional_regressors = ['summary', 'nobio', 'noeasy', 'noctr', 'judge_delegate']
+                    conditional_regressors = ['summary', 'nobio', 'noeasy', 'noctr', 'judge_delegate', 'teammate_judge_delegate']
 
                     final_model_terms = list(base_model_terms)
                     if 'teammate_skill_ratio' in df_model.columns:
@@ -470,7 +493,7 @@ if __name__ == "__main__":
 
                     # Model 5.5 (If judge_delegate was used in Model 5, do a model without it)
                     if 'judge_delegate' in final_model_terms_m5:
-                        final_model_terms_m55 = [t for t in final_model_terms_m5 if t != 'judge_delegate']
+                        final_model_terms_m55 = [t for t in final_model_terms_m5 if t != 'judge_delegate' and t != 'teammate_judge_delegate']
                         model_def_str_5_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m55)
                         log_output(f"\n                  Model 5.5: {model_def_str_5_5}")
                         try:
@@ -479,6 +502,36 @@ if __name__ == "__main__":
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 5.5: {e_full}")
                     
+                    # Model 5.6 (If judge_delegate_combined exists, do a model with it)
+                    if 'judge_delegate_combined' in df_model.columns:
+                        final_model_terms_m56 = [t for t in final_model_terms_m5 if t != 'judge_delegate' and t != 'teammate_judge_delegate']
+                        final_model_terms_m56.append('judge_delegate_combined')
+                        model_def_str_5_6 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m56)
+                        log_output(f"\n                  Model 5.6: {model_def_str_5_6}")
+                        try:
+                            logit_model5_6 = smf.logit(model_def_str_5_6, data=df_model).fit(**fit_kwargs)
+                            log_output(logit_model5_6.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 5.6: {e_full}")
+
+                        final_model_terms_m57 = final_model_terms_m5
+                        model_def_str_5_7 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m57)
+                        log_output(f"\n                  Model 5.7: {model_def_str_5_7}")
+                        try:
+                            binomial_family = sm.families.Binomial()
+                            exchangeable_cov = sm.cov_struct.Exchangeable() 
+                            logit_model5_7 = smf.gee(
+                                formula=model_def_str_5_7,
+                                groups="experiment_id",  
+                                data=df_model,
+                                family=binomial_family,
+                                cov_struct=exchangeable_cov # Or independence_cov
+                            )
+                            log_output(logit_model5_7.fit().summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 5.7: {e_full}")
+
+
                     # Model 6 (Like M5, but on subset after determinism check)
                     df_subset_m6, identified_deterministic_cats = identify_and_handle_deterministic_categories(
                         df_model, 'delegate_choice', [topic_column_for_formula, ans_type_column_for_formula], min_obs_per_category)
@@ -508,6 +561,17 @@ if __name__ == "__main__":
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 7: {e_full}")
 
+                    # Model 7.5 (Model 7 minus teammate_skill_ratio)
+                    if 'teammate_skill_ratio' in final_model_terms_m7:
+                        final_model_terms_m75 = [t for t in final_model_terms_m7 if t != 'teammate_skill_ratio']
+                        model_def_str_7_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m75)
+                        log_output(f"\n                  Model 7.5: {model_def_str_7_5}")
+                        try:
+                            logit_model7_5 = smf.logit(model_def_str_7_5, data=df_model).fit(**fit_kwargs)
+                            log_output(logit_model7_5.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 7.5: {e_full}")
+
                     # Model 8 (judge_delegate only)
                     if 'judge_delegate' in df_model.columns:
                         model_def_str_8 = 'delegate_choice ~ judge_delegate'
@@ -518,6 +582,28 @@ if __name__ == "__main__":
                             log_output(logit_model8.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 8: {e_full}")
+
+                    # Model 8.5 (teammate_judge_delegate only)
+                    if 'teammate_judge_delegate' in df_model.columns:
+                        model_def_str_8 = 'delegate_choice ~ teammate_judge_delegate'
+                        log_output(f"\n                  Model 8.5: {model_def_str_8}")
+                        try:
+                            # Use original fit_kwargs which might include clustering by q_id
+                            logit_model8 = smf.logit(model_def_str_8, data=df_model).fit(**fit_kwargs)
+                            log_output(logit_model8.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 8.5: {e_full}")
+
+                    # Model 8.6 (judge_delegates only)
+                    if 'teammate_judge_delegate' in df_model.columns and 'judge_delegate' in df_model.columns:
+                        model_def_str_8 = 'delegate_choice ~ teammate_judge_delegate + judge_delegate'
+                        log_output(f"\n                  Model 8.6: {model_def_str_8}")
+                        try:
+                            # Use original fit_kwargs which might include clustering by q_id
+                            logit_model8 = smf.logit(model_def_str_8, data=df_model).fit(**fit_kwargs)
+                            log_output(logit_model8.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 8.6: {e_full}")
 
                     # Model 9 (judge_delegate but not other surface regessors)
                     if 'judge_delegate' in df_model.columns:
@@ -540,6 +626,17 @@ if __name__ == "__main__":
                             log_output(logit_model10.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 10: {e_full}")
+                            
+                    # Model 10.5 (teammate_judge_delegate vs s_i_capability)
+                    if 'teammate_judge_delegate' in df_model.columns:
+                        model_def_str_10 = 'delegate_choice ~ teammate_judge_delegate + s_i_capability'
+                        log_output(f"\n                  Model 10.5: {model_def_str_10}")
+                        try:
+                            # Use original fit_kwargs which might include clustering by q_id
+                            logit_model10 = smf.logit(model_def_str_10, data=df_model).fit(**fit_kwargs)
+                            log_output(logit_model10.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 10.5: {e_full}")
                             
                 else:
                     log_output("\n                  Skipping Full Models due to insufficient data points (<=20).", print_to_console=True)

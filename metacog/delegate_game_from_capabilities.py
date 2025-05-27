@@ -680,7 +680,8 @@ class DelegateGameFromCapabilities(BaseGameClass):
                     phase_header += "For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer."
                 
                 # Determine the question text - include full setup with feedback/summary only for first question
-                question_text = (final_feedback + "\n" if i == 0 else "") + phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
+#                question_text = (final_feedback + "\n" if i == 0 else "") + phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
+                question_text = phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
                 
                 # Get the answer using a fresh message history for each question
                 subject_decision, _, probs = self._get_llm_answer(
@@ -1130,23 +1131,23 @@ def main():
     
     # Model and dataset configuration
     DATASET = "SimpleQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"gpt-4o-2024-08-06"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "grok-3-latest"#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.0  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.0  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 333  # Random seed for reproducibility
+    SEED = 42  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
-    OVERRIDE_SUBJECT_ACCURACY = 0.7  # Override subject's Phase 1 accuracy (None = use true accuracy)
+    OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
     USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
     USE_PHASE1_HISTORY = True  # Include full Phase 1 history (set to False for shorter context)
-    REDACT_PHASE1_ANSWERS = True  # Redact subject's Phase 1 answers
+    REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
     
     # Feedback configuration
@@ -1183,6 +1184,7 @@ def main():
     The goal is to see how well you can work with your teammate and make decisions together.
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
+    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
     """)
     # Include settings in the subject ID
     settings_suffix = ""

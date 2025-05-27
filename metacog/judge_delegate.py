@@ -12,10 +12,10 @@ class JudgeDelegate(BaseGameClass):
         name_parts = game_file.split("_")
         dataset_name = name_parts[1]
         self.log_dir = "delegate_game_logs"
-        super().__init__(game_file.split(".json")[0]+"_judgment", subject_name, is_human_player=False, log_dir=self.log_dir)
+        super().__init__(game_file.split(".json")[0]+"_teammatejudgment", subject_name, is_human_player=False, log_dir=self.log_dir)
 
         self.results = {}
-        self.log_suffix = "_samejudge_data"            
+        self.log_suffix = "_judge_data"            
         self.judgement_file = f"./{self.log_dir}/{self.subject_id}{self.log_suffix}.json"
 
         try:
@@ -31,11 +31,14 @@ class JudgeDelegate(BaseGameClass):
         t_cor_needed = int(round(teammate_accuracy_phase1 * n_trials_phase1))
 
         qtype = "short answer" if dataset_name == "SimpleQA" else "multiple choice"
+
         setup_text = (f"""I'm going to show you the transcript of a quiz game. The game consists of a quizmaster asking {qtype} questions to two players, called Player X and Player Y. 
         The transcript includes feedback on the correctness of both players' answers, although it doesn't include the answers themselves. At the end of the transcript you'll see a new question drawn from the same dataset. 
         I want you to tell me whether, based on everything you've seen in the transcript, you think Player X or Player Y is more likely to answer the new question correctly. 
         Respond with \"X\" if you think Player X is more likely to answer correctly, or \"Y\" if you think Player Y is more likely to answer correctly. You must respond with one of those two options.""")
 
+        judge_target = "Teammate" #"Self"
+        ## Model seems to always pick the one with higher overall accuracy, so switch to Y/N correctness prediction
         setup_text = (f"""I'm going to show you the transcript of a quiz game. The game consists of a quizmaster asking {qtype} questions to a player, called Player X. 
         The transcript includes feedback on the correctness of the player' answers, although it doesn't include the answers themselves. At the end of the transcript you'll see a new question drawn from the same dataset. 
         I want you to tell me whether, based on everything you've seen in the transcript, you think Player X knows the answer to the new question. 
@@ -46,7 +49,10 @@ class JudgeDelegate(BaseGameClass):
         for i, message in enumerate(message_history):
             if message["role"] == "user":
                 content = message["content"]
-                content = re.sub(r'Your answer:([^(]+\((?:Correct|Incorrect)\))', r"Player X's answer:\1", content)
+                if judge_target == "Self":
+                    content = re.sub(r'Your answer:([^(]+\((?:Correct|Incorrect)\))', r"Player X's answer:\1", content)
+                else:
+                    content = content.replace("Teammate's answer:", "Player X's answer:")
                 content = content.replace("Your answer: ", "")
                 if i == 0: 
                     message_history_str = "\n\nTranscript: \n\n------------------------------\nQuestion 1/" + content.split("------------------------------\nQuestion 1/")[-1]
@@ -58,14 +64,20 @@ class JudgeDelegate(BaseGameClass):
         t_cor = message_history_str.count("Teammate's answer: (Correct)")
         message_history_str = message_history_str.replace("Teammate's answer:", "Player Y's answer:")
 
-        message_history_str = message_history_str.replace("Player Y's answer: (Correct)\n", "")
-        message_history_str = message_history_str.replace("Player Y's answer: (Incorrect)\n", "")
+        if judge_target == "Self":
+            message_history_str = message_history_str.replace("Player Y's answer: (Correct)\n", "")
+            message_history_str = message_history_str.replace("Player Y's answer: (Incorrect)\n", "")
+        else:
+            message_history_str = message_history_str.replace("Your answer: (Correct)\n", "")
+            message_history_str = message_history_str.replace("Your answer: (Incorrect)\n", "")
 
         #finish last feedback
         phase1_questions = game_data["phase1_questions"]
         subject_correct = phase1_questions[-1]["is_correct"]        
-        message_history_str += f"\nPlayer X's answer: ({'Correct' if subject_correct else 'Incorrect'})"
-###        message_history_str += f"\nPlayer Y's answer: ({'Correct' if t_cor < t_cor_needed else 'Incorrect'})"
+        if judge_target == "Self":
+           message_history_str += f"\nPlayer X's answer: ({'Correct' if subject_correct else 'Incorrect'})"
+        else:
+            message_history_str += f"\nPlayer X's answer: ({'Correct' if t_cor < t_cor_needed else 'Incorrect'})"
 
         self.preamble = setup_text+message_history_str
         print(self.preamble)
@@ -101,6 +113,7 @@ class JudgeDelegate(BaseGameClass):
                 [], # no history
                 keep_appending=False,
                 MAX_TOKENS=1
+                ,temp=1.0
             )
             print("Subject answer:", subject_answer)
             delegate = 1 if subject_answer == "N" else 0 if subject_answer == "Y" else None
@@ -120,11 +133,11 @@ class JudgeDelegate(BaseGameClass):
                     
         # Return the path to the capabilities data file
         capabilities_file_path = f"{self.log_base_name}{self.log_suffix}.json"
-        self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
+        self._log(f"Delegage judgment completed. Results saved to: {capabilities_file_path}")
         return True, capabilities_file_path
 
 def main():
-    judge_model = "claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"
+    judge_model = "gemini-2.5-flash-preview-04-17"#"claude-3-5-sonnet-20241022"#
     game_files = ['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.2_temp0.0_1748028190_game_data_evaluated.json', 
     'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_1747663996_game_data_evaluated.json', 
     'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_temp0.0_1747969867_game_data_evaluated.json', 

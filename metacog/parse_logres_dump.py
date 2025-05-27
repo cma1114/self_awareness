@@ -1,7 +1,14 @@
 import re
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm, chi2
+import warnings
+
+import re
 
 def parse_analysis_log(log_content, output_file):
-    target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered"
+    target_params = "Feedback_True, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered"
     
     block_start_regex = re.compile(
         r"--- Analyzing (\S+) \(" + re.escape(target_params) + r", \d+ game files\) ---"
@@ -9,20 +16,22 @@ def parse_analysis_log(log_content, output_file):
 
     prob_si0_regex = re.compile(r"^\s*Probability of delegating when s_i_capability is 0: (.*)$")
     prob_si1_regex = re.compile(r"^\s*Probability of delegating when s_i_capability is 1: (.*)$")
-    phase1_acc_regex = re.compile(r"^\s*Phase 1 self-accuracy \(from completed results, total - phase2\): (.*)$")
+    phase1_acc_regex = re.compile(r"^\s*Phase 1 accuracy: (.*)$")
     phase2_acc_regex = re.compile(r"^\s*Phase 2 self-accuracy: (.*)$")
 
-    # Regex for cross-tabulation
+    # Cross-tabulation regexes (unchanged)
     crosstab_title_regex = re.compile(r"^\s*Cross-tabulation of delegate_choice vs\. s_i_capability:$")
-    # This will match the line "s_i_capability     0   1" or similar with spaces
-    crosstab_col_header_regex = re.compile(r"^\s*s_i_capability\s+\S+\s+\S+") # Generalize for 0 and 1
-    # This matches the "delegate_choice" line that might appear before data rows
+    crosstab_col_header_regex = re.compile(r"^\s*s_i_capability\s+\S+\s+\S+")
     crosstab_row_header_label_regex = re.compile(r"^\s*delegate_choice\s*$")
-    # This matches a data row like "0 11 9" or "1 46 34"
-    crosstab_data_row_regex = re.compile(r"^\s*\d+\s+(\d+)\s+(\d+)\s*$") # Catches the two numbers
+    crosstab_data_row_regex = re.compile(r"^\s*\d+\s+(\d+)\s+(\d+)\s*$")
 
-    model4_start_regex = re.compile(r"^\s*Model 4.*(?:No Interactions)?.*: delegate_choice ~")
+    # Model 4 regexes (unchanged)
+    model4_start_regex = re.compile(r"^\s*Model 4.*\(No Interactions\).*:\s*delegate_choice ~")
     si_capability_line_regex = re.compile(r"^\s*s_i_capability\s+(-?\d+\.\d+)\s+.*$")
+
+    # *** NEW regexes for Log-Likelihood and Model 7 ***
+    log_likelihood_regex    = re.compile(r"Log-Likelihood:\s*([-\d\.]+)")
+    model7_start_regex      = re.compile(r"^\s*Model 7.*delegate_choice ~")
 
     analysis_blocks = re.split(r"(?=--- Analyzing )", log_content)
 
@@ -42,37 +51,55 @@ def parse_analysis_log(log_content, output_file):
                     "prob_si1": "Not found", "P1_n1": "Not found",
                     "phase1_acc": "Not found",
                     "phase2_acc": "Not found",
-                    "model4_si_cap": "Not found"
+                    "model4_si_cap": "Not found",
+                    # --- NEW fields ---
+                    "model4_log_lik": "Not found",
+                    "model7_log_lik": "Not found",
                 }
                 
                 # --- Cross-tab parsing state ---
                 parsing_crosstab = False
                 expecting_crosstab_col_header = False
-                expecting_crosstab_row_header_label = False # For the "delegate_choice" line
+                expecting_crosstab_row_header_label = False
                 crosstab_data_lines_collected = 0
-                temp_crosstab_cells = [] # To store the four cell values as they are found
+                temp_crosstab_cells = []
 
-                # --- Model 4 parsing state ---
+                # --- Model 4 parsing state (unchanged) ---
                 found_model4_summary = False
                 in_model4_summary_table = False
 
-                lines = block_content.splitlines()
-                for line_idx, line in enumerate(lines):
-                    # --- Standard extractions first ---
-                    m_prob_si0 = prob_si0_regex.match(line)
-                    if m_prob_si0: extracted_info["prob_si0"] = line.strip(); continue
-                    m_prob_si1 = prob_si1_regex.match(line)
-                    if m_prob_si1: extracted_info["prob_si1"] = line.strip(); continue
-                    m_phase1_acc = phase1_acc_regex.match(line)
-                    if m_phase1_acc: extracted_info["phase1_acc"] = line.strip(); continue
-                    m_phase2_acc = phase2_acc_regex.match(line)
-                    if m_phase2_acc: extracted_info["phase2_acc"] = line.strip(); continue
+                # --- Model 7 parsing state (NEW) ---
+                found_model7_summary = False
+                in_model7_summary_table = False
 
-                    # --- Cross-tabulation parsing state machine ---
+                lines = block_content.splitlines()
+                for line in lines:
+                    # --- Standard extractions first ---
+                    m = prob_si0_regex.match(line)
+                    if m:
+                        extracted_info["prob_si0"] = line.strip()
+                        continue
+
+                    m = prob_si1_regex.match(line)
+                    if m:
+                        extracted_info["prob_si1"] = line.strip()
+                        continue
+
+                    m = phase1_acc_regex.match(line)
+                    if m:
+                        extracted_info["phase1_acc"] = line.strip()
+                        continue
+
+                    m = phase2_acc_regex.match(line)
+                    if m:
+                        extracted_info["phase2_acc"] = line.strip()
+                        continue
+
+                    # --- Cross-tabulation parsing state machine (unchanged) ---
                     if crosstab_title_regex.match(line):
                         parsing_crosstab = True
                         expecting_crosstab_col_header = True
-                        expecting_crosstab_row_header_label = False # Reset
+                        expecting_crosstab_row_header_label = False
                         crosstab_data_lines_collected = 0
                         temp_crosstab_cells = []
                         continue
@@ -80,65 +107,91 @@ def parse_analysis_log(log_content, output_file):
                     if parsing_crosstab:
                         if expecting_crosstab_col_header and crosstab_col_header_regex.match(line):
                             expecting_crosstab_col_header = False
-                            expecting_crosstab_row_header_label = True # Next could be "delegate_choice"
+                            expecting_crosstab_row_header_label = True
                             continue
                         elif expecting_crosstab_row_header_label and crosstab_row_header_label_regex.match(line):
-                            expecting_crosstab_row_header_label = False # "delegate_choice" line found, now expect data
+                            expecting_crosstab_row_header_label = False
                             continue
-                        elif (not expecting_crosstab_col_header): # If col_header was found, or if row_header_label was optional/passed
-                            # This covers the case where delegate_choice line might be absent
-                            if expecting_crosstab_row_header_label: # If we were still expecting "delegate_choice" but got data
-                                expecting_crosstab_row_header_label = False # No longer expecting it
-
+                        else:
                             data_match = crosstab_data_row_regex.match(line)
                             if data_match:
-                                temp_crosstab_cells.append(int(data_match.group(1))) # Cell for s_i=0
-                                temp_crosstab_cells.append(int(data_match.group(2))) # Cell for s_i=1
+                                temp_crosstab_cells.append(int(data_match.group(1)))
+                                temp_crosstab_cells.append(int(data_match.group(2)))
                                 crosstab_data_lines_collected += 1
-                                if crosstab_data_lines_collected == 2:
-                                    # temp_crosstab_cells should be [val_row0_si0, val_row0_si1, val_row1_si0, val_row1_si1]
-                                    if len(temp_crosstab_cells) == 4:
-                                        n0_val = temp_crosstab_cells[0] + temp_crosstab_cells[2]
-                                        n1_val = temp_crosstab_cells[1] + temp_crosstab_cells[3]
-                                        extracted_info["P0_n0"] = str(n0_val)
-                                        extracted_info["P1_n1"] = str(n1_val)
-                                    parsing_crosstab = False # Done with this table
+                                if crosstab_data_lines_collected == 2 and len(temp_crosstab_cells) == 4:
+                                    n0 = temp_crosstab_cells[0] + temp_crosstab_cells[2]
+                                    n1 = temp_crosstab_cells[1] + temp_crosstab_cells[3]
+                                    extracted_info["P0_n0"] = str(n0)
+                                    extracted_info["P1_n1"] = str(n1)
+                                    parsing_crosstab = False
                                 continue
-                            else: # Line doesn't match data row, assume end of crosstab
+                            # blank or unexpected line ends crosstab
+                            if not line.strip():
                                 parsing_crosstab = False
-                        # If still expecting col_header but didn't get it, or other unexpected line
-                        elif not line.strip(): # Blank line might end the crosstab section prematurely
-                            parsing_crosstab = False
-                        # If line is not blank and doesn't match expected crosstab parts, assume crosstab ended
-                        elif line.strip() and not (expecting_crosstab_col_header or expecting_crosstab_row_header_label):
-                            parsing_crosstab = False
+                            continue
 
-
-                    # --- Model 4 s_i_capability parsing (remains the same) ---
-                    if not parsing_crosstab: # Only parse Model 4 if not in crosstab logic
+                    # --- Model 4 parsing (unchanged except for NEW log-likelihood capture) ---
+                    if not parsing_crosstab:
                         if not found_model4_summary and model4_start_regex.search(line):
                             found_model4_summary = True
-                            continue 
-                        
+                            continue
+
                         if found_model4_summary and not in_model4_summary_table:
-                            if "Logit Regression Results" in line or line.strip().startswith("==="):
-                                if line.strip().startswith("===") and line.strip().endswith("==="):
-                                    in_model4_summary_table = True
+                            # look for the separator line of "==="
+                            if line.strip().startswith("===") and line.strip().endswith("==="):
+                                in_model4_summary_table = True
                             continue
 
                         if in_model4_summary_table:
-                            m_si_cap = si_capability_line_regex.match(line)
-                            if m_si_cap:
+                            # *** NEW: capture Model 4 Log-Likelihood ***
+                            m_ll = log_likelihood_regex.search(line)
+                            if m_ll:
+                                extracted_info["model4_log_lik"] = m_ll.group(1)
+                                # keep parsing in case s_i_capability also appears later
+                            
+                            m_si = si_capability_line_regex.match(line)
+                            if m_si:
                                 extracted_info["model4_si_cap"] = line.strip()
-                                found_model4_summary = False 
-                                in_model4_summary_table = False 
-                            elif line.strip().startswith("--- Analyzing") or \
-                                (line.strip().startswith("Model ") and not model4_start_regex.search(line)) or \
-                                line.strip().startswith("--- Odds Ratio"):
+                                # done with Model 4 block
                                 found_model4_summary = False
                                 in_model4_summary_table = False
-                
-                # Write out the collected info
+                                continue
+
+                            # end Model 4 if we see next model or Odds Ratio
+                            if (line.strip().startswith("--- Analyzing") or
+                                (line.strip().startswith("Model ") and not model4_start_regex.search(line)) or
+                                line.strip().startswith("--- Odds Ratio")):
+                                found_model4_summary = False
+                                in_model4_summary_table = False
+
+                    # --- Model 7 parsing (NEW) ---
+                    if not parsing_crosstab:
+                        if not found_model7_summary and model7_start_regex.search(line):
+                            found_model7_summary = True
+                            continue
+
+                        if found_model7_summary and not in_model7_summary_table:
+                            if line.strip().startswith("===") and line.strip().endswith("==="):
+                                in_model7_summary_table = True
+                            continue
+
+                        if in_model7_summary_table:
+                            m_ll7 = log_likelihood_regex.search(line)
+                            if m_ll7:
+                                extracted_info["model7_log_lik"] = m_ll7.group(1)
+                                # done with Model 7 block
+                                found_model7_summary = False
+                                in_model7_summary_table = False
+                                continue
+
+                            # end Model 7 if next model or new section appears
+                            if (line.strip().startswith("--- Analyzing") or
+                                (line.strip().startswith("Model ") and not model7_start_regex.search(line)) or
+                                line.strip().startswith("--- Odds Ratio")):
+                                found_model7_summary = False
+                                in_model7_summary_table = False
+
+                # --- Write out the collected info ---
                 outfile.write(f"  {extracted_info['prob_si0']}\n")
                 if extracted_info["P0_n0"] != "Not found":
                     outfile.write(f"  P0_n0: {extracted_info['P0_n0']}\n")
@@ -148,16 +201,13 @@ def parse_analysis_log(log_content, output_file):
                 outfile.write(f"  {extracted_info['phase1_acc']}\n")
                 outfile.write(f"  {extracted_info['phase2_acc']}\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap']}\n")
+                # --- NEW outputs ---
+                outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
+                outfile.write(f"  Model 7 Log-Likelihood: {extracted_info['model7_log_lik']}\n")
                 outfile.write("\n")
-                
+
     print(f"Parsing complete. Output written to {output_file}")
 
-import re
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import norm
-import warnings
 
 # Z-score for 95% CI
 Z_SCORE = norm.ppf(0.975)
@@ -315,15 +365,9 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["prob_s1"] = parse_value(line, r":\s*(-?\d+\.?\d*)")
             elif "P1_n1:" in line:
                 current_subject_info["p1_n1"] = parse_value(line, r":\s*(\d+)", as_type=int)
-            elif "Phase 1 self-accuracy" in line: 
-                num, den = parse_fraction(line, r":\s*(\d+)/(\d+)")
-                if num is not None and den is not None:
-                    current_subject_info["p1_acc_val"] = num / den
-                    current_subject_info["p1_acc_n"] = den
-                else: 
-                    val_perc = parse_value(line, r"\((\d+\.?\d+)%\)")
-                    current_subject_info["p1_acc_val"] = val_perc / 100 if val_perc is not None else None
-                    current_subject_info["p1_acc_n"] = None 
+            elif "Phase 1 accuracy" in line: 
+                current_subject_info["p1_acc_val"] = parse_value(line, r":\s*(\d+\.?\d*)")
+                current_subject_info["p1_acc_n"] = parse_value(line, r"\(n=(\d+)\)", as_type=int)
             elif "Phase 2 self-accuracy:" in line: 
                 current_subject_info["p2_acc_val"] = parse_value(line, r":\s*(\d+\.?\d*)")
                 current_subject_info["p2_acc_n"] = parse_value(line, r"\(n=(\d+)\)", as_type=int)
@@ -355,9 +399,18 @@ def analyze_parsed_data(input_summary_file):
                         current_subject_info["si_coef_ci_high"] = float(all_floats[-1]) # Last float
                     else:
                         print(f"Warning: Could not parse enough float values for SI Coef from: '{coef_line_part}' in line: '{line}'")
-
                 else:
                     print(f"Warning: Could not find s_i_capability coefficient line structure in: '{line}'")        
+            elif line.startswith("Model 4 Log-Likelihood:"):
+                # e.g. "Model 4 Log-Likelihood: -41.318"
+                current_subject_info["loglik4"] = parse_value(
+                    line, r":\s*(-?\d+\.?\d*)", as_type=float
+                )
+
+            elif line.startswith("Model 7 Log-Likelihood:"):
+                current_subject_info["loglik7"] = parse_value(
+                    line, r":\s*(-?\d+\.?\d*)", as_type=float
+                )
         if current_subject_info.get("subject_name"): 
             all_subject_data.append(current_subject_info)
 
@@ -389,6 +442,14 @@ def analyze_parsed_data(input_summary_file):
         rev_si_ci_low = (-1 * si_ci_high_orig) if si_ci_high_orig is not None else np.nan
         rev_si_ci_high = (-1 * si_ci_low_orig) if si_ci_low_orig is not None else np.nan
         
+        LL4 = data.get("loglik4", np.nan)
+        LL7 = data.get("loglik7", np.nan)
+        # likelihood‐ratio test statistic
+        LR_stat   = 2 * (LL4 - LL7)
+        # df = 1 because Model 4 adds exactly one parameter (s_i_capability)
+        LR_pvalue = chi2.sf(LR_stat, df=1)
+
+
         results.append({
             "Subject": subject_name,
             "Delegating Ratio": delegating_ratio,
@@ -399,15 +460,16 @@ def analyze_parsed_data(input_summary_file):
             "AccLift_CI_High": acc_lift_ci_high,
             "Reversed SI Coef": rev_si_coef,
             "RevSICoef_CI_Low": rev_si_ci_low,
-            "RevSICoef_CI_High": rev_si_ci_high
+            "RevSICoef_CI_High": rev_si_ci_high,
+            "LL_Model4": LL4,
+            "LL_Model7": LL7,
+            "LR_stat": LR_stat,
+            "LR_pvalue": LR_pvalue
         })
         
     return pd.DataFrame(results)
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import warnings # Added for consistency, though not strictly needed here
+
 
 def break_subject_name(name, max_parts_per_line=3):
     """Breaks a subject name string by hyphens for better display."""
@@ -424,7 +486,7 @@ def break_subject_name(name, max_parts_per_line=3):
             wrapped_name += "-" # Add hyphen back
     return wrapped_name
 
-def plot_results(df_results, subject_order=None):
+def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
     if df_results.empty:
         print("No data to plot.")
         return
@@ -483,7 +545,7 @@ def plot_results(df_results, subject_order=None):
                color='lightcoral', # Removed label
                yerr=[yerr_acc_lift_low, yerr_acc_lift_high], ecolor='gray', capsize=5, width=0.6)
     axs[0].set_ylabel('Accuracy Difference (P2 Acc - P1 Acc)', fontsize=label_fontsize)
-    axs[0].set_title('Phase 2 Self-Accuracy Lift by Subject (95% CI)', fontsize=title_fontsize)
+    axs[0].set_title('Phase 2 Self-Accuracy Lift by LLM (95% CI)', fontsize=title_fontsize)
     axs[0].axhline(0, color='black', linestyle='--', linewidth=0.8)
     # axs[0].legend() # Removed legend
     axs[0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
@@ -499,7 +561,7 @@ def plot_results(df_results, subject_order=None):
                color='skyblue', # <<<--- REMOVED label= HERE
                yerr=[yerr_ratio_low, yerr_ratio_high], ecolor='gray', capsize=5, width=0.6)
     axs[1].set_ylabel('Ratio P(Del|S_i=0) / P(Del|S_i=1)', fontsize=label_fontsize)
-    axs[1].set_title('Preferential Delegating Ratio by Subject (95% CI)', fontsize=title_fontsize)
+    axs[1].set_title('Preferential Delegating Ratio by LLM (95% CI)', fontsize=title_fontsize)
     axs[1].axhline(1, color='red', linestyle='--', linewidth=0.8, label='Ratio = 1 (No Preference)') # This label WILL appear
     axs[1].legend(fontsize=legend_fontsize) # This will now only pick up the axhline label
     axs[1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
@@ -516,7 +578,7 @@ def plot_results(df_results, subject_order=None):
                color='mediumseagreen', # Removed label
                yerr=[yerr_si_low, yerr_si_high], ecolor='gray', capsize=5, width=0.6)
     axs[2].set_ylabel('Coefficient Value (Log-Odds Scale)', fontsize=label_fontsize)
-    axs[2].set_title('Reversed s_i_capability Coefficient (Model 4, Adjusted) by Subject (95% CI)', fontsize=title_fontsize)
+    axs[2].set_title('Introspection Coefficient by LLM (95% CI)', fontsize=title_fontsize)
     axs[2].axhline(0, color='black', linestyle='--', linewidth=0.8)
     # axs[2].legend() # Removed legend
     axs[2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
@@ -526,13 +588,13 @@ def plot_results(df_results, subject_order=None):
     # fig.text(0.5, 0.01, 'Subject', ha='center', va='center', fontsize=label_fontsize)
 
     plt.tight_layout(pad=3.0, h_pad=4.0) # Adjust h_pad for vertical spacing if titles/xlabels overlap
-    plt.savefig("subject_analysis_charts.png", dpi=300)
-    print("Charts saved to subject_analysis_charts.png")
+    plt.savefig(f"subject_analysis_charts_{dataset_name}.png", dpi=300)
+    print(f"Charts saved to subject_analysis_charts_{dataset_name}.png")
     plt.show()
 
 if __name__ == "__main__":
-    input_log_filename = "analysis_log_multi_logres_dg_gpqa.txt"
-    output_filename = f"{input_log_filename.split('.')[0]}_parsed.txt"
+    input_log_filename = "analysis_log_multi_logres_dg_simpleqa.txt"
+    output_filename = f"{input_log_filename.split('.')[0]}_fdbk_parsed.txt"
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
             log_content_from_file = f.read()
@@ -540,13 +602,15 @@ if __name__ == "__main__":
 
         df_results = analyze_parsed_data(output_filename)
         print("\n--- Calculated Data ---")
-        print(df_results.to_string()) # Print full DataFrame
+        print(df_results.to_string(formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")})) # Print full DataFrame
         
         model_list = ['grok-3-latest', 'gemini-1.5-pro', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
         model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
         model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
+
+        model_list = ['grok-3-latest', 'claude-3-5-sonnet-20241022']
         if not df_results.empty:
-            plot_results(df_results, model_list)
+            plot_results(df_results, subject_order=model_list, dataset_name="SimpleQA_fdbk")
         else:
             print("No results to plot.")
 

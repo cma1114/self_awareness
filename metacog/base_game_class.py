@@ -166,13 +166,16 @@ class BaseGameClass:
                         logprobs=True,
                         top_logprobs=len(options)                     
                     )   
-                    print(f"completion={completion}") 
+                    #print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip().upper()
                     if len(options) == 1: #short answer, just average
                         token_logprobs=completion.choices[0].logprobs.content
                         top_probs = []
                         for token_logprob in token_logprobs:
-                            top_logprob_value = token_logprob.top_logprobs[0].logprob
+                            if token_logprob.top_logprobs is None or len(token_logprob.top_logprobs) == 0:
+                                top_logprob_value = 0.0
+                            else:
+                                top_logprob_value = token_logprob.top_logprobs[0].logprob
                             top_prob = math.exp(top_logprob_value)
                             top_probs.append(top_prob)
                         token_probs = {resp: sum(top_probs)/len(top_probs)}

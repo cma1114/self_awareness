@@ -321,7 +321,7 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    delegate_game_file = "./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_100_subj0.7_redacted_team0.0_temp0.0_1748041337_game_data.json"
+    delegate_game_file = "./delegate_game_logs/grok-3-latest_SimpleQA_50_100_team0.1_temp0.0_1748293928_game_data.json"
     
     judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
     
