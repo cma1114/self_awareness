@@ -1131,16 +1131,16 @@ def main():
     
     # Model and dataset configuration
     DATASET = "SimpleQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = "grok-3-latest"#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"grok-3-latest"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 42  # Random seed for reproducibility
+    SEED = 33  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1184,8 +1184,9 @@ def main():
     The goal is to see how well you can work with your teammate and make decisions together.
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
     """)
+#    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
+
     # Include settings in the subject ID
     settings_suffix = ""
     if OVERRIDE_SUBJECT_ACCURACY is not None:

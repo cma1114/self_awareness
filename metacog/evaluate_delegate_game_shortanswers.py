@@ -188,7 +188,7 @@ Subject response: {subject_answer}
             print(f"Valid judges for file {game_data_file} (subject_id: {file_subject_id}): {valid_judge_models_for_file}")
 
 
-        for trial_data in game_data["results"]:
+        for ctr, trial_data in enumerate(game_data["results"]):
             if trial_data.get("delegation_choice") == "Self" and trial_data.get("subject_answer"):
                 trials_to_evaluate += 1
                 question_id = trial_data.get("question_id", f"q_{trials_to_evaluate}") # Fallback q_id
@@ -218,7 +218,7 @@ Subject response: {subject_answer}
                     continue
                 
                 # Step 2: LLM panel evaluation
-                print(f"Evaluating QID {question_id} using LLM panel for subject answer: '{subject_answer[:50]}...'")
+                print(f"Evaluating QID {question_id} (question {ctr}) using LLM panel for subject answer: '{subject_answer[:50]}...'")
                 model_judgments_dict = {}
 
                 # Check if there are any valid judges for this file before proceeding with LLM eval for this trial
@@ -321,7 +321,7 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    delegate_game_file = "./delegate_game_logs/grok-3-latest_SimpleQA_50_100_team0.1_temp0.0_1748293928_game_data.json"
+    delegate_game_file = "./delegate_game_logs/claude-sonnet-4-20250514_SimpleQA_50_100_team0.4_temp0.0_1748318943_game_data.json"
     
     judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
     

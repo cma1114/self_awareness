@@ -215,7 +215,7 @@ class CapabilitiesTest(BaseGameClass):
 def main():
     IS_HUMAN = False
     DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA"
-    subject_name = "gpt-4o-2024-08-06"#"deepseek-chat"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    subject_name = "claude-sonnet-4-20250514"#"gpt-4o-2024-08-06"#"deepseek-chat"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
     N_QUESTIONS = 500#447#  # Number of questions for capabilities measurement
     

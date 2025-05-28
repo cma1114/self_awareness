@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load API keys
-anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")##os.environ.get("ANTHROPIC_SPAR_API_KEY")
+anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")##os.environ.get("ANTHROPIC_API_KEY")##
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
