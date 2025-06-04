@@ -27,6 +27,8 @@ def load_and_format_dataset(dataset_name, num_questions_needed=None, split=None,
             return load_and_format_simpleqa(num_questions_needed, skip_questions=skip_questions)
         else:
             return load_and_format_simpleqa(num_questions_needed, split=split, skip_questions=skip_questions)
+    elif dataset_name=="SimpleMC":
+        return load_and_format_simplemc(num_questions_needed, skip_questions=skip_questions)
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}. Supported datasets are: GPQA, MMLU, TruthfulQA.")
 
@@ -371,6 +373,82 @@ def load_and_format_truthfulqa(num_questions_needed=None, split="validation", sk
         print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
 
     print(f"Successfully formatted {len(formatted_questions)} unique questions from TruthfulQA.")
+    return formatted_questions
+
+def load_and_format_simplemc(num_questions_needed=None, split="test", skip_questions=None):
+    import json
+    print(f"Attempting to load SimpleMC...")
+    try:
+        filename = "./SimpleMC.jsonl"
+        with open(filename, 'r') as f:
+            dataset = [json.loads(line) for line in f]
+        print("Dataset loaded successfully.")
+    except Exception as e:
+        print(f"Error loading SimpleQA dataset: {e}")
+        return None
+
+    formatted_questions = []
+
+    dataset_indices = list(range(len(dataset)))
+    random.shuffle(dataset_indices)
+
+    sqa_qs = load_and_format_simpleqa()
+    sqa_q_dict = {q['id']: q for q in sqa_qs}  # Convert to dict for quick lookup
+    
+    if not num_questions_needed: num_questions_needed = len(dataset)
+    print(f"Formatting {num_questions_needed} questions...")
+    for idx in dataset_indices:
+        if len(formatted_questions) >= num_questions_needed:
+            break
+
+        item = dataset[idx]
+        potential_id = f"sqa_{split}_{idx}"
+
+        question_text = item.get('question')
+        if skip_questions is not None and question_text in skip_questions:
+            continue
+
+        # Gather options
+        correct_answer_text = item['correct_answer'].strip()
+        incorrect_answers_text = item['distractors']
+        if len(correct_answer_text) == 0 or any(len(ans) == 0 for ans in incorrect_answers_text):
+            continue
+
+        # Create the pool of 4 options and shuffle
+        options_list = [correct_answer_text] + incorrect_answers_text
+        random.shuffle(options_list)
+
+        # Assign labels (A-D) and find the correct one
+        options_dict = {}
+        correct_label = None
+        labels = ["A", "B", "C", "D"]
+        
+        for i, option_text in enumerate(options_list):
+            label = labels[i]
+            options_dict[label] = option_text
+            if option_text == correct_answer_text:
+                correct_label = label
+
+
+        sqa_q = sqa_q_dict[potential_id]
+        topic=sqa_q['topic']
+        answer_type=sqa_q['answer_type']
+
+        # Create the formatted dictionary
+        formatted_q = {
+            "id": potential_id,
+            "question": question_text,
+            "options": options_dict,
+            "correct_answer": correct_label,
+            "answer_type": answer_type,
+            "topic": topic
+        }
+        formatted_questions.append(formatted_q)
+
+    if len(formatted_questions) < num_questions_needed:
+        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
+
+    print(f"Successfully formatted {len(formatted_questions)} unique questions from SimpleMC.")
     return formatted_questions
 
 def load_and_format_simpleqa(num_questions_needed=None, split="test", skip_questions=None):

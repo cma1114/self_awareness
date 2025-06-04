@@ -6,10 +6,6 @@ Processes files from:
 1. delegate_game_logs - Files with _game_data.json
 2. pass_game_logs - Files with _game_data.json or _phase1_data.json
 3. capabilities_test_logs - Files with _test_data.json
-
-Usage: python compile_phase1_results.py [DATASET]
-Where DATASET is one of: GPQA, SimpleQA, MMLU, TruthfulQA
-Default: GPQA
 """
 
 import os
@@ -23,20 +19,20 @@ from collections import defaultdict
 
 # Constants
 LOG_DIRS = {
-#    "delegate_game_logs": "./delegate_game_logs",
-#    "pass_game_logs": "./pass_game_logs",
-#    "capabilities_test_logs": "./capabilities_test_logs",
+    "delegate_game_logs": "./delegate_game_logs",
+    "pass_game_logs": "./pass_game_logs",
+    "capabilities_test_logs": "./capabilities_test_logs",
     "capabilities_results_sqa": "./capabilities_results_sqa",
 }
 
-VALID_DATASETS = ["GPQA", "SimpleQA", "MMLU", "TruthfulQA"]
 CUTOFF_DATE = datetime.datetime(2025, 4, 24).timestamp()  # April 24, 2025
 
 id_prefix_map = {
     "GPQA": "gpqa_",
     "MMLU": "mmlu_",
     "TruthfulQA": "tqa_",
-    "SimpleQA": "sqa_"
+    "SimpleQA": "sqa_",
+    "SimpleMC": "smc_"
 }
 
 def get_file_timestamp(file_path):
@@ -74,57 +70,37 @@ def extract_model_name_from_capabilities_file(filename):
     # Format: MODEL_DATASET_..._test_data.json
     parts = base.split("_")
     if len(parts) >= 2:
-        if parts[1] in ["GPQA", "SimpleQA", "MMLU", "TruthfulQA"]:
+        if parts[1] in id_prefix_map.keys():
             return parts[0]
     
     return "unknown"
 
-def extract_dataset_from_question_id(question_id):
-    """Extract dataset name from a question ID."""
-    if question_id.startswith("gpqa_"):
-        return "GPQA"
-    elif question_id.startswith("mmlu_"):
-        return "MMLU"
-    elif question_id.startswith("tqa_"):
-        return "TruthfulQA"
-    elif question_id.startswith("sqa_"):
-        return "SimpleQA"
-    else:
-        return None
-
-def is_dataset_file(file_path, dataset="GPQA", file_content=None):
+def is_dataset_file(file_path, dataset, file_content=None):
     """Determine if a file contains questions from the specified dataset."""
-    # Get the prefix for question IDs based on the dataset
-    id_prefix = id_prefix_map.get(dataset, "gpqa_")
     
     # Check filename pattern
     dataset_marker = f"_{dataset}_"
     if dataset_marker in file_path:  # Primary check, esp. for delegate & capabilities
         return True
 
-    if file_content:
+    if False:#file_content:
         # For delegate_game files
         if "phase1_results" in file_content and isinstance(file_content["phase1_results"], list):
             if file_content["phase1_results"]:  # Check if list is not empty
                 sample_item_result = file_content["phase1_results"][0]
                 if isinstance(sample_item_result, dict) and \
-                   "question_id" in sample_item_result and \
-                   sample_item_result["question_id"].startswith(id_prefix):
+                   "question_id" in sample_item_result:
                     return True
         
         # For pass_game files 
         if "phase1_results" in file_content and isinstance(file_content["phase1_results"], dict):
             if file_content["phase1_results"]:  # Check if dict is not empty
-                sample_id = next(iter(file_content["phase1_results"]))
-                if sample_id.startswith(id_prefix):
-                    return True
+                return True
         
         # For capabilities_test files 
         if "results" in file_content and isinstance(file_content["results"], dict):
             if file_content["results"]:  # Check if dict is not empty
-                sample_id = next(iter(file_content["results"]))
-                if sample_id.startswith(id_prefix):
-                    return True
+                return True
     return False
 
 def process_delegate_game_file(file_path, dataset="GPQA"):
@@ -179,25 +155,21 @@ def process_pass_game_file(file_path, dataset="GPQA"):
         
         # Process phase1 results
         results = []
-        
-        id_prefix = id_prefix_map.get(dataset, "gpqa_")
-        
+                
         # In pass_game_logs, phase1_results is a dictionary
         if "phase1_results" in data and isinstance(data["phase1_results"], dict):
             for question_id, result in data["phase1_results"].items():
-                # Only process questions from the specified dataset
-                if question_id.startswith(id_prefix):
-                    # Create result object
-                    result_obj = {
-                        "question_id": question_id,
-                        "question_text": result.get("question", {}).get("question", ""),
-                        "options": result.get("question", {}).get("options", {}),
-                        "correct_answer_label": result.get("question", {}).get("correct_answer", ""),
-                        "subject_answer": result.get("subject_answer", ""),
-                        "subject_correct": result.get("is_correct"),
-                        "probs": result.get("probs", None)
-                    }
-                    results.append(result_obj)
+                # Create result object
+                result_obj = {
+                    "question_id": question_id,
+                    "question_text": result.get("question", {}).get("question", ""),
+                    "options": result.get("question", {}).get("options", {}),
+                    "correct_answer_label": result.get("question", {}).get("correct_answer", ""),
+                    "subject_answer": result.get("subject_answer", ""),
+                    "subject_correct": result.get("is_correct"),
+                    "probs": result.get("probs", None)
+                }
+                results.append(result_obj)
         
         return model_name, file_path, results
     except Exception as e:
@@ -220,26 +192,22 @@ def process_capabilities_test_file(file_path, dataset="GPQA"):
         # Process results
         results = []
         
-        id_prefix = id_prefix_map.get(dataset, "gpqa_")
-        
         # In capabilities_test_logs, it's called "results" and is a dictionary
         if "results" in data and isinstance(data["results"], dict):
             for question_id, result in data["results"].items():
-                # Only process questions from the specified dataset
-                if question_id.startswith(id_prefix):
-                    # Create result object
-                    result_obj = {
-                        "question_id": question_id,
-                        "question_text": result.get("question", {}).get("question", ""),
-                        "options": result.get("question", {}).get("options", {}),
-                        "correct_answer_label": result.get("question", {}).get("correct_answer", ""),
-                        "subject_answer": result.get("subject_answer", ""),
-                        "subject_correct": result.get("is_correct"),
-                        "probs": result.get("probs", None),
-                        "judgments": result.get("judgments", None),
-                        "evaluation_method": result.get("evaluation_method", None)
-                    }
-                    results.append(result_obj)
+                # Create result object
+                result_obj = {
+                    "question_id": question_id,
+                    "question_text": result.get("question", {}).get("question", ""),
+                    "options": result.get("question", {}).get("options", {}),
+                    "correct_answer_label": result.get("question", {}).get("correct_answer", ""),
+                    "subject_answer": result.get("subject_answer", ""),
+                    "subject_correct": result.get("is_correct"),
+                    "probs": result.get("probs", None),
+                    "judgments": result.get("judgments", None),
+                    "evaluation_method": result.get("evaluation_method", None)
+                }
+                results.append(result_obj)
         
         return model_name, file_path, results
     except Exception as e:
@@ -254,7 +222,7 @@ def process_all_files(dataset="GPQA", targ_model=None):
     
     # Get all relevant files
     delegate_files = glob.glob(os.path.join(LOG_DIRS["delegate_game_logs"], "*_game_data.json")) if "delegate_game_logs" in LOG_DIRS else []
-    pass_files = glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS[1], "*_phase1_data.json")) if "pass_game_logs" in LOG_DIRS else []
+    pass_files = glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_phase1_data.json")) if "pass_game_logs" in LOG_DIRS else []
     capabilities_files = glob.glob(os.path.join(LOG_DIRS["capabilities_test_logs"], "*_test_data.json")) if "capabilities_test_logs" in LOG_DIRS else []
     if "capabilities_results_sqa" in LOG_DIRS: capabilities_files += glob.glob(os.path.join(LOG_DIRS["capabilities_results_sqa"], "*_test_data_evaluated.json"))
     
@@ -405,9 +373,9 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "SimpleQA"# "GPQA"
+    dataset = "SimpleMC"#"SimpleQA"# "GPQA"
     
-    process_all_files(dataset, targ_model="claude-sonnet-4-20250514")
+    process_all_files(dataset)#, targ_model="claude-sonnet-4-20250514")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

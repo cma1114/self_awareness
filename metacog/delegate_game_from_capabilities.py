@@ -187,7 +187,6 @@ class DelegateGameFromCapabilities(BaseGameClass):
             return
 
         if self.dataset == "GPQA":
-            from load_and_format_datasets import load_and_format_dataset
             gpqa_questions_with_features = load_and_format_dataset("GPQA") 
 
         for q_id, result_item in self.completed_data["results"].items():
@@ -1130,17 +1129,17 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASET = "SimpleQA"  # One of: GPQA, SimpleQA, MMLU, TruthfulQA
-    SUBJECT_NAME = "claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"grok-3-latest"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASET = "SimpleMC"  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA
+    SUBJECT_NAME = 'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gpt-4o-2024-08-06"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 33  # Random seed for reproducibility
+    SEED = 42  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1162,6 +1161,8 @@ def main():
     if DATASET == "SimpleQA":
 #        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
         CAPABILITES_TEST_FILE = f"./compiled_results_sqa/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
+    elif DATASET == "SimpleMC":
+        CAPABILITES_TEST_FILE = f"./compiled_results_smc/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
     else:
         CAPABILITES_TEST_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
 

@@ -70,17 +70,21 @@ class BaseGameClass:
 
     def _setup_logging(self, log_dir):
         """Set up logging files and directories."""
-        os.makedirs(f"./{log_dir}", exist_ok=True)
-        timestamp = int(time.time())
-        self.log_base_name = f"./{log_dir}/{self.subject_id}_{timestamp}"
-        self.log_filename = f"{self.log_base_name}.log"
-        self.game_data_filename = f"{self.log_base_name}_game_data.json"
+        if log_dir:
+            os.makedirs(f"./{log_dir}", exist_ok=True)
+            timestamp = int(time.time())
+            self.log_base_name = f"./{log_dir}/{self.subject_id}_{timestamp}"
+            self.log_filename = f"{self.log_base_name}.log"
+            self.game_data_filename = f"{self.log_base_name}_game_data.json"
+        else:
+            self.log_filename = None
 
     def _log(self, message):
         """Write to log file and console."""
         print(message)
-        with open(self.log_filename, 'a', encoding='utf-8') as f:
-            f.write(message + "\n")
+        if self.log_filename:
+            with open(self.log_filename, 'a', encoding='utf-8') as f:
+                f.write(message + "\n")
 
     def _call_with_timeout(self, fn, timeout=60):
         """
@@ -146,7 +150,7 @@ class BaseGameClass:
                         **({"system": system_msg} if system_msg != "" else {}),
                         messages=formatted_messages
                     )
-                    resp = message.content[0].text.strip().upper()
+                    resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":
                     if keep_appending:
@@ -167,7 +171,7 @@ class BaseGameClass:
                         top_logprobs=len(options)                     
                     )   
                     #print(f"completion={completion}") 
-                    resp = completion.choices[0].message.content.strip().upper()
+                    resp = completion.choices[0].message.content.strip()
                     if len(options) == 1: #short answer, just average
                         token_logprobs=completion.choices[0].logprobs.content
                         top_probs = []
@@ -181,7 +185,7 @@ class BaseGameClass:
                         token_probs = {resp: sum(top_probs)/len(top_probs)}
                     else:
                         entry = completion.choices[0].logprobs.content[0]
-                        tokens = [tl.token.strip().upper() for tl in entry.top_logprobs]
+                        tokens = [tl.token.strip() for tl in entry.top_logprobs]
                         probs = [math.exp(tl.logprob) for tl in entry.top_logprobs]
                         token_probs = dict(zip(tokens, probs))
                         #logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
@@ -245,7 +249,7 @@ class BaseGameClass:
                     lp_dict_arr=result["choices"][0]['logprobs']['content'][0]['top_logprobs']
                     tokens, probs = [], []
                     for lp_dict in lp_dict_arr:
-                        tokens.append(lp_dict['token'].strip().upper())
+                        tokens.append(lp_dict['token'].strip())
                         probs.append(math.exp(lp_dict['logprob']))
                     token_probs = dict((zip(tokens,probs)))
                     #print(f"tokens[0]={tokens[0]}, token_probs={token_probs}")
@@ -307,7 +311,7 @@ class BaseGameClass:
                             temperature=temp + attempt * temp_inc,
                         ), 
                     )
-                    resp = message.text.strip().upper()
+                    resp = message.text.strip()
                     return resp, None
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
@@ -326,7 +330,7 @@ class BaseGameClass:
                     delay = min(delay*2,15)
                     attempt -= 1 #don't increase temperature
                 continue
-            if resp in options or options == " ":
+            if resp.upper() in options or options == " ":
                 if token_probs: print(token_probs)
                 break
             attempt += 1
@@ -334,7 +338,7 @@ class BaseGameClass:
             if attempt == MAX_ATTEMPTS: break
 
         if keep_appending: message_history.append({"role": "assistant", "content": resp})
-        if resp not in options and options != " ":
+        if resp.upper() not in options and options != " ":
             self._log(f"Failed to get valid response for text: {q_text}; response: {resp}")
         return resp, message_history, token_probs
 
