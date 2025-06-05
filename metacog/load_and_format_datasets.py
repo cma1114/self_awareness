@@ -2,9 +2,13 @@ from datasets import load_dataset
 import random
 import os
 import ast
+import hashlib
 
 random.seed(42)  # For reproducibility
 hf_token = os.environ.get("HF_TOKEN")
+
+def text_to_id(text):
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 def load_and_format_dataset(dataset_name, num_questions_needed=None, split=None, skip_questions=None):
     if dataset_name=="GPQA":
@@ -275,7 +279,7 @@ def load_and_format_mmlu(num_questions_needed=None, split="auxiliary_train", ski
 
         # Create the formatted dictionary
         formatted_q = {
-            "id": f"mmlu_{idx}",
+            "id": f"mmlu_{text_to_id(question_text)}",
             "question": question_text,
             "options": options_dict,
             "correct_answer": correct_label
@@ -316,7 +320,9 @@ def load_and_format_truthfulqa(num_questions_needed=None, split="validation", sk
             break
 
         item = dataset[idx]
-        potential_id = f"tqa_{split}_{idx}"
+        potential_id = f"tqa_{split}_{text_to_id(question_text)}"
+        if potential_id in question_ids_added:
+            continue
 
         question_text = item.get('question')
         if skip_questions is not None and question_text in skip_questions:
@@ -393,16 +399,19 @@ def load_and_format_simplemc(num_questions_needed=None, split="test", skip_quest
     random.shuffle(dataset_indices)
 
     sqa_qs = load_and_format_simpleqa()
-    sqa_q_dict = {q['id']: q for q in sqa_qs}  # Convert to dict for quick lookup
+    sqa_q_dict = {q['question']: q for q in sqa_qs}  # Convert to dict for quick lookup
     
     if not num_questions_needed: num_questions_needed = len(dataset)
     print(f"Formatting {num_questions_needed} questions...")
+    question_ids_added = set()  # Keep track of IDs to ensure uniqueness
     for idx in dataset_indices:
         if len(formatted_questions) >= num_questions_needed:
             break
 
         item = dataset[idx]
-        potential_id = f"sqa_{split}_{idx}"
+        potential_id = f"sqa_{split}_{text_to_id(question_text)}"
+        if potential_id in question_ids_added:
+            continue
 
         question_text = item.get('question')
         if skip_questions is not None and question_text in skip_questions:
@@ -430,7 +439,7 @@ def load_and_format_simplemc(num_questions_needed=None, split="test", skip_quest
                 correct_label = label
 
 
-        sqa_q = sqa_q_dict[potential_id]
+        sqa_q = sqa_q_dict[question_text]
         topic=sqa_q['topic']
         answer_type=sqa_q['answer_type']
 
@@ -444,6 +453,7 @@ def load_and_format_simplemc(num_questions_needed=None, split="test", skip_quest
             "topic": topic
         }
         formatted_questions.append(formatted_q)
+        question_ids_added.add(potential_id)
 
     if len(formatted_questions) < num_questions_needed:
         print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
@@ -474,7 +484,9 @@ def load_and_format_simpleqa(num_questions_needed=None, split="test", skip_quest
             break
 
         item = dataset[idx]
-        potential_id = f"sqa_{split}_{idx}"
+        potential_id = f"sqa_{split}_{text_to_id(question_text)}"
+        if potential_id in question_ids_added:
+            continue
 
         question_text = item.get('problem')
         if skip_questions is not None and question_text in skip_questions:

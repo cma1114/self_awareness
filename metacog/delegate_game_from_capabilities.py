@@ -683,16 +683,26 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 question_text = phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
                 
                 # Get the answer using a fresh message history for each question
-                subject_decision, _, probs = self._get_llm_answer(
+                resp, _, probs = self._get_llm_answer(
                     valid_inputs if not self.is_short_answer else None,
                     question_text,
                     message_history=current_message_history,
                     keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] else True),
-                    MAX_TOKENS=1 if not self.is_short_answer else None,
+                    MAX_TOKENS=None,#####1 if not self.is_short_answer else None,
                     temp=self.temperature
                 )
             
             # Process decision
+            if len(resp) == 0:
+                subject_decision = resp
+            else:
+                arr=resp.split()
+                if arr[0] in valid_inputs:
+                    subject_decision = arr[0]
+                elif arr[-1] in valid_inputs:
+                    subject_decision = arr[-1]
+                else:
+                    subject_decision = resp
             if subject_decision == 'T':
                 feedback_text = "--> Delegating to teammate..."
                 
@@ -1130,14 +1140,14 @@ def main():
     
     # Model and dataset configuration
     DATASET = "SimpleMC"  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA
-    SUBJECT_NAME = 'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gpt-4o-2024-08-06"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"gpt-4o-2024-08-06"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 100 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.2  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.2  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 42  # Random seed for reproducibility
     FILTERED = False
@@ -1151,7 +1161,7 @@ def main():
     
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2
