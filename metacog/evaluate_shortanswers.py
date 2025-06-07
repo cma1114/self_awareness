@@ -503,11 +503,10 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    # Default file for testing; can be changed manually
-    # test_data_file = "./capabilities_test_logs/claude-sonnet-4-20250514_SimpleQA_500_1748311017_test_data.json"
-    test_data_file = "./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_100_redacted_team0.5_temp0.0_1747969135_game_data.json" # Example delegate game file
+    #test_data_file = "./capabilities_test_logs/gpt-4o-2024-08-06_GPSA_447_1749255078_test_data.json"
+    test_data_file = "./delegate_game_logs/gpt-4o-2024-08-06_GPSA_50_400_team0.7_temp0.0_1749265140_game_data.json"
     
-    judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
+    judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
 
 
     print(f"Evaluating {test_data_file} using models: {judge_models}")

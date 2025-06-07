@@ -141,8 +141,8 @@ class BaseGameClass:
                     else:
                         formatted_messages = copy.deepcopy(message_history)
                         formatted_messages.append(user_msg)
-                    #print(f"\nsystem_msg={system_msg}")                     
-                    #print(f"\nformatted_messages={formatted_messages}\n")             
+                    print(f"\nsystem_msg={system_msg}")                     
+                    print(f"\nformatted_messages={formatted_messages}\n")             
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),

@@ -22,7 +22,7 @@ LOG_DIRS = {
     "delegate_game_logs": "./delegate_game_logs",
     "pass_game_logs": "./pass_game_logs",
     "capabilities_test_logs": "./capabilities_test_logs",
-    "capabilities_results_sqa": "./capabilities_results_sqa",
+    "capabilities_results_sa": "./capabilities_results_sa",
 }
 
 CUTOFF_DATE = datetime.datetime(2025, 4, 24).timestamp()  # April 24, 2025
@@ -32,6 +32,7 @@ id_prefix_map = {
     "MMLU": "mmlu_",
     "TruthfulQA": "tqa_",
     "SimpleQA": "sqa_",
+    "GPSA": "gpsa_",
     "SimpleMC": "smc_"
 }
 
@@ -224,7 +225,7 @@ def process_all_files(dataset="GPQA", targ_model=None):
     delegate_files = glob.glob(os.path.join(LOG_DIRS["delegate_game_logs"], "*_game_data.json")) if "delegate_game_logs" in LOG_DIRS else []
     pass_files = glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_game_data.json")) + glob.glob(os.path.join(LOG_DIRS["pass_game_logs"], "*_phase1_data.json")) if "pass_game_logs" in LOG_DIRS else []
     capabilities_files = glob.glob(os.path.join(LOG_DIRS["capabilities_test_logs"], "*_test_data.json")) if "capabilities_test_logs" in LOG_DIRS else []
-    if "capabilities_results_sqa" in LOG_DIRS: capabilities_files += glob.glob(os.path.join(LOG_DIRS["capabilities_results_sqa"], "*_test_data_evaluated.json"))
+    if "capabilities_results_sa" in LOG_DIRS: capabilities_files += glob.glob(os.path.join(LOG_DIRS["capabilities_results_sa"], "*_test_data_evaluated.json"))
     
     # Filter files by date
     recent_delegate_files = [f for f in delegate_files if get_file_timestamp(f) >= CUTOFF_DATE]
@@ -373,9 +374,9 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "SimpleMC"#"SimpleQA"# "GPQA"
+    dataset = "GPSA"#"SimpleMC"#"SimpleQA"# "GPQA"
     
-    process_all_files(dataset)#, targ_model="claude-sonnet-4-20250514")
+    process_all_files(dataset, targ_model="gpt-4o-2024-08-06")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

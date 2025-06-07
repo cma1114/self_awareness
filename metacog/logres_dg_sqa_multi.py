@@ -8,7 +8,6 @@ from load_and_format_datasets import load_and_format_dataset
 import re
 from collections import defaultdict
 
-LOG_FILENAME = "analysis_log_multi_logres_dg_simpleqa.txt"
 
 def log_output(message_string, print_to_console=False):
     with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
@@ -319,8 +318,13 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
-    print("Loading main sqa dataset for features...")
-    sqa_all_questions = load_and_format_dataset("SimpleQA")
+
+    dataset = "SimpleMC"
+
+
+    LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+    print(f"Loading main {dataset} dataset for features...")
+    sqa_all_questions = load_and_format_dataset(dataset)
     sqa_feature_lookup = {
         item['id']: {
             'answer_type': item.get('answer_type', 0),
@@ -331,7 +335,8 @@ if __name__ == "__main__":
     print(f"sqa feature lookup created with {len(sqa_feature_lookup)} entries.")
 
     game_logs_dir = "./delegate_game_logs/"
-    capabilities_dir = "./compiled_results_sqa/"
+    capabilities_dir = "./compiled_results_sqa/" if dataset == "SimpleQA" else "./compiled_results_smc/"
+    game_file_suffix = "_evaluated" if dataset == "SimpleQA" else ""
 
     if not os.path.isdir(game_logs_dir) or not os.path.isdir(capabilities_dir):
         print(f"Error: Ensure directories exist: {game_logs_dir}, {capabilities_dir}")
@@ -344,8 +349,8 @@ if __name__ == "__main__":
         if game_filename in skip_files:
             continue
 
-        if game_filename.endswith("_game_data_evaluated.json") and "_SimpleQA_" in game_filename:
-            model_name_part = game_filename.split("_SimpleQA_")[0]
+        if game_filename.endswith(f"_game_data{game_file_suffix}.json") and f"_{dataset}_" in game_filename:
+            model_name_part = game_filename.split(f"_{dataset}_")[0]
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
 
     subj_acc_override_pattern = re.compile(r"_subj\d+(\.\d+)?_")

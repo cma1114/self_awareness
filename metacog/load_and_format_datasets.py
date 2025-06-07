@@ -3,6 +3,7 @@ import random
 import os
 import ast
 import hashlib
+import re
 
 random.seed(42)  # For reproducibility
 hf_token = os.environ.get("HF_TOKEN")
@@ -16,6 +17,11 @@ def load_and_format_dataset(dataset_name, num_questions_needed=None, split=None,
             return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, skip_questions=skip_questions)
         else:
             return load_and_format_gpqa(num_questions_needed, hf_token=hf_token, split=split, skip_questions=skip_questions)
+    if dataset_name=="GPSA":
+        if split is None:
+            return load_and_format_gpsa(num_questions_needed, hf_token=hf_token, skip_questions=skip_questions)
+        else:
+            return load_and_format_gpsa(num_questions_needed, hf_token=hf_token, split=split, skip_questions=skip_questions)
     elif dataset_name=="MMLU":
         if split is None:
             return load_and_format_mmlu(num_questions_needed, skip_questions=skip_questions)
@@ -36,7 +42,92 @@ def load_and_format_dataset(dataset_name, num_questions_needed=None, split=None,
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}. Supported datasets are: GPQA, MMLU, TruthfulQA.")
 
-def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train", skip_questions=None):
+## GPQA logic
+difficulty_rubric = {
+    'Easy undergraduate level (or easier)': 1,
+    'Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)': 2,
+    'Hard graduate level (could be a question on a hard graduate exam for PhD students in the domain)': 3,
+    'Post-graduate level or harder (only individuals with years of highly specialized expertise could reliably answer correctly)': 4
+}
+
+difficulty_fields = [
+    "Writer's Difficulty Estimate",
+    "Question Difficulty_EV_1",
+    "Question Difficulty_EV_2"
+]
+
+def get_numeric_difficulty(difficulty_string):
+    """Converts a difficulty string to its numeric value based on the rubric."""
+    return difficulty_rubric.get(difficulty_string) # Returns None if string not in rubric
+
+def calculate_average_difficulty(item):
+    """
+    Calculates the average numeric difficulty for a dataset item (dictionary).
+    Handles missing values as per specifications.
+    """
+    numeric_difficulties = []
+    for field in difficulty_fields:
+        difficulty_str = item.get(field)
+        if difficulty_str: # Check if the string is not None or empty
+            numeric_val = get_numeric_difficulty(difficulty_str)
+            if numeric_val is not None:
+                numeric_difficulties.append(numeric_val)
+    
+    if not numeric_difficulties: # All fields were missing or invalid
+        return 2.5 # Default average difficulty
+    else:
+        return sum(numeric_difficulties)/len(numeric_difficulties)
+
+STOPWORDS = set([
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "have", 
+    "he", "her", "here", "him", "his", "how", "i", "if", "in", "is", "it", "its", 
+    "of", "on", "or", "she", "so", "that", "the", "their", "them", "then", "there", 
+    "these", "they", "this", "to", "was", "what", "when", "where", "which", "while", 
+    "who", "whom", "why", "will", "with", "you", "your"
+])
+
+def get_unique_alphanumeric_words(text_string):
+    """
+    Extracts unique alphanumeric words from a string.
+    Converts to lowercase before finding unique words.
+    """
+    if not isinstance(text_string, str):
+        return set()
+    words = re.findall(r'\b\w+\b', text_string.lower()) # \w+ finds alphanumeric sequences
+    filtered_words = [word for word in words if word not in STOPWORDS]
+    return set(filtered_words)
+
+def calculate_option_question_word_overlap_ratio(question_item):
+    """
+    Calculates the ratio of unique words in combined options to unique words in the question.
+    Returns the ratio, or np.nan if either word set is empty.
+    """
+    question_text = question_item.get("Question", "")
+    
+    correct_ans_text = question_item.get("Correct Answer", "")
+    incorrect_ans1_text = question_item.get("Incorrect Answer 1", "")
+    incorrect_ans2_text = question_item.get("Incorrect Answer 2", "")
+    incorrect_ans3_text = question_item.get("Incorrect Answer 3", "")
+
+    combined_options_text = " ".join(filter(None, [
+        correct_ans_text, 
+        incorrect_ans1_text, 
+        incorrect_ans2_text, 
+        incorrect_ans3_text
+    ]))
+
+    unique_words_question = get_unique_alphanumeric_words(question_text)
+    unique_words_options = get_unique_alphanumeric_words(combined_options_text)
+
+    num_unique_words_question = len(unique_words_question)
+    num_unique_words_options = len(unique_words_options)
+
+    if num_unique_words_question == 0: # Avoid division by zero
+        return 0
+    
+    return num_unique_words_options / num_unique_words_question
+
+def load_and_format_gpsa(num_questions_needed=None, hf_token=None, split="train", skip_questions=None):
     """
     Loads the GPQA dataset and formats questions into the A-D multiple-choice format.
     """
@@ -56,89 +147,73 @@ def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train"
     question_ids_added = set()
     required_fields = ['Question', 'Correct Answer', 'Incorrect Answer 1', 'Incorrect Answer 2', 'Incorrect Answer 3', 'Record ID']
 
-    difficulty_rubric = {
-        'Easy undergraduate level (or easier)': 1,
-        'Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)': 2,
-        'Hard graduate level (could be a question on a hard graduate exam for PhD students in the domain)': 3,
-        'Post-graduate level or harder (only individuals with years of highly specialized expertise could reliably answer correctly)': 4
-    }
+    dataset_indices = list(range(len(dataset)))
+    random.shuffle(dataset_indices)
 
-    difficulty_fields = [
-        "Writer's Difficulty Estimate",
-        "Question Difficulty_EV_1",
-        "Question Difficulty_EV_2"
-    ]
+    if not num_questions_needed: num_questions_needed = len(dataset)
+    print(f"Formatting {num_questions_needed} questions from GPSA...")
 
-    def get_numeric_difficulty(difficulty_string):
-        """Converts a difficulty string to its numeric value based on the rubric."""
-        return difficulty_rubric.get(difficulty_string) # Returns None if string not in rubric
+    bad_ids=["recgCB0HSVt2IslDN"]
+    for idx in dataset_indices:
+        if len(formatted_questions) >= num_questions_needed:
+            break
 
-    def calculate_average_difficulty(item):
-        """
-        Calculates the average numeric difficulty for a dataset item (dictionary).
-        Handles missing values as per specifications.
-        """
-        numeric_difficulties = []
-        for field in difficulty_fields:
-            difficulty_str = item.get(field)
-            if difficulty_str: # Check if the string is not None or empty
-                numeric_val = get_numeric_difficulty(difficulty_str)
-                if numeric_val is not None:
-                    numeric_difficulties.append(numeric_val)
+        item = dataset[idx]
+        if skip_questions and item['Question'] in skip_questions:
+            print(f"DEBUG: Skipping question '{item['Question'][:50]}...' as it's in skip_questions")
+            continue
+
+        # Check if all required fields exist and are not None/empty
+        if not all(item.get(field) for field in required_fields):
+            continue
+
+        record_id = item['Record ID']
+
+        # Apply filtering
+        if record_id in bad_ids:
+            continue
+
+        # Check if ID already added
+        if record_id in question_ids_added:
+            continue
+
+
+        # Create the formatted question
+        formatted_q = {
+            "id": f"gpqa_{split}_{record_id}",
+            "question": item['Question'],
+            "correct_answer": item['Correct Answer'].strip(),
+            "difficulty_score": calculate_average_difficulty(item),
+            "high_level_domain": item["High-level domain"],
+        }
+        formatted_questions.append(formatted_q)
+        question_ids_added.add(record_id)
         
-        if not numeric_difficulties: # All fields were missing or invalid
-            return 2.5 # Default average difficulty
-        else:
-            return sum(numeric_difficulties)/len(numeric_difficulties)
+    if len(formatted_questions) < num_questions_needed:
+        print(f"Warning: Only able to format {len(formatted_questions)} unique questions, but {num_questions_needed} were requested.")
 
-    STOPWORDS = set([
-        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "have", 
-        "he", "her", "here", "him", "his", "how", "i", "if", "in", "is", "it", "its", 
-        "of", "on", "or", "she", "so", "that", "the", "their", "them", "then", "there", 
-        "these", "they", "this", "to", "was", "what", "when", "where", "which", "while", 
-        "who", "whom", "why", "will", "with", "you", "your"
-    ])
-    import re
-    def get_unique_alphanumeric_words(text_string):
-        """
-        Extracts unique alphanumeric words from a string.
-        Converts to lowercase before finding unique words.
-        """
-        if not isinstance(text_string, str):
-            return set()
-        words = re.findall(r'\b\w+\b', text_string.lower()) # \w+ finds alphanumeric sequences
-        filtered_words = [word for word in words if word not in STOPWORDS]
-        return set(filtered_words)
+    print(f"Successfully formatted {len(formatted_questions)} unique questions from GPSA.")
+    return formatted_questions
 
-    def calculate_option_question_word_overlap_ratio(question_item):
-        """
-        Calculates the ratio of unique words in combined options to unique words in the question.
-        Returns the ratio, or np.nan if either word set is empty.
-        """
-        question_text = question_item.get("Question", "")
-        
-        correct_ans_text = question_item.get("Correct Answer", "")
-        incorrect_ans1_text = question_item.get("Incorrect Answer 1", "")
-        incorrect_ans2_text = question_item.get("Incorrect Answer 2", "")
-        incorrect_ans3_text = question_item.get("Incorrect Answer 3", "")
+def load_and_format_gpqa(num_questions_needed=None, hf_token=None, split="train", skip_questions=None):
+    """
+    Loads the GPQA dataset and formats questions into the A-D multiple-choice format.
+    """
+    print(f"Attempting to load GPQA ({split} split)...")
+    dataset_name = "Idavidrein/gpqa"
+    config_name = "gpqa_main"
+    try:
+        dataset = load_dataset(dataset_name, config_name, split=split, token=hf_token, trust_remote_code=True)
+        print("GPQA Dataset loaded successfully.")
+    except Exception as e:
+        print(f"Error loading GPQA dataset '{dataset_name}' ({config_name}, {split}): {e}")
+        print("Please ensure you have the 'datasets' library installed, an internet connection,")
+        print(f"and potentially a valid Hugging Face token if required (passed as hf_token).")
+        return None
 
-        combined_options_text = " ".join(filter(None, [
-            correct_ans_text, 
-            incorrect_ans1_text, 
-            incorrect_ans2_text, 
-            incorrect_ans3_text
-        ]))
-
-        unique_words_question = get_unique_alphanumeric_words(question_text)
-        unique_words_options = get_unique_alphanumeric_words(combined_options_text)
-
-        num_unique_words_question = len(unique_words_question)
-        num_unique_words_options = len(unique_words_options)
-
-        if num_unique_words_question == 0: # Avoid division by zero
-            return 0
-        
-        return num_unique_words_options / num_unique_words_question
+    formatted_questions = []
+    question_ids_added = set()
+    required_fields = ['Question', 'Correct Answer', 'Incorrect Answer 1', 'Incorrect Answer 2', 'Incorrect Answer 3', 'Record ID']
 
     dataset_indices = list(range(len(dataset)))
     random.shuffle(dataset_indices)
@@ -409,11 +484,11 @@ def load_and_format_simplemc(num_questions_needed=None, split="test", skip_quest
             break
 
         item = dataset[idx]
+        question_text = item.get('question')
         potential_id = f"sqa_{split}_{text_to_id(question_text)}"
         if potential_id in question_ids_added:
             continue
 
-        question_text = item.get('question')
         if skip_questions is not None and question_text in skip_questions:
             continue
 
@@ -484,11 +559,12 @@ def load_and_format_simpleqa(num_questions_needed=None, split="test", skip_quest
             break
 
         item = dataset[idx]
+        question_text = item.get('problem')
+        
         potential_id = f"sqa_{split}_{text_to_id(question_text)}"
         if potential_id in question_ids_added:
             continue
 
-        question_text = item.get('problem')
         if skip_questions is not None and question_text in skip_questions:
             continue
         best_answer = item.get('answer')

@@ -214,10 +214,10 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" 
-    subject_name = 'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022" #"claude-sonnet-4-20250514"#"deepseek-chat"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    DATASET_NAME = "GPSA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gemini-2.5-flash-preview-04-17"#"claude-sonnet-4-20250514"#"deepseek-chat"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    N_QUESTIONS = 500#447#  # Number of questions for capabilities measurement
+    N_QUESTIONS = 447#500#  # Number of questions for capabilities measurement
     
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
     try:
@@ -240,7 +240,7 @@ def main():
         )
                     
         # Run capabilities measurement
-        if DATASET_NAME == "SimpleQA": success, capabilities_file = game.run_capabilities_measurement_sa()
+        if DATASET_NAME == "SimpleQA" or DATASET_NAME == "GPSA": success, capabilities_file = game.run_capabilities_measurement_sa()
         else: success, capabilities_file = game.run_capabilities_measurement()
         
         if success:
