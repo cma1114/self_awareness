@@ -141,8 +141,8 @@ class BaseGameClass:
                     else:
                         formatted_messages = copy.deepcopy(message_history)
                         formatted_messages.append(user_msg)
-                    print(f"\nsystem_msg={system_msg}")                     
-                    print(f"\nformatted_messages={formatted_messages}\n")             
+                    #print(f"\nsystem_msg={system_msg}")                     
+                    #print(f"\nformatted_messages={formatted_messages}\n")             
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
@@ -168,7 +168,7 @@ class BaseGameClass:
                         temperature=temp + attempt * temp_inc,
                         messages=formatted_messages,
                         logprobs=True,
-                        top_logprobs=len(options)                     
+                        top_logprobs=len(options)# if len(options) > 1 or self.provider != "DeepSeek" else 10,          
                     )   
                     #print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
@@ -180,9 +180,10 @@ class BaseGameClass:
                                 top_logprob_value = 0.0
                             else:
                                 top_logprob_value = token_logprob.top_logprobs[0].logprob
-                            top_prob = math.exp(top_logprob_value)
+                            top_prob = top_logprob_value#### math.exp(top_logprob_value)
                             top_probs.append(top_prob)
-                        token_probs = {resp: sum(top_probs)/len(top_probs)}
+                        ###token_probs = {resp: sum(top_probs)/len(top_probs)}
+                        token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
                     else:
                         entry = completion.choices[0].logprobs.content[0]
                         tokens = [tl.token.strip() for tl in entry.top_logprobs]

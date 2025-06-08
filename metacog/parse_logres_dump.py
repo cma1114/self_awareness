@@ -8,7 +8,7 @@ import warnings
 import re
 
 def parse_analysis_log(log_content, output_file):
-    target_params = "Feedback_True, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered"
+    target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered"
     
     block_start_regex = re.compile(
         r"--- Analyzing (\S+) \(" + re.escape(target_params) + r", \d+ game files\) ---"
@@ -593,8 +593,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
     plt.show()
 
 if __name__ == "__main__":
-    input_log_filename = "analysis_log_multi_logres_dg_simpleqa.txt"
-    output_filename = f"{input_log_filename.split('.')[0]}_fdbk_parsed.txt"
+    
+    dataset = "GPSA"
+    suffix = "_full"
+
+    input_log_filename = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+    output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
             log_content_from_file = f.read()
@@ -608,9 +612,9 @@ if __name__ == "__main__":
         model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
         model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
 
-        model_list = ['grok-3-latest', 'claude-3-5-sonnet-20241022']
+        model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06']
         if not df_results.empty:
-            plot_results(df_results, subject_order=model_list, dataset_name="SimpleQA_fdbk")
+            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}")
         else:
             print("No results to plot.")
 

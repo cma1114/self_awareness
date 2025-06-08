@@ -8,8 +8,6 @@ from load_and_format_datasets import load_and_format_dataset
 import re
 from collections import defaultdict
 
-LOG_FILENAME = "analysis_log_multi_logres_dg_gpqa.txt"
-
 def log_output(message_string, print_to_console=False):
     with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
@@ -222,13 +220,15 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'human_difficulty': gpqa_features['difficulty'],
                     'q_length': np.log(len(gpqa_features.get('q_text', ''))),
                     'domain': domain,#####("Biology" if domain == "biology" else "NonBiology"),
-                    'overlap_ratio': gpqa_features.get('overlap_ratio', 0),
                     'avg_word_length': get_average_word_length(gpqa_features.get('q_text', '')),
                     'percent_non_alphabetic_whitespace': get_percent_non_alphabetic_whitespace(gpqa_features.get('q_text', '')),
                     'p_i_capability': p_i_capability,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
+
+                if 'overlap_ratio' in gpqa_features and gpqa_features['overlap_ratio'] > 0:
+                    trial_data_dict['overlap_ratio'] = gpqa_features['overlap_ratio']
 
                 if max_norm_prob_trial is not None:
                     trial_data_dict['max_normalized_prob'] = max_norm_prob_trial
@@ -315,8 +315,14 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
-    print("Loading main GPQA dataset for features...")
-    gpqa_all_questions = load_and_format_dataset("GPQA") # This should have id, Question, high_level_domain, difficulty_score
+
+    dataset = "GPQA"#"GPSA"# 
+
+    LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+
+
+    print(f"Loading main {dataset} dataset for features...")
+    gpqa_all_questions = load_and_format_dataset(dataset) # This should have id, Question, high_level_domain, difficulty_score
 
     gpqa_feature_lookup = {
         item['id']: {
@@ -329,7 +335,9 @@ if __name__ == "__main__":
     print(f"GPQA feature lookup created with {len(gpqa_feature_lookup)} entries.")
 
     game_logs_dir = "./delegate_game_logs/"
-    capabilities_dir = "./completed_results_gpqa/"
+    capabilities_dir = "./completed_results_gpqa/" if dataset == "GPQA" else "./compiled_results_gpsa/"
+    game_file_suffix = "_evaluated" if dataset == "GPSA" else ""
+    test_file_suffix = "completed" if dataset == "GPQA" else "compiled"
 
     if not os.path.isdir(game_logs_dir) or not os.path.isdir(capabilities_dir):
         print(f"Error: Ensure directories exist: {game_logs_dir}, {capabilities_dir}")
@@ -337,8 +345,8 @@ if __name__ == "__main__":
 
     model_game_files = defaultdict(list)
     for game_filename in sorted(os.listdir(game_logs_dir)):
-        if game_filename.endswith("_game_data.json") and "_GPQA_" in game_filename:
-            model_name_part = game_filename.split("_GPQA_")[0]
+        if game_filename.endswith(f"_game_data{game_file_suffix}.json") and f"_{dataset}_" in game_filename:
+            model_name_part = game_filename.split(f"_{dataset}_")[0]
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
 
     subj_acc_override_pattern = re.compile(r"_subj\d+(\.\d+)?_")
@@ -361,7 +369,7 @@ if __name__ == "__main__":
         for group_names_tuple, current_game_files_for_analysis in process_file_groups(
                 game_files_for_model, FILE_GROUPING_CRITERIA, model_name_part):
             
-            capabilities_filename = f"{model_name_part}_phase1_completed.json"
+            capabilities_filename = f"{model_name_part}_phase1_{test_file_suffix}.json"
             capabilities_file_path = os.path.join(capabilities_dir, capabilities_filename)
 
             if not os.path.exists(capabilities_file_path):
@@ -395,7 +403,7 @@ if __name__ == "__main__":
 
 
             except Exception as e:
-                print(f"{'  '*(len(group_names_tuple)+1)}Error loading Ccapabilities file {capabilities_file_path}: {e}. Skipping this group.")
+                print(f"{'  '*(len(group_names_tuple)+1)}Error loading capabilities file {capabilities_file_path}: {e}. Skipping this group.")
                 continue
             
             if not s_i_map_for_this_model:
@@ -526,10 +534,11 @@ if __name__ == "__main__":
                         'human_difficulty',
                         'q_length',
                         f'C({domain_column_for_formula})',
-                        'overlap_ratio',
                         'avg_word_length',
                         'percent_non_alphabetic_whitespace'
                     ]
+                    if 'overlap_ratio' in df_model.columns:
+                        base_model_terms.append('overlap_ratio')
 
                     log_output(f"                  Domain Counts:\n {df_model['domain'].value_counts()}")
                     

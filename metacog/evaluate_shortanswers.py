@@ -504,9 +504,9 @@ Subject response: {subject_answer}
 
 def main():
     #test_data_file = "./capabilities_test_logs/gpt-4o-2024-08-06_GPSA_447_1749255078_test_data.json"
-    test_data_file = "./delegate_game_logs/gpt-4o-2024-08-06_GPSA_50_400_team0.7_temp0.0_1749265140_game_data.json"
+    test_data_file = "./delegate_game_logs/gemini-2.0-flash-001_SimpleQA_50_450_team0.1_temp0.0_1749329362_game_data.json"
     
-    judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
+    judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]
 
 
     print(f"Evaluating {test_data_file} using models: {judge_models}")

@@ -184,7 +184,7 @@ def break_subject_name(name, max_parts_per_line=3):
             wrapped_name += "-" # Add hyphen back
     return wrapped_name
 
-def plot_results(df_results, subject_order=None):
+def plot_results(df_results, subject_order=None, dataset_name=""):
     if df_results.empty:
         print("No data to plot.")
         return
@@ -254,13 +254,16 @@ def plot_results(df_results, subject_order=None):
     # fig.text(0.5, 0.01, 'Subject', ha='center', va='center', fontsize=label_fontsize)
 
     plt.tight_layout(pad=3.0, h_pad=4.0) # Adjust h_pad for vertical spacing if titles/xlabels overlap
-    plt.savefig("subject_analysis_charts_capent.png", dpi=300)
-    print("Charts saved to subject_analysis_charts_capent.png")
+    plt.savefig(f"subject_analysis_charts_{dataset_name}.png", dpi=300)
+    print(f"Charts saved to subject_analysis_charts_{dataset_name}.png")
     plt.show()
 
 if __name__ == "__main__":
-    input_log_filename = "analysis_log_multi_logres_dg_gpqa.txt"
-    output_filename = f"{input_log_filename.split('.')[0]}_capent_parsed.txt"
+    dataset = "GPSA"
+    suffix = "_full"
+
+    input_log_filename = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+    output_filename = f"{input_log_filename.split('.')[0]}{suffix}_capent_parsed.txt"
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
             log_content_from_file = f.read()
@@ -270,9 +273,9 @@ if __name__ == "__main__":
         print("\n--- Calculated Data ---")
         print(df_results.to_string(formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")})) # Print full DataFrame
         
-        model_list = ['grok-3-latest', 'gpt-4-turbo-2024-04-09']
+        model_list = ['grok-3-latest', 'gpt-4o-2024-08-06']
         if not df_results.empty:
-            plot_results(df_results, model_list)
+            plot_results(df_results, model_list, dataset_name=f"{dataset}{suffix}_capent")
         else:
             print("No results to plot.")
 

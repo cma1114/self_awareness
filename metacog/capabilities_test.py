@@ -7,7 +7,7 @@ class CapabilitiesTest(BaseGameClass):
     """
     Just ask independent multiple-choice or short answer questions and record responses.
     """
-    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None):
+    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None, temperature=0.0):
         """
         Args:
             subject_id (str): Identifier for the subject/session
@@ -26,6 +26,7 @@ class CapabilitiesTest(BaseGameClass):
         self.correct_count = 0
         self.total_count = 0
         self.accuracy = None
+        self.temperature = temperature
         self.log_suffix = "_test_data"            
 
         if len(questions) < self.n_questions:
@@ -107,7 +108,8 @@ class CapabilitiesTest(BaseGameClass):
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
                         keep_appending=False,
-                        MAX_TOKENS=1
+                        MAX_TOKENS=1,
+                        temp=self.temperature
                     )
             
             # Check correctness
@@ -186,7 +188,8 @@ class CapabilitiesTest(BaseGameClass):
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
                         keep_appending=False,
-                        MAX_TOKENS=None
+                        MAX_TOKENS=None,
+                        temp=self.temperature
                     )
                         
             # Store result
@@ -214,10 +217,11 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "GPSA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gemini-2.5-flash-preview-04-17"#"claude-sonnet-4-20250514"#"deepseek-chat"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "deepseek-chat"#"gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gemini-2.5-flash-preview-04-17"#"claude-sonnet-4-20250514"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    N_QUESTIONS = 447#500#  # Number of questions for capabilities measurement
+    N_QUESTIONS = 500#447#  # Number of questions for capabilities measurement
+    temp = 0.0
     
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
     try:
@@ -236,7 +240,8 @@ def main():
             questions=formatted_questions,
             n_questions=N_QUESTIONS,
             is_human_player=IS_HUMAN,
-            resume_from=resume_from
+            resume_from=resume_from,
+            temperature=temp
         )
                     
         # Run capabilities measurement

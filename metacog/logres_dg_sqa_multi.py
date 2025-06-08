@@ -319,7 +319,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC"
+    dataset = "SimpleQA"
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
@@ -508,6 +508,7 @@ if __name__ == "__main__":
 
                 if len(df_model) > 20 :
                     min_obs_per_category=int(len(df_model)/15) + 1
+                    if 'grok' in model_name_part: min_obs_per_category = 40
                     
                     for col, new_col_name in [('topic', 'topic_grouped'), ('answer_type', 'answer_type_grouped')]:
                         counts = df_model[col].value_counts()
