@@ -115,7 +115,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       gpqa_feature_lookup,
                                       capabilities_s_i_map_for_model,
                                       p_i_map_for_this_model=None,
-                                      entropy_map_for_this_model=None):
+                                      entropy_map_for_this_model=None
+                                      ,game_file_suffix=""):
     all_regression_data_for_model = []
     file_level_features_cache = []
 
@@ -124,12 +125,12 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
     phase2_corcnt, phase2_totalcnt = 0, 0
     for game_file_path in game_file_paths_list:
-        judgment_data_for_file = {}
+        judgment_data, teammate_judgment_data = {}, {}
         try:
             with open(game_file_path, 'r', encoding='utf-8') as f:
                 game_data = json.load(f)
 
-            judgment_file_path = game_file_path.replace("_game_data.json", "_game_data_judgment_judge_data.json")
+            judgment_file_path = game_file_path.replace(f"_game_data{game_file_suffix}.json", f"_game_data{game_file_suffix}_judgment_judge_data.json")
             if os.path.exists(judgment_file_path):
                 try:
                     with open(judgment_file_path, 'r', encoding='utf-8') as jf:
@@ -137,9 +138,20 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     if isinstance(judgment_content, dict) and "results" in judgment_content and isinstance(judgment_content["results"], dict):
                         for qid, q_data in judgment_content["results"].items():
                             if isinstance(q_data, dict) and "delegate" in q_data:
-                                judgment_data_for_file[qid] = q_data["delegate"]
+                                judgment_data[qid] = q_data["delegate"]
                 except Exception as e_judge:
                     print(f"Error loading or parsing judgment file {judgment_file_path}: {e_judge}")
+            judgment_file_path = game_file_path.replace(f"_game_data{game_file_suffix}.json", "_game_data{game_file_suffix}_teammatejudgment_judge_data.json")
+            if os.path.exists(judgment_file_path):
+                try:
+                    with open(judgment_file_path, 'r', encoding='utf-8') as jf:
+                        judgment_content = json.load(jf)
+                    if isinstance(judgment_content, dict) and "results" in judgment_content and isinstance(judgment_content["results"], dict):
+                        for qid, q_data in judgment_content["results"].items():
+                            if isinstance(q_data, dict) and "delegate" in q_data:
+                                teammate_judgment_data[qid] = q_data["delegate"]
+                except Exception as e_judge:
+                    print(f"Error loading or parsing teammate judgment file {judgment_file_path}: {e_judge}")
         except Exception as e:
             print(f"Error loading game file {game_file_path}: {e}")
             continue
@@ -160,7 +172,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 "nobio_file": "_nobio_" in filename_base,
                 "noeasy_file": "_noeasy_" in filename_base,
                 "noctr_file": "_noctr_" in filename_base,
-                "judgment_data": judgment_data_for_file
+                "judgment_data": judgment_data,
+                "teammate_judgment_data": teammate_judgment_data
             })
 
     if not file_level_features_cache:
@@ -217,6 +230,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_id': q_id, 
                     'delegate_choice': delegate_choice_numeric,
                     's_i_capability': s_i_capability,
+                    'team_correct': trial.get('team_correct', False),
                     'human_difficulty': gpqa_features['difficulty'],
                     'q_length': np.log(len(gpqa_features.get('q_text', ''))),
                     'domain': domain,#####("Biology" if domain == "biology" else "NonBiology"),

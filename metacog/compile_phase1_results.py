@@ -374,9 +374,9 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "GPSA"#"SimpleMC"#"SimpleQA"# "GPQA"
+    dataset = "SimpleQA"#"GPSA"#"SimpleMC"# "GPQA"
     
-    process_all_files(dataset, targ_model="gpt-4o-2024-08-06")
+    process_all_files(dataset, targ_model="deepseek-chat")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

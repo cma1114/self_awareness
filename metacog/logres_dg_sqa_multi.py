@@ -95,7 +95,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       sqa_feature_lookup,
                                       capabilities_s_i_map_for_model,
                                       p_i_map_for_this_model=None,
-                                      entropy_map_for_this_model=None):
+                                      entropy_map_for_this_model=None,
+                                      game_file_suffix=""):
     all_regression_data_for_model = []
     file_level_features_cache = []
 
@@ -109,7 +110,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
             with open(game_file_path, 'r', encoding='utf-8') as f:
                 game_data = json.load(f)
 
-            judgment_file_path = game_file_path.replace("_game_data_evaluated.json", "_game_data_evaluated_judgment_judge_data.json")
+            judgment_file_path = game_file_path.replace(f"_game_data{game_file_suffix}.json", f"_game_data{game_file_suffix}_judgment_judge_data.json")
             if os.path.exists(judgment_file_path):
                 try:
                     with open(judgment_file_path, 'r', encoding='utf-8') as jf:
@@ -120,7 +121,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                 judgment_data[qid] = q_data["delegate"]
                 except Exception as e_judge:
                     print(f"Error loading or parsing judgment file {judgment_file_path}: {e_judge}")
-            judgment_file_path = game_file_path.replace("_game_data_evaluated.json", "_game_data_evaluated_teammatejudgment_judge_data.json")
+            judgment_file_path = game_file_path.replace(f"_game_data{game_file_suffix}.json", "_game_data{game_file_suffix}_teammatejudgment_judge_data.json")
             if os.path.exists(judgment_file_path):
                 try:
                     with open(judgment_file_path, 'r', encoding='utf-8') as jf:
@@ -423,7 +424,8 @@ if __name__ == "__main__":
                                                          sqa_feature_lookup,
                                                          s_i_map_for_this_model,
                                                          p_i_map_for_this_model,
-                                                         entropy_map_for_this_model)
+                                                         entropy_map_for_this_model,
+                                                         game_file_suffix=game_file_suffix)
 
             if df_model is None or df_model.empty:
                 print(f"{'  '*(len(group_names_tuple)+1)}No data for regression analysis for group: {model_name_part} ({', '.join(group_names_tuple)}).")

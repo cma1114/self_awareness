@@ -8,11 +8,12 @@ class JudgeDelegate(BaseGameClass):
     """
     Ask LLMs to judge who to delegate to.
     """
-    def __init__(self, game_file, subject_name):
+    def __init__(self, game_file, subject_name, judge_subj):
         name_parts = game_file.split("_")
         dataset_name = name_parts[1]
         self.log_dir = "delegate_game_logs"
-        super().__init__(game_file.split(".json")[0]+"_teammatejudgment", subject_name, is_human_player=False, log_dir=self.log_dir)
+        prefix = "teammate" if judge_subj == False else ""
+        super().__init__(game_file.split(".json")[0]+f"_{prefix}judgment", subject_name, is_human_player=False, log_dir=self.log_dir)
 
         self.results = {}
         self.log_suffix = "_judge_data"            
@@ -30,14 +31,14 @@ class JudgeDelegate(BaseGameClass):
         teammate_accuracy_phase1 = game_data["teammate_accuracy_phase1"]
         t_cor_needed = int(round(teammate_accuracy_phase1 * n_trials_phase1))
 
-        qtype = "short answer" if dataset_name == "SimpleQA" else "multiple choice"
+        qtype = "short answer" if dataset_name == "SimpleQA" or dataset_name == "GPSA" else "multiple choice"
 
         setup_text = (f"""I'm going to show you the transcript of a quiz game. The game consists of a quizmaster asking {qtype} questions to two players, called Player X and Player Y. 
         The transcript includes feedback on the correctness of both players' answers, although it doesn't include the answers themselves. At the end of the transcript you'll see a new question drawn from the same dataset. 
         I want you to tell me whether, based on everything you've seen in the transcript, you think Player X or Player Y is more likely to answer the new question correctly. 
         Respond with \"X\" if you think Player X is more likely to answer correctly, or \"Y\" if you think Player Y is more likely to answer correctly. You must respond with one of those two options.""")
 
-        judge_target = "Teammate" #"Self"
+        judge_target = "Teammate" if judge_subj == False else "Self"
         ## Model seems to always pick the one with higher overall accuracy, so switch to Y/N correctness prediction
         setup_text = (f"""I'm going to show you the transcript of a quiz game. The game consists of a quizmaster asking {qtype} questions to a player, called Player X. 
         The transcript includes feedback on the correctness of the player' answers, although it doesn't include the answers themselves. At the end of the transcript you'll see a new question drawn from the same dataset. 
@@ -138,13 +139,18 @@ class JudgeDelegate(BaseGameClass):
 
 def main():
     judge_model = "gemini-2.5-flash-preview-04-17"#"claude-3-5-sonnet-20241022"#
-    game_files = ['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.2_temp0.0_1748028190_game_data_evaluated.json', 
-    'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_1747663996_game_data_evaluated.json', 
-    'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_temp0.0_1747969867_game_data_evaluated.json', 
-    'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746405_game_data_evaluated.json']
-    #game_files = ['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.1_temp0.0_1748028564_game_data_evaluated.json']
+    #game_files = ['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.2_temp0.0_1748028190_game_data_evaluated.json', 
+    #'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_1747663996_game_data_evaluated.json', 
+    #'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_temp0.0_1747969867_game_data_evaluated.json', 
+    #'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746405_game_data_evaluated.json']
+    game_files = ['claude-3-5-sonnet-20241022_GPQA_50_400_team0.5_temp0.0_1749313123_game_data.json', 'claude-3-5-sonnet-20241022_GPSA_50_400_team0.7_temp0.0_1749305420_game_data_evaluated.json']
+    judge_subj = True #True if you want to judge self, False if you want to judge teammate
+
     for game_file in game_files:
-        judge = JudgeDelegate(game_file, judge_model)
+        judge = JudgeDelegate(game_file, judge_model, judge_subj)
+        judge.run_judge()
+    for game_file in game_files:
+        judge = JudgeDelegate(game_file, judge_model, False)
         judge.run_judge()
 
 if __name__ == "__main__":
