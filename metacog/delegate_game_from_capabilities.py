@@ -594,8 +594,11 @@ class DelegateGameFromCapabilities(BaseGameClass):
         if self.use_phase1_summary:
             # Generate summary text - like summary_screen_text_template in delegate_game.py
             summary_text = "\n\n" + "="*10 + " Phase 1 Summary " + "="*10
-            summary_text += f"\nIn Phase 1, you answered {self.subject_accuracy_phase1:.1%} of the questions correctly."
-            summary_text += f"\nYour teammate answered {self.teammate_accuracy_phase1:.1%} of the questions correctly."
+            if self.feedback_config['phase1_subject_feedback']:
+                summary_text += f"\nIn Phase 1, you answered {self.subject_accuracy_phase1:.1%} of the questions correctly."
+                summary_text += f"\nYour teammate answered {self.teammate_accuracy_phase1:.1%} of the questions correctly."
+            else:
+                summary_text += f"\nIn Phase 1, your teammate answered {self.teammate_accuracy_phase1:.1%} of the questions correctly."
             summary_text += "\n" + "="*40 + "\n"
             
             # Add to final_feedback
@@ -1139,23 +1142,23 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASET = "SimpleQA"  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    SUBJECT_NAME = "gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASET = "GPSA"  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 450 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 1.0  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 1.0  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 3  # Random seed for reproducibility
+    SEED = 42#714#41#3  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
-    USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
-    USE_PHASE1_HISTORY = True  # Include full Phase 1 history (set to False for shorter context)
+    USE_PHASE1_SUMMARY = True  # Include summary of Phase 1 performance
+    USE_PHASE1_HISTORY = False  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
     

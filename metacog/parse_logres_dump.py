@@ -594,7 +594,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
 
 if __name__ == "__main__":
     
-    dataset = "GPSA"
+    dataset = "SimpleMC"
     suffix = "_full"
 
     input_log_filename = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"

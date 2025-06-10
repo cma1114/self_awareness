@@ -285,8 +285,9 @@ def compile_model_results(model, file_paths, all_results, output_dir, dataset="G
         q_id = result["question_id"]
         
         # Skip if subject_correct is None
-        if result["subject_correct"] is None or result["subject_answer"] is None or result["subject_answer"] == "":
+        if result["subject_answer"] is None or result["subject_answer"] == "": # or result["subject_correct"] is None or 
             continue
+        if result["subject_correct"] is None: result["subject_correct"] = False
         
         # If this is the first time seeing this question, initialize its entry
         if q_id not in question_responses:
@@ -376,7 +377,7 @@ def main():
     # Hard-coded dataset - change this value to compile different datasets
     dataset = "SimpleQA"#"GPSA"#"SimpleMC"# "GPQA"
     
-    process_all_files(dataset, targ_model="deepseek-chat")
+    process_all_files(dataset, targ_model="claude-3-5-sonnet-20241022")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

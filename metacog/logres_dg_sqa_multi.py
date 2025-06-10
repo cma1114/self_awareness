@@ -176,6 +176,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
     create_noctr_reg = len(set(f["noctr_file"] for f in file_level_features_cache)) > 1
 
     for file_ctr, file_data in enumerate(file_level_features_cache):
+        print(f"\nProcessing file {file_ctr + 1}/{len(file_level_features_cache)}: {game_file_paths_list[file_ctr]}")
+        print(f"len(file_data['trials']) = {len(file_data['trials'])}")
         for trial in file_data["trials"]:
             q_id = trial.get("question_id")
             delegation_choice_str = trial.get("delegation_choice")
@@ -189,6 +191,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                         phase2_totalcnt -= 1
             
             if not q_id or not delegation_choice_str:
+                print(f"Skipping trial with missing q_id or delegation_choice: {trial}")
                 continue
 
             prob_dict_trial = trial.get("probs")
@@ -246,8 +249,13 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 if create_noctr_reg: trial_data_dict['noctr'] = int(file_data["noctr_file"])
                 
                 all_regression_data_for_model.append(trial_data_dict)
-    
+            else:
+                if not sqa_features:
+                    print(f"Warning: No SQA features found for q_id {q_id} in file {game_file_paths_list[file_ctr]}. Skipping trial.")
+                if s_i_capability is None:
+                    print(f"Warning: No S_i capability found for q_id {q_id} in file {game_file_paths_list[file_ctr]}. Skipping trial.")
     if not all_regression_data_for_model:
+        print(f"No valid regression data found in the provided game files.")
         return None
     
     df_to_return = pd.DataFrame(all_regression_data_for_model)
@@ -320,7 +328,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA"
+    dataset = "SimpleMC"#"SimpleQA" #
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"

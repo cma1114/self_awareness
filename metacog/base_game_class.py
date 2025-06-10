@@ -330,7 +330,7 @@ class BaseGameClass:
                     delay = min(delay*2,15)
                     attempt -= 1 #don't increase temperature
                 continue
-            if resp.upper() in options or options == " ":
+            if True:###resp.upper() in options or options == " ":
                 if token_probs: print(token_probs)
                 break
             attempt += 1

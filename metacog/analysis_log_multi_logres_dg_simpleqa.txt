@@ -1,288 +1,302 @@
 
---- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
-              Game files for analysis: ['./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.4_temp0.0_1749321973_game_data_evaluated.json']
+--- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered, 5 game files) ---
+              Game files for analysis: ['./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749504973_game_data_evaluated.json', './delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749506651_game_data_evaluated.json', './delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749507565_game_data_evaluated.json', './delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749513699_game_data_evaluated.json', './delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749515124_game_data_evaluated.json']
 
                   Delegation to teammate occurred: Not found
                   Phase 1 self-accuracy (from completed results, total - phase2): Not found
                   Phase 2 self-accuracy: Not found
                   Statistical test (P2 self vs P1): Not found
 df_model['delegate_choice'].value_counts()= delegate_choice
-1    228
-0     61
+1    1738
+0     512
 Name: count, dtype: int64
 
 Cross-tabulation of delegate_choice vs. s_i_capability:
-s_i_capability     0   1
-delegate_choice         
-0                 28  33
-1                157  71
+s_i_capability      0    1
+delegate_choice           
+0                 279  233
+1                1421  317
 
-Probability of delegating when s_i_capability is 0: 0.8486
-Probability of delegating when s_i_capability is 1: 0.6827
-Phase 1 accuracy: 0.3600 (n=400)
-Phase 2 self-accuracy: 0.5738 (n=61)
+Probability of delegating when s_i_capability is 0: 0.8359
+Probability of delegating when s_i_capability is 1: 0.5764
+Phase 1 accuracy: 0.2400 (n=400)
+Phase 2 self-accuracy: 0.5508 (n=512)
 Cross-tabulation of delegate_choice vs. team_correct:
 team_correct     False  True 
 delegate_choice              
-0                   26     35
-1                  134     94
+0                  215    282
+1                 1185    505
 
 Cross-tabulation of s_i_capability vs. team_correct (for self_choice trials):
 team_correct    False  True 
 s_i_capability              
-0                  21      7
-1                   5     28
+0                 192     73
+1                  23    209
 
 
   Model 1: Delegate_Choice ~ S_i_capability
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                  289
-Model:                          Logit   Df Residuals:                      287
+Dep. Variable:        delegate_choice   No. Observations:                 2250
+Model:                          Logit   Df Residuals:                     2248
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.03577
-Time:                        20:04:38   Log-Likelihood:                -143.62
-converged:                       True   LL-Null:                       -148.94
-Covariance Type:            nonrobust   LLR p-value:                  0.001097
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.06046
+Time:                        20:46:29   Log-Likelihood:                -1133.7
+converged:                       True   LL-Null:                       -1206.7
+Covariance Type:            nonrobust   LLR p-value:                 1.356e-33
 ==================================================================================
                      coef    std err          z      P>|z|      [0.025      0.975]
 ----------------------------------------------------------------------------------
-Intercept          1.7240      0.205      8.404      0.000       1.322       2.126
-s_i_capability    -0.9579      0.294     -3.257      0.001      -1.534      -0.382
+Intercept          1.6279      0.065     24.860      0.000       1.500       1.756
+s_i_capability    -1.3200      0.108    -12.186      0.000      -1.532      -1.108
 ==================================================================================
-                  Grouped rare topic into 'Misc'/'Other': ['Sports', 'History', 'TV shows', 'Video games']
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
                   Topic Counts:
  topic
-Science and technology    66
-Politics                  45
-Art                       42
-Geography                 30
-Music                     23
-Other                     22
-Sports                    18
-History                   16
-TV shows                  15
-Video games               12
+Science and technology    439
+Politics                  341
+Art                       334
+Other                     238
+Geography                 202
+Music                     182
+Sports                    176
+TV shows                  131
+History                   116
+Video games                91
 Name: count, dtype: int64
                   Answer Type Counts:
  answer_type
-Date      104
-Other      60
-Person     59
-Number     49
-Place      17
+Date      776
+Person    544
+Other     438
+Number    346
+Place     146
 Name: count, dtype: int64
 
                   Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
 answer_type_grouped     Date  Number  Other  Person
 topic_grouped                                      
-Art                       12       5     11      14
-Geography                 11      13      6       0
-Misc                      21      10     19      11
-Music                      6       3      7       7
-Other                      9       4      6       3
-Politics                  18       4     14       9
-Science and technology    27      10     14      15
+Art                       95      39     77     123
+Geography                 70      80     52       0
+Misc                     107      42    120      69
+Music                     55      19     53      55
+Other                     83      30     64      61
+Politics                 162      25     88      66
+Science and technology   162      63     77     137
+Sports                    42      48     53      33
                   Capability by topic_grouped:
                             mean       std  count
 topic_grouped                                    
-Art                     0.404762  0.496796     42
-Geography               0.266667  0.449776     30
-Misc                    0.393443  0.492568     61
-Music                   0.260870  0.448978     23
-Other                   0.272727  0.455842     22
-Politics                0.466667  0.504525     45
-Science and technology  0.333333  0.475017     66
+Art                     0.251497  0.434525    334
+Geography               0.227723  0.420405    202
+Misc                    0.260355  0.439479    338
+Music                   0.170330  0.376959    182
+Other                   0.184874  0.389013    238
+Politics                0.351906  0.478267    341
+Science and technology  0.252847  0.435140    439
+Sports                  0.147727  0.355842    176
                   Delegate Choice by topic_grouped:
 topic_grouped           delegate_choice
-Art                     1                  0.857143
-                        0                  0.142857
-Geography               1                  0.733333
-                        0                  0.266667
-Misc                    1                  0.852459
-                        0                  0.147541
-Music                   1                  0.782609
-                        0                  0.217391
-Other                   1                  0.818182
-                        0                  0.181818
-Politics                1                  0.711111
-                        0                  0.288889
-Science and technology  1                  0.757576
-                        0                  0.242424
+Art                     1                  0.799401
+                        0                  0.200599
+Geography               1                  0.722772
+                        0                  0.277228
+Misc                    1                  0.837278
+                        0                  0.162722
+Music                   1                  0.796703
+                        0                  0.203297
+Other                   1                  0.815126
+                        0                  0.184874
+Politics                1                  0.736070
+                        0                  0.263930
+Science and technology  1                  0.708428
+                        0                  0.291572
+Sports                  1                  0.801136
+                        0                  0.198864
 Name: proportion, dtype: float64
 
                   Capability by answer_type_grouped:
                          mean       std  count
 answer_type_grouped                           
-Date                 0.442308  0.499066    104
-Number               0.204082  0.407206     49
-Other                0.363636  0.484200     77
-Person               0.338983  0.477427     59
+Date                 0.314433  0.464589    776
+Number               0.130058  0.336854    346
+Other                0.256849  0.437270    584
+Person               0.204044  0.403372    544
                   Delegate Choice by answer_type_grouped:
 answer_type_grouped  delegate_choice
-Date                 1                  0.663462
-                     0                  0.336538
-Number               1                  0.836735
-                     0                  0.163265
-Other                1                  0.857143
-                     0                  0.142857
-Person               1                  0.881356
-                     0                  0.118644
+Date                 1                  0.702320
+                     0                  0.297680
+Number               1                  0.794798
+                     0                  0.205202
+Other                1                  0.825342
+                     0                  0.174658
+Person               1                  0.801471
+                     0                  0.198529
 Name: proportion, dtype: float64
 
                   Q length by capability:
                     mean       std  count
 s_i_capability                           
-0               4.500848  0.392620    185
-1               4.517008  0.389083    104
+0               4.516946  0.378398   1700
+1               4.521332  0.383712    550
 topic_grouped           delegate_choice
-Art                     1                  0.857143
-                        0                  0.142857
-Geography               1                  0.733333
-                        0                  0.266667
-Misc                    1                  0.852459
-                        0                  0.147541
-Music                   1                  0.782609
-                        0                  0.217391
-Other                   1                  0.818182
-                        0                  0.181818
-Politics                1                  0.711111
-                        0                  0.288889
-Science and technology  1                  0.757576
-                        0                  0.242424
+Art                     1                  0.799401
+                        0                  0.200599
+Geography               1                  0.722772
+                        0                  0.277228
+Misc                    1                  0.837278
+                        0                  0.162722
+Music                   1                  0.796703
+                        0                  0.203297
+Other                   1                  0.815126
+                        0                  0.184874
+Politics                1                  0.736070
+                        0                  0.263930
+Science and technology  1                  0.708428
+                        0                  0.291572
+Sports                  1                  0.801136
+                        0                  0.198864
 Name: proportion, dtype: float64
 
 answer_type_grouped  delegate_choice
-Date                 1                  0.663462
-                     0                  0.336538
-Number               1                  0.836735
-                     0                  0.163265
-Other                1                  0.857143
-                     0                  0.142857
-Person               1                  0.881356
-                     0                  0.118644
+Date                 1                  0.702320
+                     0                  0.297680
+Number               1                  0.794798
+                     0                  0.205202
+Other                1                  0.825342
+                     0                  0.174658
+Person               1                  0.801471
+                     0                  0.198529
 Name: proportion, dtype: float64
 
                   topic+answer_type By delegate:
 
 delegate_choice                                    0         1  total_count
 topic_grouped          answer_type_grouped                                 
-Art                    Date                 0.333333  0.666667           12
-                       Number               0.200000  0.800000            5
-                       Other                0.000000  1.000000           11
-                       Person               0.071429  0.928571           14
-Geography              Date                 0.272727  0.727273           11
-                       Number               0.230769  0.769231           13
-                       Other                0.333333  0.666667            6
-Misc                   Date                 0.190476  0.809524           21
-                       Number               0.200000  0.800000           10
-                       Other                0.157895  0.842105           19
-                       Person               0.000000  1.000000           11
-Music                  Date                 0.333333  0.666667            6
-                       Number               0.000000  1.000000            3
-                       Other                0.142857  0.857143            7
-                       Person               0.285714  0.714286            7
-Other                  Date                 0.222222  0.777778            9
-                       Number               0.250000  0.750000            4
-                       Other                0.166667  0.833333            6
-                       Person               0.000000  1.000000            3
-Politics               Date                 0.388889  0.611111           18
-                       Number               0.250000  0.750000            4
-                       Other                0.214286  0.785714           14
-                       Person               0.222222  0.777778            9
-Science and technology Date                 0.481481  0.518519           27
-                       Number               0.000000  1.000000           10
-                       Other                0.071429  0.928571           14
-                       Person               0.133333  0.866667           15
+Art                    Date                 0.315789  0.684211           95
+                       Number               0.256410  0.743590           39
+                       Other                0.142857  0.857143           77
+                       Person               0.130081  0.869919          123
+Geography              Date                 0.242857  0.757143           70
+                       Number               0.287500  0.712500           80
+                       Other                0.307692  0.692308           52
+Misc                   Date                 0.186916  0.813084          107
+                       Number               0.309524  0.690476           42
+                       Other                0.133333  0.866667          120
+                       Person               0.086957  0.913043           69
+Music                  Date                 0.127273  0.872727           55
+                       Number               0.157895  0.842105           19
+                       Other                0.094340  0.905660           53
+                       Person               0.400000  0.600000           55
+Other                  Date                 0.253012  0.746988           83
+                       Number               0.233333  0.766667           30
+                       Other                0.140625  0.859375           64
+                       Person               0.114754  0.885246           61
+Politics               Date                 0.246914  0.753086          162
+                       Number               0.040000  0.960000           25
+                       Other                0.272727  0.727273           88
+                       Person               0.378788  0.621212           66
+Science and technology Date                 0.506173  0.493827          162
+                       Number               0.142857  0.857143           63
+                       Other                0.207792  0.792208           77
+                       Person               0.153285  0.846715          137
+Sports                 Date                 0.333333  0.666667           42
+                       Number               0.104167  0.895833           48
+                       Other                0.094340  0.905660           53
+                       Person               0.333333  0.666667           33
+                    Model 4: Using clustered standard errors by q_id.
 
                   Model 4 (No Interactions): delegate_choice ~ s_i_capability + C(topic_grouped) + C(answer_type_grouped) + q_length
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                  289
-Model:                          Logit   Df Residuals:                      277
-Method:                           MLE   Df Model:                           11
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.09703
-Time:                        20:04:38   Log-Likelihood:                -134.49
-converged:                       True   LL-Null:                       -148.94
-Covariance Type:            nonrobust   LLR p-value:                  0.002350
+Dep. Variable:        delegate_choice   No. Observations:                 2250
+Model:                          Logit   Df Residuals:                     2237
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.09099
+Time:                        20:46:29   Log-Likelihood:                -1096.9
+converged:                       True   LL-Null:                       -1206.7
+Covariance Type:              cluster   LLR p-value:                 2.894e-40
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
-Intercept                                      2.3461      1.922      1.220      0.222      -1.422       6.114
-C(topic_grouped)[T.Geography]                 -0.8093      0.652     -1.242      0.214      -2.087       0.468
-C(topic_grouped)[T.Misc]                       0.0096      0.594      0.016      0.987      -1.155       1.174
-C(topic_grouped)[T.Music]                     -0.7444      0.705     -1.056      0.291      -2.126       0.638
-C(topic_grouped)[T.Other]                     -0.2551      0.746     -0.342      0.732      -1.717       1.207
-C(topic_grouped)[T.Politics]                  -0.7284      0.595     -1.225      0.220      -1.894       0.437
-C(topic_grouped)[T.Science and technology]    -0.6240      0.553     -1.128      0.259      -1.709       0.461
-C(answer_type_grouped)[T.Number]               0.7811      0.463      1.686      0.092      -0.127       1.689
-C(answer_type_grouped)[T.Other]                1.0498      0.399      2.631      0.009       0.268       1.832
-C(answer_type_grouped)[T.Person]               1.2068      0.472      2.557      0.011       0.282       2.132
-s_i_capability                                -0.9311      0.313     -2.976      0.003      -1.544      -0.318
-q_length                                      -0.1686      0.410     -0.411      0.681      -0.973       0.635
+Intercept                                     -1.8354      1.176     -1.560      0.119      -4.141       0.470
+C(topic_grouped)[T.Geography]                 -0.3839      0.398     -0.965      0.335      -1.164       0.396
+C(topic_grouped)[T.Misc]                       0.2768      0.351      0.790      0.430      -0.410       0.964
+C(topic_grouped)[T.Music]                     -0.1245      0.426     -0.292      0.770      -0.960       0.711
+C(topic_grouped)[T.Other]                      0.0366      0.371      0.099      0.921      -0.691       0.764
+C(topic_grouped)[T.Politics]                  -0.3601      0.339     -1.062      0.288      -1.025       0.305
+C(topic_grouped)[T.Science and technology]    -0.5489      0.297     -1.851      0.064      -1.130       0.032
+C(topic_grouped)[T.Sports]                    -0.1544      0.405     -0.382      0.703      -0.947       0.638
+C(answer_type_grouped)[T.Number]               0.2429      0.269      0.902      0.367      -0.285       0.771
+C(answer_type_grouped)[T.Other]                0.6712      0.243      2.768      0.006       0.196       1.147
+C(answer_type_grouped)[T.Person]               0.4646      0.252      1.845      0.065      -0.029       0.958
+s_i_capability                                -1.3202      0.189     -6.973      0.000      -1.691      -0.949
+q_length                                       0.7455      0.259      2.884      0.004       0.239       1.252
 ==============================================================================================================
 
                   --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
-                  P-value for s_i_capability: 0.002917
-                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 2.5372 [1.3743, 4.6840]
+                  P-value for s_i_capability: 3.109e-12
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 3.7442 [2.5834, 5.4265]
 
                   Model 5.7: delegate_choice ~ s_i_capability + C(topic_grouped) + C(answer_type_grouped) + q_length
                                GEE Regression Results                              
 ===================================================================================
-Dep. Variable:             delegate_choice   No. Observations:                  289
-Model:                                 GEE   No. clusters:                        1
-Method:                        Generalized   Min. cluster size:                 289
-                      Estimating Equations   Max. cluster size:                 289
-Family:                           Binomial   Mean cluster size:               289.0
-Dependence structure:         Exchangeable   Num. iterations:                     5
-Date:                     Sat, 07 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         20:04:38
+Dep. Variable:             delegate_choice   No. Observations:                 2250
+Model:                                 GEE   No. clusters:                        5
+Method:                        Generalized   Min. cluster size:                 450
+                      Estimating Equations   Max. cluster size:                 450
+Family:                           Binomial   Mean cluster size:               450.0
+Dependence structure:         Exchangeable   Num. iterations:                     7
+Date:                     Mon, 09 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         20:46:29
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
-Intercept                                      2.3435   2.01e-15   1.17e+15      0.000       2.343       2.343
-C(topic_grouped)[T.Geography]                 -0.8088   4.28e-16  -1.89e+15      0.000      -0.809      -0.809
-C(topic_grouped)[T.Misc]                       0.0096   7.22e-16   1.34e+13      0.000       0.010       0.010
-C(topic_grouped)[T.Music]                     -0.7439   4.39e-16   -1.7e+15      0.000      -0.744      -0.744
-C(topic_grouped)[T.Other]                     -0.2549   5.07e-16  -5.02e+14      0.000      -0.255      -0.255
-C(topic_grouped)[T.Politics]                  -0.7280   2.37e-16  -3.07e+15      0.000      -0.728      -0.728
-C(topic_grouped)[T.Science and technology]    -0.6236   2.08e-16  -2.99e+15      0.000      -0.624      -0.624
-C(answer_type_grouped)[T.Number]               0.7808   2.62e-16   2.98e+15      0.000       0.781       0.781
-C(answer_type_grouped)[T.Other]                1.0493   2.54e-16   4.13e+15      0.000       1.049       1.049
-C(answer_type_grouped)[T.Person]               1.2061   1.26e-15   9.61e+14      0.000       1.206       1.206
-s_i_capability                                -0.9306   8.64e-17  -1.08e+16      0.000      -0.931      -0.931
-q_length                                      -0.1685   8.46e-16  -1.99e+14      0.000      -0.169      -0.169
+Intercept                                     -1.8388      0.743     -2.475      0.013      -3.295      -0.382
+C(topic_grouped)[T.Geography]                 -0.3919      0.215     -1.819      0.069      -0.814       0.030
+C(topic_grouped)[T.Misc]                       0.2788      0.130      2.152      0.031       0.025       0.533
+C(topic_grouped)[T.Music]                     -0.1388      0.178     -0.781      0.435      -0.487       0.210
+C(topic_grouped)[T.Other]                      0.0331      0.109      0.304      0.761      -0.180       0.246
+C(topic_grouped)[T.Politics]                  -0.3494      0.058     -6.073      0.000      -0.462      -0.237
+C(topic_grouped)[T.Science and technology]    -0.5438      0.153     -3.562      0.000      -0.843      -0.245
+C(topic_grouped)[T.Sports]                    -0.1520      0.262     -0.579      0.562      -0.666       0.362
+C(answer_type_grouped)[T.Number]               0.2135      0.069      3.087      0.002       0.078       0.349
+C(answer_type_grouped)[T.Other]                0.6534      0.134      4.876      0.000       0.391       0.916
+C(answer_type_grouped)[T.Person]               0.4531      0.089      5.083      0.000       0.278       0.628
+s_i_capability                                -1.3107      0.095    -13.782      0.000      -1.497      -1.124
+q_length                                       0.7364      0.119      6.171      0.000       0.503       0.970
 ==============================================================================
-Skew:                         -1.2296   Kurtosis:                       0.2052
-Centered skew:                -1.2296   Centered kurtosis:              0.2052
+Skew:                         -1.1409   Kurtosis:                      -0.0437
+Centered skew:                -1.0842   Centered kurtosis:              0.0131
 ==============================================================================
                     Skipping Model 6: No deterministic categories removed, would be same as Model 5.
 
                   Model 7: delegate_choice ~ C(topic_grouped) + C(answer_type_grouped) + q_length
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                  289
-Model:                          Logit   Df Residuals:                      278
-Method:                           MLE   Df Model:                           10
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.06708
-Time:                        20:04:38   Log-Likelihood:                -138.95
-converged:                       True   LL-Null:                       -148.94
-Covariance Type:            nonrobust   LLR p-value:                   0.02943
+Dep. Variable:        delegate_choice   No. Observations:                 2250
+Model:                          Logit   Df Residuals:                     2238
+Method:                           MLE   Df Model:                           11
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.03505
+Time:                        20:46:29   Log-Likelihood:                -1164.4
+converged:                       True   LL-Null:                       -1206.7
+Covariance Type:              cluster   LLR p-value:                 1.906e-13
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
-Intercept                                      1.6707      1.852      0.902      0.367      -1.960       5.301
-C(topic_grouped)[T.Geography]                 -0.6493      0.636     -1.021      0.307      -1.895       0.597
-C(topic_grouped)[T.Misc]                       0.0627      0.584      0.107      0.915      -1.083       1.208
-C(topic_grouped)[T.Music]                     -0.5633      0.689     -0.818      0.414      -1.913       0.787
-C(topic_grouped)[T.Other]                     -0.1177      0.726     -0.162      0.871      -1.541       1.306
-C(topic_grouped)[T.Politics]                  -0.7414      0.580     -1.278      0.201      -1.879       0.396
-C(topic_grouped)[T.Science and technology]    -0.5069      0.541     -0.936      0.349      -1.568       0.554
-C(answer_type_grouped)[T.Number]               0.9747      0.452      2.155      0.031       0.088       1.861
-C(answer_type_grouped)[T.Other]                1.0899      0.392      2.781      0.005       0.322       1.858
-C(answer_type_grouped)[T.Person]               1.2759      0.465      2.741      0.006       0.364       2.188
-q_length                                      -0.1352      0.398     -0.339      0.734      -0.916       0.646
+Intercept                                     -2.2522      1.184     -1.903      0.057      -4.572       0.068
+C(topic_grouped)[T.Geography]                 -0.3375      0.373     -0.904      0.366      -1.069       0.394
+C(topic_grouped)[T.Misc]                       0.2492      0.353      0.705      0.481      -0.444       0.942
+C(topic_grouped)[T.Music]                      0.0220      0.414      0.053      0.958      -0.789       0.833
+C(topic_grouped)[T.Other]                      0.1569      0.388      0.404      0.686      -0.604       0.918
+C(topic_grouped)[T.Politics]                  -0.4107      0.326     -1.258      0.208      -1.050       0.229
+C(topic_grouped)[T.Science and technology]    -0.4999      0.289     -1.731      0.083      -1.066       0.066
+C(topic_grouped)[T.Sports]                    -0.0064      0.391     -0.016      0.987      -0.774       0.761
+C(answer_type_grouped)[T.Number]               0.4923      0.265      1.856      0.063      -0.028       1.012
+C(answer_type_grouped)[T.Other]                0.6949      0.245      2.833      0.005       0.214       1.176
+C(answer_type_grouped)[T.Person]               0.5924      0.243      2.437      0.015       0.116       1.069
+q_length                                       0.7234      0.258      2.809      0.005       0.219       1.228
 ==============================================================================================================
 
 --- Analyzing gemini-2.0-flash-001 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
@@ -326,8 +340,8 @@ s_i_capability
 Dep. Variable:        delegate_choice   No. Observations:                  443
 Model:                          Logit   Df Residuals:                      441
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                0.006726
-Time:                        20:04:38   Log-Likelihood:                -200.11
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                0.006726
+Time:                        20:46:29   Log-Likelihood:                -200.11
 converged:                       True   LL-Null:                       -201.47
 Covariance Type:            nonrobust   LLR p-value:                   0.09971
 ==================================================================================
@@ -498,8 +512,8 @@ Sports                 Date                 0.444444  0.555556            9
 Dep. Variable:        delegate_choice   No. Observations:                  443
 Model:                          Logit   Df Residuals:                      430
 Method:                           MLE   Df Model:                           12
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.3595
-Time:                        20:04:38   Log-Likelihood:                -129.03
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.3595
+Time:                        20:46:29   Log-Likelihood:                -129.03
 converged:                       True   LL-Null:                       -201.47
 Covariance Type:            nonrobust   LLR p-value:                 6.204e-25
 ==============================================================================================================
@@ -533,8 +547,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 443
 Family:                           Binomial   Mean cluster size:               443.0
 Dependence structure:         Exchangeable   Num. iterations:                     9
-Date:                     Sat, 07 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         20:04:38
+Date:                     Mon, 09 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         20:46:29
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
@@ -563,8 +577,8 @@ Centered skew:                -0.9347   Centered kurtosis:              2.1672
 Dep. Variable:        delegate_choice   No. Observations:                  443
 Model:                          Logit   Df Residuals:                      431
 Method:                           MLE   Df Model:                           11
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.3533
-Time:                        20:04:38   Log-Likelihood:                -130.29
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.3533
+Time:                        20:46:29   Log-Likelihood:                -130.29
 converged:                       True   LL-Null:                       -201.47
 Covariance Type:            nonrobust   LLR p-value:                 5.439e-25
 ==============================================================================================================
@@ -625,8 +639,8 @@ s_i_capability
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.02024
-Time:                        20:04:38   Log-Likelihood:                -259.78
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.02024
+Time:                        20:46:29   Log-Likelihood:                -259.78
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                  0.001053
 ==================================================================================
@@ -642,8 +656,8 @@ s_i_capability    -0.7611      0.238     -3.202      0.001      -1.227      -0.2
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                0.006550
-Time:                        20:04:38   Log-Likelihood:                -263.41
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                0.006550
+Time:                        20:46:29   Log-Likelihood:                -263.41
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                   0.06236
 ========================================================================================
@@ -659,8 +673,8 @@ capabilities_entropy    -1.9137      1.052     -1.820      0.069      -3.975    
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.02024
-Time:                        20:04:38   Log-Likelihood:                -259.78
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.02024
+Time:                        20:46:29   Log-Likelihood:                -259.78
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                  0.001053
 ==================================================================================
@@ -837,8 +851,8 @@ Sports                 Date                 0.428571  0.571429            7
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      376
 Method:                           MLE   Df Model:                           12
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.1439
-Time:                        20:04:38   Log-Likelihood:                -226.99
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.1439
+Time:                        20:46:29   Log-Likelihood:                -226.99
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                 2.083e-11
 ==============================================================================================================
@@ -869,8 +883,8 @@ q_length                                       0.7070      0.318      2.220     
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      375
 Method:                           MLE   Df Model:                           13
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.1555
-Time:                        20:04:38   Log-Likelihood:                -223.91
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.1555
+Time:                        20:46:29   Log-Likelihood:                -223.91
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                 3.771e-12
 ==============================================================================================================
@@ -898,8 +912,8 @@ capabilities_entropy                          -3.1670      1.337     -2.368     
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      376
 Method:                           MLE   Df Model:                           12
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.1272
-Time:                        20:04:38   Log-Likelihood:                -231.41
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.1272
+Time:                        20:46:29   Log-Likelihood:                -231.41
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                 9.479e-10
 ==============================================================================================================
@@ -941,8 +955,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 389
 Family:                           Binomial   Mean cluster size:               389.0
 Dependence structure:         Exchangeable   Num. iterations:                     8
-Date:                     Sat, 07 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         20:04:38
+Date:                     Mon, 09 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         20:46:29
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
@@ -971,8 +985,8 @@ Centered skew:                 0.3365   Centered kurtosis:             -1.2016
 Dep. Variable:        delegate_choice   No. Observations:                  389
 Model:                          Logit   Df Residuals:                      377
 Method:                           MLE   Df Model:                           11
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.1233
-Time:                        20:04:38   Log-Likelihood:                -232.45
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.1233
+Time:                        20:46:29   Log-Likelihood:                -232.45
 converged:                       True   LL-Null:                       -265.14
 Covariance Type:            nonrobust   LLR p-value:                 9.158e-10
 ==============================================================================================================
@@ -1033,8 +1047,8 @@ s_i_capability
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      397
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.02386
-Time:                        20:04:38   Log-Likelihood:                -108.77
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.02386
+Time:                        20:46:29   Log-Likelihood:                -108.77
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                   0.02113
 ==================================================================================
@@ -1050,8 +1064,8 @@ s_i_capability    -0.8595      0.371     -2.314      0.021      -1.587      -0.1
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      397
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.02916
-Time:                        20:04:38   Log-Likelihood:                -108.18
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.02916
+Time:                        20:46:29   Log-Likelihood:                -108.18
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                   0.01080
 ========================================================================================
@@ -1067,8 +1081,8 @@ capabilities_entropy     4.3840      1.926      2.276      0.023       0.609    
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      397
 Method:                           MLE   Df Model:                            1
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                 0.02386
-Time:                        20:04:38   Log-Likelihood:                -108.77
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                 0.02386
+Time:                        20:46:29   Log-Likelihood:                -108.77
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                   0.02113
 ==================================================================================
@@ -1216,8 +1230,8 @@ Science and technology Date                 0.379310  0.620690           29
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            9
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.2936
-Time:                        20:04:38   Log-Likelihood:                -78.715
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.2936
+Time:                        20:46:29   Log-Likelihood:                -78.715
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                 1.196e-10
 ==============================================================================================================
@@ -1245,8 +1259,8 @@ q_length                                      -0.9183      0.548     -1.676     
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                           10
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.3021
-Time:                        20:04:38   Log-Likelihood:                -77.763
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.3021
+Time:                        20:46:29   Log-Likelihood:                -77.763
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                 1.453e-10
 ==============================================================================================================
@@ -1271,8 +1285,8 @@ capabilities_entropy                           2.8595      2.172      1.316     
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            9
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.2876
-Time:                        20:04:38   Log-Likelihood:                -79.375
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.2876
+Time:                        20:46:29   Log-Likelihood:                -79.375
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                 2.160e-10
 ==============================================================================================================
@@ -1311,8 +1325,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 399
 Family:                           Binomial   Mean cluster size:               399.0
 Dependence structure:         Exchangeable   Num. iterations:                     8
-Date:                     Sat, 07 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         20:04:38
+Date:                     Mon, 09 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         20:46:29
 ==============================================================================================================
                                                  coef    std err          z      P>|z|      [0.025      0.975]
 --------------------------------------------------------------------------------------------------------------
@@ -1338,8 +1352,8 @@ Centered skew:                -2.1903   Centered kurtosis:              6.3074
 Dep. Variable:        delegate_choice   No. Observations:                  399
 Model:                          Logit   Df Residuals:                      390
 Method:                           MLE   Df Model:                            8
-Date:                Sat, 07 Jun 2025   Pseudo R-squ.:                  0.2633
-Time:                        20:04:38   Log-Likelihood:                -82.088
+Date:                Mon, 09 Jun 2025   Pseudo R-squ.:                  0.2633
+Time:                        20:46:29   Log-Likelihood:                -82.088
 converged:                       True   LL-Null:                       -111.42
 Covariance Type:            nonrobust   LLR p-value:                 8.485e-10
 ==============================================================================================================

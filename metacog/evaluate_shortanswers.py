@@ -503,10 +503,10 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    test_data_file = "./capabilities_test_logs/deepseek-chat_SimpleQA_500_1749395840_test_data.json"
-    #test_data_file = "./delegate_game_logs/gemini-2.0-flash-001_SimpleQA_50_450_team0.1_temp0.0_1749329362_game_data.json"
+    #test_data_file = "./capabilities_test_logs/deepseek-chat_SimpleQA_500_1749395840_test_data.json"
+    test_data_file = "./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_450_team0.3_temp0.0_1749515124_game_data.json"
     
-    judge_models = ["gpt-4o-2024-08-06", "gemini-2.0-flash-001", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    judge_models = ["gpt-4o-2024-08-06", "gemini-2.0-flash-001", "deepseek-chat"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
 
 
     print(f"Evaluating {test_data_file} using models: {judge_models}")
