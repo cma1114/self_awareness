@@ -184,7 +184,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
             if delegation_choice_str == "Self":
                 subject_answer = trial.get("subject_answer")
                 if subject_answer and re.search(r'\b(T|DELEGATE)\b', subject_answer, re.IGNORECASE) and \
-                   trial.get("evaluation_method", "").startswith("llm_plurality"):
+                   trial.get("evaluation_method", "").startswith("llm_plurality") and "not delegate" not in subject_answer.lower() and "rather than delegate" not in subject_answer.lower():
                     judg_dict = trial.get("judgments")
                     if judg_dict and sum(j == "NOT ATTEMPTED" for j in judg_dict.values()) > len(judg_dict) / 2:
                         delegation_choice_str = "Teammate"
@@ -328,7 +328,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC"#"SimpleQA" #
+    dataset = "SimpleQA" #"SimpleMC"#
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"

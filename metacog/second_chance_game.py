@@ -21,7 +21,7 @@ class SecondChanceGame(BaseGameClass):
     Game class for the Second-Chance experiment.
     """
     def __init__(self, subject_id, subject_name, capabilities_file_path, 
-                 num_questions=20, show_original_answer=True, is_human_player=False):
+                 num_questions=None, show_original_answer=True, is_human_player=False):
         """
         Initialize the game with configuration parameters.
         
@@ -88,8 +88,9 @@ class SecondChanceGame(BaseGameClass):
             
             self._log(f"Found {len(self.wrong_questions)} questions that were answered incorrectly")
             
-            if len(self.wrong_questions) < self.num_questions:
+            if self.num_questions and len(self.wrong_questions) < self.num_questions:
                 self._log(f"Warning: Only {len(self.wrong_questions)} wrong questions available, but {self.num_questions} requested")
+                self.num_questions = len(self.wrong_questions)
             
             return True
         except Exception as e:
@@ -305,11 +306,11 @@ def main():
     # Configuration
     IS_HUMAN = False
     subject_name = "claude-3-5-sonnet-20241022" #"claude-3-haiku-20240307""claude-3-7-sonnet-20250219"#
-    CAPABILITIES_FILE = "./pass_game_logs/aop_claude-3-5-sonnet-20241022_MMLU_1000_1745613577_1745613581_phase1_data.json"
-    NUM_QUESTIONS = 92
+    CAPABILITIES_FILE = "./compiled_results_sqa/claude-3-5-sonnet-20241022_phase1_compiled.json"##"./pass_game_logs/aop_claude-3-5-sonnet-20241022_MMLU_1000_1745613577_1745613581_phase1_data.json"
     SHOW_ORIGINAL_ANSWER = True
+    NUM_QUESTIONS = None  # Use all wrong questions if None
     
-    DATASET_NAME = "GPQA" if "GPQA" in CAPABILITIES_FILE.upper() else "MMLU" if "MMLU" in CAPABILITIES_FILE.upper() else "TruthfulQA"
+    DATASET_NAME = "GPQA" if "GPQA" in CAPABILITIES_FILE.upper() else "GPSA" if "GPSA" in CAPABILITIES_FILE.upper() else "SimpleQA" if "sqa" in CAPABILITIES_FILE.upper() else "SimpleMC" if "smc" in CAPABILITIES_FILE.upper() else "Unknown"
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}"
     try:
         

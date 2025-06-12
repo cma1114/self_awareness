@@ -34,7 +34,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                  feedback_config=None, override_subject_accuracy=None, randomize_phase1_answers=False,
                  use_phase1_summary=True, use_phase1_history=True,
                  redact_phase1_answers=False, initial_setup_explanation="",
-                 seed=None, temperature=0.0):
+                 seed=None, temperature=0.0, resume_from=None):
         """
         Initializes the game instance using completed results data.
 
@@ -111,6 +111,19 @@ class DelegateGameFromCapabilities(BaseGameClass):
 
         # Load completed results data
         self._load_completed_results()
+
+        if resume_from:
+            # If resuming, load the existing results
+            self._log(f"Resuming from: {resume_from}")
+            try:
+                with open(resume_from, 'r', encoding='utf-8') as f:
+                    res = json.load(f)
+                self.completed_results = res["results"]
+            except Exception as e:
+                self._log(f"Error resuming from {resume_from}: {e}")
+                raise ValueError(f"Could not resume from {resume_from}: {e}")
+        else:
+            self.completed_results = None
 
     def _load_completed_results(self):
         """Load completed results data from the specified file."""
@@ -644,6 +657,18 @@ class DelegateGameFromCapabilities(BaseGameClass):
         
         # Process each question
         for i, question in enumerate(self.phase2_questions):
+            if self.completed_results:
+                cont = False
+                for result in self.completed_results:
+                    if result["question_id"] == question["id"] and result["subject_answer"] != "":
+                        self._record_trial(**result,trial_num=i,q_data=question)
+                        if result["subject_correct"] == True: 
+                            phase2_score += 1                
+                        print(f"Using pre-recorded answer for question {i+1} of {len(self.phase2_questions)}: {question['id']}")
+                        cont = True
+                        break
+                if cont: continue  # Skip to next question if already answered in completed results
+
             # Prepare question text
             formatted_question = self._present_question(question)###, i+1, len(self.phase2_questions))
             
@@ -1142,8 +1167,12 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASET = "GPSA"  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"gpt-4o-2024-08-06"#'gemini-2.0-flash-001'#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASETS = ["SimpleQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    for DATASET in DATASETS:
+        real_main(DATASET)
+
+def real_main(DATASET):
+    SUBJECT_NAME = "claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"deepseek-chat"#"grok-3-latest"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
@@ -1152,7 +1181,7 @@ def main():
     TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
     TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 42#714#41#3  # Random seed for reproducibility
+    SEED = 33#714#41#42#3  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1161,7 +1190,8 @@ def main():
     USE_PHASE1_HISTORY = False  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
-    
+    resume_from = None
+
     # Feedback configuration
     feedback_config = {
         'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
@@ -1201,6 +1231,7 @@ def main():
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """)
+
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
 
     # Include settings in the subject ID
@@ -1242,7 +1273,8 @@ def main():
             redact_phase1_answers=REDACT_PHASE1_ANSWERS,
             initial_setup_explanation=initial_setup_explanation,
             seed=SEED,
-            temperature=TEMPERATURE
+            temperature=TEMPERATURE,
+            resume_from=resume_from
         )
         
         # Run the game

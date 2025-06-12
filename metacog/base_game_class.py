@@ -47,7 +47,7 @@ class BaseGameClass:
             elif self.subject_name.startswith("grok"):
                 self.provider = "xAI"
             elif re.match(r"meta-llama/Meta-Llama-3\.1-\d+B", self.subject_name):
-                self.provider = "NDIF"
+                self.provider = "Hyperbolic"###"NDIF"
             elif "deepseek" in self.subject_name:
                 self.provider = "DeepSeek"
             else:
@@ -246,14 +246,28 @@ class BaseGameClass:
                     )
                     result = response.json()
                     if not result["choices"][0]['logprobs']: raise ValueError("logprobs not returned")
-                    lp_dict_arr=result["choices"][0]['logprobs']['content'][0]['top_logprobs']
-                    tokens, probs = [], []
-                    for lp_dict in lp_dict_arr:
-                        tokens.append(lp_dict['token'].strip())
-                        probs.append(math.exp(lp_dict['logprob']))
-                    token_probs = dict((zip(tokens,probs)))
-                    #print(f"tokens[0]={tokens[0]}, token_probs={token_probs}")
-                    return tokens[0], token_probs
+                    resp = result['choices'][0]['message']['content'].strip()
+
+                    if len(options) == 1:                     # ---------- short‑answer ----------
+                        token_logprobs = result['choices'][0]['logprobs']['content']
+                        top_probs = []
+
+                        for tok in token_logprobs:
+                            top_list = tok.get('top_logprobs') or []      # [] if None
+                            if top_list:
+                                top_logprob_value = top_list[0]['logprob']
+                            else:
+                                top_logprob_value = tok['logprob']        # <-- fallback
+                            top_probs.append(top_logprob_value)
+
+                        token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
+
+                    else:                                      # ---------- multiple choice ----------
+                        entry   = result['choices'][0]['logprobs']['content'][0]
+                        tokens  = [alt['token'].strip() for alt in entry['top_logprobs']]
+                        probs   = [math.exp(alt['logprob'])     for alt in entry['top_logprobs']]
+                        token_probs = dict(zip(tokens, probs))
+                    return resp, token_probs
                 elif self.provider == "NDIF":
                     prompt = ""
                     # Build prompt from message history and current question
