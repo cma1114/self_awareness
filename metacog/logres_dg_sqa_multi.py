@@ -7,45 +7,13 @@ import numpy as np
 from load_and_format_datasets import load_and_format_dataset
 import re
 from collections import defaultdict
-
+from logres_helpers import *
 
 def log_output(message_string, print_to_console=False):
     with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
-
-LOG_METRICS_TO_EXTRACT = [
-    "Delegation to teammate occurred",
-    "Phase 1 self-accuracy (from completed results, total - phase2)",
-    "Phase 2 self-accuracy",
-    "Statistical test (P2 self vs P1)"
-]
-
-LOG_METRIC_PATTERNS = {
-    "Delegation to teammate occurred": re.compile(r"^\s*Delegation to teammate occurred in (.*)$"),
-    "Phase 1 self-accuracy (from completed results, total - phase2)": re.compile(r"^\s*Phase 1 self-accuracy \(from completed results, total - phase2\): (.*)$"),
-    "Phase 2 self-accuracy": re.compile(r"^\s*Phase 2 self-accuracy: (.*)$"),
-    "Statistical test (P2 self vs P1)": re.compile(r"^\s*Statistical test \(P2 self vs P1\): (.*)$")
-}
-
-def extract_log_file_metrics(log_filepath):
-    extracted_log_metrics = {key: "Not found" for key in LOG_METRICS_TO_EXTRACT}
-    try:
-        with open(log_filepath, 'r') as f:
-            for line in f:
-                for metric_name, pattern in LOG_METRIC_PATTERNS.items():
-                    match = pattern.match(line)
-                    if match:
-                        extracted_log_metrics[metric_name] = match.group(1).strip()
-                        if all(val != "Not found" for val in extracted_log_metrics.values()):
-                            return extracted_log_metrics
-    except FileNotFoundError:
-        print(f"Warning: Log file not found: {log_filepath}")
-    except Exception as e:
-        print(f"An error occurred while reading log file {log_filepath}: {e}")
-    return extracted_log_metrics
-
 
 def identify_and_handle_deterministic_categories(df_input, outcome_var, categorical_predictors, min_obs_for_determinism_check=5):
     df_subset = df_input.copy()
@@ -457,6 +425,36 @@ if __name__ == "__main__":
                 log_output(f"df_model['delegate_choice'].value_counts()= {df_model['delegate_choice'].value_counts(dropna=False)}\n")
                 if 's_i_capability' in df_model.columns:
                     cross_tab_s_i = pd.crosstab(df_model['delegate_choice'], df_model['s_i_capability'])
+                    #TP = cross_tab_s_i.loc[1, 0]; FP = cross_tab_s_i.loc[1, 1]; FN = cross_tab_s_i.loc[0, 0]; TN = cross_tab_s_i.loc[0, 1]
+                    delegated = np.array(df_model['delegate_choice'], bool)
+                    kept_mask = ~delegated                       # True where model answered itself
+                    cap_corr = np.array(df_model['s_i_capability'], bool)   # Baseline correctness from capabilities file
+                    team_corr = np.where(df_model['delegate_choice'] == 0, df_model['team_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
+                    # Hybrid correctness label 
+                    #    – use real game correctness when the model kept
+                    #    – fallback to baseline correctness when it delegated
+                    true_label = np.where(kept_mask, team_corr, cap_corr)   # 1 = model would be correct
+
+                    #mcc, score, ci = mcc_ci_boot(TP=TP, FN=FN, FP=FP, TN=TN)
+                    TP, FN, FP, TN = contingency(delegated, cap_corr)
+                    raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
+                    delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
+                    log_output(f"Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
+
+                    #mcc, score, ci = mcc_ci_boot(TP=TP, FN=FN, FP=FP, TN=TN)
+                    TP, FN, FP, TN = contingency(delegated, true_label)
+                    N = (TP+FP+TN+FN)
+                    k   = FN + TN
+                    acc_kept   = TN / k
+                    acc_deleg  = cap_corr[delegated].mean()
+                    p0_hyb     = (k/N)*acc_kept + (1-k/N)*acc_deleg
+                    adj_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], p0_hyb)
+
+                    log_output(f"Adjusted introspection score = {adj_stats['mcc']:.3f} [{adj_stats['mcc_ci'][0]:.3f}, {adj_stats['mcc_ci'][1]:.3f}], p={adj_stats['p_mcc']:.4g}")
+                    delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
+                    log_output(f"Adjusted delegate gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
+
                     log_output(f"Cross-tabulation of delegate_choice vs. s_i_capability:\n{cross_tab_s_i}\n")
                     prob_delegating_Si0 = df_model.loc[df_model['s_i_capability'] == 0, 'delegate_choice'].mean()
                     log_output(f"Probability of delegating when s_i_capability is 0: {prob_delegating_Si0:.4f}")
@@ -465,6 +463,12 @@ if __name__ == "__main__":
                     log_output(f"Phase 1 accuracy: {subject_acc_phase1:.4f} (n=400)")
                     log_output(f"Phase 2 self-accuracy: {phase2_corcnt/phase2_totalcnt:.4f} (n={phase2_totalcnt})")
                 
+                    #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
+                    log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}")
+
+                    #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
+                    log_output(f"Adjusted self-acc lift = {adj_stats['lift']:.3f} [{adj_stats['lift_ci'][0]:.3f}, {adj_stats['lift_ci'][1]:.3f}], p={adj_stats['p_lift']:.4g}")
+
                 if 'team_correct' in df_model.columns:
                     cross_tab_team_correct = pd.crosstab(df_model['delegate_choice'], df_model['team_correct'])
                     log_output(f"Cross-tabulation of delegate_choice vs. team_correct:\n{cross_tab_team_correct}\n")

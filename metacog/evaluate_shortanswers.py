@@ -503,7 +503,7 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    test_data_file = "./delegate_game_logs/claude-sonnet-4-20250514_SimpleQA_50_450_nohistory_summary_team0.5_temp0.0_1749687483_game_data.json"
+    test_data_file = "./capabilities_test_logs/claude-sonnet-4-20250514_GPQA_447_1749732375_test_data.json"
     #test_data_file = "./delegate_game_logs/deepseek-chat_GPSA_50_450_nohistory_summary_team0.5_temp0.0_1749657780_game_data.json"
     
     judge_models = ["deepseek-chat", "gpt-4o-2024-08-06", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]

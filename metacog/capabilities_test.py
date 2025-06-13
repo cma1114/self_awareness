@@ -108,20 +108,31 @@ class CapabilitiesTest(BaseGameClass):
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
                         keep_appending=False,
-                        MAX_TOKENS=1,
+                        MAX_TOKENS=None,#1,
                         temp=self.temperature
                     )
             
             # Check correctness
-            is_correct = (subject_answer == question["correct_answer"])
+            if len(subject_answer) == 0:
+                subject_decision = subject_answer
+            else:
+                arr=subject_answer.split()
+                if arr[0] in list(question["options"].keys()):
+                    subject_decision = arr[0]
+                elif arr[-1] in list(question["options"].keys()):
+                    subject_decision = arr[-1]
+                else:
+                    subject_decision = subject_answer
+
+            is_correct = (subject_decision == question["correct_answer"])
             if is_correct:
                 self.correct_count += 1
             
             # Store result
-            if subject_answer != "":
+            if subject_decision != "":
                 self.results[question["id"]] = {
                     "question": question,
-                    "subject_answer": subject_answer,
+                    "subject_answer": subject_decision,
                     "is_correct": is_correct,
                     "probs": probs 
                 }

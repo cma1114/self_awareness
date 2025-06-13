@@ -1,0 +1,1165 @@
+
+--- Analyzing Model from Game File: claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_1747609609_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 33/100 trials (33.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 86/239 (35.99%)
+  Phase 2 self-accuracy: 25/67 (37.31%)
+  Statistical test (P2 self vs P1): z-score = 0.2001, p-value = 0.8414
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:               2.227e-05
+Time:                        10:35:14   Log-Likelihood:                -63.416
+converged:                       True   LL-Null:                       -63.418
+Covariance Type:            nonrobust   LLR p-value:                    0.9576
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.7167      0.266     -2.692      0.007      -1.238      -0.195
+s_i_capability     0.0235      0.443      0.053      0.958      -0.844       0.891
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1892
+Time:                        10:35:14   Log-Likelihood:                -51.417
+converged:                       True   LL-Null:                       -63.418
+Covariance Type:            nonrobust   LLR p-value:                   0.06507
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                             -2.2544      1.061     -2.126      0.034      -4.333      -0.176
+C(topic)[T.Geography]                 -2.6051      1.266     -2.057      0.040      -5.087      -0.123
+C(topic)[T.History]                   -0.3108      1.428     -0.218      0.828      -3.110       2.488
+C(topic)[T.Music]                     -0.0114      0.935     -0.012      0.990      -1.845       1.822
+C(topic)[T.Other]                     -0.6771      0.989     -0.684      0.494      -2.616       1.262
+C(topic)[T.Politics]                  -0.9028      0.913     -0.989      0.323      -2.692       0.887
+C(topic)[T.Science and technology]    -0.8834      0.812     -1.088      0.277      -2.475       0.708
+C(topic)[T.Sports]                     0.0652      1.195      0.055      0.956      -2.276       2.407
+C(topic)[T.TV shows]                  -1.5841      1.483     -1.068      0.286      -4.491       1.323
+C(topic)[T.Video games]                1.0182      1.118      0.911      0.362      -1.172       3.209
+C(answer_type)[T.Number]               1.4268      0.809      1.764      0.078      -0.158       3.012
+C(answer_type)[T.Other]                2.6250      0.801      3.276      0.001       1.055       4.195
+C(answer_type)[T.Person]               1.3835      0.795      1.739      0.082      -0.176       2.943
+C(answer_type)[T.Place]                1.7186      1.000      1.719      0.086      -0.240       3.678
+s_i_capability                         0.4186      0.538      0.779      0.436      -0.635       1.472
+q_length                               0.0063      0.006      1.025      0.305      -0.006       0.018
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.4362
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 0.6580
+95% CI for this Odds Ratio: [0.2294, 1.8870]
+
+--- Analyzing Model from Game File: claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.5_1747663996_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 73/100 trials (73.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 86/239 (35.99%)
+  Phase 2 self-accuracy: 15/27 (55.56%)
+  Statistical test (P2 self vs P1): z-score = 1.9864, p-value = 0.0470
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.05126
+Time:                        10:35:14   Log-Likelihood:                -55.336
+converged:                       True   LL-Null:                       -58.326
+Covariance Type:            nonrobust   LLR p-value:                   0.01447
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.4663      0.320      4.579      0.000       0.839       2.094
+s_i_capability    -1.1299      0.466     -2.426      0.015      -2.043      -0.217
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+    Could not fit full model: Singular matrix
+
+--- Analyzing Model from Game File: claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746405_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 85/100 trials (85.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 86/239 (35.99%)
+  Phase 2 self-accuracy: 11/15 (73.33%)
+  Statistical test (P2 self vs P1): z-score = 2.8881, p-value = 0.0039
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1367
+Time:                        10:35:14   Log-Likelihood:                -36.493
+converged:                       True   LL-Null:                       -42.271
+Covariance Type:            nonrobust   LLR p-value:                 0.0006752
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          2.7408      0.516      5.313      0.000       1.730       3.752
+s_i_capability    -2.0032      0.633     -3.165      0.002      -3.244      -0.763
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.4267
+Time:                        10:35:14   Log-Likelihood:                -24.236
+converged:                      False   LL-Null:                       -42.271
+Covariance Type:            nonrobust   LLR p-value:                  0.001727
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.7322      1.269      0.577      0.564      -1.756       3.220
+C(topic)[T.Geography]                  1.6438      1.412      1.164      0.244      -1.123       4.411
+C(topic)[T.History]                    0.3129      1.622      0.193      0.847      -2.866       3.492
+C(topic)[T.Music]                      1.7331      1.685      1.028      0.304      -1.570       5.036
+C(topic)[T.Other]                     -1.2464      1.457     -0.855      0.392      -4.102       1.610
+C(topic)[T.Politics]                   1.4811      1.563      0.947      0.343      -1.583       4.545
+C(topic)[T.Science and technology]     0.5432      1.271      0.427      0.669      -1.948       3.035
+C(topic)[T.Sports]                     0.3232      1.929      0.168      0.867      -3.458       4.105
+C(topic)[T.TV shows]                  19.1051   1.62e+04      0.001      0.999   -3.17e+04    3.17e+04
+C(topic)[T.Video games]               19.8257   3.95e+04      0.001      1.000   -7.73e+04    7.73e+04
+C(answer_type)[T.Number]              -1.2277      0.902     -1.361      0.174      -2.996       0.541
+C(answer_type)[T.Other]                1.0392      1.345      0.773      0.440      -1.597       3.675
+C(answer_type)[T.Person]              22.9475   4.28e+04      0.001      1.000   -8.39e+04    8.39e+04
+C(answer_type)[T.Place]               24.3951   1.16e+05      0.000      1.000   -2.27e+05    2.27e+05
+s_i_capability                        -2.8735      0.965     -2.979      0.003      -4.764      -0.983
+q_length                               0.0191      0.012      1.543      0.123      -0.005       0.043
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.27 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.002891
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 17.6980
+95% CI for this Odds Ratio: [2.6725, 117.2009]
+
+--- Analyzing Model from Game File: claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746913_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 60/100 trials (60.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 86/239 (35.99%)
+  Phase 2 self-accuracy: 20/40 (50.00%)
+  Statistical test (P2 self vs P1): z-score = 1.6904, p-value = 0.0909
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.02649
+Time:                        10:35:14   Log-Likelihood:                -65.518
+converged:                       True   LL-Null:                       -67.301
+Covariance Type:            nonrobust   LLR p-value:                   0.05897
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.6931      0.261      2.655      0.008       0.181       1.205
+s_i_capability    -0.8109      0.432     -1.879      0.060      -1.657       0.035
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+    Could not fit full model: Singular matrix
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.5_1747614135_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 5/100 trials (5.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 26/95 (27.37%)
+  Statistical test (P2 self vs P1): z-score = -1.5664, p-value = 0.1172
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:               0.0009077
+Time:                        10:35:14   Log-Likelihood:                -19.834
+converged:                       True   LL-Null:                       -19.852
+Covariance Type:            nonrobust   LLR p-value:                    0.8494
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -3.0123      0.591     -5.094      0.000      -4.171      -1.853
+s_i_capability     0.1790      0.938      0.191      0.849      -1.659       2.017
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+    Could not fit full model: Singular matrix
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_1747615223_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 13/100 trials (13.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 26/87 (29.89%)
+  Statistical test (P2 self vs P1): z-score = -1.0593, p-value = 0.2895
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002343
+Time:                        10:35:14   Log-Likelihood:                -38.548
+converged:                       True   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                    0.6704
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -1.8101      0.360     -5.034      0.000      -2.515      -1.105
+s_i_capability    -0.2693      0.641     -0.420      0.674      -1.525       0.986
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1631
+Time:                        10:35:14   Log-Likelihood:                -32.337
+converged:                      False   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                    0.6329
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                             -1.3055      1.058     -1.234      0.217      -3.379       0.768
+C(topic)[T.Geography]                -19.6196   9101.177     -0.002      0.998   -1.79e+04    1.78e+04
+C(topic)[T.History]                  -24.2890   1.74e+05     -0.000      1.000    -3.4e+05     3.4e+05
+C(topic)[T.Music]                     -0.4524      1.319     -0.343      0.732      -3.037       2.132
+C(topic)[T.Other]                    -39.5935    2.3e+08  -1.72e-07      1.000    -4.5e+08     4.5e+08
+C(topic)[T.Politics]                  -0.1222      0.933     -0.131      0.896      -1.952       1.707
+C(topic)[T.Science and technology]    -0.8167      1.062     -0.769      0.442      -2.899       1.266
+C(topic)[T.Sports]                     0.0953      1.069      0.089      0.929      -2.001       2.191
+C(topic)[T.TV shows]                 -70.0277   1.31e+15  -5.35e-14      1.000   -2.56e+15    2.56e+15
+C(topic)[T.Video games]               -0.6686      1.299     -0.515      0.607      -3.214       1.877
+C(answer_type)[T.Number]              -0.1647      0.975     -0.169      0.866      -2.076       1.746
+C(answer_type)[T.Other]                0.3787      0.845      0.448      0.654      -1.278       2.036
+C(answer_type)[T.Person]              -0.1496      0.995     -0.150      0.881      -2.101       1.801
+C(answer_type)[T.Place]                0.1931      1.303      0.148      0.882      -2.361       2.747
+s_i_capability                        -0.2181      0.716     -0.305      0.760      -1.621       1.184
+q_length                               0.0019      0.007      0.276      0.782      -0.012       0.015
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.32 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.7605
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.2438
+95% CI for this Odds Ratio: [0.3059, 5.0564]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_1747658903_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 62/100 trials (62.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 19/38 (50.00%)
+  Statistical test (P2 self vs P1): z-score = 1.7238, p-value = 0.0847
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01516
+Time:                        10:35:14   Log-Likelihood:                -65.400
+converged:                       True   LL-Null:                       -66.406
+Covariance Type:            nonrobust   LLR p-value:                    0.1559
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.7167      0.266      2.692      0.007       0.195       1.238
+s_i_capability    -0.6055      0.427     -1.418      0.156      -1.442       0.231
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.08399
+Time:                        10:35:14   Log-Likelihood:                -60.829
+converged:                       True   LL-Null:                       -66.406
+Covariance Type:            nonrobust   LLR p-value:                    0.7416
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.9463      0.843      1.122      0.262      -0.707       2.600
+C(topic)[T.Geography]                  0.5324      0.938      0.568      0.570      -1.306       2.371
+C(topic)[T.History]                    0.3953      1.343      0.294      0.769      -2.237       3.028
+C(topic)[T.Music]                     -0.0382      1.092     -0.035      0.972      -2.178       2.102
+C(topic)[T.Other]                     -0.6849      0.895     -0.766      0.444      -2.439       1.069
+C(topic)[T.Politics]                  -0.7034      0.805     -0.874      0.382      -2.281       0.874
+C(topic)[T.Science and technology]    -0.8269      0.814     -1.015      0.310      -2.423       0.769
+C(topic)[T.Sports]                     1.1447      1.245      0.920      0.358      -1.295       3.584
+C(topic)[T.TV shows]                  -1.3387      1.122     -1.193      0.233      -3.538       0.860
+C(topic)[T.Video games]                0.1140      1.066      0.107      0.915      -1.975       2.203
+C(answer_type)[T.Number]               0.0135      0.637      0.021      0.983      -1.235       1.262
+C(answer_type)[T.Other]                0.5865      0.686      0.855      0.393      -0.758       1.931
+C(answer_type)[T.Person]               0.1385      0.651      0.213      0.831      -1.137       1.414
+C(answer_type)[T.Place]                0.5540      0.962      0.576      0.565      -1.331       2.439
+s_i_capability                        -0.5927      0.489     -1.213      0.225      -1.551       0.365
+q_length                              -0.0012      0.005     -0.241      0.809      -0.011       0.009
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.2252
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.8089
+95% CI for this Odds Ratio: [0.6941, 4.7141]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_1747688483_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 62/100 trials (62.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 19/38 (50.00%)
+  Statistical test (P2 self vs P1): z-score = 1.7238, p-value = 0.0847
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01516
+Time:                        10:35:14   Log-Likelihood:                -65.400
+converged:                       True   LL-Null:                       -66.406
+Covariance Type:            nonrobust   LLR p-value:                    0.1559
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.7167      0.266      2.692      0.007       0.195       1.238
+s_i_capability    -0.6055      0.427     -1.418      0.156      -1.442       0.231
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.08399
+Time:                        10:35:14   Log-Likelihood:                -60.829
+converged:                       True   LL-Null:                       -66.406
+Covariance Type:            nonrobust   LLR p-value:                    0.7416
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.9463      0.843      1.122      0.262      -0.707       2.600
+C(topic)[T.Geography]                  0.5324      0.938      0.568      0.570      -1.306       2.371
+C(topic)[T.History]                    0.3953      1.343      0.294      0.769      -2.237       3.028
+C(topic)[T.Music]                     -0.0382      1.092     -0.035      0.972      -2.178       2.102
+C(topic)[T.Other]                     -0.6849      0.895     -0.766      0.444      -2.439       1.069
+C(topic)[T.Politics]                  -0.7034      0.805     -0.874      0.382      -2.281       0.874
+C(topic)[T.Science and technology]    -0.8269      0.814     -1.015      0.310      -2.423       0.769
+C(topic)[T.Sports]                     1.1447      1.245      0.920      0.358      -1.295       3.584
+C(topic)[T.TV shows]                  -1.3387      1.122     -1.193      0.233      -3.538       0.860
+C(topic)[T.Video games]                0.1140      1.066      0.107      0.915      -1.975       2.203
+C(answer_type)[T.Number]               0.0135      0.637      0.021      0.983      -1.235       1.262
+C(answer_type)[T.Other]                0.5865      0.686      0.855      0.393      -0.758       1.931
+C(answer_type)[T.Person]               0.1385      0.651      0.213      0.831      -1.137       1.414
+C(answer_type)[T.Place]                0.5540      0.962      0.576      0.565      -1.331       2.439
+s_i_capability                        -0.5927      0.489     -1.213      0.225      -1.551       0.365
+q_length                              -0.0012      0.005     -0.241      0.809      -0.011       0.009
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.2252
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.8089
+95% CI for this Odds Ratio: [0.6941, 4.7141]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_1747702105_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 90/100 trials (90.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 5/10 (50.00%)
+  Statistical test (P2 self vs P1): z-score = 0.9190, p-value = 0.3581
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01402
+Time:                        10:35:14   Log-Likelihood:                -32.053
+converged:                       True   LL-Null:                       -32.508
+Covariance Type:            nonrobust   LLR p-value:                    0.3397
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          2.4681      0.466      5.299      0.000       1.555       3.381
+s_i_capability    -0.6436      0.670     -0.960      0.337      -1.957       0.670
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1915
+Time:                        10:35:14   Log-Likelihood:                -26.284
+converged:                      False   LL-Null:                       -32.508
+Covariance Type:            nonrobust   LLR p-value:                    0.6448
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              3.1588      1.557      2.029      0.042       0.107       6.210
+C(topic)[T.Geography]                 -0.2742      1.610     -0.170      0.865      -3.429       2.880
+C(topic)[T.History]                   22.6163   1.29e+05      0.000      1.000   -2.54e+05    2.54e+05
+C(topic)[T.Music]                     17.6205   8155.046      0.002      0.998    -1.6e+04     1.6e+04
+C(topic)[T.Other]                     -0.7823      1.387     -0.564      0.573      -3.500       1.936
+C(topic)[T.Politics]                   0.7713      1.553      0.497      0.619      -2.273       3.816
+C(topic)[T.Science and technology]    -0.4158      1.326     -0.314      0.754      -3.015       2.183
+C(topic)[T.Sports]                    23.0962   1.39e+05      0.000      1.000   -2.72e+05    2.72e+05
+C(topic)[T.TV shows]                  -2.0665      1.422     -1.454      0.146      -4.853       0.720
+C(topic)[T.Video games]               -0.9275      1.592     -0.583      0.560      -4.047       2.192
+C(answer_type)[T.Number]               0.2267      1.106      0.205      0.838      -1.942       2.395
+C(answer_type)[T.Other]               -0.5134      1.072     -0.479      0.632      -2.614       1.587
+C(answer_type)[T.Person]              -0.6823      1.013     -0.674      0.501      -2.668       1.303
+C(answer_type)[T.Place]               26.1502   5.33e+05   4.91e-05      1.000   -1.04e+06    1.04e+06
+s_i_capability                        -1.0709      0.818     -1.310      0.190      -2.673       0.531
+q_length                              -0.0019      0.009     -0.209      0.835      -0.020       0.016
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.25 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.1902
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 2.9181
+95% CI for this Odds Ratio: [0.5877, 14.4885]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_1747711733_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 87/100 trials (87.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 3/13 (23.08%)
+  Statistical test (P2 self vs P1): z-score = -0.9479, p-value = 0.3432
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.001548
+Time:                        10:35:14   Log-Likelihood:                -38.579
+converged:                       True   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                    0.7294
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.8281      0.359      5.091      0.000       1.124       2.532
+s_i_capability     0.2196      0.641      0.342      0.732      -1.037       1.476
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.3529
+Time:                        10:35:14   Log-Likelihood:                -25.004
+converged:                      False   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                   0.02661
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              1.8484      2.043      0.905      0.366      -2.155       5.852
+C(topic)[T.Geography]                 22.4308   5.35e+04      0.000      1.000   -1.05e+05    1.05e+05
+C(topic)[T.History]                    6.7026     52.519      0.128      0.898     -96.233     109.638
+C(topic)[T.Music]                     -0.2291      1.676     -0.137      0.891      -3.514       3.056
+C(topic)[T.Other]                     -0.7091      1.627     -0.436      0.663      -3.899       2.480
+C(topic)[T.Politics]                  -1.9272      1.331     -1.448      0.148      -4.535       0.681
+C(topic)[T.Science and technology]    -0.3274      1.318     -0.248      0.804      -2.911       2.257
+C(topic)[T.Sports]                    25.8152   4.62e+05   5.59e-05      1.000   -9.05e+05    9.05e+05
+C(topic)[T.TV shows]                  -2.1795      1.431     -1.523      0.128      -4.984       0.625
+C(topic)[T.Video games]               30.9014   9.05e+06   3.41e-06      1.000   -1.77e+07    1.77e+07
+C(answer_type)[T.Number]              -1.8187      1.303     -1.396      0.163      -4.372       0.734
+C(answer_type)[T.Other]               -2.5574      1.238     -2.066      0.039      -4.984      -0.131
+C(answer_type)[T.Person]              -0.2297      1.345     -0.171      0.864      -2.866       2.406
+C(answer_type)[T.Place]               18.4780   4.46e+04      0.000      1.000   -8.73e+04    8.74e+04
+s_i_capability                         1.0233      0.937      1.092      0.275      -0.814       2.861
+q_length                               0.0154      0.013      1.206      0.228      -0.010       0.040
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.31 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.275
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 0.3594
+95% CI for this Odds Ratio: [0.0572, 2.2569]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_temp0.0_1747757909_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 87/100 trials (87.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 3/13 (23.08%)
+  Statistical test (P2 self vs P1): z-score = -0.9479, p-value = 0.3432
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.001548
+Time:                        10:35:14   Log-Likelihood:                -38.579
+converged:                       True   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                    0.7294
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.8281      0.359      5.091      0.000       1.124       2.532
+s_i_capability     0.2196      0.641      0.342      0.732      -1.037       1.476
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.3529
+Time:                        10:35:14   Log-Likelihood:                -25.004
+converged:                      False   LL-Null:                       -38.639
+Covariance Type:            nonrobust   LLR p-value:                   0.02661
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              1.8484      2.043      0.905      0.366      -2.155       5.852
+C(topic)[T.Geography]                 22.4308   5.35e+04      0.000      1.000   -1.05e+05    1.05e+05
+C(topic)[T.History]                    6.7026     52.519      0.128      0.898     -96.233     109.638
+C(topic)[T.Music]                     -0.2291      1.676     -0.137      0.891      -3.514       3.056
+C(topic)[T.Other]                     -0.7091      1.627     -0.436      0.663      -3.899       2.480
+C(topic)[T.Politics]                  -1.9272      1.331     -1.448      0.148      -4.535       0.681
+C(topic)[T.Science and technology]    -0.3274      1.318     -0.248      0.804      -2.911       2.257
+C(topic)[T.Sports]                    25.8152   4.62e+05   5.59e-05      1.000   -9.05e+05    9.05e+05
+C(topic)[T.TV shows]                  -2.1795      1.431     -1.523      0.128      -4.984       0.625
+C(topic)[T.Video games]               30.9014   9.05e+06   3.41e-06      1.000   -1.77e+07    1.77e+07
+C(answer_type)[T.Number]              -1.8187      1.303     -1.396      0.163      -4.372       0.734
+C(answer_type)[T.Other]               -2.5574      1.238     -2.066      0.039      -4.984      -0.131
+C(answer_type)[T.Person]              -0.2297      1.345     -0.171      0.864      -2.866       2.406
+C(answer_type)[T.Place]               18.4780   4.46e+04      0.000      1.000   -8.73e+04    8.74e+04
+s_i_capability                         1.0233      0.937      1.092      0.275      -0.814       2.861
+q_length                               0.0154      0.013      1.206      0.228      -0.010       0.040
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.31 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.275
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 0.3594
+95% CI for this Odds Ratio: [0.0572, 2.2569]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_100_team0.7_temp0.0_1747758328_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 77/100 trials (77.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 142/396 (35.89%)
+  Phase 2 self-accuracy: 7/23 (30.43%)
+  Statistical test (P2 self vs P1): z-score = -0.5283, p-value = 0.5973
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       98
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002053
+Time:                        10:35:14   Log-Likelihood:                -53.817
+converged:                       True   LL-Null:                       -53.928
+Covariance Type:            nonrobust   LLR p-value:                    0.6379
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.2928      0.302      4.285      0.000       0.701       1.884
+s_i_capability    -0.2319      0.491     -0.473      0.636      -1.193       0.730
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  100
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.07030
+Time:                        10:35:14   Log-Likelihood:                -50.137
+converged:                      False   LL-Null:                       -53.928
+Covariance Type:            nonrobust   LLR p-value:                    0.9394
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              2.6468      1.294      2.046      0.041       0.111       5.182
+C(topic)[T.Geography]                 -0.8647      1.407     -0.614      0.539      -3.623       1.894
+C(topic)[T.History]                   -1.5449      1.371     -1.127      0.260      -4.233       1.143
+C(topic)[T.Music]                     -2.4420      1.471     -1.660      0.097      -5.325       0.441
+C(topic)[T.Other]                     -0.9121      1.349     -0.676      0.499      -3.556       1.732
+C(topic)[T.Politics]                  -0.8630      1.328     -0.650      0.516      -3.466       1.740
+C(topic)[T.Science and technology]    -1.3134      1.149     -1.143      0.253      -3.565       0.938
+C(topic)[T.Sports]                    -1.2601      1.353     -0.931      0.352      -3.913       1.392
+C(topic)[T.TV shows]                  -1.3121      1.366     -0.960      0.337      -3.990       1.366
+C(topic)[T.Video games]               -1.7596      1.674     -1.051      0.293      -5.040       1.521
+C(answer_type)[T.Number]              -0.8371      0.746     -1.122      0.262      -2.299       0.625
+C(answer_type)[T.Other]                0.1548      0.872      0.178      0.859      -1.553       1.863
+C(answer_type)[T.Person]              -0.6465      0.672     -0.962      0.336      -1.963       0.670
+C(answer_type)[T.Place]               22.3210   9.28e+04      0.000      1.000   -1.82e+05    1.82e+05
+s_i_capability                        -0.2730      0.532     -0.513      0.608      -1.316       0.770
+q_length                               0.0017      0.006      0.291      0.771      -0.010       0.013
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.608
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.3139
+95% CI for this Odds Ratio: [0.4629, 3.7290]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.75_1747681023_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: Not found
+  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+  Phase 2 self-accuracy: Not found
+  Statistical test (P2 self vs P1): Not found
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002416
+Time:                        10:35:14   Log-Likelihood:                -121.88
+converged:                       True   LL-Null:                       -122.17
+Covariance Type:            nonrobust   LLR p-value:                    0.4423
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.9383      0.197      4.773      0.000       0.553       1.324
+s_i_capability    -0.2451      0.318     -0.771      0.441      -0.868       0.378
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.04184
+Time:                        10:35:14   Log-Likelihood:                -117.06
+converged:                       True   LL-Null:                       -122.17
+Covariance Type:            nonrobust   LLR p-value:                    0.8054
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.3209      0.609      0.527      0.598      -0.872       1.514
+C(topic)[T.Geography]                  0.7864      0.667      1.179      0.239      -0.521       2.094
+C(topic)[T.History]                    1.4819      1.166      1.270      0.204      -0.804       3.768
+C(topic)[T.Music]                      0.4849      0.731      0.663      0.507      -0.949       1.919
+C(topic)[T.Other]                      0.5332      0.635      0.840      0.401      -0.711       1.777
+C(topic)[T.Politics]                   0.9863      0.664      1.485      0.138      -0.316       2.288
+C(topic)[T.Science and technology]    -0.0617      0.542     -0.114      0.909      -1.124       1.000
+C(topic)[T.Sports]                     0.2714      0.626      0.433      0.665      -0.956       1.499
+C(topic)[T.TV shows]                  -0.0715      0.676     -0.106      0.916      -1.397       1.254
+C(topic)[T.Video games]                0.6275      0.929      0.676      0.499      -1.193       2.448
+C(answer_type)[T.Number]              -0.0660      0.462     -0.143      0.886      -0.971       0.839
+C(answer_type)[T.Other]                0.4211      0.482      0.873      0.383      -0.524       1.366
+C(answer_type)[T.Person]               0.2023      0.458      0.442      0.658      -0.695       1.099
+C(answer_type)[T.Place]                0.8847      0.712      1.243      0.214      -0.510       2.279
+s_i_capability                        -0.3399      0.342     -0.994      0.320      -1.011       0.331
+q_length                               0.0011      0.004      0.299      0.765      -0.006       0.009
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.3205
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.4049
+95% CI for this Odds Ratio: [0.7184, 2.7471]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.75_1747686720_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 165/200 trials (82.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 6/35 (17.14%)
+  Statistical test (P2 self vs P1): z-score = -2.2073, p-value = 0.0273
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01095
+Time:                        10:35:14   Log-Likelihood:                -91.730
+converged:                       True   LL-Null:                       -92.745
+Covariance Type:            nonrobust   LLR p-value:                    0.1541
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.3669      0.220      6.222      0.000       0.936       1.797
+s_i_capability     0.5790      0.419      1.383      0.167      -0.241       1.400
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+    Could not fit full model: Singular matrix
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.7_1747688909_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 151/200 trials (75.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 15/49 (30.61%)
+  Statistical test (P2 self vs P1): z-score = -0.7064, p-value = 0.4800
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01480
+Time:                        10:35:14   Log-Likelihood:                -109.71
+converged:                       True   LL-Null:                       -111.36
+Covariance Type:            nonrobust   LLR p-value:                   0.06941
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.3669      0.220      6.222      0.000       0.936       1.797
+s_i_capability    -0.6106      0.335     -1.823      0.068      -1.267       0.046
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.07050
+Time:                        10:35:14   Log-Likelihood:                -103.50
+converged:                       True   LL-Null:                       -111.36
+Covariance Type:            nonrobust   LLR p-value:                    0.4021
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.7874      0.617      1.275      0.202      -0.423       1.998
+C(topic)[T.Geography]                  0.4842      0.638      0.759      0.448      -0.766       1.735
+C(topic)[T.History]                    0.0350      0.901      0.039      0.969      -1.732       1.802
+C(topic)[T.Music]                      0.5097      0.745      0.684      0.494      -0.951       1.970
+C(topic)[T.Other]                      1.2264      0.704      1.743      0.081      -0.152       2.605
+C(topic)[T.Politics]                   1.0344      0.669      1.545      0.122      -0.278       2.346
+C(topic)[T.Science and technology]     1.2493      0.632      1.977      0.048       0.011       2.488
+C(topic)[T.Sports]                     0.9533      0.678      1.407      0.160      -0.375       2.282
+C(topic)[T.TV shows]                   1.3055      0.882      1.481      0.139      -0.422       3.033
+C(topic)[T.Video games]                0.8113      0.938      0.865      0.387      -1.027       2.650
+C(answer_type)[T.Number]              -0.1680      0.480     -0.350      0.726      -1.109       0.773
+C(answer_type)[T.Other]                0.1137      0.506      0.225      0.822      -0.878       1.105
+C(answer_type)[T.Person]               0.7453      0.552      1.350      0.177      -0.337       1.827
+C(answer_type)[T.Place]                0.9432      0.728      1.296      0.195      -0.483       2.369
+s_i_capability                        -0.6354      0.365     -1.741      0.082      -1.351       0.080
+q_length                              -0.0038      0.004     -0.986      0.324      -0.011       0.004
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.08174
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.8878
+95% CI for this Odds Ratio: [0.9231, 3.8607]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.7_1747699434_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 166/200 trials (83.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 12/34 (35.29%)
+  Statistical test (P2 self vs P1): z-score = -0.0595, p-value = 0.9525
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002574
+Time:                        10:35:14   Log-Likelihood:                -90.943
+converged:                       True   LL-Null:                       -91.177
+Covariance Type:            nonrobust   LLR p-value:                    0.4932
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.6864      0.243      6.928      0.000       1.209       2.164
+s_i_capability    -0.2650      0.385     -0.689      0.491      -1.019       0.489
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1690
+Time:                        10:35:14   Log-Likelihood:                -75.765
+converged:                      False   LL-Null:                       -91.177
+Covariance Type:            nonrobust   LLR p-value:                  0.009272
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              3.6418      0.946      3.849      0.000       1.788       5.496
+C(topic)[T.Geography]                  0.6059      0.972      0.624      0.533      -1.298       2.510
+C(topic)[T.History]                   27.0283   5.75e+05    4.7e-05      1.000   -1.13e+06    1.13e+06
+C(topic)[T.Music]                      0.7644      1.214      0.630      0.529      -1.614       3.143
+C(topic)[T.Other]                     -0.2298      0.810     -0.284      0.777      -1.818       1.358
+C(topic)[T.Politics]                   0.0788      0.827      0.095      0.924      -1.542       1.700
+C(topic)[T.Science and technology]     0.2880      0.795      0.362      0.717      -1.270       1.846
+C(topic)[T.Sports]                     0.2642      0.865      0.306      0.760      -1.430       1.959
+C(topic)[T.TV shows]                  -2.0780      0.790     -2.632      0.008      -3.625      -0.531
+C(topic)[T.Video games]               -1.6463      0.988     -1.666      0.096      -3.583       0.290
+C(answer_type)[T.Number]              -1.4750      0.689     -2.140      0.032      -2.826      -0.124
+C(answer_type)[T.Other]               -1.2273      0.679     -1.808      0.071      -2.558       0.103
+C(answer_type)[T.Person]              -1.4621      0.687     -2.129      0.033      -2.808      -0.116
+C(answer_type)[T.Place]               -0.6487      0.934     -0.695      0.487      -2.479       1.181
+s_i_capability                        -0.6237      0.458     -1.361      0.174      -1.522       0.275
+q_length                              -0.0066      0.005     -1.444      0.149      -0.016       0.002
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.1736
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.8659
+95% CI for this Odds Ratio: [0.7599, 4.5818]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.7_1747712168_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 177/200 trials (88.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 7/23 (30.43%)
+  Statistical test (P2 self vs P1): z-score = -0.5193, p-value = 0.6036
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002536
+Time:                        10:35:14   Log-Likelihood:                -71.188
+converged:                       True   LL-Null:                       -71.369
+Covariance Type:            nonrobust   LLR p-value:                    0.5474
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          2.1401      0.283      7.574      0.000       1.586       2.694
+s_i_capability    -0.2768      0.456     -0.607      0.544      -1.171       0.617
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1503
+Time:                        10:35:14   Log-Likelihood:                -60.638
+converged:                      False   LL-Null:                       -71.369
+Covariance Type:            nonrobust   LLR p-value:                    0.1228
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              3.6742      1.122      3.273      0.001       1.474       5.874
+C(topic)[T.Geography]                 31.2488    6.2e+06   5.04e-06      1.000   -1.22e+07    1.22e+07
+C(topic)[T.History]                   23.6515    1.8e+05      0.000      1.000   -3.52e+05    3.52e+05
+C(topic)[T.Music]                     -1.3070      0.999     -1.309      0.191      -3.264       0.650
+C(topic)[T.Other]                     -1.4021      0.941     -1.490      0.136      -3.246       0.442
+C(topic)[T.Politics]                  -1.2366      0.948     -1.304      0.192      -3.095       0.622
+C(topic)[T.Science and technology]    -0.9076      0.897     -1.012      0.311      -2.665       0.850
+C(topic)[T.Sports]                    19.5192   1.64e+04      0.001      0.999   -3.22e+04    3.22e+04
+C(topic)[T.TV shows]                  -1.4208      1.012     -1.404      0.160      -3.404       0.562
+C(topic)[T.Video games]               -2.0772      1.191     -1.744      0.081      -4.412       0.258
+C(answer_type)[T.Number]              -1.2566      0.749     -1.677      0.094      -2.726       0.212
+C(answer_type)[T.Other]               -1.1842      0.701     -1.689      0.091      -2.558       0.190
+C(answer_type)[T.Person]              -0.6714      0.766     -0.877      0.381      -2.172       0.829
+C(answer_type)[T.Place]               -1.2522      1.282     -0.977      0.329      -3.765       1.261
+s_i_capability                        -0.1385      0.503     -0.275      0.783      -1.124       0.847
+q_length                              -0.0003      0.006     -0.047      0.963      -0.012       0.011
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.21 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.7831
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.1485
+95% CI for this Odds Ratio: [0.4286, 3.0779]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.7_temp0.0_1747753314_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 16/200 trials (8.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 63/184 (34.24%)
+  Statistical test (P2 self vs P1): z-score = -0.3505, p-value = 0.7259
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.03600
+Time:                        10:35:14   Log-Likelihood:                -53.747
+converged:                       True   LL-Null:                       -55.754
+Covariance Type:            nonrobust   LLR p-value:                   0.04512
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -2.1401      0.283     -7.574      0.000      -2.694      -1.586
+s_i_capability    -1.3412      0.772     -1.738      0.082      -2.853       0.171
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1710
+Time:                        10:35:14   Log-Likelihood:                -46.219
+converged:                      False   LL-Null:                       -55.754
+Covariance Type:            nonrobust   LLR p-value:                    0.2106
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                             -0.7769      1.263     -0.615      0.539      -3.253       1.699
+C(topic)[T.Geography]                 -7.5203     35.437     -0.212      0.832     -76.975      61.935
+C(topic)[T.History]                    0.1923      1.246      0.154      0.877      -2.250       2.635
+C(topic)[T.Music]                     -0.1256      1.207     -0.104      0.917      -2.492       2.240
+C(topic)[T.Other]                      0.5659      0.877      0.645      0.519      -1.153       2.285
+C(topic)[T.Politics]                  -0.6653      1.191     -0.559      0.576      -3.000       1.669
+C(topic)[T.Science and technology]    -1.5196      1.164     -1.305      0.192      -3.801       0.762
+C(topic)[T.Sports]                     0.2014      0.973      0.207      0.836      -1.706       2.109
+C(topic)[T.TV shows]                   0.2385      0.987      0.242      0.809      -1.696       2.173
+C(topic)[T.Video games]                0.9667      1.334      0.725      0.469      -1.647       3.581
+C(answer_type)[T.Number]               0.4044      0.998      0.405      0.685      -1.551       2.360
+C(answer_type)[T.Other]                0.5803      0.884      0.657      0.511      -1.152       2.312
+C(answer_type)[T.Person]               0.6430      0.792      0.811      0.417      -0.910       2.196
+C(answer_type)[T.Place]               -5.3226     19.161     -0.278      0.781     -42.878      32.233
+s_i_capability                        -1.5881      0.823     -1.930      0.054      -3.201       0.024
+q_length                              -0.0174      0.011     -1.627      0.104      -0.038       0.004
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.05357
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 4.8944
+95% CI for this Odds Ratio: [0.9759, 24.5468]
+
+--- Analyzing Model from Game File: gemini-2.5-flash-preview-04-17_SimpleQA_50_200_team0.7_temp0.0_1747757130_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 177/200 trials (88.50%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 106/296 (35.89%)
+  Phase 2 self-accuracy: 7/23 (30.43%)
+  Statistical test (P2 self vs P1): z-score = -0.5193, p-value = 0.6036
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.002536
+Time:                        10:35:14   Log-Likelihood:                -71.188
+converged:                       True   LL-Null:                       -71.369
+Covariance Type:            nonrobust   LLR p-value:                    0.5474
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          2.1401      0.283      7.574      0.000       1.586       2.694
+s_i_capability    -0.2768      0.456     -0.607      0.544      -1.171       0.617
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  200
+Model:                          Logit   Df Residuals:                      184
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.1503
+Time:                        10:35:14   Log-Likelihood:                -60.638
+converged:                      False   LL-Null:                       -71.369
+Covariance Type:            nonrobust   LLR p-value:                    0.1228
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              3.6742      1.122      3.273      0.001       1.474       5.874
+C(topic)[T.Geography]                 31.2488    6.2e+06   5.04e-06      1.000   -1.22e+07    1.22e+07
+C(topic)[T.History]                   23.6515    1.8e+05      0.000      1.000   -3.52e+05    3.52e+05
+C(topic)[T.Music]                     -1.3070      0.999     -1.309      0.191      -3.264       0.650
+C(topic)[T.Other]                     -1.4021      0.941     -1.490      0.136      -3.246       0.442
+C(topic)[T.Politics]                  -1.2366      0.948     -1.304      0.192      -3.095       0.622
+C(topic)[T.Science and technology]    -0.9076      0.897     -1.012      0.311      -2.665       0.850
+C(topic)[T.Sports]                    19.5192   1.64e+04      0.001      0.999   -3.22e+04    3.22e+04
+C(topic)[T.TV shows]                  -1.4208      1.012     -1.404      0.160      -3.404       0.562
+C(topic)[T.Video games]               -2.0772      1.191     -1.744      0.081      -4.412       0.258
+C(answer_type)[T.Number]              -1.2566      0.749     -1.677      0.094      -2.726       0.212
+C(answer_type)[T.Other]               -1.1842      0.701     -1.689      0.091      -2.558       0.190
+C(answer_type)[T.Person]              -0.6714      0.766     -0.877      0.381      -2.172       0.829
+C(answer_type)[T.Place]               -1.2522      1.282     -0.977      0.329      -3.765       1.261
+s_i_capability                        -0.1385      0.503     -0.275      0.783      -1.124       0.847
+q_length                              -0.0003      0.006     -0.047      0.963      -0.012       0.011
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.21 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.7831
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.1485
+95% CI for this Odds Ratio: [0.4286, 3.0779]
+
+--- Analyzing Model from Game File: gpt-4o-2024-08-06_SimpleQA_50_100_team0.5_1747606787_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 32/100 trials (32.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 130/391 (33.20%)
+  Phase 2 self-accuracy: 13/68 (19.12%)
+  Statistical test (P2 self vs P1): z-score = -2.3222, p-value = 0.0202
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                   85
+Model:                          Logit   Df Residuals:                       83
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.003105
+Time:                        10:35:14   Log-Likelihood:                -51.333
+converged:                       True   LL-Null:                       -51.493
+Covariance Type:            nonrobust   LLR p-value:                    0.5717
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.7932      0.276     -2.869      0.004      -1.335      -0.251
+s_i_capability    -0.3054      0.547     -0.559      0.576      -1.377       0.766
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                   85
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.4093
+Time:                        10:35:14   Log-Likelihood:                -30.415
+converged:                      False   LL-Null:                       -51.493
+Covariance Type:            nonrobust   LLR p-value:                 0.0002127
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                             -4.4108      1.555     -2.836      0.005      -7.459      -1.363
+C(topic)[T.Geography]                  0.5828      1.538      0.379      0.705      -2.431       3.597
+C(topic)[T.History]                   -0.2521      1.622     -0.155      0.876      -3.432       2.928
+C(topic)[T.Music]                      1.2079      1.482      0.815      0.415      -1.696       4.112
+C(topic)[T.Other]                      3.1073      1.625      1.912      0.056      -0.077       6.292
+C(topic)[T.Politics]                  -0.1458      1.296     -0.113      0.910      -2.686       2.394
+C(topic)[T.Science and technology]    -0.9917      1.340     -0.740      0.459      -3.618       1.635
+C(topic)[T.Sports]                    -1.1860      1.503     -0.789      0.430      -4.132       1.760
+C(topic)[T.TV shows]                   1.9214      1.394      1.379      0.168      -0.810       4.653
+C(topic)[T.Video games]              -31.2301   6.22e+06  -5.02e-06      1.000   -1.22e+07    1.22e+07
+C(answer_type)[T.Number]               4.0882      1.266      3.229      0.001       1.607       6.570
+C(answer_type)[T.Other]                0.4001      1.220      0.328      0.743      -1.991       2.791
+C(answer_type)[T.Person]               1.2623      1.110      1.138      0.255      -0.913       3.437
+C(answer_type)[T.Place]                4.7022      1.747      2.692      0.007       1.279       8.126
+s_i_capability                        -1.2761      0.938     -1.361      0.174      -3.114       0.562
+q_length                               0.0172      0.008      2.241      0.025       0.002       0.032
+======================================================================================================
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.1735
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 3.5825
+95% CI for this Odds Ratio: [0.5703, 22.5034]
+
+--- Analyzing Model from Game File: gpt-4o-2024-08-06_SimpleQA_50_100_team0.5_1747661975_game_data_evaluated.json (feedback=True) ---
+  Delegation to teammate occurred: 62/100 trials (62.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 130/391 (33.20%)
+  Phase 2 self-accuracy: 10/38 (26.32%)
+  Statistical test (P2 self vs P1): z-score = -0.8701, p-value = 0.3842
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                   85
+Model:                          Logit   Df Residuals:                       83
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                 0.01898
+Time:                        10:35:14   Log-Likelihood:                -55.228
+converged:                       True   LL-Null:                       -56.296
+Covariance Type:            nonrobust   LLR p-value:                    0.1438
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.7178      0.273      2.632      0.008       0.183       1.252
+s_i_capability    -0.7178      0.491     -1.462      0.144      -1.680       0.244
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                   85
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                           15
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                  0.3459
+Time:                        10:35:14   Log-Likelihood:                -36.821
+converged:                      False   LL-Null:                       -56.296
+Covariance Type:            nonrobust   LLR p-value:                 0.0006518
+======================================================================================================
+                                         coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------
+Intercept                              0.3376      1.157      0.292      0.771      -1.931       2.606
+C(topic)[T.Geography]                 22.0608   2.83e+04      0.001      0.999   -5.55e+04    5.56e+04
+C(topic)[T.History]                   -0.3792      1.597     -0.237      0.812      -3.509       2.751
+C(topic)[T.Music]                     -2.0423      1.370     -1.491      0.136      -4.727       0.642
+C(topic)[T.Other]                      0.4452      1.374      0.324      0.746      -2.249       3.139
+C(topic)[T.Politics]                  -0.0400      0.994     -0.040      0.968      -1.988       1.908
+C(topic)[T.Science and technology]    -1.2933      0.945     -1.368      0.171      -3.146       0.559
+C(topic)[T.Sports]                    -1.3224      1.187     -1.114      0.265      -3.648       1.004
+C(topic)[T.TV shows]                   0.0667      1.114      0.060      0.952      -2.117       2.250
+C(topic)[T.Video games]              -21.0266   1.44e+04     -0.001      0.999   -2.83e+04    2.82e+04
+C(answer_type)[T.Number]              42.9181   3.29e+04      0.001      0.999   -6.44e+04    6.44e+04
+C(answer_type)[T.Other]               -0.1040      0.793     -0.131      0.896      -1.659       1.451
+C(answer_type)[T.Person]               0.5266      0.752      0.701      0.484      -0.947       2.000
+C(answer_type)[T.Place]                1.5504      1.584      0.979      0.328      -1.554       4.655
+s_i_capability                        -2.0271      0.767     -2.644      0.008      -3.530      -0.524
+q_length                               0.0057      0.008      0.760      0.447      -0.009       0.021
+======================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.26 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Odds Ratio for S_i_capability on Delegation (Adjusted) ---
+P-value for s_i_capability: 0.0082
+Odds Ratio (Delegating when S_i=0 vs. S_i=1): 7.5922
+95% CI for this Odds Ratio: [1.6892, 34.1228]
+
+--- Analyzing Model from Game File: gpt-4o-2024-08-06_SimpleQA_50_100_team0.7_temp0.0_1747748872_game_data_evaluated.json (feedback=False) ---
+  Delegation to teammate occurred: 73/100 trials (73.00%)
+  Phase 1 self-accuracy (from completed results, total - phase2): 118/386 (30.45%)
+  Phase 2 self-accuracy: 8/27 (29.63%)
+  Statistical test (P2 self vs P1): z-score = -0.1026, p-value = 0.9183
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                   88
+Model:                          Logit   Df Residuals:                       86
+Method:                           MLE   Df Model:                            1
+Date:                Thu, 22 May 2025   Pseudo R-squ.:                0.007425
+Time:                        10:35:14   Log-Likelihood:                -50.179
+converged:                       True   LL-Null:                       -50.554
+Covariance Type:            nonrobust   LLR p-value:                    0.3862
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.1896      0.305      3.897      0.000       0.591       1.788
+s_i_capability    -0.4424      0.507     -0.873      0.383      -1.436       0.551
+==================================================================================
+
+  Model 4: Delegate_choice ~ s_i_capability + q_length + c(topic) + c(answer_type)
+    Could not fit full model: Singular matrix
