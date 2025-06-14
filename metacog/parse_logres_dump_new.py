@@ -8,15 +8,20 @@ import warnings
 # Z-score for 95% CI
 Z_SCORE = norm.ppf(0.975)
 
-def parse_analysis_log(log_content, output_file, target_params, model_list):
+def parse_analysis_log(log_content, output_file, target_params, model_list, adj_int=True, adj_lift=True):
     
     block_start_regex = re.compile(
         r"--- Analyzing (\S+) \(" + re.escape(target_params) + r", \d+ game files\) ---"
     )
 
-    # New regexes for the updated format
     adj_introspection_regex = re.compile(r"Adjusted introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
     adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    raw_introspection_regex = re.compile(r"Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
+    raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    introspection_regex = adj_introspection_regex if adj_int else raw_introspection_regex
+    self_acc_lift_regex = adj_self_acc_lift_regex if adj_lift else raw_self_acc_lift_regex
+    prefix_int = "adj" if adj_int else "raw"
+    prefix_lift = "adj" if adj_lift else "raw"
     
     # Model section identifiers
     model4_start_regex = re.compile(r"^\s*Model 4.*\(No Interactions\).*:\s*delegate_choice ~")
@@ -35,6 +40,12 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
     # Log-likelihood regex
     log_likelihood_regex = re.compile(r"Log-Likelihood:\s*([-\d.]+)")
 
+    # Cross-tabulation regexes 
+    crosstab_title_regex = re.compile(r"^\s*Cross-tabulation of delegate_choice vs\. s_i_capability:$")
+    crosstab_col_header_regex = re.compile(r"^\s*s_i_capability\s+\S+\s+\S+")
+    crosstab_row_header_label_regex = re.compile(r"^\s*delegate_choice\s*$")
+    crosstab_data_row_regex = re.compile(r"^\s*\d+\s+(\d+)\s+(\d+)\s*$")
+
     analysis_blocks = re.split(r"(?=--- Analyzing )", log_content)
 
     with open(output_file, 'w', encoding='utf-8') as outfile:
@@ -52,12 +63,12 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                 outfile.write(f"Subject: {subject_name}\n")
                 
                 extracted_info = {
-                    "adj_introspection": "Not found",
-                    "adj_introspection_ci_low": "Not found",
-                    "adj_introspection_ci_high": "Not found",
-                    "adj_self_acc_lift": "Not found",
-                    "adj_self_acc_lift_ci_low": "Not found",
-                    "adj_self_acc_lift_ci_high": "Not found",
+                    f"{prefix_int}_introspection": "Not found",
+                    f"{prefix_int}_introspection_ci_low": "Not found",
+                    f"{prefix_int}_introspection_ci_high": "Not found",
+                    f"{prefix_lift}_self_acc_lift": "Not found",
+                    f"{prefix_lift}_self_acc_lift_ci_low": "Not found",
+                    f"{prefix_lift}_self_acc_lift_ci_high": "Not found",
                     "model4_si_cap_coef": "Not found",
                     "model4_si_cap_ci_low": "Not found",
                     "model4_si_cap_ci_high": "Not found",
@@ -69,6 +80,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                     "model48_norm_prob_entropy_ci_low": "Not found",
                     "model48_norm_prob_entropy_ci_high": "Not found",
                     "model7_log_lik": "Not found",
+                    "delegation_rate": "Not found",
+                    "phase1_accuracy": "Not found",
+                    "total_n": "Not found"
                 }
                 
                 # Model parsing states
@@ -77,25 +91,72 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                 in_model48 = False
                 in_model7 = False
                 found_logit_results = False
-                
+
+                # --- Cross-tab parsing state ---
+                parsing_crosstab = False
+                expecting_crosstab_col_header = False
+                expecting_crosstab_row_header_label = False
+                crosstab_data_lines_collected = 0
+                temp_crosstab_cells = []
+
                 lines = block_content.splitlines()
                 for i, line in enumerate(lines):
                     # Extract adjusted introspection score
-                    m = adj_introspection_regex.search(line)
+                    m = introspection_regex.search(line)
                     if m:
-                        extracted_info["adj_introspection"] = m.group(1)
-                        extracted_info["adj_introspection_ci_low"] = m.group(2)
-                        extracted_info["adj_introspection_ci_high"] = m.group(3)
+                        extracted_info[f"{prefix_int}_introspection"] = m.group(1)
+                        extracted_info[f"{prefix_int}_introspection_ci_low"] = m.group(2)
+                        extracted_info[f"{prefix_int}_introspection_ci_high"] = m.group(3)
                         continue
                     
                     # Extract adjusted self-acc lift
-                    m = adj_self_acc_lift_regex.search(line)
+                    m = self_acc_lift_regex.search(line)
                     if m:
-                        extracted_info["adj_self_acc_lift"] = m.group(1)
-                        extracted_info["adj_self_acc_lift_ci_low"] = m.group(2)
-                        extracted_info["adj_self_acc_lift_ci_high"] = m.group(3)
+                        extracted_info[f"{prefix_lift}_self_acc_lift"] = m.group(1)
+                        extracted_info[f"{prefix_lift}_self_acc_lift_ci_low"] = m.group(2)
+                        extracted_info[f"{prefix_lift}_self_acc_lift_ci_high"] = m.group(3)
                         continue
                     
+                    # Cross-tabulation parsing state machine
+                    if not parsing_crosstab and not any([in_model4, in_model46, in_model48, in_model7]) and crosstab_title_regex.match(line):
+                        parsing_crosstab = True
+                        expecting_crosstab_col_header = True
+                        expecting_crosstab_row_header_label = False
+                        crosstab_data_lines_collected = 0
+                        temp_crosstab_cells = []
+                        continue
+
+                    if parsing_crosstab:
+                        if expecting_crosstab_col_header and crosstab_col_header_regex.match(line):
+                            expecting_crosstab_col_header = False
+                            expecting_crosstab_row_header_label = True
+                            continue
+                        elif expecting_crosstab_row_header_label and crosstab_row_header_label_regex.match(line):
+                            expecting_crosstab_row_header_label = False
+                            continue
+                        else:
+                            data_match = crosstab_data_row_regex.match(line)
+                            if data_match:
+                                temp_crosstab_cells.append(int(data_match.group(1)))
+                                temp_crosstab_cells.append(int(data_match.group(2)))
+                                crosstab_data_lines_collected += 1
+                                if crosstab_data_lines_collected == 2 and len(temp_crosstab_cells) == 4:
+                                    # Calculate delegation rate, phase 1 accuracy, and total N
+                                    # temp_crosstab_cells = [row0_col0, row0_col1, row1_col0, row1_col1]
+                                    total_n = sum(temp_crosstab_cells)
+                                    delegation_rate = (temp_crosstab_cells[2] + temp_crosstab_cells[3]) / total_n if total_n > 0 else 0
+                                    phase1_accuracy = (temp_crosstab_cells[1] + temp_crosstab_cells[3]) / total_n if total_n > 0 else 0
+                                    
+                                    extracted_info["delegation_rate"] = str(delegation_rate)
+                                    extracted_info["phase1_accuracy"] = str(phase1_accuracy)
+                                    extracted_info["total_n"] = str(total_n)
+                                    parsing_crosstab = False
+                                continue
+                            # blank or unexpected line ends crosstab
+                            if not line.strip():
+                                parsing_crosstab = False
+                            continue
+
                     # Check for model starts
                     if model4_start_regex.search(line):
                         in_model4 = True
@@ -103,6 +164,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                         in_model48 = False
                         in_model7 = False
                         found_logit_results = False
+                        parsing_crosstab = False
                         continue
                     elif model46_start_regex.search(line):
                         in_model4 = False
@@ -110,6 +172,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                         in_model48 = False
                         in_model7 = False
                         found_logit_results = False
+                        parsing_crosstab = False
                         continue
                     elif model48_start_regex.search(line):
                         in_model4 = False
@@ -117,6 +180,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                         in_model48 = True
                         in_model7 = False
                         found_logit_results = False
+                        parsing_crosstab = False
                         continue
                     elif model7_start_regex.search(line):
                         in_model4 = False
@@ -124,57 +188,59 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                         in_model48 = False
                         in_model7 = True
                         found_logit_results = False
+                        parsing_crosstab = False
                         continue
                     
                     # Check for Logit Regression Results
-                    if logit_results_regex.match(line):
+                    if not parsing_crosstab and logit_results_regex.match(line):
                         found_logit_results = True
                         continue
                     
                     # Extract coefficients and log-likelihood based on current model
-                    if in_model4 and found_logit_results:
-                        # Look for s_i_capability coefficient
-                        m = si_capability_coef_regex.match(line)
-                        if m:
-                            extracted_info["model4_si_cap_coef"] = m.group(1)
-                            extracted_info["model4_si_cap_ci_low"] = m.group(5)
-                            extracted_info["model4_si_cap_ci_high"] = m.group(6)
+                    if not parsing_crosstab:
+                        if in_model4 and found_logit_results:
+                            # Look for s_i_capability coefficient
+                            m = si_capability_coef_regex.match(line)
+                            if m:
+                                extracted_info["model4_si_cap_coef"] = m.group(1)
+                                extracted_info["model4_si_cap_ci_low"] = m.group(5)
+                                extracted_info["model4_si_cap_ci_high"] = m.group(6)
+                            
+                            # Look for log-likelihood
+                            m = log_likelihood_regex.search(line)
+                            if m:
+                                extracted_info["model4_log_lik"] = m.group(1)
                         
-                        # Look for log-likelihood
-                        m = log_likelihood_regex.search(line)
-                        if m:
-                            extracted_info["model4_log_lik"] = m.group(1)
+                        elif in_model46 and found_logit_results:
+                            # Look for capabilities_entropy coefficient
+                            m = capabilities_entropy_coef_regex.match(line)
+                            if m:
+                                extracted_info["model46_cap_entropy_coef"] = m.group(1)
+                                extracted_info["model46_cap_entropy_ci_low"] = m.group(5)
+                                extracted_info["model46_cap_entropy_ci_high"] = m.group(6)
+                        
+                        elif in_model48 and found_logit_results:
+                            # Look for normalized_prob_entropy coefficient
+                            m = normalized_prob_entropy_coef_regex.match(line)
+                            if m:
+                                extracted_info["model48_norm_prob_entropy_coef"] = m.group(1)
+                                extracted_info["model48_norm_prob_entropy_ci_low"] = m.group(5)
+                                extracted_info["model48_norm_prob_entropy_ci_high"] = m.group(6)
+                        
+                        elif in_model7 and found_logit_results:
+                            # Look for log-likelihood
+                            m = log_likelihood_regex.search(line)
+                            if m:
+                                extracted_info["model7_log_lik"] = m.group(1)
                     
-                    elif in_model46 and found_logit_results:
-                        # Look for capabilities_entropy coefficient
-                        m = capabilities_entropy_coef_regex.match(line)
-                        if m:
-                            extracted_info["model46_cap_entropy_coef"] = m.group(1)
-                            extracted_info["model46_cap_entropy_ci_low"] = m.group(5)
-                            extracted_info["model46_cap_entropy_ci_high"] = m.group(6)
-                    
-                    elif in_model48 and found_logit_results:
-                        # Look for normalized_prob_entropy coefficient
-                        m = normalized_prob_entropy_coef_regex.match(line)
-                        if m:
-                            extracted_info["model48_norm_prob_entropy_coef"] = m.group(1)
-                            extracted_info["model48_norm_prob_entropy_ci_low"] = m.group(5)
-                            extracted_info["model48_norm_prob_entropy_ci_high"] = m.group(6)
-                    
-                    elif in_model7 and found_logit_results:
-                        # Look for log-likelihood
-                        m = log_likelihood_regex.search(line)
-                        if m:
-                            extracted_info["model7_log_lik"] = m.group(1)
-                    
-                    # Reset state if we see a new model or section
-                    if line.strip().startswith("Model ") and not any([
-                        model4_start_regex.search(line),
-                        model46_start_regex.search(line),
-                        model48_start_regex.search(line),
-                        model7_start_regex.search(line)
-                    ]):
-                        in_model4 = in_model46 = in_model48 = in_model7 = False
+                        # Reset state if we see a new model or section
+                        if line.strip().startswith("Model ") and not any([
+                            model4_start_regex.search(line),
+                            model46_start_regex.search(line),
+                            model48_start_regex.search(line),
+                            model7_start_regex.search(line)
+                        ]):
+                            in_model4 = in_model46 = in_model48 = in_model7 = False
                 
                 # Validate required fields and write output
                 if extracted_info["model4_si_cap_coef"] == "Not found":
@@ -191,13 +257,18 @@ def parse_analysis_log(log_content, output_file, target_params, model_list):
                     print(f"Warning: Model 4.8 normalized_prob_entropy coefficient not found for {subject_name}")
                 
                 # Write extracted info
-                outfile.write(f"  Adjusted introspection score: {extracted_info['adj_introspection']} [{extracted_info['adj_introspection_ci_low']}, {extracted_info['adj_introspection_ci_high']}]\n")
-                outfile.write(f"  Adjusted self-acc lift: {extracted_info['adj_self_acc_lift']} [{extracted_info['adj_self_acc_lift_ci_low']}, {extracted_info['adj_self_acc_lift_ci_high']}]\n")
+                prefix_int_cln = "Adjusted " if adj_int else "Raw "
+                prefix_lift_cln = "Adjusted " if adj_lift else "Raw "
+                outfile.write(f"  {prefix_int_cln}introspection score: {extracted_info[f'{prefix_int}_introspection']} [{extracted_info[f'{prefix_int}_introspection_ci_low']}, {extracted_info[f'{prefix_int}_introspection_ci_high']}]\n")
+                outfile.write(f"  {prefix_lift_cln}self-acc lift: {extracted_info[f'{prefix_lift}_self_acc_lift']} [{extracted_info[f'{prefix_lift}_self_acc_lift_ci_low']}, {extracted_info[f'{prefix_lift}_self_acc_lift_ci_high']}]\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
                 outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
                 outfile.write(f"  Model 4.6 capabilities_entropy: {extracted_info['model46_cap_entropy_coef']} [{extracted_info['model46_cap_entropy_ci_low']}, {extracted_info['model46_cap_entropy_ci_high']}]\n")
                 outfile.write(f"  Model 4.8 normalized_prob_entropy: {extracted_info['model48_norm_prob_entropy_coef']} [{extracted_info['model48_norm_prob_entropy_ci_low']}, {extracted_info['model48_norm_prob_entropy_ci_high']}]\n")
                 outfile.write(f"  Model 7 Log-Likelihood: {extracted_info['model7_log_lik']}\n")
+                outfile.write(f"  Delegation rate: {extracted_info['delegation_rate']}\n")
+                outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
+                outfile.write(f"  Total N: {extracted_info['total_n']}\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -226,20 +297,22 @@ def analyze_parsed_data(input_summary_file):
                 if current_subject_info.get("subject_name"):
                     all_subject_data.append(current_subject_info)
                 current_subject_info = {"subject_name": line.split("Subject:")[1].strip()}
-            elif "Adjusted introspection score:" in line:
+            elif "introspection score:" in line:
                 # Parse: "Adjusted introspection score: 0.167 [0.070, 0.262]"
+                prefix_int = "adj" if "Adjusted" in line else "raw"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
-                    current_subject_info["adj_introspection"] = float(m.group(1))
-                    current_subject_info["adj_introspection_ci_low"] = float(m.group(2))
-                    current_subject_info["adj_introspection_ci_high"] = float(m.group(3))
-            elif "Adjusted self-acc lift:" in line:
+                    current_subject_info[f"{prefix_int}_introspection"] = float(m.group(1))
+                    current_subject_info[f"{prefix_int}_introspection_ci_low"] = float(m.group(2))
+                    current_subject_info[f"{prefix_int}_introspection_ci_high"] = float(m.group(3))
+            elif "self-acc lift:" in line:
                 # Parse: "Adjusted self-acc lift: 0.178 [0.062, 0.280]"
+                prefix_lift = "adj" if "Adjusted" in line else "raw"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
-                    current_subject_info["adj_self_acc_lift"] = float(m.group(1))
-                    current_subject_info["adj_self_acc_lift_ci_low"] = float(m.group(2))
-                    current_subject_info["adj_self_acc_lift_ci_high"] = float(m.group(3))
+                    current_subject_info[f"{prefix_lift}_self_acc_lift"] = float(m.group(1))
+                    current_subject_info[f"{prefix_lift}_self_acc_lift_ci_low"] = float(m.group(2))
+                    current_subject_info[f"{prefix_lift}_self_acc_lift_ci_high"] = float(m.group(3))
             elif "Model 4 s_i_capability:" in line:
                 # Parse: "Model 4 s_i_capability: -0.8796 [-1.451, -0.309]"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
@@ -265,7 +338,13 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["norm_prob_entropy_ci_high"] = float(m.group(3))
             elif "Model 7 Log-Likelihood:" in line:
                 current_subject_info["loglik7"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
-        
+            elif "Delegation rate:" in line:
+                current_subject_info["delegation_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Phase 1 accuracy:" in line:
+                current_subject_info["phase1_accuracy"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Total N:" in line:
+                current_subject_info["total_n"] = parse_value(line, r":\s*(\d+)", as_type=int)
+
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
 
@@ -274,13 +353,13 @@ def analyze_parsed_data(input_summary_file):
         subject_name = data.get("subject_name", "Unknown")
         
         # Get all the values, using np.nan for missing optional values
-        adj_introspection = data.get("adj_introspection", np.nan)
-        adj_introspection_ci_low = data.get("adj_introspection_ci_low", np.nan)
-        adj_introspection_ci_high = data.get("adj_introspection_ci_high", np.nan)
+        adj_introspection = data.get(f"{prefix_int}_introspection", np.nan)
+        adj_introspection_ci_low = data.get(f"{prefix_int}_introspection_ci_low", np.nan)
+        adj_introspection_ci_high = data.get(f"{prefix_int}_introspection_ci_high", np.nan)
         
-        adj_self_acc_lift = data.get("adj_self_acc_lift", np.nan)
-        adj_self_acc_lift_ci_low = data.get("adj_self_acc_lift_ci_low", np.nan)
-        adj_self_acc_lift_ci_high = data.get("adj_self_acc_lift_ci_high", np.nan)
+        adj_self_acc_lift = data.get(f"{prefix_lift}_self_acc_lift", np.nan)
+        adj_self_acc_lift_ci_low = data.get(f"{prefix_lift}_self_acc_lift_ci_low", np.nan)
+        adj_self_acc_lift_ci_high = data.get(f"{prefix_lift}_self_acc_lift_ci_high", np.nan)
         
         si_coef = data.get("si_coef", np.nan)
         si_ci_low = data.get("si_coef_ci_low", np.nan)
@@ -305,15 +384,20 @@ def analyze_parsed_data(input_summary_file):
         # Calculate likelihood ratio test
         LR_stat = 2 * (LL4 - LL7) if not np.isnan(LL4) and not np.isnan(LL7) else np.nan
         LR_pvalue = chi2.sf(LR_stat, df=1) if not np.isnan(LR_stat) else np.nan
-        
+
+        # Get delegation rate, phase 1 accuracy, and total N
+        delegation_rate = data.get("delegation_rate", np.nan)
+        phase1_accuracy = data.get("phase1_accuracy", np.nan)
+        total_n = data.get("total_n", np.nan)
+
         results.append({
             "Subject": subject_name,
-            "Adj Intro": adj_introspection,
-            "AdjIntro_LB": adj_introspection_ci_low,
-            "AdjIntro_UB": adj_introspection_ci_high,
-            "Adj Acc Lift": adj_self_acc_lift,
-            "AdjAccLift_LB": adj_self_acc_lift_ci_low,
-            "AdjAccLift_UB": adj_self_acc_lift_ci_high,
+            f"{prefix_int.capitalize()} Intro": adj_introspection,
+            f"{prefix_int.capitalize()}Intro_LB": adj_introspection_ci_low,
+            f"{prefix_int.capitalize()}Intro_UB": adj_introspection_ci_high,
+            f"{prefix_lift.capitalize()} Acc Lift": adj_self_acc_lift,
+            f"{prefix_lift.capitalize()}AccLift_LB": adj_self_acc_lift_ci_low,
+            f"{prefix_lift.capitalize()}AccLift_UB": adj_self_acc_lift_ci_high,
             "Cap Coef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
@@ -326,7 +410,10 @@ def analyze_parsed_data(input_summary_file):
             "LL_Model4": LL4,
             "LL_Model7": LL7,
             "LR_stat": LR_stat,
-            "LR_pvalue": LR_pvalue
+            "LR_pvalue": LR_pvalue,
+            "Delegation_Rate": delegation_rate,
+            "Phase1_Accuracy": phase1_accuracy,
+            "Total_N": total_n
         })
         
     return pd.DataFrame(results)
@@ -348,7 +435,11 @@ def break_subject_name(name, max_parts_per_line=3):
     return wrapped_name
 
 
-def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
+def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=True, adj_lift=True):
+    prefix_int = "Adj" if adj_int else "Raw"
+    prefix_lift = "Adj" if adj_lift else "Raw"
+    prefix_int_cln = "Adjusted " if adj_int else ""
+    prefix_lift_cln = "Adjusted " if adj_lift else ""
     if df_results.empty:
         print("No data to plot.")
         return
@@ -406,16 +497,16 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
     legend_fontsize = 12
 
     # --- Plot 1: Adjusted Introspection Score ---
-    yerr_intro_low = np.nan_to_num(df_results["Adj Intro"] - df_results["AdjIntro_LB"], nan=0.0)
-    yerr_intro_high = np.nan_to_num(df_results["AdjIntro_UB"] - df_results["Adj Intro"], nan=0.0)
+    yerr_intro_low = np.nan_to_num(df_results[f"{prefix_int} Intro"] - df_results[f"{prefix_int}Intro_LB"], nan=0.0)
+    yerr_intro_high = np.nan_to_num(df_results[f"{prefix_int}Intro_UB"] - df_results[f"{prefix_int} Intro"], nan=0.0)
     yerr_intro_low[yerr_intro_low < 0] = 0
     yerr_intro_high[yerr_intro_high < 0] = 0
     
-    axs[0, 0].bar(formatted_subject_names, df_results["Adj Intro"],
+    axs[0, 0].bar(formatted_subject_names, df_results[f"{prefix_int} Intro"],
                    color='mediumpurple',
                    yerr=[yerr_intro_low, yerr_intro_high], ecolor='gray', capsize=5, width=0.6)
     axs[0, 0].set_ylabel('Introspection Score', fontsize=label_fontsize)
-    axs[0, 0].set_title('Adjusted Introspection Score by LLM (95% CI)', fontsize=title_fontsize)
+    axs[0, 0].set_title(f'{prefix_int_cln}Introspection Score by LLM (95% CI)', fontsize=title_fontsize)
     axs[0, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
     axs[0, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
     axs[0, 0].tick_params(axis='y', labelsize=tick_fontsize)
@@ -436,16 +527,16 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
     axs[1, 0].tick_params(axis='y', labelsize=tick_fontsize)
 
     # --- Plot 3: Adjusted Self-Accuracy Lift ---
-    yerr_acc_lift_low = np.nan_to_num(df_results["Adj Acc Lift"] - df_results["AdjAccLift_LB"], nan=0.0)
-    yerr_acc_lift_high = np.nan_to_num(df_results["AdjAccLift_UB"] - df_results["Adj Acc Lift"], nan=0.0)
+    yerr_acc_lift_low = np.nan_to_num(df_results[f"{prefix_lift} Acc Lift"] - df_results[f"{prefix_lift}AccLift_LB"], nan=0.0)
+    yerr_acc_lift_high = np.nan_to_num(df_results[f"{prefix_lift}AccLift_UB"] - df_results[f"{prefix_lift} Acc Lift"], nan=0.0)
     yerr_acc_lift_low[yerr_acc_lift_low < 0] = 0
     yerr_acc_lift_high[yerr_acc_lift_high < 0] = 0
     
-    axs[2, 0].bar(formatted_subject_names, df_results["Adj Acc Lift"],
+    axs[2, 0].bar(formatted_subject_names, df_results[f"{prefix_lift} Acc Lift"],
                    color='lightcoral',
                    yerr=[yerr_acc_lift_low, yerr_acc_lift_high], ecolor='gray', capsize=5, width=0.6)
     axs[2, 0].set_ylabel('Accuracy Difference', fontsize=label_fontsize)
-    axs[2, 0].set_title('Adjusted Self-Accuracy Lift by LLM (95% CI)', fontsize=title_fontsize)
+    axs[2, 0].set_title(f'{prefix_lift_cln}Self-Accuracy Lift by LLM (95% CI)', fontsize=title_fontsize)
     axs[2, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
     axs[2, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
     axs[2, 0].tick_params(axis='y', labelsize=tick_fontsize)
@@ -499,27 +590,34 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA"):
 if __name__ == "__main__":
     
     dataset = "GPSA"
-    suffix = "_full_sum"
+    target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, NoHistory, NotFiltered"
+#    model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-1.5-pro']
+    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
+    show_adjusted_introspection = True
+    show_adjusted_self_acc_lift = True
 
+    suffix = "_full"
+    if "Feedback_True" in target_params: suffix += "_fb"
+    if "WithHistory" in target_params: suffix += "_hist" 
+    else: suffix += "_sum"
     input_log_filename = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
-    target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, NoHistory, NotFiltered"
-    model_list = ['grok-3-latest', 'gemini-1.5-pro', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
-    model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
-    model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
 
-    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06']
+#    model_list = ['grok-3-latest', 'gemini-1.5-pro', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
+#    model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
+#    model_list = ['claude-3-7-sonnet-20250219', 'grok-3-latest', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'gemini-1.5-pro', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
+
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
             log_content_from_file = f.read()
-        parse_analysis_log(log_content_from_file, output_filename, target_params, model_list)
+        parse_analysis_log(log_content_from_file, output_filename, target_params, model_list, adj_int=show_adjusted_introspection, adj_lift=show_adjusted_self_acc_lift)
 
         df_results = analyze_parsed_data(output_filename)
         print("\n--- Calculated Data ---")
         print(df_results.to_string(formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")}))
         
         if not df_results.empty:
-            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}")
+            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}", adj_int=show_adjusted_introspection, adj_lift=show_adjusted_self_acc_lift)
         else:
             print("No results to plot.")
 

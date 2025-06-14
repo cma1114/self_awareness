@@ -477,7 +477,8 @@ if __name__ == "__main__":
                     log_output(f"Probability of delegating when s_i_capability is 0: {prob_delegating_Si0:.4f}")
                     prob_delegating_Si1 = df_model.loc[df_model['s_i_capability'] == 1, 'delegate_choice'].mean()
                     log_output(f"Probability of delegating when s_i_capability is 1: {prob_delegating_Si1:.4f}")
-                    log_output(f"Phase 1 accuracy: {subject_acc_phase1:.4f} (n=400)")
+#                    log_output(f"Phase 1 accuracy: {subject_acc_phase1:.4f} (n=400)")
+                    log_output(f"Phase 1 accuracy: {cap_corr.mean():.4f} (n={len(cap_corr)})")
                     log_output(f"Phase 2 self-accuracy: {phase2_corcnt/phase2_totalcnt:.4f} (n={phase2_totalcnt})")
                 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
