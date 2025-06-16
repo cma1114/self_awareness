@@ -189,7 +189,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_id': q_id, 
                     'delegate_choice': delegate_choice_numeric,
                     's_i_capability': s_i_capability,
-                    'team_correct': trial.get('team_correct', False),
+                    'team_correct': False if trial.get('team_correct') is None else trial['team_correct'],
                     'answer_type': sqa_features['answer_type'],
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
@@ -296,7 +296,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA" #"SimpleMC"#
+    dataset = "SimpleMC"#"SimpleQA" #
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
@@ -478,7 +478,8 @@ if __name__ == "__main__":
                         if not self_choice_df.empty:
                              cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['team_correct'])
                              log_output(f"Cross-tabulation of s_i_capability vs. team_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
-
+                             TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
+                             log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
 
                 log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
                 try:

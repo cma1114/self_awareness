@@ -314,7 +314,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"# "GPQA"#
+    dataset = "GPQA"#"GPSA"# 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
 
@@ -495,9 +495,10 @@ if __name__ == "__main__":
                         if not self_choice_df.empty:
                              cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['team_correct'])
                              log_output(f"Cross-tabulation of s_i_capability vs. team_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
-
-
-                log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
+                             TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
+                             log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+                else:
+                    log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
                 try:
                     logit_model1 = smf.logit('delegate_choice ~ s_i_capability', data=df_model).fit(disp=0)
                     log_output(logit_model1.summary())

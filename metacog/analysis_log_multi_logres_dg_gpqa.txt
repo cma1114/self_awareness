@@ -1,217 +1,215 @@
 
---- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, NoHistory, NotFiltered, 6 game files) ---
-              Game files for analysis: ['./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749517564_game_data.json', './delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749519081_game_data.json', './delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749520914_game_data.json', './delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749522494_game_data.json', './delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749524582_game_data.json', './delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749848729_game_data.json']
+--- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, NoHistory, NotFiltered, 1 game files) ---
+              Game files for analysis: ['./delegate_game_logs/claude-3-5-sonnet-20241022_GPQA_50_450_nohistory_summary_team0.5_temp0.0_1749524582_game_data.json']
 
-                  Delegation to teammate occurred: 144/397 trials (36.27%)
+                  Delegation to teammate occurred: 141/397 trials (35.52%)
                   Phase 1 self-accuracy (from completed results, total - phase2): 21/50 (42.73%)
-                  Phase 2 self-accuracy: 124/253 (49.01%)
-                  Statistical test (P2 self vs P1): z-score = 0.9070, p-value = 0.3644
+                  Phase 2 self-accuracy: 129/256 (50.39%)
+                  Statistical test (P2 self vs P1): z-score = 1.0856, p-value = 0.2777
 df_model['delegate_choice'].value_counts()= delegate_choice
-0    1512
-1     870
+0    256
+1    141
 Name: count, dtype: int64
 
-Introspection score = 0.163 [0.125, 0.201], p=9.382e-54
-Delegate Gap = 0.159 [0.120, 0.196, p=1.74e-15]
-Adjusted introspection score = 0.174 [0.136, 0.213], p=6.165e-51
-Adjusted delegate gap = 0.169 [0.130, 0.206, p=2.336e-17]
+Introspection score = 0.142 [0.047, 0.241], p=0.004
+Delegate Gap = 0.138 [0.043, 0.227, p=0.004578]
+Adjusted introspection score = 0.164 [0.070, 0.263], p=0.002
+Adjusted delegate gap = 0.158 [0.064, 0.247, p=0.00106]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
 delegate_choice          
-0                772  740
-1                590  280
+0                133  123
+1                 94   47
 
-Probability of delegating when s_i_capability is 0: 0.4332
-Probability of delegating when s_i_capability is 1: 0.2745
-Phase 1 accuracy: 0.4282 (n=2382)
-Phase 2 self-accuracy: 0.5007 (n=1512)
-Self-acc lift = 0.072 [0.047, 0.098], p=1.617e-08
-Adjusted self-acc lift = 0.065 [0.040, 0.090], p=3.582e-07
+Probability of delegating when s_i_capability is 0: 0.4141
+Probability of delegating when s_i_capability is 1: 0.2765
+Phase 1 accuracy: 0.4282 (n=397)
+Phase 2 self-accuracy: 0.5039 (n=256)
+Self-acc lift = 0.076 [0.013, 0.138], p=0.01626
+Adjusted self-acc lift = 0.061 [-0.002, 0.123], p=0.05892
 Cross-tabulation of delegate_choice vs. team_correct:
 team_correct     False  True 
 delegate_choice              
-0                  755    757
-1                  428    442
+0                  127    129
+1                   74     67
 
 Cross-tabulation of s_i_capability vs. team_correct (for self_choice trials):
 team_correct    False  True 
 s_i_capability              
-0                 630    142
-1                 125    615
+0                 106     27
+1                  21    102
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1875
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                 2382
-Model:                          Logit   Df Residuals:                     2380
+Dep. Variable:        delegate_choice   No. Observations:                  397
+Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02057
-Time:                        18:19:42   Log-Likelihood:                -1531.3
-converged:                       True   LL-Null:                       -1563.5
-Covariance Type:            nonrobust   LLR p-value:                 1.053e-15
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01578
+Time:                        13:29:22   Log-Likelihood:                -254.21
+converged:                       True   LL-Null:                       -258.28
+Covariance Type:            nonrobust   LLR p-value:                  0.004308
 ==================================================================================
                      coef    std err          z      P>|z|      [0.025      0.975]
 ----------------------------------------------------------------------------------
-Intercept         -0.2689      0.055     -4.917      0.000      -0.376      -0.162
-s_i_capability    -0.7030      0.089     -7.903      0.000      -0.877      -0.529
+Intercept         -0.3471      0.135     -2.576      0.010      -0.611      -0.083
+s_i_capability    -0.6150      0.218     -2.820      0.005      -1.042      -0.188
 ==================================================================================
 
   Model 2: Delegate_Choice ~ human_difficulty
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                 2382
-Model:                          Logit   Df Residuals:                     2380
+Dep. Variable:        delegate_choice   No. Observations:                  397
+Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.003622
-Time:                        18:19:42   Log-Likelihood:                -1557.8
-converged:                       True   LL-Null:                       -1563.5
-Covariance Type:            nonrobust   LLR p-value:                 0.0007643
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.002385
+Time:                        13:29:22   Log-Likelihood:                -257.67
+converged:                       True   LL-Null:                       -258.28
+Covariance Type:            nonrobust   LLR p-value:                    0.2670
 ====================================================================================
                        coef    std err          z      P>|z|      [0.025      0.975]
 ------------------------------------------------------------------------------------
-Intercept           -1.1482      0.183     -6.274      0.000      -1.507      -0.790
-human_difficulty     0.2497      0.074      3.361      0.001       0.104       0.395
+Intercept           -1.0700      0.441     -2.425      0.015      -1.935      -0.205
+human_difficulty     0.1986      0.179      1.110      0.267      -0.152       0.550
 ====================================================================================
 
   Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                 2382
-Model:                          Logit   Df Residuals:                     2379
+Dep. Variable:        delegate_choice   No. Observations:                  397
+Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02460
-Time:                        18:19:42   Log-Likelihood:                -1525.0
-converged:                       True   LL-Null:                       -1563.5
-Covariance Type:            nonrobust   LLR p-value:                 1.987e-17
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01837
+Time:                        13:29:22   Log-Likelihood:                -253.54
+converged:                       True   LL-Null:                       -258.28
+Covariance Type:            nonrobust   LLR p-value:                  0.008696
 ====================================================================================
                        coef    std err          z      P>|z|      [0.025      0.975]
 ------------------------------------------------------------------------------------
-Intercept           -0.9014      0.187     -4.812      0.000      -1.268      -0.534
-s_i_capability      -0.7119      0.089     -7.977      0.000      -0.887      -0.537
-human_difficulty     0.2668      0.075      3.539      0.000       0.119       0.415
+Intercept           -0.8439      0.451     -1.870      0.061      -1.728       0.040
+s_i_capability      -0.6202      0.219     -2.838      0.005      -1.049      -0.192
+human_difficulty     0.2093      0.181      1.157      0.247      -0.145       0.564
 ====================================================================================
                   Grouped rare domain into 'Misc'/'Other': None
                   Domain Counts:
  domain
-physics      995
-chemistry    976
-biology      411
+physics      163
+chemistry    162
+biology       72
 Name: count, dtype: int64
                   Capability by domain_grouped:
                     mean       std  count
 domain_grouped                           
-biology         0.649635  0.477666    411
-chemistry       0.310451  0.462915    976
-physics         0.452261  0.497966    995
+biology         0.611111  0.490919     72
+chemistry       0.320988  0.468304    162
+physics         0.453988  0.499413    163
                   Delegate Choice by domain_grouped:
 domain_grouped  delegate_choice
-biology         0                  0.914842
-                1                  0.085158
-chemistry       0                  0.556352
-                1                  0.443648
-physics         0                  0.595980
-                1                  0.404020
+biology         0                  0.930556
+                1                  0.069444
+chemistry       0                  0.561728
+                1                  0.438272
+physics         0                  0.601227
+                1                  0.398773
 Name: proportion, dtype: float64
 
                   Q length by capability:
                     mean       std  count
 s_i_capability                           
-0               5.917551  0.653967   1362
-1               5.882150  0.626601   1020
+0               5.926232  0.648027    227
+1               5.892936  0.623911    170
                   Human-rated difficulty by capability:
                     mean       std  count
 s_i_capability                           
-0               2.365272  0.582786   1362
-1               2.385458  0.560028   1020
+0               2.367841  0.593441    227
+1               2.383333  0.577023    170
 domain_grouped  delegate_choice
-biology         0                  0.914842
-                1                  0.085158
-chemistry       0                  0.556352
-                1                  0.443648
-physics         0                  0.595980
-                1                  0.404020
+biology         0                  0.930556
+                1                  0.069444
+chemistry       0                  0.561728
+                1                  0.438272
+physics         0                  0.601227
+                1                  0.398773
 Name: proportion, dtype: float64
 
-                    Model 4: Using clustered standard errors by q_id.
 
                   Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                 2382
-Model:                          Logit   Df Residuals:                     2373
+Dep. Variable:        delegate_choice   No. Observations:                  397
+Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.09572
-Time:                        18:19:42   Log-Likelihood:                -1413.8
-converged:                       True   LL-Null:                       -1563.5
-Covariance Type:              cluster   LLR p-value:                 5.729e-60
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09722
+Time:                        13:29:22   Log-Likelihood:                -233.17
+converged:                       True   LL-Null:                       -258.28
+Covariance Type:            nonrobust   LLR p-value:                 3.705e-08
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
-Intercept                            -1.8690      1.670     -1.119      0.263      -5.142       1.404
-C(domain_grouped)[T.chemistry]        2.0001      0.491      4.071      0.000       1.037       2.963
-C(domain_grouped)[T.physics]          1.8987      0.485      3.915      0.000       0.948       2.849
-s_i_capability                       -0.5273      0.209     -2.522      0.012      -0.937      -0.117
-human_difficulty                      0.5576      0.177      3.148      0.002       0.211       0.905
-q_length                             -0.2043      0.200     -1.022      0.307      -0.596       0.188
-avg_word_length                      -0.1063      0.184     -0.576      0.565      -0.468       0.255
-percent_non_alphabetic_whitespace     0.0170      0.019      0.890      0.374      -0.020       0.055
-overlap_ratio                         0.0415      0.227      0.183      0.855      -0.403       0.486
+Intercept                            -2.6609      1.898     -1.402      0.161      -6.381       1.059
+C(domain_grouped)[T.chemistry]        2.2283      0.527      4.228      0.000       1.195       3.261
+C(domain_grouped)[T.physics]          2.0964      0.537      3.906      0.000       1.044       3.148
+s_i_capability                       -0.4391      0.233     -1.884      0.060      -0.896       0.018
+human_difficulty                      0.4937      0.196      2.513      0.012       0.109       0.879
+q_length                             -0.1077      0.216     -0.500      0.617      -0.530       0.315
+avg_word_length                      -0.0718      0.202     -0.355      0.722      -0.468       0.324
+percent_non_alphabetic_whitespace     0.0168      0.020      0.820      0.412      -0.023       0.057
+overlap_ratio                        -0.0485      0.254     -0.191      0.848      -0.546       0.449
 =====================================================================================================
 
                   --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
-                  P-value for s_i_capability: 0.01168
-                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.6944 [1.1246, 2.5528]
+                  P-value for s_i_capability: 0.0595
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.5514 [0.9826, 2.4495]
 
                   Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
                                GEE Regression Results                              
 ===================================================================================
-Dep. Variable:             delegate_choice   No. Observations:                 2382
-Model:                                 GEE   No. clusters:                        6
+Dep. Variable:             delegate_choice   No. Observations:                  397
+Model:                                 GEE   No. clusters:                        1
 Method:                        Generalized   Min. cluster size:                 397
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
-Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:42
+Dependence structure:         Exchangeable   Num. iterations:                     5
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:22
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
-Intercept                            -1.8679      0.236     -7.907      0.000      -2.331      -1.405
-C(domain_grouped)[T.chemistry]        2.0007      0.065     30.758      0.000       1.873       2.128
-C(domain_grouped)[T.physics]          1.8990      0.081     23.577      0.000       1.741       2.057
-s_i_capability                       -0.5276      0.030    -17.303      0.000      -0.587      -0.468
-human_difficulty                      0.5547      0.014     40.179      0.000       0.528       0.582
-q_length                             -0.2033      0.026     -7.943      0.000      -0.253      -0.153
-avg_word_length                      -0.1062      0.026     -4.109      0.000      -0.157      -0.056
-percent_non_alphabetic_whitespace     0.0171      0.004      4.115      0.000       0.009       0.025
-overlap_ratio                         0.0414      0.037      1.113      0.266      -0.031       0.114
+Intercept                            -2.6548   2.57e-13  -1.03e+13      0.000      -2.655      -2.655
+C(domain_grouped)[T.chemistry]        2.2254   5.73e-14   3.89e+13      0.000       2.225       2.225
+C(domain_grouped)[T.physics]          2.0936   5.48e-14   3.82e+13      0.000       2.094       2.094
+s_i_capability                       -0.4389   7.04e-15  -6.24e+13      0.000      -0.439      -0.439
+human_difficulty                      0.4935   7.63e-15   6.47e+13      0.000       0.494       0.494
+q_length                             -0.1077   2.11e-15   -5.1e+13      0.000      -0.108      -0.108
+avg_word_length                      -0.0718    1.1e-15  -6.55e+13      0.000      -0.072      -0.072
+percent_non_alphabetic_whitespace     0.0168   2.43e-16   6.91e+13      0.000       0.017       0.017
+overlap_ratio                        -0.0485   1.15e-15  -4.22e+13      0.000      -0.048      -0.048
 ==============================================================================
-Skew:                          0.4014   Kurtosis:                      -1.4215
-Centered skew:                 0.4012   Centered kurtosis:             -1.4201
+Skew:                          0.4227   Kurtosis:                      -1.4323
+Centered skew:                 0.4227   Centered kurtosis:             -1.4323
 ==============================================================================
 
                   Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
                            Logit Regression Results                           
 ==============================================================================
-Dep. Variable:        delegate_choice   No. Observations:                 2382
-Model:                          Logit   Df Residuals:                     2374
+Dep. Variable:        delegate_choice   No. Observations:                  397
+Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.08581
-Time:                        18:19:42   Log-Likelihood:                -1429.3
-converged:                       True   LL-Null:                       -1563.5
-Covariance Type:              cluster   LLR p-value:                 3.440e-54
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09027
+Time:                        13:29:22   Log-Likelihood:                -234.97
+converged:                       True   LL-Null:                       -258.28
+Covariance Type:            nonrobust   LLR p-value:                 6.587e-08
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
-Intercept                            -2.1491      1.652     -1.301      0.193      -5.388       1.089
-C(domain_grouped)[T.chemistry]        2.1632      0.487      4.441      0.000       1.209       3.118
-C(domain_grouped)[T.physics]          1.9679      0.478      4.113      0.000       1.030       2.906
-human_difficulty                      0.5568      0.177      3.144      0.002       0.210       0.904
-q_length                             -0.1771      0.200     -0.886      0.376      -0.569       0.215
-avg_word_length                      -0.1419      0.184     -0.773      0.440      -0.502       0.218
-percent_non_alphabetic_whitespace     0.0134      0.019      0.722      0.470      -0.023       0.050
-overlap_ratio                         0.0494      0.230      0.215      0.830      -0.402       0.500
+Intercept                            -2.8710      1.886     -1.522      0.128      -6.567       0.825
+C(domain_grouped)[T.chemistry]        2.3379      0.523      4.474      0.000       1.314       3.362
+C(domain_grouped)[T.physics]          2.1339      0.534      3.999      0.000       1.088       3.180
+human_difficulty                      0.4939      0.196      2.526      0.012       0.111       0.877
+q_length                             -0.0891      0.215     -0.414      0.679      -0.511       0.333
+avg_word_length                      -0.0984      0.202     -0.487      0.626      -0.494       0.298
+percent_non_alphabetic_whitespace     0.0144      0.020      0.710      0.478      -0.025       0.054
+overlap_ratio                        -0.0448      0.257     -0.174      0.862      -0.548       0.459
 =====================================================================================================
 
 --- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered, 5 game files) ---
@@ -226,9 +224,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0     528
 Name: count, dtype: int64
 
-Introspection score = 0.288 [0.243, 0.327], p=2.171e-36
+Introspection score = 0.288 [0.243, 0.327], p=0
 Delegate Gap = 0.257 [0.217, 0.296, p=1.231e-37]
-Adjusted introspection score = 0.298 [0.255, 0.337], p=4.126e-38
+Adjusted introspection score = 0.298 [0.255, 0.337], p=0
 Adjusted delegate gap = 0.266 [0.226, 0.304, p=3.802e-40]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -254,15 +252,14 @@ s_i_capability
 0                 155     22
 1                  16    335
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.0720
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                 1985
 Model:                          Logit   Df Residuals:                     1983
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.07152
-Time:                        18:19:42   Log-Likelihood:                -1067.6
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.07152
+Time:                        13:29:22   Log-Likelihood:                -1067.6
 converged:                       True   LL-Null:                       -1149.8
 Covariance Type:            nonrobust   LLR p-value:                 1.202e-37
 ==================================================================================
@@ -278,8 +275,8 @@ s_i_capability    -1.3369      0.107    -12.441      0.000      -1.547      -1.1
 Dep. Variable:        delegate_choice   No. Observations:                 1985
 Model:                          Logit   Df Residuals:                     1983
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.001847
-Time:                        18:19:42   Log-Likelihood:                -1147.7
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.001847
+Time:                        13:29:22   Log-Likelihood:                -1147.7
 converged:                       True   LL-Null:                       -1149.8
 Covariance Type:            nonrobust   LLR p-value:                   0.03933
 ====================================================================================
@@ -295,8 +292,8 @@ human_difficulty     0.1848      0.090      2.051      0.040       0.008       0
 Dep. Variable:        delegate_choice   No. Observations:                 1985
 Model:                          Logit   Df Residuals:                     1982
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.07374
-Time:                        18:19:42   Log-Likelihood:                -1065.0
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.07374
+Time:                        13:29:22   Log-Likelihood:                -1065.0
 converged:                       True   LL-Null:                       -1149.8
 Covariance Type:            nonrobust   LLR p-value:                 1.514e-37
 ====================================================================================
@@ -356,8 +353,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                 1985
 Model:                          Logit   Df Residuals:                     1976
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1214
-Time:                        18:19:42   Log-Likelihood:                -1010.2
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1214
+Time:                        13:29:22   Log-Likelihood:                -1010.2
 converged:                       True   LL-Null:                       -1149.8
 Covariance Type:              cluster   LLR p-value:                 1.084e-55
 =====================================================================================================
@@ -390,8 +387,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                    14
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:42
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:22
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -415,8 +412,8 @@ Centered skew:                -0.8170   Centered kurtosis:             -0.4232
 Dep. Variable:        delegate_choice   No. Observations:                 1985
 Model:                          Logit   Df Residuals:                     1977
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06246
-Time:                        18:19:42   Log-Likelihood:                -1078.0
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06246
+Time:                        13:29:22   Log-Likelihood:                -1078.0
 converged:                       True   LL-Null:                       -1149.8
 Covariance Type:              cluster   LLR p-value:                 8.792e-28
 =====================================================================================================
@@ -464,9 +461,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 1    111
 Name: count, dtype: int64
 
-Introspection score = 0.144 [0.053, 0.233], p=8.6e-34
+Introspection score = 0.144 [0.053, 0.233], p=0
 Delegate Gap = 0.141 [0.047, 0.223, p=0.00405]
-Adjusted introspection score = 0.153 [0.064, 0.240], p=4.93e-33
+Adjusted introspection score = 0.153 [0.064, 0.240], p=0.001
 Adjusted delegate gap = 0.149 [0.056, 0.230, p=0.002234]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0   1
@@ -492,15 +489,14 @@ s_i_capability
 0                 161     26
 1                  23     76
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1713
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01851
-Time:                        18:19:42   Log-Likelihood:                -230.90
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01851
+Time:                        13:29:22   Log-Likelihood:                -230.90
 converged:                       True   LL-Null:                       -235.25
 Covariance Type:            nonrobust   LLR p-value:                  0.003162
 ==================================================================================
@@ -516,8 +512,8 @@ s_i_capability    -0.7616      0.269     -2.836      0.005      -1.288      -0.2
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               0.0005583
-Time:                        18:19:42   Log-Likelihood:                -235.12
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               0.0005583
+Time:                        13:29:22   Log-Likelihood:                -235.12
 converged:                       True   LL-Null:                       -235.25
 Covariance Type:            nonrobust   LLR p-value:                    0.6083
 ====================================================================================
@@ -533,8 +529,8 @@ human_difficulty    -0.1022      0.200     -0.512      0.609      -0.494       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01893
-Time:                        18:19:42   Log-Likelihood:                -230.80
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01893
+Time:                        13:29:22   Log-Likelihood:                -230.80
 converged:                       True   LL-Null:                       -235.25
 Covariance Type:            nonrobust   LLR p-value:                   0.01165
 ====================================================================================
@@ -593,8 +589,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1180
-Time:                        18:19:42   Log-Likelihood:                -207.48
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1180
+Time:                        13:29:22   Log-Likelihood:                -207.48
 converged:                       True   LL-Null:                       -235.25
 Covariance Type:            nonrobust   LLR p-value:                 3.469e-09
 =====================================================================================================
@@ -624,8 +620,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:42
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:22
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -649,8 +645,8 @@ Centered skew:                 0.8271   Centered kurtosis:             -0.6854
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1057
-Time:                        18:19:42   Log-Likelihood:                -210.38
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1057
+Time:                        13:29:22   Log-Likelihood:                -210.38
 converged:                       True   LL-Null:                       -235.25
 Covariance Type:            nonrobust   LLR p-value:                 1.630e-08
 =====================================================================================================
@@ -678,9 +674,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0    191
 Name: count, dtype: int64
 
-Introspection score = 0.151 [0.053, 0.242], p=6.646e-08
+Introspection score = 0.151 [0.053, 0.242], p=0
 Delegate Gap = 0.164 [0.057, 0.265, p=0.002627]
-Adjusted introspection score = 0.167 [0.070, 0.256], p=1.907e-07
+Adjusted introspection score = 0.167 [0.070, 0.256], p=0
 Adjusted delegate gap = 0.180 [0.074, 0.280, p=0.000883]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0   1
@@ -706,15 +702,14 @@ s_i_capability
 0                  92     27
 1                  24     48
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.2670
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01652
-Time:                        18:19:43   Log-Likelihood:                -270.36
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01652
+Time:                        13:29:22   Log-Likelihood:                -270.36
 converged:                       True   LL-Null:                       -274.90
 Covariance Type:            nonrobust   LLR p-value:                  0.002584
 ==================================================================================
@@ -730,8 +725,8 @@ s_i_capability    -0.6620      0.222     -2.988      0.003      -1.096      -0.2
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               0.0001542
-Time:                        18:19:43   Log-Likelihood:                -274.85
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               0.0001542
+Time:                        13:29:22   Log-Likelihood:                -274.85
 converged:                       True   LL-Null:                       -274.90
 Covariance Type:            nonrobust   LLR p-value:                    0.7709
 ====================================================================================
@@ -747,8 +742,8 @@ human_difficulty     0.0520      0.179      0.291      0.771      -0.298       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01676
-Time:                        18:19:43   Log-Likelihood:                -270.29
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01676
+Time:                        13:29:22   Log-Likelihood:                -270.29
 converged:                       True   LL-Null:                       -274.90
 Covariance Type:            nonrobust   LLR p-value:                  0.009967
 ====================================================================================
@@ -807,8 +802,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1598
-Time:                        18:19:43   Log-Likelihood:                -230.96
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1598
+Time:                        13:29:22   Log-Likelihood:                -230.96
 converged:                       True   LL-Null:                       -274.90
 Covariance Type:            nonrobust   LLR p-value:                 1.255e-15
 =====================================================================================================
@@ -838,8 +833,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                    10
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:22
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -863,8 +858,8 @@ Centered skew:                -0.1194   Centered kurtosis:             -1.1627
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1520
-Time:                        18:19:43   Log-Likelihood:                -233.10
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1520
+Time:                        13:29:22   Log-Likelihood:                -233.10
 converged:                       True   LL-Null:                       -274.90
 Covariance Type:            nonrobust   LLR p-value:                 2.548e-15
 =====================================================================================================
@@ -892,9 +887,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0    110
 Name: count, dtype: int64
 
-Introspection score = 0.084 [-0.013, 0.190], p=0.1255
+Introspection score = 0.084 [-0.013, 0.190], p=0.092
 Delegate Gap = 0.080 [-0.013, 0.177, p=0.09534]
-Adjusted introspection score = 0.049 [-0.050, 0.151], p=0.2326
+Adjusted introspection score = 0.049 [-0.050, 0.151], p=0.314
 Adjusted delegate gap = 0.048 [-0.045, 0.146, p=0.3247]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0   1
@@ -920,15 +915,14 @@ s_i_capability
 0                  63      4
 1                   8     35
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1091
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.005835
-Time:                        18:19:43   Log-Likelihood:                -232.93
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.005835
+Time:                        13:29:22   Log-Likelihood:                -232.93
 converged:                       True   LL-Null:                       -234.30
 Covariance Type:            nonrobust   LLR p-value:                   0.09822
 ==================================================================================
@@ -944,8 +938,8 @@ s_i_capability    -0.3889      0.234     -1.663      0.096      -0.847       0.0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               0.0009170
-Time:                        18:19:43   Log-Likelihood:                -234.08
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               0.0009170
+Time:                        13:29:22   Log-Likelihood:                -234.08
 converged:                       True   LL-Null:                       -234.30
 Covariance Type:            nonrobust   LLR p-value:                    0.5121
 ====================================================================================
@@ -961,8 +955,8 @@ human_difficulty    -0.1264      0.193     -0.656      0.512      -0.504       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.006711
-Time:                        18:19:43   Log-Likelihood:                -232.73
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.006711
+Time:                        13:29:22   Log-Likelihood:                -232.73
 converged:                       True   LL-Null:                       -234.30
 Covariance Type:            nonrobust   LLR p-value:                    0.2076
 ====================================================================================
@@ -1021,8 +1015,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1038
-Time:                        18:19:43   Log-Likelihood:                -209.97
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1038
+Time:                        13:29:22   Log-Likelihood:                -209.97
 converged:                       True   LL-Null:                       -234.30
 Covariance Type:            nonrobust   LLR p-value:                 7.395e-08
 =====================================================================================================
@@ -1052,8 +1046,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:22
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -1077,8 +1071,8 @@ Centered skew:                -0.8832   Centered kurtosis:             -0.4143
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1033
-Time:                        18:19:43   Log-Likelihood:                -210.10
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1033
+Time:                        13:29:22   Log-Likelihood:                -210.10
 converged:                       True   LL-Null:                       -234.30
 Covariance Type:            nonrobust   LLR p-value:                 2.990e-08
 =====================================================================================================
@@ -1106,9 +1100,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0    138
 Name: count, dtype: int64
 
-Introspection score = 0.250 [0.151, 0.348], p=0.04326
+Introspection score = 0.250 [0.151, 0.348], p=0
 Delegate Gap = 0.263 [0.157, 0.364, p=6.403e-07]
-Adjusted introspection score = 0.339 [0.242, 0.430], p=0.3553
+Adjusted introspection score = 0.339 [0.242, 0.430], p=0
 Adjusted delegate gap = 0.346 [0.243, 0.440, p=1.525e-11]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0   1
@@ -1134,15 +1128,14 @@ s_i_capability
 0                  55     22
 1                   9     52
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.2246
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04703
-Time:                        18:19:43   Log-Likelihood:                -244.38
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04703
+Time:                        13:29:22   Log-Likelihood:                -244.38
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                 9.057e-07
 ==================================================================================
@@ -1161,8 +1154,8 @@ s_i_capability    -1.1247      0.230     -4.880      0.000      -1.576      -0.6
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04703
-Time:                        18:19:43   Log-Likelihood:                -244.38
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04703
+Time:                        13:29:22   Log-Likelihood:                -244.38
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                 9.057e-07
 ==================================================================================
@@ -1184,8 +1177,8 @@ s_i_capability    -1.1247      0.230     -4.880      0.000      -1.576      -0.6
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               1.881e-05
-Time:                        18:19:43   Log-Likelihood:                -256.44
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               1.881e-05
+Time:                        13:29:23   Log-Likelihood:                -256.44
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                    0.9217
 ====================================================================================
@@ -1201,8 +1194,8 @@ human_difficulty     0.0179      0.182      0.098      0.922      -0.339       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04708
-Time:                        18:19:43   Log-Likelihood:                -244.37
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04708
+Time:                        13:29:23   Log-Likelihood:                -244.37
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                 5.705e-06
 ====================================================================================
@@ -1261,8 +1254,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1709
-Time:                        18:19:43   Log-Likelihood:                -212.61
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1709
+Time:                        13:29:23   Log-Likelihood:                -212.61
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                 1.380e-15
 =====================================================================================================
@@ -1310,8 +1303,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     5
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:23
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -1335,8 +1328,8 @@ Centered skew:                -0.5285   Centered kurtosis:             -0.7296
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1497
-Time:                        18:19:43   Log-Likelihood:                -218.05
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1497
+Time:                        13:29:23   Log-Likelihood:                -218.05
 converged:                       True   LL-Null:                       -256.44
 Covariance Type:            nonrobust   LLR p-value:                 6.212e-14
 =====================================================================================================
@@ -1364,9 +1357,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 1    162
 Name: count, dtype: int64
 
-Introspection score = 0.103 [0.010, 0.202], p=4.008e-05
+Introspection score = 0.103 [0.010, 0.202], p=0.032
 Delegate Gap = 0.102 [0.005, 0.196, p=0.0393]
-Adjusted introspection score = 0.108 [0.014, 0.207], p=5.285e-05
+Adjusted introspection score = 0.108 [0.014, 0.207], p=0.028
 Adjusted delegate gap = 0.106 [0.009, 0.200, p=0.03205]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -1392,15 +1385,14 @@ s_i_capability
 0                 104     15
 1                  14    102
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1234
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.007950
-Time:                        18:19:43   Log-Likelihood:                -266.30
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.007950
+Time:                        13:29:23   Log-Likelihood:                -266.30
 converged:                       True   LL-Null:                       -268.43
 Covariance Type:            nonrobust   LLR p-value:                   0.03884
 ==================================================================================
@@ -1416,8 +1408,8 @@ s_i_capability    -0.4265      0.207     -2.057      0.040      -0.833      -0.0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               0.0005791
-Time:                        18:19:43   Log-Likelihood:                -268.27
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               0.0005791
+Time:                        13:29:23   Log-Likelihood:                -268.27
 converged:                       True   LL-Null:                       -268.43
 Covariance Type:            nonrobust   LLR p-value:                    0.5771
 ====================================================================================
@@ -1433,8 +1425,8 @@ human_difficulty     0.0983      0.176      0.558      0.577      -0.247       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.008397
-Time:                        18:19:43   Log-Likelihood:                -266.18
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.008397
+Time:                        13:29:23   Log-Likelihood:                -266.18
 converged:                       True   LL-Null:                       -268.43
 Covariance Type:            nonrobust   LLR p-value:                    0.1050
 ====================================================================================
@@ -1493,8 +1485,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.09475
-Time:                        18:19:43   Log-Likelihood:                -243.00
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09475
+Time:                        13:29:23   Log-Likelihood:                -243.00
 converged:                       True   LL-Null:                       -268.43
 Covariance Type:            nonrobust   LLR p-value:                 2.783e-08
 =====================================================================================================
@@ -1524,8 +1516,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     8
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:23
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -1549,8 +1541,8 @@ Centered skew:                 0.3133   Centered kurtosis:             -1.4424
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.09185
-Time:                        18:19:43   Log-Likelihood:                -243.77
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09185
+Time:                        13:29:23   Log-Likelihood:                -243.77
 converged:                       True   LL-Null:                       -268.43
 Covariance Type:            nonrobust   LLR p-value:                 1.970e-08
 =====================================================================================================
@@ -1578,9 +1570,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 1     89
 Name: count, dtype: int64
 
-Introspection score = 0.224 [0.134, 0.310], p=1.466e-27
+Introspection score = 0.224 [0.134, 0.310], p=0
 Delegate Gap = 0.188 [0.108, 0.263, p=8.351e-06]
-Adjusted introspection score = 0.216 [0.126, 0.304], p=2.607e-28
+Adjusted introspection score = 0.216 [0.126, 0.304], p=0
 Adjusted delegate gap = 0.182 [0.102, 0.257, p=1.691e-05]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -1606,15 +1598,14 @@ s_i_capability
 0                 141     16
 1                  19    132
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1136
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04973
-Time:                        18:19:43   Log-Likelihood:                -200.76
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04973
+Time:                        13:29:23   Log-Likelihood:                -200.76
 converged:                       True   LL-Null:                       -211.26
 Covariance Type:            nonrobust   LLR p-value:                 4.565e-06
 ==================================================================================
@@ -1630,8 +1621,8 @@ s_i_capability    -1.1994      0.278     -4.309      0.000      -1.745      -0.6
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.001025
-Time:                        18:19:43   Log-Likelihood:                -211.05
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.001025
+Time:                        13:29:23   Log-Likelihood:                -211.05
 converged:                       True   LL-Null:                       -211.26
 Covariance Type:            nonrobust   LLR p-value:                    0.5106
 ====================================================================================
@@ -1647,8 +1638,8 @@ human_difficulty    -0.1408      0.215     -0.656      0.512      -0.561       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.05086
-Time:                        18:19:43   Log-Likelihood:                -200.52
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.05086
+Time:                        13:29:23   Log-Likelihood:                -200.52
 converged:                       True   LL-Null:                       -211.26
 Covariance Type:            nonrobust   LLR p-value:                 2.154e-05
 ====================================================================================
@@ -1707,8 +1698,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1248
-Time:                        18:19:43   Log-Likelihood:                -184.89
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1248
+Time:                        13:29:23   Log-Likelihood:                -184.89
 converged:                       True   LL-Null:                       -211.26
 Covariance Type:            nonrobust   LLR p-value:                 1.210e-08
 =====================================================================================================
@@ -1738,8 +1729,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     7
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:23
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -1763,8 +1754,8 @@ Centered skew:                 1.0679   Centered kurtosis:             -0.1160
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.08753
-Time:                        18:19:43   Log-Likelihood:                -192.77
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.08753
+Time:                        13:29:23   Log-Likelihood:                -192.77
 converged:                       True   LL-Null:                       -211.26
 Covariance Type:            nonrobust   LLR p-value:                 4.721e-06
 =====================================================================================================
@@ -1792,9 +1783,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0     95
 Name: count, dtype: int64
 
-Introspection score = 0.216 [0.120, 0.314], p=2.841e-10
+Introspection score = 0.216 [0.120, 0.314], p=0
 Delegate Gap = 0.186 [0.100, 0.271, p=1.746e-05]
-Adjusted introspection score = 0.207 [0.110, 0.305], p=5.794e-10
+Adjusted introspection score = 0.207 [0.110, 0.305], p=0
 Adjusted delegate gap = 0.178 [0.092, 0.264, p=3.831e-05]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -1820,15 +1811,14 @@ s_i_capability
 0                  30      6
 1                   7     52
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1368
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04201
-Time:                        18:19:43   Log-Likelihood:                -209.28
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04201
+Time:                        13:29:23   Log-Likelihood:                -209.28
 converged:                       True   LL-Null:                       -218.46
 Covariance Type:            nonrobust   LLR p-value:                 1.833e-05
 ==================================================================================
@@ -1844,8 +1834,8 @@ s_i_capability    -1.0225      0.243     -4.213      0.000      -1.498      -0.5
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.004651
-Time:                        18:19:43   Log-Likelihood:                -217.44
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.004651
+Time:                        13:29:23   Log-Likelihood:                -217.44
 converged:                       True   LL-Null:                       -218.46
 Covariance Type:            nonrobust   LLR p-value:                    0.1540
 ====================================================================================
@@ -1861,8 +1851,8 @@ human_difficulty     0.2971      0.210      1.413      0.158      -0.115       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04663
-Time:                        18:19:43   Log-Likelihood:                -208.27
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04663
+Time:                        13:29:23   Log-Likelihood:                -208.27
 converged:                       True   LL-Null:                       -218.46
 Covariance Type:            nonrobust   LLR p-value:                 3.764e-05
 ====================================================================================
@@ -1921,8 +1911,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06497
-Time:                        18:19:43   Log-Likelihood:                -204.26
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06497
+Time:                        13:29:23   Log-Likelihood:                -204.26
 converged:                       True   LL-Null:                       -218.46
 Covariance Type:            nonrobust   LLR p-value:                 0.0004062
 =====================================================================================================
@@ -1952,8 +1942,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:43
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:23
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -1977,8 +1967,8 @@ Centered skew:                -1.0936   Centered kurtosis:             -0.3792
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02655
-Time:                        18:19:43   Log-Likelihood:                -212.65
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02655
+Time:                        13:29:23   Log-Likelihood:                -212.65
 converged:                       True   LL-Null:                       -218.46
 Covariance Type:            nonrobust   LLR p-value:                    0.1144
 =====================================================================================================
@@ -2006,9 +1996,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0     99
 Name: count, dtype: int64
 
-Introspection score = 0.265 [0.167, 0.361], p=3.72e-08
+Introspection score = 0.265 [0.167, 0.361], p=0
 Delegate Gap = 0.233 [0.145, 0.319, p=1.357e-07]
-Adjusted introspection score = 0.169 [0.070, 0.266], p=1.469e-05
+Adjusted introspection score = 0.169 [0.070, 0.266], p=0
 Adjusted delegate gap = 0.150 [0.061, 0.240, p=0.0007685]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -2034,15 +2024,14 @@ s_i_capability
 0                  32      4
 1                  15     48
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1919
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06173
-Time:                        18:19:44   Log-Likelihood:                -209.21
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06173
+Time:                        13:29:23   Log-Likelihood:                -209.21
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.549e-07
 ==================================================================================
@@ -2058,8 +2047,8 @@ s_i_capability    -1.2427      0.242     -5.129      0.000      -1.718      -0.7
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1539
-Time:                        18:19:44   Log-Likelihood:                -188.65
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1539
+Time:                        13:29:23   Log-Likelihood:                -188.65
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.183e-16
 ========================================================================================
@@ -2075,8 +2064,8 @@ capabilities_entropy     1.7189      0.235      7.325      0.000       1.259    
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06173
-Time:                        18:19:44   Log-Likelihood:                -209.21
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06173
+Time:                        13:29:23   Log-Likelihood:                -209.21
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.549e-07
 ==================================================================================
@@ -2092,8 +2081,8 @@ s_i_capability    -1.2427      0.242     -5.129      0.000      -1.718      -0.7
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2957
-Time:                        18:19:44   Log-Likelihood:                -157.04
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2957
+Time:                        13:29:23   Log-Likelihood:                -157.04
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.605e-30
 ===========================================================================================
@@ -2109,8 +2098,8 @@ normalized_prob_entropy     2.6097      0.274      9.539      0.000       2.074 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3263
-Time:                        18:19:44   Log-Likelihood:                -150.21
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3263
+Time:                        13:29:23   Log-Likelihood:                -150.21
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 2.519e-32
 ===========================================================================================
@@ -2127,8 +2116,8 @@ normalized_prob_entropy     2.2455      0.288      7.792      0.000       1.681 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:               0.0002078
-Time:                        18:19:44   Log-Likelihood:                -222.93
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:               0.0002078
+Time:                        13:29:23   Log-Likelihood:                -222.93
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                    0.7608
 ====================================================================================
@@ -2144,8 +2133,8 @@ human_difficulty    -0.0630      0.207     -0.305      0.761      -0.468       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06195
-Time:                        18:19:44   Log-Likelihood:                -209.16
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06195
+Time:                        13:29:23   Log-Likelihood:                -209.16
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.003e-06
 ====================================================================================
@@ -2204,8 +2193,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1484
-Time:                        18:19:44   Log-Likelihood:                -189.88
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1484
+Time:                        13:29:23   Log-Likelihood:                -189.88
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 2.817e-11
 =====================================================================================================
@@ -2232,8 +2221,8 @@ overlap_ratio                         0.2230      0.190      1.174      0.240   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2334
-Time:                        18:19:44   Log-Likelihood:                -170.93
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2334
+Time:                        13:29:23   Log-Likelihood:                -170.93
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 2.342e-18
 =====================================================================================================
@@ -2257,8 +2246,8 @@ capabilities_entropy                  1.4978      0.263      5.689      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2297
-Time:                        18:19:44   Log-Likelihood:                -171.76
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2297
+Time:                        13:29:23   Log-Likelihood:                -171.76
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.368e-18
 =====================================================================================================
@@ -2281,8 +2270,8 @@ capabilities_entropy                  1.5948      0.255      6.250      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3849
-Time:                        18:19:44   Log-Likelihood:                -137.16
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3849
+Time:                        13:29:23   Log-Likelihood:                -137.16
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 2.824e-32
 =====================================================================================================
@@ -2306,8 +2295,8 @@ normalized_prob_entropy               2.6769      0.316      8.471      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3749
-Time:                        18:19:44   Log-Likelihood:                -139.37
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3749
+Time:                        13:29:23   Log-Likelihood:                -139.37
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 4.963e-32
 =====================================================================================================
@@ -2330,8 +2319,8 @@ normalized_prob_entropy               2.7153      0.313      8.677      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3960
-Time:                        18:19:44   Log-Likelihood:                -134.68
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3960
+Time:                        13:29:23   Log-Likelihood:                -134.68
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.194e-32
 =====================================================================================================
@@ -2356,8 +2345,8 @@ normalized_prob_entropy               2.4479      0.330      7.413      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3920
-Time:                        18:19:44   Log-Likelihood:                -135.57
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3920
+Time:                        13:29:23   Log-Likelihood:                -135.57
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 6.156e-33
 =====================================================================================================
@@ -2384,8 +2373,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     7
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:44
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:23
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -2409,8 +2398,8 @@ Centered skew:                -0.9319   Centered kurtosis:             -0.0758
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1251
-Time:                        18:19:44   Log-Likelihood:                -195.08
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1251
+Time:                        13:29:23   Log-Likelihood:                -195.08
 converged:                       True   LL-Null:                       -222.97
 Covariance Type:            nonrobust   LLR p-value:                 1.045e-09
 =====================================================================================================
@@ -2438,9 +2427,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0    187
 Name: count, dtype: int64
 
-Introspection score = 0.177 [0.077, 0.270], p=0.07043
+Introspection score = 0.177 [0.077, 0.270], p=0.001
 Delegate Gap = 0.179 [0.079, 0.274, p=0.0004317]
-Adjusted introspection score = 0.161 [0.063, 0.251], p=0.04263
+Adjusted introspection score = 0.161 [0.063, 0.251], p=0.001
 Adjusted delegate gap = 0.164 [0.064, 0.259, p=0.001351]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0   1
@@ -2466,15 +2455,14 @@ s_i_capability
 0                  71     22
 1                  25     69
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.2513
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02265
-Time:                        18:19:44   Log-Likelihood:                -268.30
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02265
+Time:                        13:29:24   Log-Likelihood:                -268.30
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 0.0004219
 ==================================================================================
@@ -2490,8 +2478,8 @@ s_i_capability    -0.7253      0.207     -3.499      0.000      -1.132      -0.3
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1001
-Time:                        18:19:44   Log-Likelihood:                -247.03
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1001
+Time:                        13:29:24   Log-Likelihood:                -247.03
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 1.231e-13
 ========================================================================================
@@ -2507,8 +2495,8 @@ capabilities_entropy     1.2577      0.180      6.983      0.000       0.905    
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02265
-Time:                        18:19:44   Log-Likelihood:                -268.30
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02265
+Time:                        13:29:24   Log-Likelihood:                -268.30
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 0.0004219
 ==================================================================================
@@ -2524,8 +2512,8 @@ s_i_capability    -0.7253      0.207     -3.499      0.000      -1.132      -0.3
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2599
-Time:                        18:19:44   Log-Likelihood:                -203.17
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2599
+Time:                        13:29:24   Log-Likelihood:                -203.17
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 6.900e-33
 ===========================================================================================
@@ -2541,8 +2529,8 @@ normalized_prob_entropy     2.6000      0.274      9.496      0.000       2.063 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2601
-Time:                        18:19:44   Log-Likelihood:                -203.10
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2601
+Time:                        13:29:24   Log-Likelihood:                -203.10
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 9.709e-32
 ===========================================================================================
@@ -2559,8 +2547,8 @@ normalized_prob_entropy     2.5405      0.316      8.041      0.000       1.921 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01303
-Time:                        18:19:44   Log-Likelihood:                -270.94
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01303
+Time:                        13:29:24   Log-Likelihood:                -270.94
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                  0.007480
 ====================================================================================
@@ -2576,8 +2564,8 @@ human_difficulty     0.4819      0.183      2.639      0.008       0.124       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04128
-Time:                        18:19:44   Log-Likelihood:                -263.18
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04128
+Time:                        13:29:24   Log-Likelihood:                -263.18
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 1.200e-05
 ====================================================================================
@@ -2636,8 +2624,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1020
-Time:                        18:19:44   Log-Likelihood:                -246.53
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1020
+Time:                        13:29:24   Log-Likelihood:                -246.53
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 2.855e-09
 =====================================================================================================
@@ -2664,8 +2652,8 @@ overlap_ratio                         0.1971      0.174      1.134      0.257   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1888
-Time:                        18:19:44   Log-Likelihood:                -222.68
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1888
+Time:                        13:29:24   Log-Likelihood:                -222.68
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 2.848e-18
 =====================================================================================================
@@ -2689,8 +2677,8 @@ capabilities_entropy                  1.4045      0.217      6.458      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1888
-Time:                        18:19:44   Log-Likelihood:                -222.68
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1888
+Time:                        13:29:24   Log-Likelihood:                -222.68
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 7.604e-19
 =====================================================================================================
@@ -2713,8 +2701,8 @@ capabilities_entropy                  1.4076      0.211      6.675      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3191
-Time:                        18:19:44   Log-Likelihood:                -186.92
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3191
+Time:                        13:29:24   Log-Likelihood:                -186.92
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 5.140e-33
 =====================================================================================================
@@ -2738,8 +2726,8 @@ normalized_prob_entropy               2.6914      0.304      8.843      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3189
-Time:                        18:19:44   Log-Likelihood:                -186.98
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3189
+Time:                        13:29:24   Log-Likelihood:                -186.98
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 1.120e-33
 =====================================================================================================
@@ -2762,8 +2750,8 @@ normalized_prob_entropy               2.6984      0.303      8.897      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3216
-Time:                        18:19:44   Log-Likelihood:                -186.22
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3216
+Time:                        13:29:24   Log-Likelihood:                -186.22
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 1.197e-32
 =====================================================================================================
@@ -2788,8 +2776,8 @@ normalized_prob_entropy               2.5060      0.338      7.417      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3216
-Time:                        18:19:44   Log-Likelihood:                -186.22
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3216
+Time:                        13:29:24   Log-Likelihood:                -186.22
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 2.622e-33
 =====================================================================================================
@@ -2816,8 +2804,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:44
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:24
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -2841,8 +2829,8 @@ Centered skew:                -0.0991   Centered kurtosis:             -1.4443
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.09556
-Time:                        18:19:44   Log-Likelihood:                -248.28
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09556
+Time:                        13:29:24   Log-Likelihood:                -248.28
 converged:                       True   LL-Null:                       -274.51
 Covariance Type:            nonrobust   LLR p-value:                 4.729e-09
 =====================================================================================================
@@ -2870,9 +2858,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0    178
 Name: count, dtype: int64
 
-Introspection score = 0.217 [0.120, 0.313], p=0.9358
+Introspection score = 0.217 [0.120, 0.313], p=0
 Delegate Gap = 0.216 [0.118, 0.309, p=1.583e-05]
-Adjusted introspection score = 0.195 [0.098, 0.290], p=0.9366
+Adjusted introspection score = 0.195 [0.098, 0.290], p=0
 Adjusted delegate gap = 0.195 [0.096, 0.288, p=0.0001055]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -2898,15 +2886,14 @@ s_i_capability
 0                  72      4
 1                   8     94
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.0674
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.03431
-Time:                        18:19:44   Log-Likelihood:                -263.69
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.03431
+Time:                        13:29:24   Log-Likelihood:                -263.69
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 1.498e-05
 ==================================================================================
@@ -2922,8 +2909,8 @@ s_i_capability    -0.8863      0.207     -4.280      0.000      -1.292      -0.4
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      381
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.06009
-Time:                        18:19:44   Log-Likelihood:                -247.03
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.06009
+Time:                        13:29:24   Log-Likelihood:                -247.03
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 1.908e-08
 ========================================================================================
@@ -2939,8 +2926,8 @@ capabilities_entropy     1.6438      0.324      5.071      0.000       1.008    
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      381
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.03682
-Time:                        18:19:44   Log-Likelihood:                -253.15
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.03682
+Time:                        13:29:24   Log-Likelihood:                -253.15
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 1.087e-05
 ==================================================================================
@@ -2956,8 +2943,8 @@ s_i_capability    -0.9188      0.211     -4.346      0.000      -1.333      -0.5
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2128
-Time:                        18:19:44   Log-Likelihood:                -214.95
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2128
+Time:                        13:29:24   Log-Likelihood:                -214.95
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 4.266e-27
 ===========================================================================================
@@ -2973,8 +2960,8 @@ normalized_prob_entropy     2.8022      0.322      8.713      0.000       2.172 
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      380
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2037
-Time:                        18:19:44   Log-Likelihood:                -209.29
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2037
+Time:                        13:29:24   Log-Likelihood:                -209.29
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 5.599e-24
 ===========================================================================================
@@ -2991,8 +2978,8 @@ normalized_prob_entropy     2.6431      0.362      7.292      0.000       1.933 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.003967
-Time:                        18:19:44   Log-Likelihood:                -271.98
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.003967
+Time:                        13:29:24   Log-Likelihood:                -271.98
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                    0.1410
 ====================================================================================
@@ -3008,8 +2995,8 @@ human_difficulty     0.2610      0.178      1.465      0.143      -0.088       0
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04002
-Time:                        18:19:44   Log-Likelihood:                -262.13
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04002
+Time:                        13:29:24   Log-Likelihood:                -262.13
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 1.795e-05
 ====================================================================================
@@ -3068,8 +3055,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.09606
-Time:                        18:19:44   Log-Likelihood:                -246.83
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.09606
+Time:                        13:29:24   Log-Likelihood:                -246.83
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 1.373e-08
 =====================================================================================================
@@ -3096,8 +3083,8 @@ overlap_ratio                         0.1070      0.175      0.611      0.541   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      373
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1235
-Time:                        18:19:44   Log-Likelihood:                -230.37
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1235
+Time:                        13:29:24   Log-Likelihood:                -230.37
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 1.499e-10
 =====================================================================================================
@@ -3121,8 +3108,8 @@ capabilities_entropy                  1.3032      0.346      3.769      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      374
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1135
-Time:                        18:19:44   Log-Likelihood:                -232.99
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1135
+Time:                        13:29:24   Log-Likelihood:                -232.99
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 5.424e-10
 =====================================================================================================
@@ -3145,8 +3132,8 @@ capabilities_entropy                  1.5055      0.337      4.469      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2702
-Time:                        18:19:44   Log-Likelihood:                -199.27
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2702
+Time:                        13:29:24   Log-Likelihood:                -199.27
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 2.787e-27
 =====================================================================================================
@@ -3170,8 +3157,8 @@ normalized_prob_entropy               2.8006      0.347      8.067      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2685
-Time:                        18:19:44   Log-Likelihood:                -199.73
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2685
+Time:                        13:29:24   Log-Likelihood:                -199.73
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 9.751e-28
 =====================================================================================================
@@ -3194,8 +3181,8 @@ normalized_prob_entropy               2.8678      0.342      8.386      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      372
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2570
-Time:                        18:19:44   Log-Likelihood:                -195.29
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2570
+Time:                        13:29:24   Log-Likelihood:                -195.29
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 4.291e-24
 =====================================================================================================
@@ -3220,8 +3207,8 @@ normalized_prob_entropy               2.7347      0.384      7.124      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      373
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2553
-Time:                        18:19:44   Log-Likelihood:                -195.73
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2553
+Time:                        13:29:24   Log-Likelihood:                -195.73
 converged:                       True   LL-Null:                       -262.83
 Covariance Type:            nonrobust   LLR p-value:                 1.628e-24
 =====================================================================================================
@@ -3248,8 +3235,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:44
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:24
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -3273,8 +3260,8 @@ Centered skew:                -0.2083   Centered kurtosis:             -1.4471
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.07348
-Time:                        18:19:44   Log-Likelihood:                -253.00
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.07348
+Time:                        13:29:24   Log-Likelihood:                -253.00
 converged:                       True   LL-Null:                       -273.06
 Covariance Type:            nonrobust   LLR p-value:                 1.190e-06
 =====================================================================================================
@@ -3302,9 +3289,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 0     71
 Name: count, dtype: int64
 
-Introspection score = 0.156 [0.059, 0.252], p=1.069e-18
+Introspection score = 0.156 [0.059, 0.252], p=0.001
 Delegate Gap = 0.120 [0.044, 0.197, p=0.001893]
-Adjusted introspection score = 0.167 [0.071, 0.263], p=3.51e-19
+Adjusted introspection score = 0.167 [0.071, 0.263], p=0.001
 Adjusted delegate gap = 0.128 [0.052, 0.205, p=0.0008968]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -3330,15 +3317,14 @@ s_i_capability
 0                  25      2
 1                   1     43
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.0423
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02586
-Time:                        18:19:44   Log-Likelihood:                -181.62
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02586
+Time:                        13:29:24   Log-Likelihood:                -181.62
 converged:                       True   LL-Null:                       -186.44
 Covariance Type:            nonrobust   LLR p-value:                  0.001901
 ==================================================================================
@@ -3354,8 +3340,8 @@ s_i_capability    -0.8227      0.269     -3.058      0.002      -1.350      -0.2
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      381
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.07974
-Time:                        18:19:44   Log-Likelihood:                -164.83
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.07974
+Time:                        13:29:24   Log-Likelihood:                -164.83
 converged:                       True   LL-Null:                       -179.11
 Covariance Type:            nonrobust   LLR p-value:                 9.062e-08
 ========================================================================================
@@ -3371,8 +3357,8 @@ capabilities_entropy     2.7491      0.689      3.988      0.000       1.398    
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      381
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02482
-Time:                        18:19:44   Log-Likelihood:                -174.67
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02482
+Time:                        13:29:24   Log-Likelihood:                -174.67
 converged:                       True   LL-Null:                       -179.11
 Covariance Type:            nonrobust   LLR p-value:                  0.002866
 ==================================================================================
@@ -3388,8 +3374,8 @@ s_i_capability    -0.8063      0.274     -2.938      0.003      -1.344      -0.2
 Dep. Variable:        delegate_choice   No. Observations:                  396
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1987
-Time:                        18:19:44   Log-Likelihood:                -149.24
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1987
+Time:                        13:29:24   Log-Likelihood:                -149.24
 converged:                       True   LL-Null:                       -186.25
 Covariance Type:            nonrobust   LLR p-value:                 7.729e-18
 ===========================================================================================
@@ -3405,8 +3391,8 @@ normalized_prob_entropy     5.3299      1.172      4.549      0.000       3.033 
 Dep. Variable:        delegate_choice   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      379
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2003
-Time:                        18:19:44   Log-Likelihood:                -143.07
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2003
+Time:                        13:29:24   Log-Likelihood:                -143.07
 converged:                       True   LL-Null:                       -178.91
 Covariance Type:            nonrobust   LLR p-value:                 2.718e-16
 ===========================================================================================
@@ -3423,8 +3409,8 @@ normalized_prob_entropy     4.9152      1.210      4.064      0.000       2.545 
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      395
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01621
-Time:                        18:19:44   Log-Likelihood:                -183.42
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01621
+Time:                        13:29:24   Log-Likelihood:                -183.42
 converged:                       True   LL-Null:                       -186.44
 Covariance Type:            nonrobust   LLR p-value:                   0.01394
 ====================================================================================
@@ -3440,8 +3426,8 @@ human_difficulty     0.5831      0.243      2.403      0.016       0.107       1
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      394
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.04567
-Time:                        18:19:44   Log-Likelihood:                -177.93
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.04567
+Time:                        13:29:24   Log-Likelihood:                -177.93
 converged:                       True   LL-Null:                       -186.44
 Covariance Type:            nonrobust   LLR p-value:                 0.0002006
 ====================================================================================
@@ -3500,8 +3486,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      388
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1055
-Time:                        18:19:44   Log-Likelihood:                -166.77
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1055
+Time:                        13:29:24   Log-Likelihood:                -166.77
 converged:                       True   LL-Null:                       -186.44
 Covariance Type:            nonrobust   LLR p-value:                 4.251e-06
 =====================================================================================================
@@ -3528,8 +3514,8 @@ overlap_ratio                         0.1008      0.275      0.367      0.714   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      373
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1643
-Time:                        18:19:44   Log-Likelihood:                -149.67
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1643
+Time:                        13:29:24   Log-Likelihood:                -149.67
 converged:                       True   LL-Null:                       -179.11
 Covariance Type:            nonrobust   LLR p-value:                 2.211e-09
 =====================================================================================================
@@ -3553,8 +3539,8 @@ capabilities_entropy                  2.5304      0.693      3.651      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  383
 Model:                          Logit   Df Residuals:                      374
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1590
-Time:                        18:19:44   Log-Likelihood:                -150.63
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1590
+Time:                        13:29:24   Log-Likelihood:                -150.63
 converged:                       True   LL-Null:                       -179.11
 Covariance Type:            nonrobust   LLR p-value:                 1.834e-09
 =====================================================================================================
@@ -3577,8 +3563,8 @@ capabilities_entropy                  2.7523      0.692      3.977      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  396
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2674
-Time:                        18:19:44   Log-Likelihood:                -136.45
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2674
+Time:                        13:29:24   Log-Likelihood:                -136.45
 converged:                       True   LL-Null:                       -186.25
 Covariance Type:            nonrobust   LLR p-value:                 1.893e-17
 =====================================================================================================
@@ -3602,8 +3588,8 @@ normalized_prob_entropy               5.0875      1.153      4.414      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  396
 Model:                          Logit   Df Residuals:                      387
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2652
-Time:                        18:19:44   Log-Likelihood:                -136.86
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2652
+Time:                        13:29:24   Log-Likelihood:                -136.86
 converged:                       True   LL-Null:                       -186.25
 Covariance Type:            nonrobust   LLR p-value:                 7.627e-18
 =====================================================================================================
@@ -3626,8 +3612,8 @@ normalized_prob_entropy               5.2806      1.160      4.551      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      371
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2721
-Time:                        18:19:44   Log-Likelihood:                -130.23
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2721
+Time:                        13:29:24   Log-Likelihood:                -130.23
 converged:                       True   LL-Null:                       -178.91
 Covariance Type:            nonrobust   LLR p-value:                 1.821e-16
 =====================================================================================================
@@ -3652,8 +3638,8 @@ normalized_prob_entropy               4.8150      1.194      4.032      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      372
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2717
-Time:                        18:19:44   Log-Likelihood:                -130.30
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2717
+Time:                        13:29:24   Log-Likelihood:                -130.30
 converged:                       True   LL-Null:                       -178.91
 Covariance Type:            nonrobust   LLR p-value:                 5.728e-17
 =====================================================================================================
@@ -3680,8 +3666,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 397
 Family:                           Binomial   Mean cluster size:               397.0
 Dependence structure:         Exchangeable   Num. iterations:                     6
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:44
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:24
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -3705,8 +3691,8 @@ Centered skew:                -1.4181   Centered kurtosis:              0.8257
 Dep. Variable:        delegate_choice   No. Observations:                  397
 Model:                          Logit   Df Residuals:                      389
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.08028
-Time:                        18:19:44   Log-Likelihood:                -171.48
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.08028
+Time:                        13:29:24   Log-Likelihood:                -171.48
 converged:                       True   LL-Null:                       -186.44
 Covariance Type:            nonrobust   LLR p-value:                 9.755e-05
 =====================================================================================================
@@ -3734,9 +3720,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 1    169
 Name: count, dtype: int64
 
-Introspection score = 0.194 [0.099, 0.294], p=1.746e-05
+Introspection score = 0.194 [0.099, 0.294], p=0
 Delegate Gap = 0.195 [0.095, 0.288, p=0.0001331]
-Adjusted introspection score = 0.181 [0.085, 0.277], p=6.941e-06
+Adjusted introspection score = 0.181 [0.085, 0.277], p=0.001
 Adjusted delegate gap = 0.182 [0.082, 0.275, p=0.0003724]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -3762,15 +3748,14 @@ s_i_capability
 0                  97     11
 1                  14     97
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.1142
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02783
-Time:                        18:19:44   Log-Likelihood:                -258.32
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02783
+Time:                        13:29:24   Log-Likelihood:                -258.32
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 0.0001203
 ==================================================================================
@@ -3786,8 +3771,8 @@ s_i_capability    -0.8107      0.214     -3.790      0.000      -1.230      -0.3
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      384
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1465
-Time:                        18:19:44   Log-Likelihood:                -225.59
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1465
+Time:                        13:29:24   Log-Likelihood:                -225.59
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 1.372e-18
 ========================================================================================
@@ -3803,8 +3788,8 @@ capabilities_entropy     1.6959      0.212      7.999      0.000       1.280    
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      384
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02973
-Time:                        18:19:44   Log-Likelihood:                -256.45
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02973
+Time:                        13:29:24   Log-Likelihood:                -256.45
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 7.356e-05
 ==================================================================================
@@ -3820,8 +3805,8 @@ s_i_capability    -0.8390      0.215     -3.903      0.000      -1.260      -0.4
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2120
-Time:                        18:19:44   Log-Likelihood:                -209.39
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2120
+Time:                        13:29:24   Log-Likelihood:                -209.39
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 2.577e-26
 ===========================================================================================
@@ -3837,8 +3822,8 @@ normalized_prob_entropy     2.2147      0.249      8.896      0.000       1.727 
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      383
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2158
-Time:                        18:19:44   Log-Likelihood:                -207.27
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2158
+Time:                        13:29:24   Log-Likelihood:                -207.27
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 1.700e-25
 ===========================================================================================
@@ -3855,8 +3840,8 @@ normalized_prob_entropy     1.8969      0.333      5.705      0.000       1.245 
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      386
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.01082
-Time:                        18:19:44   Log-Likelihood:                -262.84
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.01082
+Time:                        13:29:24   Log-Likelihood:                -262.84
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                   0.01651
 ====================================================================================
@@ -3872,8 +3857,8 @@ human_difficulty    -0.4325      0.183     -2.367      0.018      -0.791      -0
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      385
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.03875
-Time:                        18:19:44   Log-Likelihood:                -255.41
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.03875
+Time:                        13:29:24   Log-Likelihood:                -255.41
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 3.375e-05
 ====================================================================================
@@ -3932,8 +3917,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      379
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1484
-Time:                        18:19:44   Log-Likelihood:                -226.27
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1484
+Time:                        13:29:24   Log-Likelihood:                -226.27
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 8.190e-14
 =====================================================================================================
@@ -3960,8 +3945,8 @@ overlap_ratio                         0.2644      0.196      1.352      0.176   
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      376
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2714
-Time:                        18:19:44   Log-Likelihood:                -192.58
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2714
+Time:                        13:29:24   Log-Likelihood:                -192.58
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 1.998e-26
 =====================================================================================================
@@ -3985,8 +3970,8 @@ capabilities_entropy                  1.7769      0.245      7.256      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      377
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2676
-Time:                        18:19:44   Log-Likelihood:                -193.58
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2676
+Time:                        13:29:24   Log-Likelihood:                -193.58
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 1.185e-26
 =====================================================================================================
@@ -4009,8 +3994,8 @@ capabilities_entropy                  1.8283      0.242      7.553      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      378
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3229
-Time:                        18:19:44   Log-Likelihood:                -179.92
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3229
+Time:                        13:29:24   Log-Likelihood:                -179.92
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 2.883e-32
 =====================================================================================================
@@ -4034,8 +4019,8 @@ normalized_prob_entropy               2.3153      0.282      8.203      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      379
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3191
-Time:                        18:19:44   Log-Likelihood:                -180.91
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3191
+Time:                        13:29:24   Log-Likelihood:                -180.91
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 1.567e-32
 =====================================================================================================
@@ -4058,8 +4043,8 @@ normalized_prob_entropy               2.3486      0.280      8.390      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      375
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3269
-Time:                        18:19:44   Log-Likelihood:                -177.90
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3269
+Time:                        13:29:24   Log-Likelihood:                -177.90
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 7.213e-32
 =====================================================================================================
@@ -4084,8 +4069,8 @@ normalized_prob_entropy               1.8646      0.363      5.141      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  386
 Model:                          Logit   Df Residuals:                      376
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3239
-Time:                        18:19:44   Log-Likelihood:                -178.69
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3239
+Time:                        13:29:24   Log-Likelihood:                -178.69
 converged:                       True   LL-Null:                       -264.31
 Covariance Type:            nonrobust   LLR p-value:                 3.425e-32
 =====================================================================================================
@@ -4112,8 +4097,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 388
 Family:                           Binomial   Mean cluster size:               388.0
 Dependence structure:         Exchangeable   Num. iterations:                     7
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:44
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:24
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -4137,8 +4122,8 @@ Centered skew:                 0.1338   Centered kurtosis:             -1.3183
 Dep. Variable:        delegate_choice   No. Observations:                  388
 Model:                          Logit   Df Residuals:                      380
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1327
-Time:                        18:19:44   Log-Likelihood:                -230.46
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1327
+Time:                        13:29:24   Log-Likelihood:                -230.46
 converged:                       True   LL-Null:                       -265.71
 Covariance Type:            nonrobust   LLR p-value:                 1.171e-12
 =====================================================================================================
@@ -4166,9 +4151,9 @@ df_model['delegate_choice'].value_counts()= delegate_choice
 1     19
 Name: count, dtype: int64
 
-Introspection score = 0.078 [0.010, 0.140], p=7.013e-98
+Introspection score = 0.078 [0.010, 0.140], p=0.036
 Delegate Gap = 0.027 [-0.001, 0.054, p=0.04859]
-Adjusted introspection score = 0.012 [-0.068, 0.081], p=2.184e-134
+Adjusted introspection score = 0.012 [-0.068, 0.081], p=0.772
 Adjusted delegate gap = 0.005 [-0.036, 0.030, p=0.7672]
 Cross-tabulation of delegate_choice vs. s_i_capability:
 s_i_capability     0    1
@@ -4194,15 +4179,14 @@ s_i_capability
 0                 318     31
 1                 154    118
 
-
-  Model 1: Delegate_Choice ~ S_i_capability
+Game-Test Change Rate: 0.2979
                            Logit Regression Results                           
 ==============================================================================
 Dep. Variable:        delegate_choice   No. Observations:                  640
 Model:                          Logit   Df Residuals:                      638
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02465
-Time:                        18:19:45   Log-Likelihood:                -83.430
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02465
+Time:                        13:29:24   Log-Likelihood:                -83.430
 converged:                       True   LL-Null:                       -85.539
 Covariance Type:            nonrobust   LLR p-value:                   0.04003
 ==================================================================================
@@ -4218,8 +4202,8 @@ s_i_capability    -1.0725      0.569     -1.886      0.059      -2.187       0.0
 Dep. Variable:        delegate_choice   No. Observations:                  636
 Model:                          Logit   Df Residuals:                      634
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.1600
-Time:                        18:19:45   Log-Likelihood:                -71.752
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.1600
+Time:                        13:29:24   Log-Likelihood:                -71.752
 converged:                       True   LL-Null:                       -85.418
 Covariance Type:            nonrobust   LLR p-value:                 1.715e-07
 ========================================================================================
@@ -4235,8 +4219,8 @@ capabilities_entropy     2.4706      0.579      4.271      0.000       1.337    
 Dep. Variable:        delegate_choice   No. Observations:                  636
 Model:                          Logit   Df Residuals:                      634
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.02460
-Time:                        18:19:45   Log-Likelihood:                -83.317
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.02460
+Time:                        13:29:24   Log-Likelihood:                -83.317
 converged:                       True   LL-Null:                       -85.418
 Covariance Type:            nonrobust   LLR p-value:                   0.04038
 ==================================================================================
@@ -4252,8 +4236,8 @@ s_i_capability    -1.0709      0.569     -1.883      0.060      -2.185       0.0
 Dep. Variable:        delegate_choice   No. Observations:                  364
 Model:                          Logit   Df Residuals:                      362
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3455
-Time:                        18:19:45   Log-Likelihood:                -48.823
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3455
+Time:                        13:29:24   Log-Likelihood:                -48.823
 converged:                       True   LL-Null:                       -74.597
 Covariance Type:            nonrobust   LLR p-value:                 6.985e-13
 ===========================================================================================
@@ -4269,8 +4253,8 @@ normalized_prob_entropy     4.6805      0.939      4.985      0.000       2.840 
 Dep. Variable:        delegate_choice   No. Observations:                  363
 Model:                          Logit   Df Residuals:                      360
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.3536
-Time:                        18:19:45   Log-Likelihood:                -48.188
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.3536
+Time:                        13:29:24   Log-Likelihood:                -48.188
 converged:                       True   LL-Null:                       -74.543
 Covariance Type:            nonrobust   LLR p-value:                 3.581e-12
 ===========================================================================================
@@ -4287,8 +4271,8 @@ normalized_prob_entropy     4.1842      1.024      4.086      0.000       2.177 
 Dep. Variable:        delegate_choice   No. Observations:                  640
 Model:                          Logit   Df Residuals:                      638
 Method:                           MLE   Df Model:                            1
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                0.008719
-Time:                        18:19:45   Log-Likelihood:                -84.793
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                0.008719
+Time:                        13:29:24   Log-Likelihood:                -84.793
 converged:                       True   LL-Null:                       -85.539
 Covariance Type:            nonrobust   LLR p-value:                    0.2220
 ====================================================================================
@@ -4304,8 +4288,8 @@ human_difficulty    -0.5214      0.437     -1.193      0.233      -1.378       0
 Dep. Variable:        delegate_choice   No. Observations:                  640
 Model:                          Logit   Df Residuals:                      637
 Method:                           MLE   Df Model:                            2
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.03319
-Time:                        18:19:45   Log-Likelihood:                -82.700
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.03319
+Time:                        13:29:25   Log-Likelihood:                -82.700
 converged:                       True   LL-Null:                       -85.539
 Covariance Type:            nonrobust   LLR p-value:                   0.05851
 ====================================================================================
@@ -4365,8 +4349,8 @@ Name: proportion, dtype: float64
 Dep. Variable:        delegate_choice   No. Observations:                  640
 Model:                          Logit   Df Residuals:                      631
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.07248
-Time:                        18:19:45   Log-Likelihood:                -79.339
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.07248
+Time:                        13:29:25   Log-Likelihood:                -79.339
 converged:                       True   LL-Null:                       -85.539
 Covariance Type:              cluster   LLR p-value:                    0.1343
 =====================================================================================================
@@ -4393,8 +4377,8 @@ overlap_ratio                        -0.0270      0.917     -0.029      0.976   
 Dep. Variable:        delegate_choice   No. Observations:                  636
 Model:                          Logit   Df Residuals:                      626
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2140
-Time:                        18:19:45   Log-Likelihood:                -67.135
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2140
+Time:                        13:29:25   Log-Likelihood:                -67.135
 converged:                       True   LL-Null:                       -85.418
 Covariance Type:            nonrobust   LLR p-value:                 3.146e-05
 =====================================================================================================
@@ -4418,8 +4402,8 @@ capabilities_entropy                  2.5756      0.631      4.084      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  636
 Model:                          Logit   Df Residuals:                      627
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.2001
-Time:                        18:19:45   Log-Likelihood:                -68.323
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.2001
+Time:                        13:29:25   Log-Likelihood:                -68.323
 converged:                       True   LL-Null:                       -85.418
 Covariance Type:            nonrobust   LLR p-value:                 3.752e-05
 =====================================================================================================
@@ -4442,8 +4426,8 @@ capabilities_entropy                  2.5246      0.614      4.110      0.000   
 Dep. Variable:        delegate_choice   No. Observations:                  364
 Model:                          Logit   Df Residuals:                      354
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.4820
-Time:                        18:19:45   Log-Likelihood:                -38.642
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.4820
+Time:                        13:29:25   Log-Likelihood:                -38.642
 converged:                       True   LL-Null:                       -74.597
 Covariance Type:            nonrobust   LLR p-value:                 6.419e-12
 =====================================================================================================
@@ -4471,8 +4455,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:        delegate_choice   No. Observations:                  364
 Model:                          Logit   Df Residuals:                      355
 Method:                           MLE   Df Model:                            8
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.4768
-Time:                        18:19:45   Log-Likelihood:                -39.031
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.4768
+Time:                        13:29:25   Log-Likelihood:                -39.031
 converged:                       True   LL-Null:                       -74.597
 Covariance Type:            nonrobust   LLR p-value:                 2.924e-12
 =====================================================================================================
@@ -4499,8 +4483,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:        delegate_choice   No. Observations:                  363
 Model:                          Logit   Df Residuals:                      352
 Method:                           MLE   Df Model:                           10
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.4844
-Time:                        18:19:45   Log-Likelihood:                -38.432
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.4844
+Time:                        13:29:25   Log-Likelihood:                -38.432
 converged:                       True   LL-Null:                       -74.543
 Covariance Type:            nonrobust   LLR p-value:                 1.647e-11
 =====================================================================================================
@@ -4529,8 +4513,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:        delegate_choice   No. Observations:                  363
 Model:                          Logit   Df Residuals:                      353
 Method:                           MLE   Df Model:                            9
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                  0.4796
-Time:                        18:19:45   Log-Likelihood:                -38.795
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                  0.4796
+Time:                        13:29:25   Log-Likelihood:                -38.795
 converged:                       True   LL-Null:                       -74.543
 Covariance Type:            nonrobust   LLR p-value:                 7.742e-12
 =====================================================================================================
@@ -4561,8 +4545,8 @@ Method:                        Generalized   Min. cluster size:                 
                       Estimating Equations   Max. cluster size:                 320
 Family:                           Binomial   Mean cluster size:               320.0
 Dependence structure:         Exchangeable   Num. iterations:                     4
-Date:                     Fri, 13 Jun 2025   Scale:                           1.000
-Covariance type:                    robust   Time:                         18:19:45
+Date:                     Sun, 15 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         13:29:25
 =====================================================================================================
                                         coef    std err          z      P>|z|      [0.025      0.975]
 -----------------------------------------------------------------------------------------------------
@@ -4586,8 +4570,8 @@ Centered skew:                 5.3413   Centered kurtosis:             27.4004
 Dep. Variable:        delegate_choice   No. Observations:                  640
 Model:                          Logit   Df Residuals:                      632
 Method:                           MLE   Df Model:                            7
-Date:                Fri, 13 Jun 2025   Pseudo R-squ.:                 0.05162
-Time:                        18:19:45   Log-Likelihood:                -81.123
+Date:                Sun, 15 Jun 2025   Pseudo R-squ.:                 0.05162
+Time:                        13:29:25   Log-Likelihood:                -81.123
 converged:                       True   LL-Null:                       -85.539
 Covariance Type:              cluster   LLR p-value:                    0.2651
 =====================================================================================================

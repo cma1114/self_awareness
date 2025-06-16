@@ -18,6 +18,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, adj_
     adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     raw_introspection_regex = re.compile(r"Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
     raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
     introspection_regex = adj_introspection_regex if adj_int else raw_introspection_regex
     self_acc_lift_regex = adj_self_acc_lift_regex if adj_lift else raw_self_acc_lift_regex
     prefix_int = "adj" if adj_int else "raw"
@@ -82,7 +83,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, adj_
                     "model7_log_lik": "Not found",
                     "delegation_rate": "Not found",
                     "phase1_accuracy": "Not found",
-                    "total_n": "Not found"
+                    "total_n": "Not found",
+                    "game_test_change_rate": "Not found"
                 }
                 
                 # Model parsing states
@@ -116,7 +118,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, adj_
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_low"] = m.group(2)
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_high"] = m.group(3)
                         continue
-                    
+
+                    # Extract game test change rate
+                    m = game_test_change_regex.search(line)
+                    if m:
+                        extracted_info["game_test_change_rate"] = m.group(1)
+                        continue
+
                     # Cross-tabulation parsing state machine
                     if not parsing_crosstab and not any([in_model4, in_model46, in_model48, in_model7]) and crosstab_title_regex.match(line):
                         parsing_crosstab = True
@@ -269,6 +277,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, adj_
                 outfile.write(f"  Delegation rate: {extracted_info['delegation_rate']}\n")
                 outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
                 outfile.write(f"  Total N: {extracted_info['total_n']}\n")
+                outfile.write(f"  Game-Test Change Rate: {extracted_info['game_test_change_rate']}\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -344,6 +353,8 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["phase1_accuracy"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "Total N:" in line:
                 current_subject_info["total_n"] = parse_value(line, r":\s*(\d+)", as_type=int)
+            elif "Game-Test Change Rate:" in line:
+                current_subject_info["game_test_change_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -413,7 +424,8 @@ def analyze_parsed_data(input_summary_file):
             "LR_pvalue": LR_pvalue,
             "Delegation_Rate": delegation_rate,
             "Phase1_Accuracy": phase1_accuracy,
-            "Total_N": total_n
+            "Total_N": total_n,
+            "Change%": data.get("game_test_change_rate", np.nan)
         })
         
     return pd.DataFrame(results)
@@ -589,10 +601,10 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=Tr
 
 if __name__ == "__main__":
     
-    dataset = "GPSA"
+    dataset = "SimpleQA"
     target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, NoHistory, NotFiltered"
-#    model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-1.5-pro']
-    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
+    model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
+#    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
     show_adjusted_introspection = True
     show_adjusted_self_acc_lift = True
 

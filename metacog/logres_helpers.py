@@ -60,6 +60,9 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0):
     ci_lift = tuple(np.percentile(lifts, [2.5, 97.5]))  # ★ tuple()
     ci_mcc  = tuple(np.percentile(mccs,  [2.5, 97.5]))
 
+    boot_arr = np.array(mccs)
+    p_mcc = 2 * min((boot_arr <= 0).mean(), (boot_arr >= 0).mean())
+    
     return dict(lift=lift,   lift_ci=ci_lift,  p_lift=p_lift,
                 mcc=mcc,     mcc_ci =ci_mcc,  p_mcc =p_mcc)
 

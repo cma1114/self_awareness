@@ -1167,27 +1167,27 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "deepseek-chat"#"gemini-1.5-pro"#"claude-3-sonnet-20240229"#"claude-3-5-sonnet-20241022"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"grok-3-latest"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 450 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.8  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.8  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 33#714#41#42#3  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
     OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
-    USE_PHASE1_SUMMARY = True  # Include summary of Phase 1 performance
-    USE_PHASE1_HISTORY = False  # Include full Phase 1 history
+    USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
+    USE_PHASE1_HISTORY = True  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
     resume_from = None
