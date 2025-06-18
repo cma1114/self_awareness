@@ -183,7 +183,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
             capabilities_entropy = entropy_map_for_this_model.get(q_id) if entropy_map_for_this_model else None
 
             if sqa_features and s_i_capability is not None:
-                delegate_choice_numeric = 1 if delegation_choice_str == "Teammate" else 0
+                delegate_choice_numeric = 0 if delegation_choice_str == "Self" else 1
                 
                 trial_data_dict = {
                     'q_id': q_id, 
@@ -296,7 +296,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC"#"SimpleQA" #
+    dataset = "SimpleQA" #"SimpleMC"#
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"

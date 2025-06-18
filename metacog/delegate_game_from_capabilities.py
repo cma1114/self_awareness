@@ -31,7 +31,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                  completed_results_file=None, dataset="GPQA",
                  n_trials_phase1=100, n_trials_phase2=100,
                  teammate_accuracy_phase1=0.7, teammate_accuracy_phase2=0.7,
-                 feedback_config=None, override_subject_accuracy=None, randomize_phase1_answers=False,
+                 feedback_config=None, override_subject_accuracy=None, override_subject_accuracy_game=None, randomize_phase1_answers=False,
                  use_phase1_summary=True, use_phase1_history=True,
                  redact_phase1_answers=False, initial_setup_explanation="",
                  seed=None, temperature=0.0, resume_from=None):
@@ -80,6 +80,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
         self.use_phase1_history = use_phase1_history
         self.redact_phase1_answers = redact_phase1_answers
         self.initial_setup_explanation = initial_setup_explanation
+        self.override_subject_accuracy_game = override_subject_accuracy_game
 
         # Default feedback configuration
         self.feedback_config = {
@@ -369,8 +370,23 @@ class DelegateGameFromCapabilities(BaseGameClass):
             return
 
         # Calculate target number of correct and incorrect questions for the run
+        if self.override_subject_accuracy_game is not None:
+            self.true_subject_accuracy = self.override_subject_accuracy_game
+            self._log(f"Using override subject accuracy for Phase 2: {self.true_subject_accuracy:.2%}")
+            if int(round((1-self.true_subject_accuracy) * total_remaining_questions)) > len(remaining_incorrect_ordered):
+                needed_incorrect_for_run = len(remaining_incorrect_ordered)
+                needed_correct_for_run = self.true_subject_accuracy/(1-self.true_subject_accuracy) * needed_incorrect_for_run
+            elif int(round(self.true_subject_accuracy * total_remaining_questions)) > len(remaining_correct_ordered):
+                needed_correct_for_run = len(remaining_correct_ordered)
+                needed_incorrect_for_run = (1-self.true_subject_accuracy)/self.true_subject_accuracy * needed_correct_for_run
+            else:
+                # Use the original calculation
+                needed_correct_for_run = int(round(self.true_subject_accuracy * total_remaining_questions))
+                needed_incorrect_for_run = int(round((1-self.true_subject_accuracy) * total_remaining_questions))
+            self.n_trials_phase2 = needed_correct_for_run + needed_incorrect_for_run
+
         target_correct_for_run = int(round(self.true_subject_accuracy * self.n_trials_phase2))
-        target_incorrect_for_run = self.n_trials_phase2 - target_correct_for_run
+        target_incorrect_for_run = int(round((1-self.true_subject_accuracy) * self.n_trials_phase2))
 
         selected_correct_qs = []
         selected_incorrect_qs = []
@@ -716,6 +732,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                     question_text,
                     message_history=current_message_history,
                     keep_appending=(False if not self.feedback_config['phase2_teammate_feedback'] and not self.feedback_config['phase2_subject_feedback'] else True),
+                    setup_text="Respond ONLY with your answer or 'T'\n" if self.is_short_answer else None,
                     MAX_TOKENS=None,#####1 if not self.is_short_answer else None,
                     temp=self.temperature
                 )
@@ -978,10 +995,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
             # Use true subject accuracy for Phase 1 (from completed results file)
             # This is the actual accuracy from the original capabilities test
             phase1_accuracy = self.true_subject_accuracy
-            # Calculate total number of questions from the results file minus phase 2 trials
-            total_questions_in_results = len(self.all_correct_questions) + len(self.all_incorrect_questions)
-            phase1_total = total_questions_in_results - self.n_trials_phase2
-            phase1_correct = int(round(phase1_accuracy * phase1_total))
+            phase1_correct = int(round(phase1_accuracy * self.n_trials_phase1))
 
             # We already calculated these values earlier in the function
             phase2_self_correct = sum(1 for r in phase2_results if r['delegation_choice'] == 'Self' and r['team_correct'])
@@ -989,17 +1003,17 @@ class DelegateGameFromCapabilities(BaseGameClass):
             phase2_self_accuracy = phase2_self_correct / phase2_self_total if phase2_self_total > 0 else 0
 
             summary += f"\n--- Self-accuracy Comparison (Phase 1 vs Phase 2) ---\n"
-            summary += f"Phase 1 self-accuracy (from completed results, total - phase2): {phase1_correct}/{phase1_total} ({phase1_accuracy:.2%})\n"
+            summary += f"Phase 1 self-accuracy (from completed results, total - phase2): {phase1_correct}/{self.n_trials_phase1} ({phase1_accuracy:.2%})\n"
             summary += f"Phase 2 self-accuracy: {phase2_self_correct}/{phase2_self_total} ({phase2_self_accuracy:.2%})\n"
 
             # Perform binomial test to compare accuracies between phases
-            if phase1_total > 0 and phase2_self_total > 0:
+            if self.n_trials_phase1 > 0 and phase2_self_total > 0:
                 try:
                     # Two-proportion z-test using statsmodels
                     from statsmodels.stats.proportion import proportions_ztest
                     import numpy as np
                     count = np.array([phase2_self_correct, phase1_correct])
-                    nobs = np.array([phase2_self_total, phase1_total])
+                    nobs = np.array([phase2_self_total, self.n_trials_phase1])
                     stat, p_value = proportions_ztest(count, nobs)
                     
                     summary += f"Statistical test (P2 self vs P1): z-score = {stat:.4f}, p-value = {p_value:.4f}\n"
@@ -1172,29 +1186,30 @@ def main():
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
-    N_TRIALS_PHASE2 = 450 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
+    N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 33#714#41#42#3  # Random seed for reproducibility
+    SEED = 3#714#42#33#41#  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
-    OVERRIDE_SUBJECT_ACCURACY = None  # Override subject's Phase 1 accuracy (None = use true accuracy)
-    USE_PHASE1_SUMMARY = False  # Include summary of Phase 1 performance
-    USE_PHASE1_HISTORY = True  # Include full Phase 1 history
+    OVERRIDE_SUBJECT_ACCURACY = 0.5  # Override subject's Phase 1 accuracy (None = use true accuracy)
+    OVERRIDE_SUBJECT_ACCURACY_GAME = 0.5  # Override subject's Phase 2 accuracy (None = use true accuracy)
+    USE_PHASE1_SUMMARY = True  # Include summary of Phase 1 performance
+    USE_PHASE1_HISTORY = False  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
     resume_from = None
 
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2
@@ -1238,6 +1253,8 @@ def real_main(DATASET):
     settings_suffix = ""
     if OVERRIDE_SUBJECT_ACCURACY is not None:
         settings_suffix += f"_subj{OVERRIDE_SUBJECT_ACCURACY}"
+    if OVERRIDE_SUBJECT_ACCURACY_GAME is not None:
+        settings_suffix += f"_subjgame{OVERRIDE_SUBJECT_ACCURACY_GAME}"
     if not USE_PHASE1_HISTORY:
         settings_suffix += "_nohistory"
     if USE_PHASE1_SUMMARY:
@@ -1267,6 +1284,7 @@ def real_main(DATASET):
             teammate_accuracy_phase2=TEAMMATE_ACCURACY_PHASE2,
             feedback_config=feedback_config,
             override_subject_accuracy=OVERRIDE_SUBJECT_ACCURACY,
+            override_subject_accuracy_game=OVERRIDE_SUBJECT_ACCURACY_GAME,
             randomize_phase1_answers=RANDOMIZE_PHASE1_ANSWERS,
             use_phase1_summary=USE_PHASE1_SUMMARY,
             use_phase1_history=USE_PHASE1_HISTORY,

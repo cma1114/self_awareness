@@ -189,7 +189,7 @@ class CapabilitiesTest(BaseGameClass):
             else:
                 # For LLM subject
                 llm_prompt = q_text + "\nYour answer: "
-                setup_prompt = "I'm going to ask you a series of short answer questions. For each one, respond as succinctly as possible."
+                setup_prompt = "I'm going to ask you a series of short answer questions. For each one, respond as succinctly as possible. Answer as best you can, even if you're not certain."
                 if False:#question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
                     subject_answer = ""
                     probs = None
@@ -228,10 +228,10 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "GPSA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    N_QUESTIONS = 447#500#   # Number of questions for capabilities measurement
+    N_QUESTIONS = 500#447#   # Number of questions for capabilities measurement
     temp = 0.0
     
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"

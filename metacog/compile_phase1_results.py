@@ -375,9 +375,9 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "GPSA"#"GPQA"#"SimpleQA"#"SimpleMC"# 
+    dataset = "SimpleQA"#"GPSA"#"GPQA"#"SimpleMC"# 
     
-    process_all_files(dataset, targ_model="claude-3-sonnet-20240229")
+    process_all_files(dataset, targ_model="claude-3-5-sonnet-20241022")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")
