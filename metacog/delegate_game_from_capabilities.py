@@ -1181,26 +1181,26 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["SimpleQA", "SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-5-sonnet-20241022"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-sonnet-4-20250514"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 3#714#42#33#41#  # Random seed for reproducibility
+    SEED = 41#3#714#42#33#  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
-    OVERRIDE_SUBJECT_ACCURACY = 0.5  # Override subject's Phase 1 accuracy (None = use true accuracy)
-    OVERRIDE_SUBJECT_ACCURACY_GAME = 0.5  # Override subject's Phase 2 accuracy (None = use true accuracy)
+    OVERRIDE_SUBJECT_ACCURACY = None#0.5  # Override subject's Phase 1 accuracy (None = use true accuracy)
+    OVERRIDE_SUBJECT_ACCURACY_GAME = None#0.5  # Override subject's Phase 2 accuracy (None = use true accuracy)
     USE_PHASE1_SUMMARY = True  # Include summary of Phase 1 performance
     USE_PHASE1_HISTORY = False  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
@@ -1209,7 +1209,7 @@ def real_main(DATASET):
 
     # Feedback configuration
     feedback_config = {
-        'phase1_subject_feedback': True,     # Show subject's answer feedback in phase 1
+        'phase1_subject_feedback': False,     # Show subject's answer feedback in phase 1
         'phase1_teammate_feedback': True,    # Show teammate's answer feedback in phase 1
         'phase2_subject_feedback': False,    # Show subject's answer feedback in phase 2
         'phase2_teammate_feedback': False,   # Show teammate's answer feedback in phase 2

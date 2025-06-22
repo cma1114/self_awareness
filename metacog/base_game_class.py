@@ -112,7 +112,7 @@ class BaseGameClass:
             # Re-raise for retry handling
             raise
 
-    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1, temp=0.0):
+    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1, temp=0.0, accept_any=True):
         """Gets answer from LLM model"""
         # Prepare common data
         user_msg = {"role": "user", "content": q_text}
@@ -344,7 +344,7 @@ class BaseGameClass:
                     delay = min(delay*2,15)
                     attempt -= 1 #don't increase temperature
                 continue
-            if True:###resp.upper() in options or options == " ":
+            if accept_any or resp.upper() in options or options == " ":
                 if token_probs: print(token_probs)
                 break
             attempt += 1

@@ -106,7 +106,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
             continue
 
         filename_base = os.path.basename(game_file_path)
-        phase2_trials = [t for t in game_data.get("results", []) if t.get('phase') == 2]
+        phase2_trials = [t for t in game_data.get("results", []) if t.get('phase',0) == 2 or (t.get('passes_used') is not None and t['passes_used'] >= 0)]
 
         phase2_corcnt += sum(1 for t in phase2_trials if t["delegation_choice"]=="Self" and t["subject_correct"])
         phase2_totalcnt += sum(1 for t in phase2_trials if t["delegation_choice"]=="Self")
@@ -114,9 +114,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
         if phase2_trials:
             file_level_features_cache.append({
                 "trials": phase2_trials,
-                "teammate_accuracy_phase1_file": game_data.get("teammate_accuracy_phase1"),
-                "subject_accuracy_phase1_file": game_data.get("subject_accuracy_phase1"),
-                "phase1_subject_feedback_file": game_data.get("feedback_config", {}).get("phase1_subject_feedback"),
+                "teammate_accuracy_phase1_file": game_data.get("teammate_accuracy_phase1",None),
+                "subject_accuracy_phase1_file": game_data.get("subject_accuracy_phase1",None),
                 "summary_file": "_summary_" in filename_base,
                 "nobio_file": "_nobio_" in filename_base,
                 "noeasy_file": "_noeasy_" in filename_base,
@@ -189,7 +188,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_id': q_id, 
                     'delegate_choice': delegate_choice_numeric,
                     's_i_capability': s_i_capability,
-                    'team_correct': False if trial.get('team_correct') is None else trial['team_correct'],
+                    'subject_correct': False if trial.get('subject_correct') is None else trial['subject_correct'],
                     'answer_type': sqa_features['answer_type'],
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
@@ -199,6 +198,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
+                if trial.get('team_correct') is not None:
+                    trial_data_dict['team_correct'] = trial['team_correct']
 
                 if max_norm_prob_trial is not None:
                     trial_data_dict['max_normalized_prob'] = max_norm_prob_trial
@@ -297,9 +298,10 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleQA" #"SimpleMC"#
+    game_type = "dg" #aop"
 
 
-    LOG_FILENAME = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
     print(f"Loading main {dataset} dataset for features...")
     sqa_all_questions = load_and_format_dataset(dataset)
     sqa_feature_lookup = {
@@ -311,7 +313,7 @@ if __name__ == "__main__":
     }
     print(f"sqa feature lookup created with {len(sqa_feature_lookup)} entries.")
 
-    game_logs_dir = "./delegate_game_logs/"
+    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/"
     capabilities_dir = "./compiled_results_sqa/" if dataset == "SimpleQA" else "./compiled_results_smc/"
     game_file_suffix = "_evaluated" if dataset == "SimpleQA" else ""
 
@@ -320,10 +322,13 @@ if __name__ == "__main__":
         exit()
 
     skip_files = []#['claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.1_temp0.0_1748028564_game_data_evaluated.json', 'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.2_temp0.0_1748028190_game_data_evaluated.json',  'claude-3-5-sonnet-20241022_SimpleQA_50_100_team0.7_1747746405_game_data_evaluated.json']
+    hit_files = None#["claude-3-5-sonnet-20241022_SimpleMC_50_500_subj0.5_subjgame0.5_team0.5_temp0.0_1750276176_game_data.json"]
 
     model_game_files = defaultdict(list)
     for game_filename in sorted(os.listdir(game_logs_dir)):
         if game_filename in skip_files:
+            continue
+        if hit_files and game_filename not in hit_files:
             continue
 
         if game_filename.endswith(f"_game_data{game_file_suffix}.json") and f"_{dataset}_" in game_filename:
@@ -331,17 +336,27 @@ if __name__ == "__main__":
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
 
     subj_acc_override_pattern = re.compile(r"_subj\d+(\.\d+)?_")
+    subj_game_override_pattern = re.compile(r"_subjgame\d+(\.\d+)?_")
 
-    FILE_GROUPING_CRITERIA = [
-        {'name_prefix': "Feedback", 'split_logic': split_by_feedback},
-        {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
-        {'name_prefix': "SubjAccOverride", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: subj_acc_override_pattern.search(bn), "SubjAccOverride", "NoSubjAccOverride")},
-        {'name_prefix': "Randomized", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_randomized_" in bn, "Randomized", "NotRandomized")},
-        {'name_prefix': "NoHistory", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_nohistory_" in bn, "NoHistory", "WithHistory")},
-#        {'name_prefix': "Summary", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_summary_" in bn, "Summary", "NoSummary")},
-        {'name_prefix': "Filtered", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_filtered_" in bn, "Filtered", "NotFiltered")},
-    ]
-
+    if game_type == "dg":
+        FILE_GROUPING_CRITERIA = [
+            {'name_prefix': "Feedback", 'split_logic': split_by_feedback},
+            {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
+            {'name_prefix': "SubjAccOverride", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: subj_acc_override_pattern.search(bn), "SubjAccOverride", "NoSubjAccOverride")},
+            {'name_prefix': "SubjGameOverride", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: subj_game_override_pattern.search(bn), "SubjGameOverride", "NoSubjGameOverride")},
+            {'name_prefix': "Randomized", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_randomized_" in bn, "Randomized", "NotRandomized")},
+            {'name_prefix': "NoHistory", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_nohistory_" in bn, "NoHistory", "WithHistory")},
+    #        {'name_prefix': "Summary", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_summary_" in bn, "Summary", "NoSummary")},
+            {'name_prefix': "Filtered", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_filtered_" in bn, "Filtered", "NotFiltered")},
+        ]
+    else:
+        FILE_GROUPING_CRITERIA = [
+        {'name_prefix': "MsgHist", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_hist_" in bn, "MsgHist", "NoMsgHist")},
+        {'name_prefix': "QCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noqcnt_" in bn, "NoQCtr", "QCtr")},
+        {'name_prefix': "PCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_nopcnt_" in bn, "NoPCtr", "PCtr")},
+        {'name_prefix': "SCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noscnt_" in bn, "NoSCtr", "SCtr")},
+        ]
+        
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
         if not game_files_for_model:
@@ -429,7 +444,7 @@ if __name__ == "__main__":
                     delegated = np.array(df_model['delegate_choice'], bool)
                     kept_mask = ~delegated                       # True where model answered itself
                     cap_corr = np.array(df_model['s_i_capability'], bool)   # Baseline correctness from capabilities file
-                    team_corr = np.where(df_model['delegate_choice'] == 0, df_model['team_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
+                    team_corr = np.where(df_model['delegate_choice'] == 0, df_model['subject_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
                     # Hybrid correctness label 
                     #    – use real game correctness when the model kept
                     #    – fallback to baseline correctness when it delegated

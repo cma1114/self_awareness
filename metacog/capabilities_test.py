@@ -2,6 +2,7 @@ import time
 import json
 from load_and_format_datasets import load_and_format_dataset
 from base_game_class import BaseGameClass
+import random
 
 class CapabilitiesTest(BaseGameClass):
     """
@@ -228,17 +229,21 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"claude-3-haiku-20240307"#"Chris"#
+    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"gemini-2.5-flash-preview-04-17"#"deepseek-chat"#"claude-3-5-sonnet-20241022" #"claude-sonnet-4-20250514"#"gpt-4o-2024-08-06"#"grok-3-latest"#'gemini-2.0-flash-001'#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    N_QUESTIONS = 500#447#   # Number of questions for capabilities measurement
     temp = 0.0
+    seed = 42
     
+    N_QUESTIONS = 447 if DATASET_NAME.startswith("GP") else 500#   # Number of questions for capabilities measurement
     SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
     try:
         # Load questions for capabilities measurement
         print(f"Loading {N_QUESTIONS} questions for capabilities measurement...")
         formatted_questions = load_and_format_dataset(DATASET_NAME, N_QUESTIONS)
+
+        random.seed(seed)
+        random.shuffle(formatted_questions)
             
         if not formatted_questions or len(formatted_questions) < N_QUESTIONS:
             print(f"Error: Not enough questions available ({len(formatted_questions) if formatted_questions else 0}). Needed: {N_QUESTIONS}")

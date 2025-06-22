@@ -601,18 +601,23 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=Tr
 
 if __name__ == "__main__":
     
-    dataset = "SimpleQA"
-    target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NotRandomized, WithHistory, NotFiltered"
+    game_type = "dg"#"aop" #
+    dataset = "SimpleMC"
+    if game_type == "dg":
+        target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, NoHistory, NotFiltered"#
+        #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
+    else:
+        target_params = "NoMsgHist, QCtr, PCtr, SCtr"
     model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
 #    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
-    show_adjusted_introspection = True
-    show_adjusted_self_acc_lift = True
+    show_adjusted_introspection = False
+    show_adjusted_self_acc_lift = False
 
-    suffix = "_full"
+    suffix = f"_{game_type}_full"
     if "Feedback_True" in target_params: suffix += "_fb"
     if "WithHistory" in target_params: suffix += "_hist" 
     else: suffix += "_sum"
-    input_log_filename = f"analysis_log_multi_logres_dg_{dataset.lower()}.txt"
+    input_log_filename = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
 
 #    model_list = ['grok-3-latest', 'gemini-1.5-pro', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash-001', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'gpt-4-turbo-2024-04-09', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']

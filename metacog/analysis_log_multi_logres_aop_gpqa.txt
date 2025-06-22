@@ -1,0 +1,1952 @@
+
+--- Analyzing claude-3-5-sonnet-20241022 (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/claude-3-5-sonnet-20241022_GPQA_temp0.0_1750473826_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    250
+0    197
+Name: count, dtype: int64
+
+Introspection score = 0.253 [0.162, 0.341], p=0
+Delegate Gap = 0.254 [0.162, 0.341, p=8.399e-08]
+Adjusted introspection score = 0.057 [-0.036, 0.147], p=0.216
+Adjusted delegate gap = 0.060 [-0.037, 0.156, p=0.2267]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0    1
+delegate_choice          
+0                 85  112
+1                171   79
+
+Probability of delegating when s_i_capability is 0: 0.6680
+Probability of delegating when s_i_capability is 1: 0.4136
+Phase 1 accuracy: 0.4273 (n=447)
+Phase 2 self-accuracy: 0.3706 (n=197)
+Self-acc lift = -0.057 [-0.123, 0.014], p=0.1133
+Adjusted self-acc lift = 0.031 [-0.035, 0.102], p=0.3675
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.04710
+Time:                        11:37:38   Log-Likelihood:                -292.24
+converged:                       True   LL-Null:                       -306.69
+Covariance Type:            nonrobust   LLR p-value:                 7.655e-08
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.6990      0.133      5.267      0.000       0.439       0.959
+s_i_capability    -1.0481      0.198     -5.294      0.000      -1.436      -0.660
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.004542
+Time:                        11:37:38   Log-Likelihood:                -305.29
+converged:                       True   LL-Null:                       -306.69
+Covariance Type:            nonrobust   LLR p-value:                   0.09509
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -0.4225      0.408     -1.035      0.301      -1.223       0.378
+human_difficulty     0.2794      0.168      1.660      0.097      -0.050       0.609
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05224
+Time:                        11:37:38   Log-Likelihood:                -290.67
+converged:                       True   LL-Null:                       -306.69
+Covariance Type:            nonrobust   LLR p-value:                 1.101e-07
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -0.0254      0.429     -0.059      0.953      -0.867       0.816
+s_i_capability      -1.0590      0.199     -5.322      0.000      -1.449      -0.669
+human_difficulty     0.3084      0.175      1.762      0.078      -0.035       0.652
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.628205  0.486412     78
+chemistry       0.311475  0.464367    183
+physics         0.456989  0.499491    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.794872
+                1                  0.205128
+chemistry       1                  0.677596
+                0                  0.322404
+physics         1                  0.591398
+                0                  0.408602
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.921990  0.654147    256
+1               5.885009  0.621761    191
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.366536  0.581565    256
+1               2.376091  0.564085    191
+domain_grouped  delegate_choice
+biology         0                  0.794872
+                1                  0.205128
+chemistry       1                  0.677596
+                0                  0.322404
+physics         1                  0.591398
+                0                  0.408602
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1394
+Time:                        11:37:38   Log-Likelihood:                -263.94
+converged:                       True   LL-Null:                       -306.69
+Covariance Type:            nonrobust   LLR p-value:                 3.793e-15
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.6120      1.706     -2.117      0.034      -6.956      -0.268
+C(domain_grouped)[T.chemistry]        2.2481      0.390      5.766      0.000       1.484       3.012
+C(domain_grouped)[T.physics]          2.0111      0.393      5.119      0.000       1.241       2.781
+s_i_capability                       -0.8850      0.215     -4.116      0.000      -1.307      -0.464
+human_difficulty                      0.6248      0.195      3.199      0.001       0.242       1.008
+q_length                              0.1151      0.202      0.569      0.569      -0.281       0.511
+avg_word_length                      -0.0032      0.173     -0.018      0.985      -0.343       0.336
+percent_non_alphabetic_whitespace     0.0205      0.019      1.058      0.290      -0.017       0.059
+overlap_ratio                         0.2980      0.180      1.656      0.098      -0.055       0.651
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 3.859e-05
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 2.4231 [1.5897, 3.6932]
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     7
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:38
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.5942   2.07e-14  -1.74e+14      0.000      -3.594      -3.594
+C(domain_grouped)[T.chemistry]        2.2456    2.5e-14   8.99e+13      0.000       2.246       2.246
+C(domain_grouped)[T.physics]          2.0079   2.13e-14   9.41e+13      0.000       2.008       2.008
+s_i_capability                       -0.8856   9.43e-15  -9.39e+13      0.000      -0.886      -0.886
+human_difficulty                      0.6254    8.2e-15   7.63e+13      0.000       0.625       0.625
+q_length                              0.1150   2.44e-15   4.72e+13      0.000       0.115       0.115
+avg_word_length                      -0.0034    1.4e-15   -2.4e+12      0.000      -0.003      -0.003
+percent_non_alphabetic_whitespace     0.0205   1.36e-16   1.51e+14      0.000       0.021       0.021
+overlap_ratio                         0.2977   4.29e-15   6.94e+13      0.000       0.298       0.298
+==============================================================================
+Skew:                         -0.2857   Kurtosis:                      -1.1838
+Centered skew:                -0.2857   Centered kurtosis:             -1.1838
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1114
+Time:                        11:37:38   Log-Likelihood:                -272.51
+converged:                       True   LL-Null:                       -306.69
+Covariance Type:            nonrobust   LLR p-value:                 3.189e-12
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -4.1680      1.668     -2.498      0.012      -7.438      -0.898
+C(domain_grouped)[T.chemistry]        2.4565      0.380      6.460      0.000       1.711       3.202
+C(domain_grouped)[T.physics]          2.0752      0.384      5.404      0.000       1.323       2.828
+human_difficulty                      0.6228      0.192      3.247      0.001       0.247       0.999
+q_length                              0.1660      0.197      0.843      0.399      -0.220       0.552
+avg_word_length                      -0.0461      0.173     -0.267      0.790      -0.385       0.293
+percent_non_alphabetic_whitespace     0.0160      0.019      0.838      0.402      -0.021       0.053
+overlap_ratio                         0.2989      0.172      1.733      0.083      -0.039       0.637
+=====================================================================================================
+
+--- Analyzing claude-3-haiku-20240307 (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/claude-3-haiku-20240307_GPQA_temp0.0_1750473124_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+0    380
+1     67
+Name: count, dtype: int64
+
+Introspection score = 0.046 [-0.044, 0.131], p=0.307
+Delegate Gap = 0.036 [-0.040, 0.100, p=0.3297]
+Adjusted introspection score = -0.010 [-0.105, 0.077], p=0.845
+Adjusted delegate gap = -0.008 [-0.095, 0.062, p=0.8381]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0    1
+delegate_choice          
+0                261  119
+1                 50   17
+
+Probability of delegating when s_i_capability is 0: 0.1608
+Probability of delegating when s_i_capability is 1: 0.1250
+Phase 1 accuracy: 0.3043 (n=447)
+Phase 2 self-accuracy: 0.2421 (n=380)
+Self-acc lift = -0.062 [-0.104, -0.020], p=0.008685
+Adjusted self-acc lift = -0.002 [-0.044, 0.040], p=1
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.002588
+Time:                        11:37:38   Log-Likelihood:                -188.38
+converged:                       True   LL-Null:                       -188.86
+Covariance Type:            nonrobust   LLR p-value:                    0.3228
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -1.6525      0.154    -10.704      0.000      -1.955      -1.350
+s_i_capability    -0.2934      0.302     -0.972      0.331      -0.885       0.298
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01130
+Time:                        11:37:38   Log-Likelihood:                -186.73
+converged:                       True   LL-Null:                       -188.86
+Covariance Type:            nonrobust   LLR p-value:                   0.03887
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -2.8791      0.580     -4.961      0.000      -4.017      -1.742
+human_difficulty     0.4716      0.228      2.069      0.039       0.025       0.918
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01394
+Time:                        11:37:38   Log-Likelihood:                -186.23
+converged:                       True   LL-Null:                       -188.86
+Covariance Type:            nonrobust   LLR p-value:                   0.07186
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -2.7942      0.584     -4.785      0.000      -3.939      -1.650
+s_i_capability      -0.2980      0.303     -0.983      0.325      -0.892       0.296
+human_difficulty     0.4714      0.227      2.074      0.038       0.026       0.917
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.410256  0.495064     78
+chemistry       0.289617  0.454829    183
+physics         0.274194  0.447311    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.897436
+                1                  0.102564
+chemistry       0                  0.825137
+                1                  0.174863
+physics         0                  0.854839
+                1                  0.145161
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.897686  0.666887    311
+1               5.925632  0.575904    136
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.366024  0.591232    311
+1               2.381127  0.532835    136
+domain_grouped  delegate_choice
+biology         0                  0.897436
+                1                  0.102564
+chemistry       0                  0.825137
+                1                  0.174863
+physics         0                  0.854839
+                1                  0.145161
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.03606
+Time:                        11:37:38   Log-Likelihood:                -182.05
+converged:                       True   LL-Null:                       -188.86
+Covariance Type:            nonrobust   LLR p-value:                   0.09216
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.5944      2.134     -0.279      0.781      -4.776       3.588
+C(domain_grouped)[T.chemistry]        0.7827      0.476      1.645      0.100      -0.150       1.715
+C(domain_grouped)[T.physics]          0.4809      0.491      0.979      0.328      -0.482       1.444
+s_i_capability                       -0.2392      0.309     -0.774      0.439      -0.845       0.367
+human_difficulty                      0.5936      0.240      2.469      0.014       0.122       1.065
+q_length                             -0.4418      0.254     -1.742      0.082      -0.939       0.055
+avg_word_length                      -0.0492      0.230     -0.214      0.831      -0.500       0.402
+percent_non_alphabetic_whitespace    -0.0262      0.026     -0.999      0.318      -0.078       0.025
+overlap_ratio                        -0.0411      0.220     -0.187      0.852      -0.472       0.390
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.439
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.2702 [0.6931, 2.3277]
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     6
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:38
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.5888   2.29e-14  -2.57e+13      0.000      -0.589      -0.589
+C(domain_grouped)[T.chemistry]        0.7802   2.91e-15   2.68e+14      0.000       0.780       0.780
+C(domain_grouped)[T.physics]          0.4794    1.1e-15   4.35e+14      0.000       0.479       0.479
+s_i_capability                       -0.2384   1.04e-15  -2.29e+14      0.000      -0.238      -0.238
+human_difficulty                      0.5919   1.97e-15      3e+14      0.000       0.592       0.592
+q_length                             -0.4406    2.6e-15  -1.69e+14      0.000      -0.441      -0.441
+avg_word_length                      -0.0490   1.42e-15  -3.45e+13      0.000      -0.049      -0.049
+percent_non_alphabetic_whitespace    -0.0262   2.24e-16  -1.17e+14      0.000      -0.026      -0.026
+overlap_ratio                        -0.0409   3.77e-16  -1.09e+14      0.000      -0.041      -0.041
+==============================================================================
+Skew:                          1.8898   Kurtosis:                       1.8255
+Centered skew:                 1.8898   Centered kurtosis:              1.8255
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.03444
+Time:                        11:37:38   Log-Likelihood:                -182.36
+converged:                       True   LL-Null:                       -188.86
+Covariance Type:            nonrobust   LLR p-value:                   0.07191
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.5601      2.130     -0.263      0.793      -4.735       3.615
+C(domain_grouped)[T.chemistry]        0.8089      0.474      1.705      0.088      -0.121       1.739
+C(domain_grouped)[T.physics]          0.5047      0.490      1.031      0.303      -0.455       1.465
+human_difficulty                      0.5968      0.240      2.483      0.013       0.126       1.068
+q_length                             -0.4484      0.254     -1.762      0.078      -0.947       0.050
+avg_word_length                      -0.0667      0.228     -0.293      0.770      -0.513       0.380
+percent_non_alphabetic_whitespace    -0.0276      0.026     -1.056      0.291      -0.079       0.024
+overlap_ratio                        -0.0430      0.221     -0.194      0.846      -0.477       0.391
+=====================================================================================================
+
+--- Analyzing claude-3-sonnet-20240229 (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/claude-3-sonnet-20240229_GPQA_temp0.0_1750472147_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    301
+0    146
+Name: count, dtype: int64
+
+Introspection score = 0.125 [0.027, 0.220], p=0.012
+Delegate Gap = 0.125 [0.032, 0.220, p=0.008098]
+Adjusted introspection score = 0.065 [-0.029, 0.158], p=0.172
+Adjusted delegate gap = 0.066 [-0.027, 0.162, p=0.1714]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0   1
+delegate_choice         
+0                 86  60
+1                215  86
+
+Probability of delegating when s_i_capability is 0: 0.7143
+Probability of delegating when s_i_capability is 1: 0.5890
+Phase 1 accuracy: 0.3266 (n=447)
+Phase 2 self-accuracy: 0.3493 (n=146)
+Self-acc lift = 0.023 [-0.053, 0.098], p=0.5966
+Adjusted self-acc lift = 0.043 [-0.033, 0.118], p=0.2813
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01220
+Time:                        11:37:38   Log-Likelihood:                -278.95
+converged:                       True   LL-Null:                       -282.40
+Covariance Type:            nonrobust   LLR p-value:                  0.008661
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.9163      0.128      7.182      0.000       0.666       1.166
+s_i_capability    -0.5563      0.211     -2.635      0.008      -0.970      -0.142
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.002596
+Time:                        11:37:38   Log-Likelihood:                -281.66
+converged:                       True   LL-Null:                       -282.40
+Covariance Type:            nonrobust   LLR p-value:                    0.2259
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.2302      0.432      2.845      0.004       0.383       2.078
+human_difficulty    -0.2127      0.176     -1.211      0.226      -0.557       0.132
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01485
+Time:                        11:37:38   Log-Likelihood:                -278.20
+converged:                       True   LL-Null:                       -282.40
+Covariance Type:            nonrobust   LLR p-value:                   0.01511
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.4319      0.443      3.229      0.001       0.563       2.301
+s_i_capability      -0.5584      0.212     -2.640      0.008      -0.973      -0.144
+human_difficulty    -0.2161      0.177     -1.222      0.222      -0.563       0.131
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.500000  0.503236     78
+chemistry       0.306011  0.462099    183
+physics         0.274194  0.447311    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.653846
+                1                  0.346154
+chemistry       1                  0.743169
+                0                  0.256831
+physics         1                  0.741935
+                0                  0.258065
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.861637  0.658968    301
+1               5.998038  0.590832    146
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.370986  0.569652    301
+1               2.369863  0.583454    146
+domain_grouped  delegate_choice
+biology         0                  0.653846
+                1                  0.346154
+chemistry       1                  0.743169
+                0                  0.256831
+physics         1                  0.741935
+                0                  0.258065
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.09486
+Time:                        11:37:38   Log-Likelihood:                -255.61
+converged:                       True   LL-Null:                       -282.40
+Covariance Type:            nonrobust   LLR p-value:                 8.349e-09
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.9765      1.712      0.570      0.569      -2.380       4.333
+C(domain_grouped)[T.chemistry]        1.7121      0.337      5.076      0.000       1.051       2.373
+C(domain_grouped)[T.physics]          1.5071      0.340      4.438      0.000       0.842       2.173
+s_i_capability                       -0.3890      0.228     -1.706      0.088      -0.836       0.058
+human_difficulty                      0.0128      0.197      0.065      0.948      -0.373       0.398
+q_length                              0.0310      0.212      0.146      0.884      -0.384       0.446
+avg_word_length                      -0.2500      0.175     -1.426      0.154      -0.594       0.094
+percent_non_alphabetic_whitespace    -0.0428      0.019     -2.232      0.026      -0.080      -0.005
+overlap_ratio                        -0.1957      0.196     -0.999      0.318      -0.580       0.188
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.088
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.4755 [0.9437, 2.3067]
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     5
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:38
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.9759   3.95e-14   2.47e+13      0.000       0.976       0.976
+C(domain_grouped)[T.chemistry]        1.7121   1.91e-15   8.95e+14      0.000       1.712       1.712
+C(domain_grouped)[T.physics]          1.5070   2.87e-15   5.25e+14      0.000       1.507       1.507
+s_i_capability                       -0.3889   9.58e-17  -4.06e+15      0.000      -0.389      -0.389
+human_difficulty                      0.0128   1.11e-15   1.15e+13      0.000       0.013       0.013
+q_length                              0.0310   3.56e-15   8.71e+12      0.000       0.031       0.031
+avg_word_length                      -0.2499   3.74e-15  -6.68e+13      0.000      -0.250      -0.250
+percent_non_alphabetic_whitespace    -0.0428   2.66e-16  -1.61e+14      0.000      -0.043      -0.043
+overlap_ratio                        -0.1957   1.48e-15  -1.32e+14      0.000      -0.196      -0.196
+==============================================================================
+Skew:                         -0.7263   Kurtosis:                      -0.8707
+Centered skew:                -0.7263   Centered kurtosis:             -0.8707
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.08976
+Time:                        11:37:38   Log-Likelihood:                -257.05
+converged:                       True   LL-Null:                       -282.40
+Covariance Type:            nonrobust   LLR p-value:                 1.054e-08
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.8858      1.704      0.520      0.603      -2.454       4.225
+C(domain_grouped)[T.chemistry]        1.7765      0.335      5.302      0.000       1.120       2.433
+C(domain_grouped)[T.physics]          1.5876      0.336      4.719      0.000       0.928       2.247
+human_difficulty                      0.0263      0.197      0.133      0.894      -0.360       0.412
+q_length                              0.0061      0.210      0.029      0.977      -0.406       0.418
+avg_word_length                      -0.2473      0.175     -1.415      0.157      -0.590       0.095
+percent_non_alphabetic_whitespace    -0.0429      0.019     -2.237      0.025      -0.080      -0.005
+overlap_ratio                        -0.1941      0.199     -0.977      0.328      -0.583       0.195
+=====================================================================================================
+
+--- Analyzing deepseek-chat (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/deepseek-chat_GPQA_temp0.0_1750453830_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    280
+0    167
+Name: count, dtype: int64
+
+Introspection score = 0.258 [0.161, 0.349], p=0
+Delegate Gap = 0.276 [0.175, 0.371, p=5.157e-08]
+Adjusted introspection score = 0.180 [0.081, 0.274], p=0.001
+Adjusted delegate gap = 0.199 [0.095, 0.301, p=0.0001388]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0   1
+delegate_choice         
+0                 94  73
+1                225  55
+
+Probability of delegating when s_i_capability is 0: 0.7053
+Probability of delegating when s_i_capability is 1: 0.4297
+Phase 1 accuracy: 0.2864 (n=447)
+Phase 2 self-accuracy: 0.3593 (n=167)
+Self-acc lift = 0.073 [-0.005, 0.145], p=0.03998
+Adjusted self-acc lift = 0.102 [0.024, 0.174], p=0.003407
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.04923
+Time:                        11:37:38   Log-Likelihood:                -280.86
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 6.938e-08
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.8728      0.123      7.107      0.000       0.632       1.114
+s_i_capability    -1.1559      0.217     -5.334      0.000      -1.581      -0.731
+==================================================================================
+
+  Model 1.5: Delegate_Choice ~ capabilities_entropy
+                    Could not fit Model 1.5: Singular matrix
+
+  Model 1.55: Delegate_Choice ~ s_i_capability same N
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.04923
+Time:                        11:37:38   Log-Likelihood:                -280.86
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 6.938e-08
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.8728      0.123      7.107      0.000       0.632       1.114
+s_i_capability    -1.1559      0.217     -5.334      0.000      -1.581      -0.731
+==================================================================================
+
+  Model 1.6: Delegate_Choice ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.004488
+Time:                        11:37:38   Log-Likelihood:                -294.07
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                    0.1034
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                   0.5329      0.098      5.413      0.000       0.340       0.726
+normalized_prob_entropy    -1.9451      1.386     -1.404      0.160      -4.661       0.771
+===========================================================================================
+
+  Model 1.7: Delegate_Choice ~ capabilities_entropy + Game Entropy
+                    Could not fit Model 1.7: Singular matrix
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.001457
+Time:                        11:37:38   Log-Likelihood:                -294.97
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                    0.3536
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.8927      0.418      2.136      0.033       0.074       1.712
+human_difficulty    -0.1581      0.170     -0.928      0.354      -0.492       0.176
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05023
+Time:                        11:37:38   Log-Likelihood:                -280.56
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 3.592e-07
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.1961      0.438      2.733      0.006       0.338       2.054
+s_i_capability      -1.1518      0.217     -5.311      0.000      -1.577      -0.727
+human_difficulty    -0.1365      0.177     -0.773      0.440      -0.483       0.210
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.564103  0.499083     78
+chemistry       0.251366  0.434989    183
+physics         0.204301  0.404278    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.769231
+                1                  0.230769
+chemistry       1                  0.792350
+                0                  0.207650
+physics         1                  0.629032
+                0                  0.370968
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.952199  0.624484    319
+1               5.791521  0.666083    128
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.358412  0.582980    319
+1               2.401042  0.550367    128
+domain_grouped  delegate_choice
+biology         0                  0.769231
+                1                  0.230769
+chemistry       1                  0.792350
+                0                  0.207650
+physics         1                  0.629032
+                0                  0.370968
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1683
+Time:                        11:37:38   Log-Likelihood:                -245.67
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 5.538e-18
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.7199      1.762     -0.409      0.683      -4.174       2.734
+C(domain_grouped)[T.chemistry]        2.2234      0.376      5.915      0.000       1.487       2.960
+C(domain_grouped)[T.physics]          1.3188      0.371      3.551      0.000       0.591       2.047
+s_i_capability                       -0.8631      0.250     -3.453      0.001      -1.353      -0.373
+human_difficulty                      0.2350      0.195      1.207      0.227      -0.146       0.617
+q_length                              0.0227      0.211      0.108      0.914      -0.390       0.436
+avg_word_length                      -0.2170      0.188     -1.154      0.249      -0.586       0.152
+percent_non_alphabetic_whitespace     0.0387      0.023      1.719      0.086      -0.005       0.083
+overlap_ratio                         0.1710      0.177      0.968      0.333      -0.175       0.517
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.0005536
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 2.3706 [1.4525, 3.8690]
+
+                  Model 4.5: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                    Could not fit Model 4.5: Singular matrix
+
+                  Model 4.6: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                    Could not fit Model 4.6: Singular matrix
+
+                  Model 4.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      437
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1747
+Time:                        11:37:38   Log-Likelihood:                -243.79
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 3.518e-18
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.6748      1.769     -0.382      0.703      -4.141       2.792
+C(domain_grouped)[T.chemistry]        2.2347      0.376      5.936      0.000       1.497       2.972
+C(domain_grouped)[T.physics]          1.3421      0.372      3.609      0.000       0.613       2.071
+s_i_capability                       -0.8894      0.251     -3.549      0.000      -1.381      -0.398
+human_difficulty                      0.2083      0.196      1.064      0.287      -0.176       0.592
+q_length                              0.0354      0.212      0.167      0.867      -0.380       0.451
+avg_word_length                      -0.2237      0.189     -1.184      0.236      -0.594       0.147
+percent_non_alphabetic_whitespace     0.0375      0.023      1.657      0.097      -0.007       0.082
+overlap_ratio                         0.1719      0.177      0.970      0.332      -0.175       0.519
+normalized_prob_entropy              -2.3962      1.428     -1.678      0.093      -5.196       0.403
+=====================================================================================================
+
+                  Model 4.8: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1535
+Time:                        11:37:38   Log-Likelihood:                -250.07
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 3.407e-16
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.5432      1.750     -0.882      0.378      -4.973       1.886
+C(domain_grouped)[T.chemistry]        2.4473      0.371      6.594      0.000       1.720       3.175
+C(domain_grouped)[T.physics]          1.5888      0.363      4.377      0.000       0.877       2.300
+human_difficulty                      0.2029      0.193      1.050      0.294      -0.176       0.582
+q_length                              0.1652      0.207      0.800      0.424      -0.240       0.570
+avg_word_length                      -0.3024      0.192     -1.577      0.115      -0.678       0.073
+percent_non_alphabetic_whitespace     0.0367      0.023      1.617      0.106      -0.008       0.081
+overlap_ratio                         0.2166      0.176      1.229      0.219      -0.129       0.562
+normalized_prob_entropy              -2.1437      1.398     -1.534      0.125      -4.883       0.596
+=====================================================================================================
+
+                  Model 4.9: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                    Could not fit Model 4.9: Singular matrix
+
+                  Model 4.95: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                    Could not fit Model 4.95: Singular matrix
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     6
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:38
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.7101   5.62e-14  -1.26e+13      0.000      -0.710      -0.710
+C(domain_grouped)[T.chemistry]        2.2232   1.54e-14   1.44e+14      0.000       2.223       2.223
+C(domain_grouped)[T.physics]          1.3172   9.83e-15   1.34e+14      0.000       1.317       1.317
+s_i_capability                       -0.8637   5.97e-15  -1.45e+14      0.000      -0.864      -0.864
+human_difficulty                      0.2354    1.2e-15   1.96e+14      0.000       0.235       0.235
+q_length                              0.0226   6.55e-16   3.45e+13      0.000       0.023       0.023
+avg_word_length                      -0.2171   2.62e-16   -8.3e+14      0.000      -0.217      -0.217
+percent_non_alphabetic_whitespace     0.0388   2.99e-16    1.3e+14      0.000       0.039       0.039
+overlap_ratio                         0.1709    1.1e-15   1.56e+14      0.000       0.171       0.171
+==============================================================================
+Skew:                         -0.4883   Kurtosis:                      -0.8066
+Centered skew:                -0.4883   Centered kurtosis:             -0.8066
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1482
+Time:                        11:37:38   Log-Likelihood:                -251.61
+converged:                       True   LL-Null:                       -295.40
+Covariance Type:            nonrobust   LLR p-value:                 3.907e-16
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.5599      1.745     -0.894      0.371      -4.979       1.860
+C(domain_grouped)[T.chemistry]        2.4328      0.371      6.565      0.000       1.707       3.159
+C(domain_grouped)[T.physics]          1.5623      0.363      4.309      0.000       0.852       2.273
+human_difficulty                      0.2274      0.192      1.183      0.237      -0.149       0.604
+q_length                              0.1498      0.205      0.729      0.466      -0.253       0.553
+avg_word_length                      -0.2940      0.191     -1.541      0.123      -0.668       0.080
+percent_non_alphabetic_whitespace     0.0379      0.023      1.676      0.094      -0.006       0.082
+overlap_ratio                         0.2143      0.176      1.219      0.223      -0.130       0.559
+=====================================================================================================
+
+--- Analyzing gemini-2.0-flash-001 (NoMsgHist, QCtr, PCtr, SCtr, 2 game files) ---
+              Game files for analysis: ['./pass_game_logs/gemini-2.0-flash-001_GPQA_temp0.0_1750446012_game_data.json', './pass_game_logs/gemini-2.0-flash-001_GPQA_temp0.0_1750452828_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    516
+0    378
+Name: count, dtype: int64
+
+Introspection score = 0.173 [0.110, 0.236], p=0
+Delegate Gap = 0.172 [0.107, 0.236, p=2.398e-07]
+Adjusted introspection score = 0.144 [0.079, 0.208], p=0
+Adjusted delegate gap = 0.144 [0.079, 0.209, p=1.605e-05]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0    1
+delegate_choice          
+0                177  201
+1                331  185
+
+Probability of delegating when s_i_capability is 0: 0.6516
+Probability of delegating when s_i_capability is 1: 0.4793
+Phase 1 accuracy: 0.4318 (n=894)
+Phase 2 self-accuracy: 0.5026 (n=378)
+Self-acc lift = 0.071 [0.023, 0.124], p=0.005879
+Adjusted self-acc lift = 0.083 [0.036, 0.136], p=0.001208
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  894
+Model:                          Logit   Df Residuals:                      892
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02192
+Time:                        11:37:39   Log-Likelihood:                -595.63
+converged:                       True   LL-Null:                       -608.98
+Covariance Type:            nonrobust   LLR p-value:                 2.372e-07
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.6260      0.093      6.722      0.000       0.443       0.808
+s_i_capability    -0.7089      0.138     -5.136      0.000      -0.979      -0.438
+==================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  894
+Model:                          Logit   Df Residuals:                      892
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.001249
+Time:                        11:37:39   Log-Likelihood:                -608.22
+converged:                       True   LL-Null:                       -608.98
+Covariance Type:            nonrobust   LLR p-value:                    0.2173
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -0.0347      0.289     -0.120      0.904      -0.600       0.531
+human_difficulty     0.1462      0.119      1.231      0.218      -0.087       0.379
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  894
+Model:                          Logit   Df Residuals:                      891
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02328
+Time:                        11:37:39   Log-Likelihood:                -594.80
+converged:                       True   LL-Null:                       -608.98
+Covariance Type:            nonrobust   LLR p-value:                 6.978e-07
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.2602      0.300      0.869      0.385      -0.327       0.847
+s_i_capability      -0.7113      0.138     -5.147      0.000      -0.982      -0.440
+human_difficulty     0.1550      0.121      1.280      0.200      -0.082       0.392
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      372
+chemistry    366
+biology      156
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.615385  0.488071    156
+chemistry       0.338798  0.473949    366
+physics         0.446237  0.497771    372
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.583333
+                1                  0.416667
+chemistry       1                  0.609290
+                0                  0.390710
+physics         1                  0.612903
+                0                  0.387097
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.899855  0.648047    508
+1               5.914523  0.629298    386
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.368110  0.604601    508
+1               2.373921  0.529853    386
+domain_grouped  delegate_choice
+biology         0                  0.583333
+                1                  0.416667
+chemistry       1                  0.609290
+                0                  0.390710
+physics         1                  0.612903
+                0                  0.387097
+Name: proportion, dtype: float64
+
+                    Model 4: Using clustered standard errors by q_id.
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  894
+Model:                          Logit   Df Residuals:                      885
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.04275
+Time:                        11:37:39   Log-Likelihood:                -582.95
+converged:                       True   LL-Null:                       -608.98
+Covariance Type:              cluster   LLR p-value:                 1.633e-08
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             1.7329      1.385      1.251      0.211      -0.982       4.448
+C(domain_grouped)[T.chemistry]        0.6782      0.287      2.366      0.018       0.116       1.240
+C(domain_grouped)[T.physics]          0.7285      0.284      2.566      0.010       0.172       1.285
+s_i_capability                       -0.6332      0.178     -3.561      0.000      -0.982      -0.285
+human_difficulty                      0.2877      0.148      1.939      0.053      -0.003       0.578
+q_length                             -0.2950      0.172     -1.716      0.086      -0.632       0.042
+avg_word_length                      -0.0987      0.144     -0.685      0.493      -0.381       0.184
+percent_non_alphabetic_whitespace    -0.0209      0.017     -1.236      0.216      -0.054       0.012
+overlap_ratio                        -0.0434      0.152     -0.286      0.775      -0.341       0.254
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.0003689
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.8837 [1.3294, 2.6690]
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  894
+Model:                                 GEE   No. clusters:                        2
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     5
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:39
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             1.7303      0.047     37.148      0.000       1.639       1.822
+C(domain_grouped)[T.chemistry]        0.6782      0.168      4.025      0.000       0.348       1.008
+C(domain_grouped)[T.physics]          0.7284      0.150      4.868      0.000       0.435       1.022
+s_i_capability                       -0.6331      0.082     -7.679      0.000      -0.795      -0.472
+human_difficulty                      0.2876      0.018     16.323      0.000       0.253       0.322
+q_length                             -0.2949      0.024    -12.454      0.000      -0.341      -0.249
+avg_word_length                      -0.0987      0.018     -5.375      0.000      -0.135      -0.063
+percent_non_alphabetic_whitespace    -0.0209      0.003     -5.978      0.000      -0.028      -0.014
+overlap_ratio                        -0.0434      0.032     -1.376      0.169      -0.105       0.018
+==============================================================================
+Skew:                         -0.3063   Kurtosis:                      -1.6722
+Centered skew:                -0.3076   Centered kurtosis:             -1.6709
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  894
+Model:                          Logit   Df Residuals:                      886
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02642
+Time:                        11:37:39   Log-Likelihood:                -592.89
+converged:                       True   LL-Null:                       -608.98
+Covariance Type:              cluster   LLR p-value:                 3.764e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             1.2529      1.388      0.903      0.367      -1.467       3.973
+C(domain_grouped)[T.chemistry]        0.8594      0.279      3.079      0.002       0.312       1.406
+C(domain_grouped)[T.physics]          0.8372      0.281      2.977      0.003       0.286       1.388
+human_difficulty                      0.2979      0.148      2.010      0.044       0.007       0.588
+q_length                             -0.2839      0.172     -1.650      0.099      -0.621       0.053
+avg_word_length                      -0.0968      0.149     -0.651      0.515      -0.388       0.195
+percent_non_alphabetic_whitespace    -0.0230      0.017     -1.376      0.169      -0.056       0.010
+overlap_ratio                        -0.0431      0.160     -0.270      0.787      -0.356       0.270
+=====================================================================================================
+
+--- Analyzing gpt-4o-2024-08-06 (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/gpt-4o-2024-08-06_GPQA_temp0.0_1750509578_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    263
+0    184
+Name: count, dtype: int64
+
+Introspection score = 0.187 [0.094, 0.276], p=0
+Delegate Gap = 0.187 [0.094, 0.277, p=7.604e-05]
+Adjusted introspection score = 0.080 [-0.010, 0.174], p=0.082
+Adjusted delegate gap = 0.082 [-0.013, 0.176, p=0.09037]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0   1
+delegate_choice         
+0                 88  96
+1                175  88
+
+Probability of delegating when s_i_capability is 0: 0.6654
+Probability of delegating when s_i_capability is 1: 0.4783
+Phase 1 accuracy: 0.4116 (n=447)
+Phase 2 self-accuracy: 0.4130 (n=184)
+Self-acc lift = 0.001 [-0.069, 0.072], p=1
+Adjusted self-acc lift = 0.046 [-0.024, 0.117], p=0.1944
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02583
+Time:                        11:37:39   Log-Likelihood:                -295.00
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 7.657e-05
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.6874      0.131      5.260      0.000       0.431       0.944
+s_i_capability    -0.7745      0.197     -3.929      0.000      -1.161      -0.388
+==================================================================================
+
+  Model 1.5: Delegate_Choice ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1258
+Time:                        11:37:39   Log-Likelihood:                -264.71
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 2.551e-18
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.7399      0.165     -4.494      0.000      -1.063      -0.417
+capabilities_entropy     1.4425      0.179      8.067      0.000       1.092       1.793
+========================================================================================
+
+  Model 1.55: Delegate_Choice ~ s_i_capability same N
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02583
+Time:                        11:37:39   Log-Likelihood:                -295.00
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 7.657e-05
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.6874      0.131      5.260      0.000       0.431       0.944
+s_i_capability    -0.7745      0.197     -3.929      0.000      -1.161      -0.388
+==================================================================================
+
+  Model 1.6: Delegate_Choice ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.07327
+Time:                        11:37:39   Log-Likelihood:                -280.63
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 2.711e-11
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                   1.1054      0.156      7.079      0.000       0.799       1.411
+normalized_prob_entropy    -1.1918      0.187     -6.357      0.000      -1.559      -0.824
+===========================================================================================
+
+  Model 1.7: Delegate_Choice ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.2433
+Time:                        11:37:39   Log-Likelihood:                -229.14
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 1.001e-32
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                   0.0678      0.192      0.352      0.725      -0.309       0.445
+capabilities_entropy        1.9289      0.221      8.721      0.000       1.495       2.362
+normalized_prob_entropy    -1.7863      0.236     -7.573      0.000      -2.249      -1.324
+===========================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:               6.042e-06
+Time:                        11:37:39   Log-Likelihood:                -302.82
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                    0.9518
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.3332      0.409      0.814      0.415      -0.469       1.135
+human_difficulty     0.0101      0.168      0.060      0.952      -0.319       0.339
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.02613
+Time:                        11:37:39   Log-Likelihood:                -294.91
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 0.0003660
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.5164      0.419      1.233      0.218      -0.304       1.337
+s_i_capability      -0.7826      0.198     -3.950      0.000      -1.171      -0.394
+human_difficulty     0.0736      0.172      0.429      0.668      -0.263       0.410
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.717949  0.452911     78
+chemistry       0.251366  0.434989    183
+physics         0.440860  0.497830    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.679487
+                1                  0.320513
+chemistry       1                  0.688525
+                0                  0.311475
+physics         1                  0.602151
+                0                  0.397849
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.867300  0.633947    263
+1               5.961773  0.646371    184
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.326996  0.555413    263
+1               2.432971  0.594480    184
+domain_grouped  delegate_choice
+biology         0                  0.679487
+                1                  0.320513
+chemistry       1                  0.688525
+                0                  0.311475
+physics         1                  0.602151
+                0                  0.397849
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.08860
+Time:                        11:37:39   Log-Likelihood:                -275.99
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 8.042e-09
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.7680      1.623     -2.322      0.020      -6.948      -0.588
+C(domain_grouped)[T.chemistry]        1.3682      0.347      3.940      0.000       0.688       2.049
+C(domain_grouped)[T.physics]          0.9935      0.341      2.911      0.004       0.325       1.662
+s_i_capability                       -0.4989      0.216     -2.312      0.021      -0.922      -0.076
+human_difficulty                      0.2375      0.185      1.287      0.198      -0.124       0.599
+q_length                              0.5360      0.198      2.712      0.007       0.149       0.923
+avg_word_length                      -0.1547      0.167     -0.924      0.356      -0.483       0.173
+percent_non_alphabetic_whitespace     0.0367      0.020      1.840      0.066      -0.002       0.076
+overlap_ratio                         0.1185      0.174      0.682      0.495      -0.222       0.459
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.0208
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.6470 [1.0789, 2.5143]
+
+                  Model 4.5: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      437
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1755
+Time:                        11:37:39   Log-Likelihood:                -249.68
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 8.396e-19
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -6.0122      1.765     -3.407      0.001      -9.471      -2.554
+C(domain_grouped)[T.chemistry]        1.0376      0.375      2.768      0.006       0.303       1.772
+C(domain_grouped)[T.physics]          0.6611      0.366      1.806      0.071      -0.056       1.379
+s_i_capability                       -0.0555      0.240     -0.231      0.817      -0.526       0.415
+human_difficulty                      0.3781      0.198      1.907      0.057      -0.011       0.767
+q_length                              0.5831      0.214      2.729      0.006       0.164       1.002
+avg_word_length                      -0.0607      0.177     -0.342      0.732      -0.408       0.287
+percent_non_alphabetic_whitespace     0.0544      0.022      2.481      0.013       0.011       0.097
+overlap_ratio                         0.2712      0.178      1.523      0.128      -0.078       0.620
+capabilities_entropy                  1.3873      0.204      6.800      0.000       0.987       1.787
+=====================================================================================================
+
+                  Model 4.6: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1754
+Time:                        11:37:39   Log-Likelihood:                -249.71
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 2.268e-19
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -6.0446      1.760     -3.435      0.001      -9.494      -2.595
+C(domain_grouped)[T.chemistry]        1.0559      0.366      2.882      0.004       0.338       1.774
+C(domain_grouped)[T.physics]          0.6687      0.365      1.834      0.067      -0.046       1.383
+human_difficulty                      0.3788      0.198      1.909      0.056      -0.010       0.768
+q_length                              0.5816      0.214      2.722      0.006       0.163       1.000
+avg_word_length                      -0.0617      0.177     -0.348      0.728      -0.409       0.286
+percent_non_alphabetic_whitespace     0.0545      0.022      2.484      0.013       0.011       0.097
+overlap_ratio                         0.2716      0.178      1.524      0.127      -0.078       0.621
+capabilities_entropy                  1.3998      0.197      7.109      0.000       1.014       1.786
+=====================================================================================================
+
+                  Model 4.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      437
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1596
+Time:                        11:37:39   Log-Likelihood:                -254.49
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 7.477e-17
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.7684      1.681     -1.647      0.100      -6.063       0.526
+C(domain_grouped)[T.chemistry]        1.4314      0.361      3.961      0.000       0.723       2.140
+C(domain_grouped)[T.physics]          1.0715      0.355      3.022      0.003       0.377       1.766
+s_i_capability                       -0.6555      0.229     -2.856      0.004      -1.105      -0.206
+human_difficulty                      0.1664      0.194      0.858      0.391      -0.214       0.547
+q_length                              0.4768      0.208      2.295      0.022       0.070       0.884
+avg_word_length                      -0.0760      0.173     -0.440      0.660      -0.415       0.263
+percent_non_alphabetic_whitespace     0.0334      0.020      1.650      0.099      -0.006       0.073
+overlap_ratio                         0.0894      0.189      0.473      0.636      -0.281       0.460
+normalized_prob_entropy              -1.2579      0.201     -6.248      0.000      -1.652      -0.863
+=====================================================================================================
+
+                  Model 4.8: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.1460
+Time:                        11:37:39   Log-Likelihood:                -258.60
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 9.631e-16
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.0903      1.665     -1.856      0.064      -6.354       0.174
+C(domain_grouped)[T.chemistry]        1.6856      0.348      4.843      0.000       1.003       2.368
+C(domain_grouped)[T.physics]          1.2039      0.349      3.454      0.001       0.521       1.887
+human_difficulty                      0.1572      0.193      0.814      0.416      -0.221       0.536
+q_length                              0.4662      0.207      2.253      0.024       0.061       0.872
+avg_word_length                      -0.0913      0.170     -0.537      0.592      -0.425       0.242
+percent_non_alphabetic_whitespace     0.0339      0.020      1.693      0.090      -0.005       0.073
+overlap_ratio                         0.0922      0.191      0.483      0.629      -0.282       0.466
+normalized_prob_entropy              -1.2029      0.198     -6.064      0.000      -1.592      -0.814
+=====================================================================================================
+
+                  Model 4.9: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      436
+Method:                           MLE   Df Model:                           10
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.2824
+Time:                        11:37:39   Log-Likelihood:                -217.30
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 1.698e-31
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -5.5424      1.890     -2.932      0.003      -9.248      -1.837
+C(domain_grouped)[T.chemistry]        1.0069      0.402      2.503      0.012       0.218       1.795
+C(domain_grouped)[T.physics]          0.6241      0.386      1.616      0.106      -0.133       1.381
+s_i_capability                       -0.1426      0.259     -0.550      0.582      -0.651       0.366
+human_difficulty                      0.3410      0.215      1.589      0.112      -0.080       0.762
+q_length                              0.5620      0.230      2.448      0.014       0.112       1.012
+avg_word_length                       0.0629      0.199      0.316      0.752      -0.328       0.453
+percent_non_alphabetic_whitespace     0.0557      0.024      2.312      0.021       0.008       0.103
+overlap_ratio                         0.3244      0.197      1.650      0.099      -0.061       0.710
+capabilities_entropy                  1.8950      0.251      7.558      0.000       1.404       2.386
+normalized_prob_entropy              -1.7668      0.244     -7.253      0.000      -2.244      -1.289
+=====================================================================================================
+
+                  Model 4.95: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      437
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                  0.2819
+Time:                        11:37:39   Log-Likelihood:                -217.46
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 4.353e-32
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -5.6315      1.885     -2.987      0.003      -9.327      -1.936
+C(domain_grouped)[T.chemistry]        1.0522      0.394      2.669      0.008       0.279       1.825
+C(domain_grouped)[T.physics]          0.6428      0.385      1.671      0.095      -0.111       1.397
+human_difficulty                      0.3411      0.215      1.586      0.113      -0.080       0.763
+q_length                              0.5611      0.230      2.440      0.015       0.110       1.012
+avg_word_length                       0.0580      0.199      0.292      0.771      -0.332       0.448
+percent_non_alphabetic_whitespace     0.0559      0.024      2.322      0.020       0.009       0.103
+overlap_ratio                         0.3279      0.197      1.669      0.095      -0.057       0.713
+capabilities_entropy                  1.9276      0.245      7.879      0.000       1.448       2.407
+normalized_prob_entropy              -1.7637      0.244     -7.238      0.000      -2.241      -1.286
+=====================================================================================================
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     6
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:39
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.7636   6.23e-14  -6.04e+13      0.000      -3.764      -3.764
+C(domain_grouped)[T.chemistry]        1.3681   3.38e-15   4.04e+14      0.000       1.368       1.368
+C(domain_grouped)[T.physics]          0.9932    5.4e-15   1.84e+14      0.000       0.993       0.993
+s_i_capability                       -0.4991   2.57e-16  -1.94e+15      0.000      -0.499      -0.499
+human_difficulty                      0.2376   1.79e-16   1.33e+15      0.000       0.238       0.238
+q_length                              0.5362   4.21e-15   1.27e+14      0.000       0.536       0.536
+avg_word_length                      -0.1548    5.4e-15  -2.87e+13      0.000      -0.155      -0.155
+percent_non_alphabetic_whitespace     0.0367   5.11e-16   7.18e+13      0.000       0.037       0.037
+overlap_ratio                         0.1186   1.31e-15   9.07e+13      0.000       0.119       0.119
+==============================================================================
+Skew:                         -0.3397   Kurtosis:                      -1.3861
+Centered skew:                -0.3397   Centered kurtosis:             -1.3861
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.07981
+Time:                        11:37:39   Log-Likelihood:                -278.65
+converged:                       True   LL-Null:                       -302.82
+Covariance Type:            nonrobust   LLR p-value:                 3.060e-08
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.9401      1.614     -2.441      0.015      -7.103      -0.777
+C(domain_grouped)[T.chemistry]        1.5600      0.336      4.638      0.000       0.901       2.219
+C(domain_grouped)[T.physics]          1.0913      0.337      3.241      0.001       0.431       1.751
+human_difficulty                      0.2302      0.184      1.252      0.211      -0.130       0.590
+q_length                              0.5217      0.197      2.646      0.008       0.135       0.908
+avg_word_length                      -0.1662      0.166     -1.001      0.317      -0.491       0.159
+percent_non_alphabetic_whitespace     0.0370      0.020      1.857      0.063      -0.002       0.076
+overlap_ratio                         0.1108      0.176      0.631      0.528      -0.234       0.455
+=====================================================================================================
+
+--- Analyzing grok-3-latest (NoMsgHist, QCtr, PCtr, SCtr, 1 game files) ---
+              Game files for analysis: ['./pass_game_logs/grok-3-latest_GPQA_temp0.0_1750508615_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['delegate_choice'].value_counts()= delegate_choice
+1    244
+0    203
+Name: count, dtype: int64
+
+Introspection score = 0.107 [0.016, 0.195], p=0.024
+Delegate Gap = 0.107 [0.014, 0.197, p=0.02424]
+Adjusted introspection score = 0.058 [-0.032, 0.148], p=0.219
+Adjusted delegate gap = 0.058 [-0.035, 0.150, p=0.2232]
+Cross-tabulation of delegate_choice vs. s_i_capability:
+s_i_capability     0    1
+delegate_choice          
+0                 99  104
+1                145   99
+
+Probability of delegating when s_i_capability is 0: 0.5943
+Probability of delegating when s_i_capability is 1: 0.4877
+Phase 1 accuracy: 0.4541 (n=447)
+Phase 2 self-accuracy: 0.4631 (n=203)
+Self-acc lift = 0.009 [-0.055, 0.078], p=0.8326
+Adjusted self-acc lift = 0.031 [-0.033, 0.100], p=0.3953
+
+  Model 1: Delegate_Choice ~ S_i_capability
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.008250
+Time:                        11:37:39   Log-Likelihood:                -305.41
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                   0.02418
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.3816      0.130      2.927      0.003       0.126       0.637
+s_i_capability    -0.4309      0.192     -2.249      0.025      -0.806      -0.055
+==================================================================================
+
+  Model 1.5: Delegate_Choice ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      431
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01414
+Time:                        11:37:39   Log-Likelihood:                -293.58
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                  0.003713
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.0004      0.120      0.004      0.997      -0.235       0.236
+capabilities_entropy     0.7286      0.258      2.829      0.005       0.224       1.233
+========================================================================================
+
+  Model 1.55: Delegate_Choice ~ s_i_capability same N
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      431
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.008717
+Time:                        11:37:39   Log-Likelihood:                -295.19
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                   0.02269
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.4125      0.133      3.102      0.002       0.152       0.673
+s_i_capability    -0.4430      0.195     -2.273      0.023      -0.825      -0.061
+==================================================================================
+
+  Model 1.6: Delegate_Choice ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.01791
+Time:                        11:37:39   Log-Likelihood:                -302.44
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                 0.0008952
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                   0.3758      0.112      3.351      0.001       0.156       0.596
+normalized_prob_entropy    -0.9137      0.283     -3.233      0.001      -1.468      -0.360
+===========================================================================================
+
+  Model 1.7: Delegate_Choice ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      430
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.04169
+Time:                        11:37:39   Log-Likelihood:                -285.37
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                 4.054e-06
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                   0.1892      0.130      1.457      0.145      -0.065       0.444
+capabilities_entropy        0.9435      0.274      3.449      0.001       0.407       1.480
+normalized_prob_entropy    -1.1571      0.295     -3.922      0.000      -1.735      -0.579
+===========================================================================================
+
+  Model 2: Delegate_Choice ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      445
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:               0.0001139
+Time:                        11:37:39   Log-Likelihood:                -307.92
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                    0.7911
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.2881      0.405      0.712      0.476      -0.505       1.081
+human_difficulty    -0.0439      0.166     -0.265      0.791      -0.369       0.281
+====================================================================================
+
+  Model 3: Delegate_Choice ~ S_i_capability + human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      444
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                0.008272
+Time:                        11:37:39   Log-Likelihood:                -305.41
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                   0.07830
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.4262      0.412      1.034      0.301      -0.382       1.234
+s_i_capability      -0.4294      0.192     -2.236      0.025      -0.806      -0.053
+human_difficulty    -0.0191      0.167     -0.114      0.909      -0.347       0.309
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+                  Domain Counts:
+ domain
+physics      186
+chemistry    183
+biology       78
+Name: count, dtype: int64
+                  Capability by domain_grouped:
+                    mean       std  count
+domain_grouped                           
+biology         0.692308  0.464526     78
+chemistry       0.349727  0.478192    183
+physics         0.456989  0.499491    186
+                  Delegate Choice by domain_grouped:
+domain_grouped  delegate_choice
+biology         0                  0.717949
+                1                  0.282051
+chemistry       1                  0.639344
+                0                  0.360656
+physics         1                  0.564516
+                0                  0.435484
+Name: proportion, dtype: float64
+
+                  Q length by capability:
+                    mean       std  count
+s_i_capability                           
+0               5.892954  0.647881    244
+1               5.922096  0.631768    203
+                  Human-rated difficulty by capability:
+                    mean       std  count
+s_i_capability                           
+0               2.335383  0.607731    244
+1               2.412972  0.527913    203
+domain_grouped  delegate_choice
+biology         0                  0.717949
+                1                  0.282051
+chemistry       1                  0.639344
+                0                  0.360656
+physics         1                  0.564516
+                0                  0.435484
+Name: proportion, dtype: float64
+
+
+                  Model 4 (No Interactions): delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05315
+Time:                        11:37:39   Log-Likelihood:                -291.58
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                 6.864e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.6898      1.577     -1.072      0.284      -4.780       1.401
+C(domain_grouped)[T.chemistry]        1.5546      0.340      4.570      0.000       0.888       2.221
+C(domain_grouped)[T.physics]          1.1802      0.340      3.475      0.001       0.515       1.846
+s_i_capability                       -0.2110      0.203     -1.039      0.299      -0.609       0.187
+human_difficulty                      0.1422      0.178      0.797      0.425      -0.208       0.492
+q_length                              0.1823      0.191      0.957      0.339      -0.191       0.556
+avg_word_length                      -0.1107      0.163     -0.678      0.498      -0.431       0.209
+percent_non_alphabetic_whitespace    -0.0093      0.018     -0.517      0.605      -0.044       0.026
+overlap_ratio                         0.0310      0.174      0.178      0.859      -0.310       0.372
+=====================================================================================================
+
+                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---
+                  P-value for s_i_capability: 0.2987
+                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): 1.2349 [0.8295, 1.8383]
+
+                  Model 4.5: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      423
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05866
+Time:                        11:37:39   Log-Likelihood:                -280.32
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                 6.116e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.0478      1.616     -1.267      0.205      -5.216       1.120
+C(domain_grouped)[T.chemistry]        1.5249      0.351      4.348      0.000       0.837       2.212
+C(domain_grouped)[T.physics]          1.0927      0.350      3.126      0.002       0.408       1.778
+s_i_capability                       -0.1196      0.216     -0.553      0.580      -0.543       0.304
+human_difficulty                      0.1686      0.182      0.927      0.354      -0.188       0.525
+q_length                              0.2087      0.194      1.078      0.281      -0.171       0.588
+avg_word_length                      -0.1074      0.165     -0.651      0.515      -0.431       0.216
+percent_non_alphabetic_whitespace    -0.0087      0.018     -0.480      0.631      -0.044       0.027
+overlap_ratio                         0.0528      0.175      0.302      0.763      -0.290       0.395
+capabilities_entropy                  0.4778      0.279      1.715      0.086      -0.068       1.024
+=====================================================================================================
+
+                  Model 4.6: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      424
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05815
+Time:                        11:37:39   Log-Likelihood:                -280.47
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                 3.121e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.1633      1.603     -1.350      0.177      -5.305       0.978
+C(domain_grouped)[T.chemistry]        1.5606      0.345      4.524      0.000       0.884       2.237
+C(domain_grouped)[T.physics]          1.1150      0.347      3.213      0.001       0.435       1.795
+human_difficulty                      0.1656      0.182      0.911      0.362      -0.191       0.522
+q_length                              0.2104      0.194      1.087      0.277      -0.169       0.590
+avg_word_length                      -0.1026      0.165     -0.621      0.534      -0.426       0.221
+percent_non_alphabetic_whitespace    -0.0088      0.018     -0.483      0.629      -0.044       0.027
+overlap_ratio                         0.0526      0.176      0.300      0.764      -0.291       0.397
+capabilities_entropy                  0.5210      0.267      1.948      0.051      -0.003       1.045
+=====================================================================================================
+
+                  Model 4.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      437
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.06715
+Time:                        11:37:39   Log-Likelihood:                -287.27
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                 4.303e-06
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.4067      1.593     -0.883      0.377      -4.529       1.715
+C(domain_grouped)[T.chemistry]        1.5355      0.342      4.495      0.000       0.866       2.205
+C(domain_grouped)[T.physics]          1.2301      0.341      3.607      0.000       0.562       1.898
+s_i_capability                       -0.2045      0.205     -0.996      0.319      -0.607       0.198
+human_difficulty                      0.1041      0.181      0.576      0.565      -0.250       0.458
+q_length                              0.1395      0.194      0.720      0.472      -0.240       0.519
+avg_word_length                      -0.0672      0.166     -0.405      0.685      -0.392       0.258
+percent_non_alphabetic_whitespace    -0.0081      0.018     -0.438      0.661      -0.044       0.028
+overlap_ratio                         0.0536      0.178      0.301      0.764      -0.296       0.403
+normalized_prob_entropy              -0.8420      0.292     -2.883      0.004      -1.415      -0.269
+=====================================================================================================
+
+                  Model 4.8: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      438
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.06554
+Time:                        11:37:39   Log-Likelihood:                -287.77
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                 2.735e-06
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.5443      1.589     -0.972      0.331      -4.658       1.570
+C(domain_grouped)[T.chemistry]        1.6055      0.335      4.795      0.000       0.949       2.262
+C(domain_grouped)[T.physics]          1.2786      0.338      3.788      0.000       0.617       1.940
+human_difficulty                      0.0990      0.180      0.549      0.583      -0.255       0.452
+q_length                              0.1392      0.194      0.719      0.472      -0.240       0.519
+avg_word_length                      -0.0635      0.166     -0.382      0.703      -0.389       0.263
+percent_non_alphabetic_whitespace    -0.0086      0.018     -0.464      0.642      -0.045       0.028
+overlap_ratio                         0.0476      0.180      0.265      0.791      -0.305       0.400
+normalized_prob_entropy              -0.8458      0.292     -2.897      0.004      -1.418      -0.274
+=====================================================================================================
+
+                  Model 4.9: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      422
+Method:                           MLE   Df Model:                           10
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.07850
+Time:                        11:37:39   Log-Likelihood:                -274.41
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                 1.047e-06
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.9207      1.630     -1.179      0.239      -5.115       1.273
+C(domain_grouped)[T.chemistry]        1.4806      0.353      4.189      0.000       0.788       2.173
+C(domain_grouped)[T.physics]          1.1276      0.351      3.213      0.001       0.440       1.816
+s_i_capability                       -0.0603      0.221     -0.273      0.785      -0.493       0.372
+human_difficulty                      0.1228      0.185      0.665      0.506      -0.239       0.485
+q_length                              0.1732      0.198      0.876      0.381      -0.214       0.561
+avg_word_length                      -0.0449      0.167     -0.268      0.789      -0.373       0.283
+percent_non_alphabetic_whitespace    -0.0067      0.019     -0.358      0.721      -0.044       0.030
+overlap_ratio                         0.0940      0.180      0.523      0.601      -0.259       0.447
+capabilities_entropy                  0.7023      0.295      2.381      0.017       0.124       1.280
+normalized_prob_entropy              -1.0250      0.305     -3.365      0.001      -1.622      -0.428
+=====================================================================================================
+
+                  Model 4.95: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  433
+Model:                          Logit   Df Residuals:                      423
+Method:                           MLE   Df Model:                            9
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.07838
+Time:                        11:37:39   Log-Likelihood:                -274.45
+converged:                       True   LL-Null:                       -297.79
+Covariance Type:            nonrobust   LLR p-value:                 4.503e-07
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.9787      1.616     -1.224      0.221      -5.147       1.189
+C(domain_grouped)[T.chemistry]        1.4987      0.347      4.314      0.000       0.818       2.180
+C(domain_grouped)[T.physics]          1.1393      0.348      3.271      0.001       0.457       1.822
+human_difficulty                      0.1214      0.185      0.658      0.511      -0.240       0.483
+q_length                              0.1738      0.198      0.879      0.380      -0.214       0.561
+avg_word_length                      -0.0420      0.167     -0.251      0.802      -0.370       0.286
+percent_non_alphabetic_whitespace    -0.0068      0.019     -0.359      0.720      -0.044       0.030
+overlap_ratio                         0.0938      0.180      0.520      0.603      -0.260       0.447
+capabilities_entropy                  0.7260      0.282      2.572      0.010       0.173       1.279
+normalized_prob_entropy              -1.0316      0.304     -3.398      0.001      -1.627      -0.436
+=====================================================================================================
+
+                  Model 5.7: delegate_choice ~ s_i_capability + human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:             delegate_choice   No. Observations:                  447
+Model:                                 GEE   No. clusters:                        1
+Method:                        Generalized   Min. cluster size:                 447
+                      Estimating Equations   Max. cluster size:                 447
+Family:                           Binomial   Mean cluster size:               447.0
+Dependence structure:         Exchangeable   Num. iterations:                     6
+Date:                     Sat, 21 Jun 2025   Scale:                           1.000
+Covariance type:                    robust   Time:                         11:37:39
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.6861   1.62e-13  -1.04e+13      0.000      -1.686      -1.686
+C(domain_grouped)[T.chemistry]        1.5544   1.34e-14   1.16e+14      0.000       1.554       1.554
+C(domain_grouped)[T.physics]          1.1798   1.51e-14    7.8e+13      0.000       1.180       1.180
+s_i_capability                       -0.2110    1.8e-15  -1.18e+14      0.000      -0.211      -0.211
+human_difficulty                      0.1423    1.2e-15   1.19e+14      0.000       0.142       0.142
+q_length                              0.1823   1.68e-14   1.08e+13      0.000       0.182       0.182
+avg_word_length                      -0.1107   7.83e-15  -1.41e+13      0.000      -0.111      -0.111
+percent_non_alphabetic_whitespace    -0.0093   7.52e-16  -1.23e+13      0.000      -0.009      -0.009
+overlap_ratio                         0.0310   7.51e-15   4.13e+12      0.000       0.031       0.031
+==============================================================================
+Skew:                         -0.2016   Kurtosis:                      -1.6706
+Centered skew:                -0.2016   Centered kurtosis:             -1.6706
+==============================================================================
+
+                  Model 7: delegate_choice ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + overlap_ratio
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:        delegate_choice   No. Observations:                  447
+Model:                          Logit   Df Residuals:                      439
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 21 Jun 2025   Pseudo R-squ.:                 0.05141
+Time:                        11:37:39   Log-Likelihood:                -292.12
+converged:                       True   LL-Null:                       -307.95
+Covariance Type:            nonrobust   LLR p-value:                 4.693e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.8321      1.571     -1.166      0.244      -4.912       1.248
+C(domain_grouped)[T.chemistry]        1.6260      0.334      4.874      0.000       0.972       2.280
+C(domain_grouped)[T.physics]          1.2291      0.336      3.656      0.000       0.570       1.888
+human_difficulty                      0.1363      0.178      0.765      0.444      -0.213       0.485
+q_length                              0.1828      0.190      0.960      0.337      -0.190       0.556
+avg_word_length                      -0.1076      0.164     -0.656      0.512      -0.429       0.214
+percent_non_alphabetic_whitespace    -0.0098      0.018     -0.545      0.585      -0.045       0.025
+overlap_ratio                         0.0263      0.175      0.150      0.881      -0.317       0.370
+=====================================================================================================

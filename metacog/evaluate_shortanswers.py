@@ -503,8 +503,8 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    #test_data_file = "./capabilities_test_logs/claude-3-5-sonnet-20241022_SimpleQA_500_1750098636_test_data.json"
-    test_data_file = "./delegate_game_logs/claude-3-5-sonnet-20241022_SimpleQA_50_500_subj0.5_subjgame0.5_nohistory_summary_team0.5_temp0.0_1750210903_game_data.json"
+    #test_data_file = "./capabilities_test_logs/claude-3-haiku-20240307_SimpleQA_500_1750550272_test_data.json"
+    test_data_file = "./delegate_game_logs/claude-3-haiku-20240307_SimpleMC_50_500_nohistory_summary_team0.1_temp0.0_1750561409_game_data.json"
     #test_data_file = "./pass_game_logs/claude-3-5-sonnet-20241022_GPSA__temp0.0_1750183224_game_data.json"
     
     judge_models = ["deepseek-chat", "gpt-4o-2024-08-06", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
@@ -514,7 +514,7 @@ def main():
     
     evaluator = ShortAnswerEvaluator(judge_models)
 
-    if "delegate_game_logs" in test_data_file:
+    if "_game_logs" in test_data_file:
         print(f"Detected delegate game log file: {test_data_file}")
         evaluator.evaluate_delegate_game_file(test_data_file)
     else:

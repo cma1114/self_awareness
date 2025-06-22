@@ -22,7 +22,7 @@ ANSWER_TYPES = None#["Date", "Person"]
 
 class AnswerOrPassGame(BaseGameClass):
     def __init__(self, subject_id, subject_name, is_human_player, completed_results_file=None, dataset="GPQA",
-                 n_questions=None, n_right=None, n_wrong=None, max_passes=None,
+                 all_questions=False, n_right=None, n_wrong=None, max_passes=None,
                  feedback_config=None, accumulate_history=False, initial_setup_explanation="",
                  seed=None, temperature=0.0, resume_from=None):
         super().__init__(subject_id, subject_name, is_human_player, "pass_game_logs")
@@ -46,7 +46,8 @@ class AnswerOrPassGame(BaseGameClass):
         self.is_human_player = is_human_player
 
         self.questions = []
-        self.results = {}
+        self.results = []
+        self.score = 0
         self.accuracy = None
         self.message_history = []
         
@@ -64,9 +65,9 @@ class AnswerOrPassGame(BaseGameClass):
             self.feedback_config.update(feedback_config)
  
         # Load completed results data
-        self._load_completed_results()
+        self._load_completed_results(all_questions)
 
-        self.initial_setup_explanation = self.initial_setup_explanation.format(N_QUESTIONS=self.n_questions, ACCURACY=round(self.n_right/(len(self.questions))*100), NUM_PASSES=self.max_passes)
+        self.initial_setup_explanation = self.initial_setup_explanation.format(N_QUESTIONS=len(self.questions), ACCURACY=round(self.n_right/(len(self.questions))*100), NUM_PASSES=self.max_passes)
 
         if resume_from:
             # If resuming, load the existing results
@@ -81,7 +82,7 @@ class AnswerOrPassGame(BaseGameClass):
         else:
             self.completed_results = None
 
-    def _load_completed_results(self):
+    def _load_completed_results(self, all_questions):
         """Load completed results data from the specified file."""
         if not self.completed_results_file or not os.path.exists(self.completed_results_file):
             raise ValueError(f"Completed results file not found: {self.completed_results_file}")
@@ -99,9 +100,8 @@ class AnswerOrPassGame(BaseGameClass):
             self._determine_question_type()
 
             # Separate correct and incorrect questions
-            self._separate_questions_by_correctness()
+            self._separate_questions_by_correctness(all_questions)
 
-            self.n_questions = len(self.questions)
             if self.max_passes is None:
                 self.max_passes = len(self.all_incorrect_questions)
 
@@ -122,7 +122,7 @@ class AnswerOrPassGame(BaseGameClass):
         self.is_short_answer = not ("options" in first_result and isinstance(first_result["options"], dict) and len(first_result["options"]) > 0)
 
         
-    def _separate_questions_by_correctness(self):
+    def _separate_questions_by_correctness(self, all_questions):
         """Separate questions into correct and incorrect lists,
            adapting to different JSON structures based on whether it's short answer."""
         self.all_correct_questions = []
@@ -196,7 +196,7 @@ class AnswerOrPassGame(BaseGameClass):
         if self.all_incorrect_questions: # Avoid error if list is empty
             random.shuffle(self.all_incorrect_questions)
 
-        if ANSWER_TYPES and self.dataset == "SimpleQA" or self.dataset == "SimpleMC":
+        if ANSWER_TYPES and (self.dataset == "SimpleQA" or self.dataset == "SimpleMC"):
             print(f"Loading {self.dataset} dataset for features...")
             sqa_all_questions = load_and_format_dataset(self.dataset) # This should have id, Question, high_level_domain, difficulty_score
 
@@ -215,6 +215,10 @@ class AnswerOrPassGame(BaseGameClass):
             self.all_correct_questions = self.all_correct_questions[:self.n_right]
             self.all_incorrect_questions = self.all_incorrect_questions[:self.n_wrong]
             self._log(f"Limited questions to {len(self.all_correct_questions)} correct and {len(self.all_incorrect_questions)} incorrect based on n_right and n_wrong")
+        elif all_questions:
+            self.n_right = len(self.all_correct_questions)
+            self.n_wrong = len(self.all_incorrect_questions)
+            self._log(f"Using all questions: {self.n_right} correct and {self.n_wrong} incorrect")
         else:
             self.n_right = min(len(self.all_correct_questions), len(self.all_incorrect_questions))
             self.n_wrong = self.n_right 
@@ -313,6 +317,9 @@ class AnswerOrPassGame(BaseGameClass):
                 options = ["P"]
             else:
                 options = list(question["options"].keys()) + ["P"]
+            if passes_used >= self.max_passes:
+                options.remove("P")
+            
             
             # Get subject's decision
             if self.is_human_player:
@@ -363,8 +370,9 @@ class AnswerOrPassGame(BaseGameClass):
                     self.initial_setup_explanation + "\n\n" + llm_prompt,
                     message_history if self.accumulate_history else [],
                     keep_appending=self.accumulate_history,
-                    MAX_TOKENS=None,
-                    temp=self.temperature
+                    MAX_TOKENS=None if self.is_short_answer else 1,
+                    temp=self.temperature,
+                    accept_any=False
                 )
             
             # Process decision
@@ -386,16 +394,18 @@ class AnswerOrPassGame(BaseGameClass):
                 print(feedback)
                     
                 # Record pass result
-                self.results[question["id"]] = {
-                    "question": question,
+                self.results.append({
                     "trial": i + 1,
                     "passes_used": passes_used,
                     "delegation_choice": "Pass",
                     "subject_answer": None,
-                    "is_correct": None,
-                    "question_type": question["is_correct"],
+                    "subject_correct": None,
+                    "question_type": "correct" if question["is_correct"] else "incorrect",
+                    "question_id": question["id"],
+                    "question_text": question["question"],
+                    "correct_answer": question["correct_answer"],
                     "probs": probs
-                }
+                })
             else:
                 # Subject answered
                 if self.is_short_answer:
@@ -404,22 +414,28 @@ class AnswerOrPassGame(BaseGameClass):
                     is_correct = (subject_decision == question["correct_answer"])
                 if is_correct:
                     correct_count += 1
+                    self.score += 1
                 else:
                     incorrect_count += 1
+                    self.score -= 1
                 if subject_decision != question["subject_answer"]:
                     is_correct = None
                     print(f"Different answer to question {question["id"]} from phase 1: {subject_decision} != {question["subject_answer"]}")
                     dif_answer_cnt += 1
 
                 # Record answer result
-                self.results[question["id"]] = {
-                    "question": question,
+                self.results.append({
+                    "trial": i + 1,
+                    "passes_used": passes_used,
                     "delegation_choice": "Self",
                     "subject_answer": subject_decision,
-                    "is_correct": is_correct,
+                    "subject_correct": is_correct,
                     "question_type": "correct" if question["is_correct"] else "incorrect",
+                    "question_id": question["id"],
+                    "question_text": question["question"],
+                    "correct_answer": question["correct_answer"],
                     "probs": probs
-                }
+                })
                 
                 # Provide feedback if configured
                 if self.feedback_config['show_correctness']:
@@ -429,19 +445,11 @@ class AnswerOrPassGame(BaseGameClass):
             print(f"Completed question {i+1}/{len(self.questions)}; used {passes_used} passes")
             if (i+1)%log_interval == 0: self._save_game_data(message_history)
         
-        # Calculate phase 2 metrics
-        answered_questions = [r for r in self.results.values() if r["delegation_choice"] == "Self"]
-        if answered_questions:
-            self.accuracy = sum(1 for r in answered_questions if r["is_correct"]) / len(answered_questions)
-        else:
-            self.accuracy = 0
+        self.accuracy = correct_count / (correct_count + incorrect_count)
         
         # Summary
-        summary = f"\nPhase 2 Complete. Passes used: {passes_used}/{self.max_passes}\n"
-        if answered_questions:
-            summary += f"Accuracy on answered questions: {self.accuracy:.2%} ({sum(1 for r in answered_questions if r['is_correct'])}/{len(answered_questions)})"
-        else:
-            summary += "No questions answered."
+        summary = f"\nGame Complete. Passes used: {passes_used}/{self.max_passes}\n"
+        summary += f"Accuracy on answered questions: {self.accuracy:.2%} ({correct_count}/{(correct_count + incorrect_count)})"
         
         self._log(summary)
         
@@ -462,16 +470,16 @@ class AnswerOrPassGame(BaseGameClass):
         analysis = "\n" + "="*10 + " Results Analysis " + "="*10 + "\n"
         analysis += f"Subject ID: {self.subject_id}\n"
         
-        # Get overall phase 2 metrics
+        # Get overall metrics
         total_questions = len(self.results)
-        passes_used = sum(1 for r in self.results.values() if r["delegation_choice"] == "Pass")
+        passes_used = sum(1 for r in self.results if r["delegation_choice"] == "Pass")
         pass_rate = passes_used / total_questions if total_questions > 0 else 0
         
-        analysis += f"Phase 2 Pass Rate: {pass_rate:.2%} ({passes_used}/{total_questions})\n"
+        analysis += f"Pass Rate: {pass_rate:.2%} ({passes_used}/{total_questions})\n"
         
         # Split by question type
-        correct_type_questions = [r for r in self.results.values() if r["question_type"] == "correct"]
-        incorrect_type_questions = [r for r in self.results.values() if r["question_type"] == "incorrect"]
+        correct_type_questions = [r for r in self.results if r["question_type"] == "correct"]
+        incorrect_type_questions = [r for r in self.results if r["question_type"] == "incorrect"]
         
         # Calculate pass rates by question type
         if correct_type_questions:
@@ -487,19 +495,19 @@ class AnswerOrPassGame(BaseGameClass):
         # Calculate accuracy on answered questions by type
         answered_correct_type = [r for r in correct_type_questions if r["delegation_choice"] == "Self"]
         if answered_correct_type:
-            accuracy_on_answered_correct = sum(1 for r in answered_correct_type if r["is_correct"]) / len(answered_correct_type)
+            accuracy_on_answered_correct = sum(1 for r in answered_correct_type if r["subject_correct"]) / len(answered_correct_type)
             analysis += f"Accuracy on answered previously CORRECT questions: {accuracy_on_answered_correct:.2%}\n"
         
         answered_incorrect_type = [r for r in incorrect_type_questions if r["delegation_choice"] == "Self"]
         if answered_incorrect_type:
-            accuracy_on_answered_incorrect = sum(1 for r in answered_incorrect_type if r["is_correct"]) / len(answered_incorrect_type)
+            accuracy_on_answered_incorrect = sum(1 for r in answered_incorrect_type if r["subject_correct"]) / len(answered_incorrect_type)
             analysis += f"Accuracy on answered previously INCORRECT questions: {accuracy_on_answered_incorrect:.2%}\n"
         
         # Overall accuracy on answered questions
-        answered_questions = [r for r in self.results.values() if r["delegation_choice"] == "Self"]
+        answered_questions = [r for r in self.results if r["delegation_choice"] == "Self"]
         if answered_questions:
-            overall_accuracy = sum(1 for r in answered_questions if r["is_correct"]) / len(answered_questions)
-            analysis += f"Overall accuracy on answered questions: {overall_accuracy:.2%} ({sum(1 for r in answered_questions if r['is_correct'])}/{len(answered_questions)})\n"
+            overall_accuracy = sum(1 for r in answered_questions if r["subject_correct"]) / len(answered_questions)
+            analysis += f"Overall accuracy on answered questions: {overall_accuracy:.2%} ({sum(1 for r in answered_questions if r['subject_correct'])}/{len(answered_questions)})\n"
         
         # Statistical significance tests if we have both types of questions
         if correct_type_questions and incorrect_type_questions and correct_passes + incorrect_passes > 0:
@@ -530,14 +538,14 @@ class AnswerOrPassGame(BaseGameClass):
             if answered_questions:
                 
                 # Compare phase 2 accuracy to phase 1 accuracy
-                phase2_correct = sum(1 for r in answered_questions if r["is_correct"])
+                phase2_correct = sum(1 for r in answered_questions if r["subject_correct"])
                 binom_result = binomtest(k=phase2_correct, n=len(answered_questions), p=self.n_right / (self.n_right + self.n_wrong))
                 p_value = binom_result.pvalue
                 
                 analysis += f"\nBinomial test comparing phase 2 accuracy ({overall_accuracy:.2%}) to phase 1 accuracy ({self.n_right / (self.n_right + self.n_wrong):.2%}): p-value = {p_value:.4f}\n"
                 
                 if p_value < 0.05:
-                    if overall_accuracy > self.phase1_accuracy:
+                    if overall_accuracy > self.n_right / (self.n_right + self.n_wrong):
                         analysis += "Interpretation: Phase 2 accuracy is SIGNIFICANTLY HIGHER than phase 1 accuracy (p < 0.05)\n"
                     else:
                         analysis += "Interpretation: Phase 2 accuracy is SIGNIFICANTLY LOWER than phase 1 accuracy (p < 0.05)\n"
@@ -559,10 +567,14 @@ class AnswerOrPassGame(BaseGameClass):
             "questions": self.questions,
             "results": self.results,
             "accuracy": self.accuracy,
+            "score": self.score,
+            "subject_accuracy_phase1": self.n_right/(self.n_right+self.n_wrong),
             "max_passes": self.max_passes,
             "feedback_config": self.feedback_config,
+            "initial_setup_explanation": self.initial_setup_explanation,
+            "capabilities_file": self.completed_results_file,
         }
-        
+
         if message_history:
             game_data["message_history"] = message_history
             
@@ -576,22 +588,15 @@ class AnswerOrPassGame(BaseGameClass):
         return copy.deepcopy(self.results)
 
 
-def main():
-    """Main function to run the delegate game from completed results"""
-    
-    # Model and dataset configuration
-    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    for DATASET in DATASETS:
-        real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "claude-3-5-sonnet-20241022"#"deepseek-chat"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "deepseek-chat"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 33#714#41#42#3  # Random seed for reproducibility
+    SEED = 42#33#714#41#3  # Random seed for reproducibility
     
-    N_QUESTIONS = None#89  # Number of questions for capabilities measurement
-    N_RIGHT = None#46    
-    N_WRONG = None if N_QUESTIONS is None or N_RIGHT is None else N_QUESTIONS-N_RIGHT    
+    ALL_QUESTIONS = True
+    N_RIGHT = None    
+    N_WRONG = None  
     NUM_PASSES = None if N_WRONG is None else N_WRONG
     
     # Feedback configuration
@@ -633,8 +638,9 @@ def real_main(DATASET):
         Let's play a game. I'm going to ask you {N_QUESTIONS} questions. Each question is multiple choice. 
         For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
         If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
+        You can pass up to {NUM_PASSES} times.
+        Budget your passes wisely to maximize your total score.
         Your goal is to accumulate as many points as possible.
-        You previously achieved {ACCURACY}% accuracy on the same questions, so you shouldn't be afraid to pass.
         """
     else:
         game_setup_prompt = """
@@ -645,6 +651,7 @@ def real_main(DATASET):
         Budget your passes wisely to maximize your total score.
         Your goal is to accumulate as many points as possible.
         """
+#        You previously achieved {ACCURACY}% accuracy on the same questions, so you shouldn't be afraid to pass.
     
     if DATASET == "SimpleQA":
 #        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
@@ -677,7 +684,7 @@ def real_main(DATASET):
             is_human_player=IS_HUMAN,
             completed_results_file=CAPABILITES_TEST_FILE,
             dataset=DATASET,
-            n_questions=N_QUESTIONS,
+            all_questions=ALL_QUESTIONS,
             n_right=N_RIGHT,
             n_wrong=N_WRONG,
             max_passes=NUM_PASSES,
@@ -701,6 +708,20 @@ def real_main(DATASET):
     
     print("\nExecution completed.")
     
+
+# Model and dataset configuration
+DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+for DATASET in DATASETS:
+    real_main(DATASET)
+
+
+def main():
+    """Main function to run the delegate game from completed results"""
+    
+    # Model and dataset configuration
+    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    for DATASET in DATASETS:
+        real_main(DATASET)
 
 if __name__ == "__main__":
     main()
