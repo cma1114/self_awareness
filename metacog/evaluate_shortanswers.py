@@ -326,7 +326,7 @@ Subject response: {subject_answer}
                 continue
 
             question_data = result["question"]
-            subject_answer = result.get("subject_answer") # Use .get for safety
+            subject_answer = result.get("subject_answer")
             correct_answer = question_data.get("correct_answer")
             question_text = question_data.get("question")
 
@@ -504,8 +504,8 @@ Subject response: {subject_answer}
 
 def main():
     #test_data_file = "./capabilities_test_logs/claude-3-haiku-20240307_SimpleQA_500_1750550272_test_data.json"
-    test_data_file = "./delegate_game_logs/claude-3-haiku-20240307_SimpleMC_50_500_nohistory_summary_team0.1_temp0.0_1750561409_game_data.json"
-    #test_data_file = "./pass_game_logs/claude-3-5-sonnet-20241022_GPSA__temp0.0_1750183224_game_data.json"
+    #test_data_file = "./delegate_game_logs/gemini-1.5-pro_SimpleQA_50_500_nohistory_summary_team0.5_temp0.0_1750549205_game_data.json"
+    test_data_file = "./pass_game_logs/claude-3-5-sonnet-20241022_SimpleQA_noqcnt_nopcnt_noscnt_temp0.0_1750721190_game_data.json"
     
     judge_models = ["deepseek-chat", "gpt-4o-2024-08-06", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
 

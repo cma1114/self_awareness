@@ -14,14 +14,12 @@ import json
 from base_game_class import BaseGameClass
 from scipy.stats import binomtest
 
-random.seed(42)
-
 class SecondChanceGame(BaseGameClass):
     """
     Game class for the Second-Chance experiment.
     """
-    def __init__(self, subject_id, subject_name, capabilities_file_path, 
-                 num_questions=None, show_original_answer=True, is_human_player=False):
+    def __init__(self, subject_id, subject_name, dataset, capabilities_file_path, 
+                 num_questions=None, show_original_answer=True, is_human_player=False, seed=None, temperature=0.0):
         """
         Initialize the game with configuration parameters.
         
@@ -35,10 +33,15 @@ class SecondChanceGame(BaseGameClass):
         """
         super().__init__(subject_id, subject_name, is_human_player, "secondchance_game_logs")
         # Store configuration parameters
+        self.dataset = dataset
         self.capabilities_file_path = capabilities_file_path
         self.num_questions = num_questions
         self.show_original_answer = show_original_answer
         self.is_human_player = is_human_player
+        self.temperature = temperature
+        if seed is not None:
+            random.seed(seed)
+        self.is_short_answer = True if self.dataset.lower() in ["simpleqa", "gpsa"] else False
                 
         # Initialize state variables
         self.capabilities_data = None
@@ -75,12 +78,9 @@ class SecondChanceGame(BaseGameClass):
             # Find questions that were answered incorrectly
             for q_id, result in capabilities_results.items():
                 if isinstance(result, dict) and not result.get('is_correct', True):
-                    # Get the original question data
-                    question_data = result.get('question', {})
-                    if not question_data:
-                        continue
-                    
-                    # Add the subject's original wrong answer
+                    question_data = result
+                    question_data['id'] = q_id
+                    question_data['correct_answer'] = result.get('correct_answer_label')
                     question_data['original_answer'] = result.get('subject_answer')
                     
                     # Add to wrong questions list
@@ -90,6 +90,8 @@ class SecondChanceGame(BaseGameClass):
             
             if self.num_questions and len(self.wrong_questions) < self.num_questions:
                 self._log(f"Warning: Only {len(self.wrong_questions)} wrong questions available, but {self.num_questions} requested")
+                self.num_questions = len(self.wrong_questions)
+            if not self.num_questions:
                 self.num_questions = len(self.wrong_questions)
             
             return True
@@ -167,21 +169,27 @@ class SecondChanceGame(BaseGameClass):
                     return False
             else:
                 # For LLM subject
-                setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
+                if self.is_short_answer:
+                    setup_prompt = "I'm going to ask you a series of short answer questions. For each one, respond as succinctly as possible. Answer as best you can, even if you're not certain."
+                    llm_prompt = q_text + "\nYour answer: "
+                else:
+                    setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
+                    llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
                 message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
                 content = original_answer if self.show_original_answer else "[redacted]"
                 message_history.append({"role": "assistant", "content": content})
                 content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
-                message_history.append({"role": "user", "content": content})
+                #message_history.append({"role": "user", "content": content})
                 
                 # Get the answer without accumulating history
                 new_answer, _, probs = self._get_llm_answer(
-                    list(question["options"].keys()),
-                    "",
+                    list(question["options"].keys()) if not self.is_short_answer else None,
+                    content,
                     message_history=message_history,
                     keep_appending=False,
-                    MAX_TOKENS=1
+                    setup_text="Respond ONLY with your answer\n" if self.is_short_answer else None,
+                    MAX_TOKENS=1 if not self.is_short_answer else None,
+                    temp = self.temperature
                 )
             
             # Check if answer was changed
@@ -299,45 +307,73 @@ class SecondChanceGame(BaseGameClass):
         # Return for further use
         return analysis
 
-def main():
+def main(model_dataset_dict):
     """
     Main function to run the Second-Chance Game
     """
     # Configuration
     IS_HUMAN = False
-    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-haiku-20240307""claude-3-7-sonnet-20250219"#
-    CAPABILITIES_FILE = "./compiled_results_sqa/claude-3-5-sonnet-20241022_phase1_compiled.json"##"./pass_game_logs/aop_claude-3-5-sonnet-20241022_MMLU_1000_1745613577_1745613581_phase1_data.json"
-    SHOW_ORIGINAL_ANSWER = True
+    SHOW_ORIGINAL_ANSWER = False
     NUM_QUESTIONS = None  # Use all wrong questions if None
+    seed = 42
+    TEMPERATURE = 0.0 
+    for SUBJECT_NAME, datasets in model_dataset_dict.items():
+        for DATASET in datasets:
     
-    DATASET_NAME = "GPQA" if "GPQA" in CAPABILITIES_FILE.upper() else "GPSA" if "GPSA" in CAPABILITIES_FILE.upper() else "SimpleQA" if "sqa" in CAPABILITIES_FILE.upper() else "SimpleMC" if "smc" in CAPABILITIES_FILE.upper() else "Unknown"
-    SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}"
-    try:
-        
-        # Create game instance
-        game = SecondChanceGame(
-            subject_id=SUBJECT_ID,
-            subject_name=subject_name,
-            capabilities_file_path=CAPABILITIES_FILE,
-            num_questions=NUM_QUESTIONS,
-            show_original_answer=SHOW_ORIGINAL_ANSWER,
-            is_human_player=IS_HUMAN
-        )
-        
-        # Run the game
-        success = game.run_game()
-        
-        if success:
-            print("\nSecond-Chance game completed successfully.")
-        else:
-            print("\nSecond-Chance game failed.")
+            if DATASET == "SimpleQA":
+        #        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
+                CAPABILITIES_FILE = f"./compiled_results_sqa/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
+            elif DATASET == "GPSA":
+                CAPABILITIES_FILE = f"./compiled_results_gpsa/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
+            elif DATASET == "SimpleMC":
+                CAPABILITIES_FILE = f"./compiled_results_smc/{SUBJECT_NAME.replace("/","-")}_phase1_compiled.json"
+            else:
+                CAPABILITIES_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
+                
+            settings_suffix=""
+            if SHOW_ORIGINAL_ANSWER:
+                settings_suffix += "_shown"
+            else:
+                settings_suffix += "_redacted"
+            settings_suffix += f"_temp{TEMPERATURE}"
+
+            SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}{settings_suffix}"
+            try:
+                
+                # Create game instance
+                game = SecondChanceGame(
+                    subject_id=SUBJECT_ID,
+                    subject_name=SUBJECT_NAME,
+                    dataset = DATASET,
+                    capabilities_file_path=CAPABILITIES_FILE,
+                    num_questions=NUM_QUESTIONS,
+                    show_original_answer=SHOW_ORIGINAL_ANSWER,
+                    is_human_player=IS_HUMAN,
+                    seed=seed,
+                    temperature=TEMPERATURE
+                )
+                
+                # Run the game
+                success = game.run_game()
+                
+                if success:
+                    print("\nSecond-Chance game completed successfully.")
+                else:
+                    print("\nSecond-Chance game failed.")
+                    
+            except Exception as e:
+                print(f"Error during execution: {e}")
+                import traceback
+                traceback.print_exc()
             
-    except Exception as e:
-        print(f"Error during execution: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    print("\nExecution completed.")
+            print("\nExecution completed.")
 
 if __name__ == "__main__":
-    main()
+    model_dataset_dict = {
+        "claude-3-5-sonnet-20241022": ["GPSA", "SimpleQA"],
+        "deepseek-chat": ["GPSA", "SimpleQA"],
+        "gemini-2.0-flash-001": ["GPQA", "GPSA", "SimpleQA"],
+        "grok-3-latest": ["GPQA", "GPSA", "SimpleQA"],
+        "gpt-4o-2024-08-06": ["GPQA", "GPSA", "SimpleQA"],
+        }
+    main(model_dataset_dict)

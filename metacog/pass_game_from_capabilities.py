@@ -356,13 +356,16 @@ class AnswerOrPassGame(BaseGameClass):
                     if passes_used >= self.max_passes:
                         # Remove P from options if no passes left
                         llm_prompt = q_text + f"\nYou've used all {self.max_passes} passes. You must answer this question.\nYour answer: "
+                        setup_text = "Respond ONLY with your answer.\n"
                     else:
                         llm_prompt = q_text + "\nYour choice (answer succinctly or P=Pass): "
+                        setup_text = "Respond ONLY with your answer or 'P'.\n"
                 else:
+                    setup_text = None
                     if passes_used >= self.max_passes:
-                        llm_prompt = q_text + f"\nYou've used all {self.max_passes} passes. You must answer this question.\nYour answer (A, B, C, D): "
+                        llm_prompt = q_text + f"\nYou've used all {self.max_passes} passes. You must answer this question. Respond only with the letter of your choice; do NOT output any other text.\nYour answer (A, B, C, D): "
                     else:
-                        llm_prompt = q_text + "\nYour choice (A, B, C, D, or P=Pass): "
+                        llm_prompt = q_text + "\nRespond only with the letter of your choice; do NOT output any other text.\nYour choice (A, B, C, D, or P=Pass): "
                 
                 # Pass the keep_appending flag based on accumulate_history setting
                 resp, message_history, probs = self._get_llm_answer(
@@ -370,6 +373,7 @@ class AnswerOrPassGame(BaseGameClass):
                     self.initial_setup_explanation + "\n\n" + llm_prompt,
                     message_history if self.accumulate_history else [],
                     keep_appending=self.accumulate_history,
+                    setup_text=setup_text,
                     MAX_TOKENS=None if self.is_short_answer else 1,
                     temp=self.temperature,
                     accept_any=False
@@ -379,6 +383,7 @@ class AnswerOrPassGame(BaseGameClass):
             if len(resp) == 0:
                 subject_decision = resp
             else:
+                resp = resp.rstrip(".")
                 arr=resp.split()
                 if arr[0] in options:
                     subject_decision = arr[0]
@@ -399,6 +404,7 @@ class AnswerOrPassGame(BaseGameClass):
                     "passes_used": passes_used,
                     "delegation_choice": "Pass",
                     "subject_answer": None,
+                    "original_answer": question["subject_answer"],
                     "subject_correct": None,
                     "question_type": "correct" if question["is_correct"] else "incorrect",
                     "question_id": question["id"],
@@ -419,7 +425,7 @@ class AnswerOrPassGame(BaseGameClass):
                     incorrect_count += 1
                     self.score -= 1
                 if subject_decision != question["subject_answer"]:
-                    is_correct = None
+                    #is_correct = None
                     print(f"Different answer to question {question["id"]} from phase 1: {subject_decision} != {question["subject_answer"]}")
                     dif_answer_cnt += 1
 
@@ -429,6 +435,7 @@ class AnswerOrPassGame(BaseGameClass):
                     "passes_used": passes_used,
                     "delegation_choice": "Self",
                     "subject_answer": subject_decision,
+                    "original_answer": question["subject_answer"],
                     "subject_correct": is_correct,
                     "question_type": "correct" if question["is_correct"] else "incorrect",
                     "question_id": question["id"],
@@ -589,22 +596,22 @@ class AnswerOrPassGame(BaseGameClass):
 
 
 
-def real_main(DATASET):
-    SUBJECT_NAME = "deepseek-chat"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022"#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+def real_main(SUBJECT_NAME, DATASET):
+    #SUBJECT_NAME = "claude-3-5-sonnet-20241022"#"deepseek-chat"#'gemini-2.0-flash-001'#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 42#33#714#41#3  # Random seed for reproducibility
     
     ALL_QUESTIONS = True
     N_RIGHT = None    
     N_WRONG = None  
-    NUM_PASSES = None if N_WRONG is None else N_WRONG
+    NUM_PASSES = 500#None if N_WRONG is None else N_WRONG
     
     # Feedback configuration
     feedback_config = {
         'show_correctness': False,    # Show correctness feedback in phase 2
-        'show_pass_counter': True,    # Show remaining passes in phase 2
-        'show_point_counter': True,    # Show score in phase 2
-        'show_question_counter': True, # Show remaining questions in phase 2
+        'show_pass_counter': False,    # Show remaining passes in phase 2
+        'show_point_counter': False,    # Show score in phase 2
+        'show_question_counter': False, # Show remaining questions in phase 2
         'show_question_type': False,  # Show if question was previously correct/incorrect
     }
     
@@ -638,8 +645,6 @@ def real_main(DATASET):
         Let's play a game. I'm going to ask you {N_QUESTIONS} questions. Each question is multiple choice. 
         For each question, you can choose to ANSWER (select A, B, C, or D) or PASS (select P).
         If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
-        You can pass up to {NUM_PASSES} times.
-        Budget your passes wisely to maximize your total score.
         Your goal is to accumulate as many points as possible.
         """
     else:
@@ -647,11 +652,11 @@ def real_main(DATASET):
         Let's play a game. I'm going to ask you {N_QUESTIONS} short answer questions. 
         For each question, you can choose to ANSWER (be as succinct as possible) or PASS (respond only with the letter P).
         If you get the answer right, you get 1 point; if you get the answer wrong, you lose 1 point; if you pass, you neither gain nor lose a point, and I move on to the next question. 
-        You can pass up to {NUM_PASSES} times.
-        Budget your passes wisely to maximize your total score.
         Your goal is to accumulate as many points as possible.
         """
 #        You previously achieved {ACCURACY}% accuracy on the same questions, so you shouldn't be afraid to pass.
+#        You can pass up to {NUM_PASSES} times.
+#        Budget your passes wisely to maximize your total score.
     
     if DATASET == "SimpleQA":
 #        CAPABILITES_TEST_FILE = get_latest_capabilities_file(SUBJECT_NAME, DATASET)
@@ -707,21 +712,16 @@ def real_main(DATASET):
         traceback.print_exc()
     
     print("\nExecution completed.")
-    
-
-# Model and dataset configuration
-DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-for DATASET in DATASETS:
-    real_main(DATASET)
-
 
 def main():
     """Main function to run the delegate game from completed results"""
     
-    # Model and dataset configuration
-    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    for DATASET in DATASETS:
-        real_main(DATASET)
+    DATASETS = ["GPQA", "SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    models = ["grok-3-latest"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+
+    for model in models:
+        for DATASET in DATASETS:
+            real_main(model, DATASET)
 
 if __name__ == "__main__":
     main()

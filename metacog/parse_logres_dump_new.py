@@ -595,19 +595,19 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=Tr
             axs[2, 1].axis('off')
 
     plt.tight_layout(pad=3.0, h_pad=4.0)
-    plt.savefig(f"subject_analysis_charts_{dataset_name}.png", dpi=300)
-    print(f"Charts saved to subject_analysis_charts_{dataset_name}.png")
+    plt.savefig(f"subject_analysis_charts_{dataset_name}_{prefix_int}_{prefix_lift}.png", dpi=300)
+    print(f"Charts saved to subject_analysis_charts_{dataset_name}_{prefix_int}_{prefix_lift}.png")
 
 
 if __name__ == "__main__":
     
-    game_type = "dg"#"aop" #
-    dataset = "SimpleMC"
+    game_type = "aop" #"dg"#
+    dataset = "GPSA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, NoHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
-        target_params = "NoMsgHist, QCtr, PCtr, SCtr"
+        target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
     model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
 #    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
     show_adjusted_introspection = False

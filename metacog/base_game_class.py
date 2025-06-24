@@ -150,6 +150,7 @@ class BaseGameClass:
                         **({"system": system_msg} if system_msg != "" else {}),
                         messages=formatted_messages
                     )
+                    #print(f"message={message}")
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":

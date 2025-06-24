@@ -190,7 +190,10 @@ def prepare_regression_data_for_model(game_file_paths_list,
             norm_prob_entropy_trial = None
 
             if isinstance(prob_dict_trial, dict):
-                non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "T" and isinstance(v, (int, float))]
+                if "delegate" in game_file_paths_list[0]:
+                    non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "T" and isinstance(v, (int, float))]
+                else:
+                    non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "P" and isinstance(v, (int, float))]
                 
                 if non_t_probs_values:
                     sum_non_t_probs = sum(non_t_probs_values)
@@ -322,7 +325,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPSA"# 
+    dataset = "GPSA"#"GPQA"# 
     game_type = "dg" #"aop"#
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
@@ -459,6 +462,24 @@ if __name__ == "__main__":
             try:
                 log_output(f"df_model['delegate_choice'].value_counts()= {df_model['delegate_choice'].value_counts(dropna=False)}\n")
                 if 's_i_capability' in df_model.columns:
+                    #### filter out conflicts between capabilities and game
+                    df_clean = df_model[
+                        (df_model["delegate_choice"] == 1) |
+                        (df_model["s_i_capability"].astype(bool) == df_model["subject_correct"].astype(bool))
+                    ]   
+                    cross_tab_s_i = pd.crosstab(df_clean['delegate_choice'], df_clean['s_i_capability'])
+                    delegated = np.array(df_clean['delegate_choice'], bool)
+                    kept_mask = ~delegated                       # True where model answered itself
+                    cap_corr = np.array(df_clean['s_i_capability'], bool)   # Baseline correctness from capabilities file
+                    team_corr = np.where(df_clean['delegate_choice'] == 0, df_clean['subject_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
+                    TP, FN, FP, TN = contingency(delegated, cap_corr)
+                    filt_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    log_output(f"Filtered Introspection score = {filt_stats['mcc']:.3f} [{filt_stats['mcc_ci'][0]:.3f}, {filt_stats['mcc_ci'][1]:.3f}], p={filt_stats['p_mcc']:.4g}")
+                    delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
+                    log_output(f"Filtered Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
+                    log_output(f"Filtered Self-acc lift = {filt_stats['lift']:.3f} [{filt_stats['lift_ci'][0]:.3f}, {filt_stats['lift_ci'][1]:.3f}], p={filt_stats['p_lift']:.4g}")
+                    #####
+
                     cross_tab_s_i = pd.crosstab(df_model['delegate_choice'], df_model['s_i_capability'])
                     #TP = cross_tab_s_i.loc[1, 0]; FP = cross_tab_s_i.loc[1, 1]; FN = cross_tab_s_i.loc[0, 0]; TN = cross_tab_s_i.loc[0, 1]
 
@@ -509,15 +530,15 @@ if __name__ == "__main__":
                 if 'team_correct' in df_model.columns:
                     cross_tab_team_correct = pd.crosstab(df_model['delegate_choice'], df_model['team_correct'])
                     log_output(f"Cross-tabulation of delegate_choice vs. team_correct:\n{cross_tab_team_correct}\n")
-                    if 's_i_capability' in df_model.columns: # self_correct is s_i_capability when delegate_choice == 0
-                        self_choice_df = df_model[df_model['delegate_choice'] == 0]
-                        if not self_choice_df.empty:
-                             cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['team_correct'])
-                             log_output(f"Cross-tabulation of s_i_capability vs. team_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
-                             TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
-                             log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
-                else:
-                    log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
+                if 's_i_capability' in df_model.columns: # self_correct is s_i_capability when delegate_choice == 0
+                    self_choice_df = df_model[df_model['delegate_choice'] == 0]
+                    if not self_choice_df.empty:
+                        cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['subject_correct'])
+                        log_output(f"Cross-tabulation of s_i_capability vs. self_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
+                        TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
+                        log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+
+                log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
                 try:
                     logit_model1 = smf.logit('delegate_choice ~ s_i_capability', data=df_model).fit(disp=0)
                     log_output(logit_model1.summary())

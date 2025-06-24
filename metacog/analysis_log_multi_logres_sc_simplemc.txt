@@ -1,0 +1,2013 @@
+
+--- Analyzing claude-3-5-sonnet-20241022 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleMC_redacted_temp0.0_1750623745_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    121
+1     88
+Name: count, dtype: int64
+
+Answer change%: 0.4211 [0.35411618043427373, 0.48798908272362096] (n=209)
+P-value vs 25%: 5.483e-07; P-value vs 0%: 6.336e-35
+Phase 2 self-accuracy: 0.5227 [0.41836881701201467, 0.6270857284425307] (n=88)
+P-value vs 25%: 3.021e-07; P-value vs 33%: 0.0003662
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': None
+                  Topic Counts:
+ topic
+Science and technology    43
+Politics                  31
+Art                       26
+Other                     24
+Geography                 23
+Music                     17
+Sports                    16
+TV shows                  11
+Video games                9
+History                    9
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      77
+Person    43
+Number    42
+Other     31
+Place     16
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person  Place
+topic_grouped                                             
+Art                       11       2      4       7      2
+Geography                  9      10      0       0      4
+Misc                       8       3     10       6      2
+Music                      5       4      4       2      2
+Other                     10       5      2       6      1
+Politics                  15       4      5       6      1
+Science and technology    16       9      2      14      2
+Sports                     3       5      4       2      2
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.538462
+                        1                 0.461538
+Geography               1                 0.521739
+                        0                 0.478261
+Misc                    0                 0.620690
+                        1                 0.379310
+Music                   0                 0.647059
+                        1                 0.352941
+Other                   0                 0.500000
+                        1                 0.500000
+Politics                0                 0.612903
+                        1                 0.387097
+Science and technology  0                 0.627907
+                        1                 0.372093
+Sports                  0                 0.562500
+                        1                 0.437500
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.532468
+                     1                 0.467532
+Number               0                 0.690476
+                     1                 0.309524
+Other                0                 0.580645
+                     1                 0.419355
+Person               0                 0.558140
+                     1                 0.441860
+Place                0                 0.562500
+                     1                 0.437500
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.538462
+                        1                 0.461538
+Geography               1                 0.521739
+                        0                 0.478261
+Misc                    0                 0.620690
+                        1                 0.379310
+Music                   0                 0.647059
+                        1                 0.352941
+Other                   0                 0.500000
+                        1                 0.500000
+Politics                0                 0.612903
+                        1                 0.387097
+Science and technology  0                 0.627907
+                        1                 0.372093
+Sports                  0                 0.562500
+                        1                 0.437500
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.532468
+                     1                 0.467532
+Number               0                 0.690476
+                     1                 0.309524
+Other                0                 0.580645
+                     1                 0.419355
+Person               0                 0.558140
+                     1                 0.441860
+Place                0                 0.562500
+                     1                 0.437500
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.545455  0.454545           11
+                       Number               0.000000  1.000000            2
+                       Other                1.000000  0.000000            4
+                       Person               0.285714  0.714286            7
+                       Place                1.000000  0.000000            2
+Geography              Date                 0.555556  0.444444            9
+                       Number               0.500000  0.500000           10
+                       Place                0.250000  0.750000            4
+Misc                   Date                 0.625000  0.375000            8
+                       Number               0.666667  0.333333            3
+                       Other                0.500000  0.500000           10
+                       Person               0.833333  0.166667            6
+                       Place                0.500000  0.500000            2
+Music                  Date                 0.600000  0.400000            5
+                       Number               1.000000  0.000000            4
+                       Other                0.250000  0.750000            4
+                       Person               0.500000  0.500000            2
+                       Place                1.000000  0.000000            2
+Other                  Date                 0.400000  0.600000           10
+                       Number               0.800000  0.200000            5
+                       Other                1.000000  0.000000            2
+                       Person               0.333333  0.666667            6
+                       Place                0.000000  1.000000            1
+Politics               Date                 0.400000  0.600000           15
+                       Number               0.500000  0.500000            4
+                       Other                0.800000  0.200000            5
+                       Person               1.000000  0.000000            6
+                       Place                1.000000  0.000000            1
+Science and technology Date                 0.687500  0.312500           16
+                       Number               0.777778  0.222222            9
+                       Other                0.500000  0.500000            2
+                       Person               0.500000  0.500000           14
+                       Place                0.500000  0.500000            2
+Sports                 Date                 0.333333  0.666667            3
+                       Number               1.000000  0.000000            5
+                       Other                0.250000  0.750000            4
+                       Person               0.500000  0.500000            2
+                       Place                0.500000  0.500000            2
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  209
+Model:                          Logit   Df Residuals:                      196
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.02417
+Time:                        22:55:46   Log-Likelihood:                -138.81
+converged:                       True   LL-Null:                       -142.25
+Covariance Type:            nonrobust   LLR p-value:                    0.8656
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                      0.2506      1.840      0.136      0.892      -3.357       3.858
+C(topic_grouped)[T.Geography]                  0.5349      0.609      0.879      0.380      -0.658       1.728
+C(topic_grouped)[T.Misc]                      -0.3031      0.559     -0.543      0.587      -1.398       0.792
+C(topic_grouped)[T.Music]                     -0.3281      0.652     -0.503      0.615      -1.607       0.951
+C(topic_grouped)[T.Other]                      0.2435      0.574      0.424      0.672      -0.882       1.369
+C(topic_grouped)[T.Politics]                  -0.2704      0.547     -0.494      0.621      -1.343       0.802
+C(topic_grouped)[T.Science and technology]    -0.2881      0.512     -0.563      0.574      -1.291       0.715
+C(topic_grouped)[T.Sports]                     0.1118      0.660      0.169      0.866      -1.182       1.406
+C(answer_type_grouped)[T.Number]              -0.7854      0.424     -1.852      0.064      -1.616       0.046
+C(answer_type_grouped)[T.Other]               -0.0951      0.453     -0.210      0.834      -0.982       0.792
+C(answer_type_grouped)[T.Person]              -0.0332      0.397     -0.084      0.933      -0.812       0.745
+C(answer_type_grouped)[T.Place]               -0.2389      0.577     -0.414      0.679      -1.370       0.892
+q_length                                      -0.0687      0.396     -0.174      0.862      -0.845       0.707
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing claude-3-5-sonnet-20241022 (Non_Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleMC_shown_temp0.0_1750623156_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    207
+0      2
+Name: count, dtype: int64
+
+Answer change%: 0.9904 [0.9772319926766372, 1.0] (n=209)
+P-value vs 25%: 0; P-value vs 0%: 0
+Phase 2 self-accuracy: 0.5217 [0.45369008336935124, 0.589788177500214] (n=207)
+P-value vs 25%: 5.009e-15; P-value vs 33%: 5.446e-08
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': None
+                  Topic Counts:
+ topic
+Science and technology    43
+Politics                  31
+Art                       26
+Other                     24
+Geography                 23
+Music                     17
+Sports                    16
+TV shows                  11
+Video games                9
+History                    9
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      77
+Person    43
+Number    42
+Other     31
+Place     16
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person  Place
+topic_grouped                                             
+Art                       11       2      4       7      2
+Geography                  9      10      0       0      4
+Misc                       8       3     10       6      2
+Music                      5       4      4       2      2
+Other                     10       5      2       6      1
+Politics                  15       4      5       6      1
+Science and technology    16       9      2      14      2
+Sports                     3       5      4       2      2
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     1                 1.000000
+Geography               1                 0.956522
+                        0                 0.043478
+Misc                    1                 1.000000
+Music                   1                 1.000000
+Other                   1                 1.000000
+Politics                1                 1.000000
+Science and technology  1                 0.976744
+                        0                 0.023256
+Sports                  1                 1.000000
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 1                 1.000000
+Number               1                 1.000000
+Other                1                 0.967742
+                     0                 0.032258
+Person               1                 1.000000
+Place                1                 0.937500
+                     0                 0.062500
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     1                 1.000000
+Geography               1                 0.956522
+                        0                 0.043478
+Misc                    1                 1.000000
+Music                   1                 1.000000
+Other                   1                 1.000000
+Politics                1                 1.000000
+Science and technology  1                 0.976744
+                        0                 0.023256
+Sports                  1                 1.000000
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 1                 1.000000
+Number               1                 1.000000
+Other                1                 0.967742
+                     0                 0.032258
+Person               1                 1.000000
+Place                1                 0.937500
+                     0                 0.062500
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                 0     1  total_count
+topic_grouped          answer_type_grouped                         
+Art                    Date                 0.00  1.00           11
+                       Number               0.00  1.00            2
+                       Other                0.00  1.00            4
+                       Person               0.00  1.00            7
+                       Place                0.00  1.00            2
+Geography              Date                 0.00  1.00            9
+                       Number               0.00  1.00           10
+                       Place                0.25  0.75            4
+Misc                   Date                 0.00  1.00            8
+                       Number               0.00  1.00            3
+                       Other                0.00  1.00           10
+                       Person               0.00  1.00            6
+                       Place                0.00  1.00            2
+Music                  Date                 0.00  1.00            5
+                       Number               0.00  1.00            4
+                       Other                0.00  1.00            4
+                       Person               0.00  1.00            2
+                       Place                0.00  1.00            2
+Other                  Date                 0.00  1.00           10
+                       Number               0.00  1.00            5
+                       Other                0.00  1.00            2
+                       Person               0.00  1.00            6
+                       Place                0.00  1.00            1
+Politics               Date                 0.00  1.00           15
+                       Number               0.00  1.00            4
+                       Other                0.00  1.00            5
+                       Person               0.00  1.00            6
+                       Place                0.00  1.00            1
+Science and technology Date                 0.00  1.00           16
+                       Number               0.00  1.00            9
+                       Other                0.50  0.50            2
+                       Person               0.00  1.00           14
+                       Place                0.00  1.00            2
+Sports                 Date                 0.00  1.00            3
+                       Number               0.00  1.00            5
+                       Other                0.00  1.00            4
+                       Person               0.00  1.00            2
+                       Place                0.00  1.00            2
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                    Could not fit Model 4: Singular matrix
+
+                  Model 6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length (after removing deterministic categories: defaultdict(<class 'list'>, {'topic_grouped': ['Art', 'Other', 'Politics', 'Misc', 'Music', 'Sports'], 'answer_type_grouped': ['Date', 'Number', 'Person']}))
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                    8
+Model:                          Logit   Df Residuals:                        4
+Method:                           MLE   Df Model:                            3
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.2343
+Time:                        22:55:46   Log-Likelihood:                -3.4446
+converged:                      False   LL-Null:                       -4.4987
+Covariance Type:            nonrobust   LLR p-value:                    0.5503
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                    -27.4472   2.47e+04     -0.001      0.999   -4.84e+04    4.83e+04
+C(topic_grouped)[T.Science and technology]    20.4325   2.47e+04      0.001      0.999   -4.84e+04    4.84e+04
+C(answer_type_grouped)[T.Place]               22.1426   2.47e+04      0.001      0.999   -4.84e+04    4.84e+04
+q_length                                       1.4271      2.581      0.553      0.580      -3.631       6.485
+==============================================================================================================
+
+Possibly complete quasi-separation: A fraction 0.25 of observations can be
+perfectly predicted. This might indicate that there is complete
+quasi-separation. In this case some parameters will not be identified.
+
+--- Analyzing claude-3-haiku-20240307 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/claude-3-haiku-20240307_SimpleMC_redacted_temp0.0_1750624717_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    276
+1     76
+Name: count, dtype: int64
+
+Answer change%: 0.2159 [0.17292621866554114, 0.2588919631526407] (n=352)
+P-value vs 25%: 0.1201; P-value vs 0%: 7.191e-23
+Phase 2 self-accuracy: 0.3684 [0.25997160684651005, 0.4768704984166478] (n=76)
+P-value vs 25%: 0.03234; P-value vs 33%: 0.5221
+                  Grouped rare topic into 'Misc'/'Other': ['History', 'TV shows', 'Video games']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Place']
+                  Topic Counts:
+ topic
+Science and technology    69
+Politics                  55
+Art                       52
+Geography                 32
+Sports                    32
+Other                     31
+Music                     30
+History                   21
+TV shows                  21
+Video games                9
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      118
+Person     88
+Other      63
+Number     63
+Place      20
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person
+topic_grouped                                      
+Art                       17       7     11      17
+Geography                 12      14      6       0
+Misc                      13       6     19      13
+Music                      8       4      9       9
+Other                      8       6      9       8
+Politics                  29       5     10      11
+Science and technology    23      10     10      26
+Sports                     8      11      9       4
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.750000
+                        1                 0.250000
+Geography               0                 0.687500
+                        1                 0.312500
+Misc                    0                 0.764706
+                        1                 0.235294
+Music                   0                 0.933333
+                        1                 0.066667
+Other                   0                 0.741935
+                        1                 0.258065
+Politics                0                 0.781818
+                        1                 0.218182
+Science and technology  0                 0.840580
+                        1                 0.159420
+Sports                  0                 0.750000
+                        1                 0.250000
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.838983
+                     1                 0.161017
+Number               0                 0.777778
+                     1                 0.222222
+Other                0                 0.746988
+                     1                 0.253012
+Person               0                 0.750000
+                     1                 0.250000
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.750000
+                        1                 0.250000
+Geography               0                 0.687500
+                        1                 0.312500
+Misc                    0                 0.764706
+                        1                 0.235294
+Music                   0                 0.933333
+                        1                 0.066667
+Other                   0                 0.741935
+                        1                 0.258065
+Politics                0                 0.781818
+                        1                 0.218182
+Science and technology  0                 0.840580
+                        1                 0.159420
+Sports                  0                 0.750000
+                        1                 0.250000
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.838983
+                     1                 0.161017
+Number               0                 0.777778
+                     1                 0.222222
+Other                0                 0.746988
+                     1                 0.253012
+Person               0                 0.750000
+                     1                 0.250000
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.705882  0.294118           17
+                       Number               0.428571  0.571429            7
+                       Other                0.909091  0.090909           11
+                       Person               0.823529  0.176471           17
+Geography              Date                 0.916667  0.083333           12
+                       Number               0.642857  0.357143           14
+                       Other                0.333333  0.666667            6
+Misc                   Date                 0.769231  0.230769           13
+                       Number               1.000000  0.000000            6
+                       Other                0.684211  0.315789           19
+                       Person               0.769231  0.230769           13
+Music                  Date                 0.875000  0.125000            8
+                       Number               1.000000  0.000000            4
+                       Other                0.888889  0.111111            9
+                       Person               1.000000  0.000000            9
+Other                  Date                 0.875000  0.125000            8
+                       Number               0.833333  0.166667            6
+                       Other                0.666667  0.333333            9
+                       Person               0.625000  0.375000            8
+Politics               Date                 0.862069  0.137931           29
+                       Number               0.800000  0.200000            5
+                       Other                0.800000  0.200000           10
+                       Person               0.545455  0.454545           11
+Science and technology Date                 0.913043  0.086957           23
+                       Number               1.000000  0.000000           10
+                       Other                0.800000  0.200000           10
+                       Person               0.730769  0.269231           26
+Sports                 Date                 0.750000  0.250000            8
+                       Number               0.727273  0.272727           11
+                       Other                0.777778  0.222222            9
+                       Person               0.750000  0.250000            4
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      340
+Method:                           MLE   Df Model:                           11
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.03754
+Time:                        22:55:46   Log-Likelihood:                -176.74
+converged:                       True   LL-Null:                       -183.63
+Covariance Type:            nonrobust   LLR p-value:                    0.2449
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.6550      1.667     -0.993      0.321      -4.922       1.612
+C(topic_grouped)[T.Geography]                  0.4891      0.523      0.934      0.350      -0.537       1.515
+C(topic_grouped)[T.Misc]                      -0.1179      0.467     -0.253      0.801      -1.032       0.796
+C(topic_grouped)[T.Music]                     -1.5834      0.803     -1.972      0.049      -3.157      -0.010
+C(topic_grouped)[T.Other]                      0.0337      0.527      0.064      0.949      -0.999       1.067
+C(topic_grouped)[T.Politics]                  -0.0638      0.469     -0.136      0.892      -0.984       0.856
+C(topic_grouped)[T.Science and technology]    -0.5719      0.463     -1.235      0.217      -1.480       0.336
+C(topic_grouped)[T.Sports]                     0.0472      0.532      0.089      0.929      -0.995       1.090
+C(answer_type_grouped)[T.Number]               0.2941      0.410      0.716      0.474      -0.510       1.099
+C(answer_type_grouped)[T.Other]                0.6101      0.369      1.654      0.098      -0.113       1.333
+C(answer_type_grouped)[T.Person]               0.7247      0.369      1.964      0.050       0.001       1.448
+q_length                                       0.0282      0.357      0.079      0.937      -0.672       0.728
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing claude-3-sonnet-20240229 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/claude-3-sonnet-20240229_SimpleMC_redacted_temp0.0_1750639023_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    262
+1     86
+Name: count, dtype: int64
+
+Answer change%: 0.2471 [0.2018075642835529, 0.2924453092796655] (n=348)
+P-value vs 25%: 0.9011; P-value vs 0%: 1.161e-26
+Phase 2 self-accuracy: 0.2674 [0.17389383894427232, 0.36098988198596016] (n=86)
+P-value vs 25%: 0.7148; P-value vs 33%: 0.1696
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
+                  Grouped rare answer_type into 'Misc'/'Other': None
+                  Topic Counts:
+ topic
+Science and technology    65
+Politics                  56
+Art                       45
+Other                     40
+Sports                    31
+Geography                 30
+Music                     26
+TV shows                  23
+History                   19
+Video games               13
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      102
+Person     88
+Other      74
+Number     58
+Place      26
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person  Place
+topic_grouped                                             
+Art                       12       6     10      15      2
+Geography                 11      11      1       0      7
+Misc                      12       7     21      13      2
+Music                      7       3      8       7      1
+Other                     12       6      7      11      4
+Politics                  23       6      9      13      5
+Science and technology    18      10     10      24      3
+Sports                     7       9      8       5      2
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.688889
+                        1                 0.311111
+Geography               0                 0.733333
+                        1                 0.266667
+Misc                    0                 0.818182
+                        1                 0.181818
+Music                   0                 0.961538
+                        1                 0.038462
+Other                   0                 0.725000
+                        1                 0.275000
+Politics                0                 0.714286
+                        1                 0.285714
+Science and technology  0                 0.738462
+                        1                 0.261538
+Sports                  0                 0.709677
+                        1                 0.290323
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.715686
+                     1                 0.284314
+Number               0                 0.706897
+                     1                 0.293103
+Other                0                 0.810811
+                     1                 0.189189
+Person               0                 0.795455
+                     1                 0.204545
+Place                0                 0.692308
+                     1                 0.307692
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.688889
+                        1                 0.311111
+Geography               0                 0.733333
+                        1                 0.266667
+Misc                    0                 0.818182
+                        1                 0.181818
+Music                   0                 0.961538
+                        1                 0.038462
+Other                   0                 0.725000
+                        1                 0.275000
+Politics                0                 0.714286
+                        1                 0.285714
+Science and technology  0                 0.738462
+                        1                 0.261538
+Sports                  0                 0.709677
+                        1                 0.290323
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.715686
+                     1                 0.284314
+Number               0                 0.706897
+                     1                 0.293103
+Other                0                 0.810811
+                     1                 0.189189
+Person               0                 0.795455
+                     1                 0.204545
+Place                0                 0.692308
+                     1                 0.307692
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.833333  0.166667           12
+                       Number               0.333333  0.666667            6
+                       Other                0.700000  0.300000           10
+                       Person               0.733333  0.266667           15
+                       Place                0.500000  0.500000            2
+Geography              Date                 0.727273  0.272727           11
+                       Number               0.818182  0.181818           11
+                       Other                1.000000  0.000000            1
+                       Place                0.571429  0.428571            7
+Misc                   Date                 0.750000  0.250000           12
+                       Number               1.000000  0.000000            7
+                       Other                0.857143  0.142857           21
+                       Person               0.692308  0.307692           13
+                       Place                1.000000  0.000000            2
+Music                  Date                 0.857143  0.142857            7
+                       Number               1.000000  0.000000            3
+                       Other                1.000000  0.000000            8
+                       Person               1.000000  0.000000            7
+                       Place                1.000000  0.000000            1
+Other                  Date                 0.750000  0.250000           12
+                       Number               0.500000  0.500000            6
+                       Other                1.000000  0.000000            7
+                       Person               0.727273  0.272727           11
+                       Place                0.500000  0.500000            4
+Politics               Date                 0.695652  0.304348           23
+                       Number               0.666667  0.333333            6
+                       Other                0.777778  0.222222            9
+                       Person               0.692308  0.307692           13
+                       Place                0.800000  0.200000            5
+Science and technology Date                 0.611111  0.388889           18
+                       Number               0.700000  0.300000           10
+                       Other                0.700000  0.300000           10
+                       Person               0.875000  0.125000           24
+                       Place                0.666667  0.333333            3
+Sports                 Date                 0.571429  0.428571            7
+                       Number               0.666667  0.333333            9
+                       Other                0.625000  0.375000            8
+                       Person               1.000000  0.000000            5
+                       Place                1.000000  0.000000            2
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  348
+Model:                          Logit   Df Residuals:                      335
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.04015
+Time:                        22:55:46   Log-Likelihood:                -186.77
+converged:                       True   LL-Null:                       -194.59
+Covariance Type:            nonrobust   LLR p-value:                    0.2090
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                      0.5414      1.544      0.351      0.726      -2.485       3.568
+C(topic_grouped)[T.Geography]                 -0.5034      0.548     -0.918      0.359      -1.578       0.571
+C(topic_grouped)[T.Misc]                      -0.6886      0.481     -1.433      0.152      -1.631       0.253
+C(topic_grouped)[T.Music]                     -2.4452      1.072     -2.282      0.023      -4.546      -0.345
+C(topic_grouped)[T.Other]                     -0.2446      0.484     -0.506      0.613      -1.193       0.703
+C(topic_grouped)[T.Politics]                  -0.1577      0.447     -0.353      0.724      -1.034       0.718
+C(topic_grouped)[T.Science and technology]    -0.2580      0.432     -0.597      0.550      -1.105       0.589
+C(topic_grouped)[T.Sports]                    -0.1653      0.518     -0.319      0.750      -1.181       0.850
+C(answer_type_grouped)[T.Number]               0.0589      0.374      0.158      0.875      -0.673       0.791
+C(answer_type_grouped)[T.Other]               -0.4764      0.385     -1.239      0.215      -1.230       0.277
+C(answer_type_grouped)[T.Person]              -0.4760      0.356     -1.339      0.181      -1.173       0.221
+C(answer_type_grouped)[T.Place]                0.1173      0.490      0.240      0.811      -0.842       1.077
+q_length                                      -0.2446      0.331     -0.738      0.460      -0.894       0.405
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing deepseek-chat (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/deepseek-chat_SimpleMC_redacted_temp0.0_1750625361_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    195
+1     68
+Name: count, dtype: int64
+
+Answer change%: 0.2586 [0.20563922780870486, 0.31147103835099094] (n=263)
+P-value vs 25%: 0.7513; P-value vs 0%: 1.002e-21
+Phase 2 self-accuracy: 0.5882 [0.47126011111605876, 0.7052104771192355] (n=68)
+P-value vs 25%: 1.451e-08; P-value vs 33%: 1.898e-05
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                    Could not fit Model 1.5: Singular matrix
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                    Could not fit Model 1.6: Singular matrix
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                    Could not fit Model 1.7: Singular matrix
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Place']
+                  Topic Counts:
+ topic
+Science and technology    55
+Politics                  41
+Art                       39
+Other                     31
+Sports                    23
+Music                     22
+Geography                 20
+TV shows                  16
+Video games                9
+History                    7
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      75
+Person    74
+Number    49
+Other     49
+Place     16
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person
+topic_grouped                                      
+Art                        9       5     10      15
+Geography                  9       8      3       0
+Misc                       7       3     14       8
+Music                      5       3      7       7
+Other                      8       6      8       9
+Politics                  17       5     10       9
+Science and technology    15       9      8      23
+Sports                     5      10      5       3
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.769231
+                        1                 0.230769
+Geography               0                 0.850000
+                        1                 0.150000
+Misc                    0                 0.718750
+                        1                 0.281250
+Music                   0                 0.545455
+                        1                 0.454545
+Other                   0                 0.741935
+                        1                 0.258065
+Politics                0                 0.756098
+                        1                 0.243902
+Science and technology  0                 0.709091
+                        1                 0.290909
+Sports                  0                 0.869565
+                        1                 0.130435
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.693333
+                     1                 0.306667
+Number               0                 0.836735
+                     1                 0.163265
+Other                0                 0.769231
+                     1                 0.230769
+Person               0                 0.702703
+                     1                 0.297297
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.769231
+                        1                 0.230769
+Geography               0                 0.850000
+                        1                 0.150000
+Misc                    0                 0.718750
+                        1                 0.281250
+Music                   0                 0.545455
+                        1                 0.454545
+Other                   0                 0.741935
+                        1                 0.258065
+Politics                0                 0.756098
+                        1                 0.243902
+Science and technology  0                 0.709091
+                        1                 0.290909
+Sports                  0                 0.869565
+                        1                 0.130435
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.693333
+                     1                 0.306667
+Number               0                 0.836735
+                     1                 0.163265
+Other                0                 0.769231
+                     1                 0.230769
+Person               0                 0.702703
+                     1                 0.297297
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.777778  0.222222            9
+                       Number               0.800000  0.200000            5
+                       Other                0.800000  0.200000           10
+                       Person               0.733333  0.266667           15
+Geography              Date                 0.888889  0.111111            9
+                       Number               0.750000  0.250000            8
+                       Other                1.000000  0.000000            3
+Misc                   Date                 0.714286  0.285714            7
+                       Number               1.000000  0.000000            3
+                       Other                0.857143  0.142857           14
+                       Person               0.375000  0.625000            8
+Music                  Date                 0.400000  0.600000            5
+                       Number               0.666667  0.333333            3
+                       Other                0.428571  0.571429            7
+                       Person               0.714286  0.285714            7
+Other                  Date                 0.750000  0.250000            8
+                       Number               1.000000  0.000000            6
+                       Other                0.750000  0.250000            8
+                       Person               0.555556  0.444444            9
+Politics               Date                 0.647059  0.352941           17
+                       Number               1.000000  0.000000            5
+                       Other                0.700000  0.300000           10
+                       Person               0.888889  0.111111            9
+Science and technology Date                 0.600000  0.400000           15
+                       Number               0.666667  0.333333            9
+                       Other                0.875000  0.125000            8
+                       Person               0.739130  0.260870           23
+Sports                 Date                 0.800000  0.200000            5
+                       Number               0.900000  0.100000           10
+                       Other                0.800000  0.200000            5
+                       Person               1.000000  0.000000            3
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  263
+Model:                          Logit   Df Residuals:                      251
+Method:                           MLE   Df Model:                           11
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.03901
+Time:                        22:55:47   Log-Likelihood:                -144.45
+converged:                       True   LL-Null:                       -150.32
+Covariance Type:            nonrobust   LLR p-value:                    0.3844
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.9499      1.862     -1.047      0.295      -5.599       1.699
+C(topic_grouped)[T.Geography]                 -0.4383      0.758     -0.578      0.563      -1.924       1.047
+C(topic_grouped)[T.Misc]                       0.3041      0.555      0.548      0.584      -0.783       1.391
+C(topic_grouped)[T.Music]                      1.0851      0.580      1.870      0.062      -0.052       2.222
+C(topic_grouped)[T.Other]                      0.1803      0.565      0.319      0.750      -0.927       1.287
+C(topic_grouped)[T.Politics]                  -0.0083      0.539     -0.015      0.988      -1.065       1.048
+C(topic_grouped)[T.Science and technology]     0.2976      0.487      0.611      0.541      -0.656       1.252
+C(topic_grouped)[T.Sports]                    -0.5458      0.741     -0.737      0.461      -1.998       0.906
+C(answer_type_grouped)[T.Number]              -0.7527      0.475     -1.584      0.113      -1.684       0.179
+C(answer_type_grouped)[T.Other]               -0.4595      0.406     -1.133      0.257      -1.255       0.335
+C(answer_type_grouped)[T.Person]              -0.1380      0.378     -0.365      0.715      -0.880       0.604
+q_length                                       0.2220      0.394      0.564      0.573      -0.549       0.993
+==============================================================================================================
+
+                  Model 4.6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy
+                    Could not fit Model 4.6: Singular matrix
+
+                  Model 4.8: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + normalized_prob_entropy
+                    Could not fit Model 4.8: Singular matrix
+
+                  Model 4.95: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy + normalized_prob_entropy
+                    Could not fit Model 4.95: Singular matrix
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing gemini-1.5-pro (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/gemini-1.5-pro_SimpleMC_redacted_temp0.0_1750683033_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    191
+1     69
+Name: count, dtype: int64
+
+Answer change%: 0.2654 [0.21171489927503356, 0.3190543314941972] (n=260)
+P-value vs 25%: 0.5742; P-value vs 0%: 3.274e-22
+Phase 2 self-accuracy: 0.4928 [0.37479004552166834, 0.6107172008551432] (n=69)
+P-value vs 25%: 5.499e-05; P-value vs 33%: 0.007947
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': None
+                  Topic Counts:
+ topic
+Science and technology    55
+Art                       43
+Politics                  36
+Other                     28
+Geography                 24
+Music                     22
+Sports                    20
+TV shows                  16
+Video games               11
+History                    5
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Person    74
+Date      69
+Other     54
+Number    45
+Place     18
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person  Place
+topic_grouped                                             
+Art                        9       5     10      18      1
+Geography                  7      11      1       0      5
+Misc                       7       3     13       8      1
+Music                      6       4      7       4      1
+Other                      7       3      4      11      3
+Politics                  13       5      7       9      2
+Science and technology    18       7      5      22      3
+Sports                     2       7      7       2      2
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.697674
+                        1                 0.302326
+Geography               0                 0.750000
+                        1                 0.250000
+Misc                    0                 0.781250
+                        1                 0.218750
+Music                   0                 0.681818
+                        1                 0.318182
+Other                   0                 0.678571
+                        1                 0.321429
+Politics                0                 0.805556
+                        1                 0.194444
+Science and technology  0                 0.709091
+                        1                 0.290909
+Sports                  0                 0.800000
+                        1                 0.200000
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.826087
+                     1                 0.173913
+Number               0                 0.733333
+                     1                 0.266667
+Other                0                 0.722222
+                     1                 0.277778
+Person               0                 0.675676
+                     1                 0.324324
+Place                0                 0.666667
+                     1                 0.333333
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.697674
+                        1                 0.302326
+Geography               0                 0.750000
+                        1                 0.250000
+Misc                    0                 0.781250
+                        1                 0.218750
+Music                   0                 0.681818
+                        1                 0.318182
+Other                   0                 0.678571
+                        1                 0.321429
+Politics                0                 0.805556
+                        1                 0.194444
+Science and technology  0                 0.709091
+                        1                 0.290909
+Sports                  0                 0.800000
+                        1                 0.200000
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.826087
+                     1                 0.173913
+Number               0                 0.733333
+                     1                 0.266667
+Other                0                 0.722222
+                     1                 0.277778
+Person               0                 0.675676
+                     1                 0.324324
+Place                0                 0.666667
+                     1                 0.333333
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.777778  0.222222            9
+                       Number               0.800000  0.200000            5
+                       Other                0.800000  0.200000           10
+                       Person               0.611111  0.388889           18
+                       Place                0.000000  1.000000            1
+Geography              Date                 0.857143  0.142857            7
+                       Number               0.636364  0.363636           11
+                       Other                1.000000  0.000000            1
+                       Place                0.800000  0.200000            5
+Misc                   Date                 0.857143  0.142857            7
+                       Number               1.000000  0.000000            3
+                       Other                0.769231  0.230769           13
+                       Person               0.625000  0.375000            8
+                       Place                1.000000  0.000000            1
+Music                  Date                 0.666667  0.333333            6
+                       Number               1.000000  0.000000            4
+                       Other                0.428571  0.571429            7
+                       Person               1.000000  0.000000            4
+                       Place                0.000000  1.000000            1
+Other                  Date                 0.857143  0.142857            7
+                       Number               0.333333  0.666667            3
+                       Other                0.750000  0.250000            4
+                       Person               0.636364  0.363636           11
+                       Place                0.666667  0.333333            3
+Politics               Date                 0.846154  0.153846           13
+                       Number               1.000000  0.000000            5
+                       Other                0.857143  0.142857            7
+                       Person               0.666667  0.333333            9
+                       Place                0.500000  0.500000            2
+Science and technology Date                 0.833333  0.166667           18
+                       Number               0.571429  0.428571            7
+                       Other                0.600000  0.400000            5
+                       Person               0.681818  0.318182           22
+                       Place                0.666667  0.333333            3
+Sports                 Date                 1.000000  0.000000            2
+                       Number               0.714286  0.285714            7
+                       Other                0.714286  0.285714            7
+                       Person               1.000000  0.000000            2
+                       Place                1.000000  0.000000            2
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  260
+Model:                          Logit   Df Residuals:                      247
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.02703
+Time:                        22:55:47   Log-Likelihood:                -146.37
+converged:                       True   LL-Null:                       -150.44
+Covariance Type:            nonrobust   LLR p-value:                    0.7747
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -2.4122      1.805     -1.337      0.181      -5.950       1.125
+C(topic_grouped)[T.Geography]                 -0.1850      0.628     -0.294      0.769      -1.417       1.047
+C(topic_grouped)[T.Misc]                      -0.4250      0.551     -0.772      0.440      -1.505       0.655
+C(topic_grouped)[T.Music]                      0.1703      0.579      0.294      0.769      -0.965       1.305
+C(topic_grouped)[T.Other]                      0.0955      0.533      0.179      0.858      -0.948       1.139
+C(topic_grouped)[T.Politics]                  -0.5202      0.548     -0.950      0.342      -1.594       0.553
+C(topic_grouped)[T.Science and technology]    -0.0038      0.455     -0.008      0.993      -0.896       0.888
+C(topic_grouped)[T.Sports]                    -0.5985      0.670     -0.893      0.372      -1.912       0.715
+C(answer_type_grouped)[T.Number]               0.5993      0.480      1.249      0.212      -0.341       1.539
+C(answer_type_grouped)[T.Other]                0.7122      0.461      1.546      0.122      -0.191       1.615
+C(answer_type_grouped)[T.Person]               0.8214      0.418      1.967      0.049       0.003       1.640
+C(answer_type_grouped)[T.Place]                0.9024      0.610      1.481      0.139      -0.292       2.097
+q_length                                       0.2140      0.381      0.562      0.574      -0.532       0.960
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing gemini-2.0-flash-001 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/gemini-2.0-flash-001_SimpleMC_redacted_temp0.0_1750624452_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    195
+1    100
+Name: count, dtype: int64
+
+Answer change%: 0.3390 [0.2849658130234817, 0.39300028867143355] (n=295)
+P-value vs 25%: 0.001244; P-value vs 0%: 9.094e-35
+Phase 2 self-accuracy: 0.5200 [0.4220802307169153, 0.6179197692830847] (n=100)
+P-value vs 25%: 6.505e-08; P-value vs 33%: 0.0001818
+                  Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Place']
+                  Topic Counts:
+ topic
+Science and technology    55
+Art                       49
+Politics                  44
+Geography                 30
+Other                     28
+Sports                    22
+Music                     22
+TV shows                  19
+History                   16
+Video games               10
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      94
+Person    65
+Other     64
+Number    54
+Place     18
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person
+topic_grouped                                      
+Art                       16       8     12      13
+Geography                 11      14      5       0
+Misc                      12       5     17      11
+Music                      8       2      9       3
+Other                      8       4      8       8
+Politics                  19       4     11      10
+Science and technology    16       9     13      17
+Sports                     4       8      7       3
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.734694
+                        1                 0.265306
+Geography               0                 0.533333
+                        1                 0.466667
+Misc                    0                 0.666667
+                        1                 0.333333
+Music                   0                 0.727273
+                        1                 0.272727
+Other                   0                 0.571429
+                        1                 0.428571
+Politics                0                 0.636364
+                        1                 0.363636
+Science and technology  0                 0.654545
+                        1                 0.345455
+Sports                  0                 0.772727
+                        1                 0.227273
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.691489
+                     1                 0.308511
+Number               0                 0.537037
+                     1                 0.462963
+Other                0                 0.646341
+                     1                 0.353659
+Person               0                 0.738462
+                     1                 0.261538
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.734694
+                        1                 0.265306
+Geography               0                 0.533333
+                        1                 0.466667
+Misc                    0                 0.666667
+                        1                 0.333333
+Music                   0                 0.727273
+                        1                 0.272727
+Other                   0                 0.571429
+                        1                 0.428571
+Politics                0                 0.636364
+                        1                 0.363636
+Science and technology  0                 0.654545
+                        1                 0.345455
+Sports                  0                 0.772727
+                        1                 0.227273
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.691489
+                     1                 0.308511
+Number               0                 0.537037
+                     1                 0.462963
+Other                0                 0.646341
+                     1                 0.353659
+Person               0                 0.738462
+                     1                 0.261538
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.750000  0.250000           16
+                       Number               0.625000  0.375000            8
+                       Other                0.666667  0.333333           12
+                       Person               0.846154  0.153846           13
+Geography              Date                 0.636364  0.363636           11
+                       Number               0.571429  0.428571           14
+                       Other                0.200000  0.800000            5
+Misc                   Date                 0.916667  0.083333           12
+                       Number               0.400000  0.600000            5
+                       Other                0.529412  0.470588           17
+                       Person               0.727273  0.272727           11
+Music                  Date                 0.875000  0.125000            8
+                       Number               0.500000  0.500000            2
+                       Other                0.666667  0.333333            9
+                       Person               0.666667  0.333333            3
+Other                  Date                 0.500000  0.500000            8
+                       Number               0.250000  0.750000            4
+                       Other                0.625000  0.375000            8
+                       Person               0.750000  0.250000            8
+Politics               Date                 0.526316  0.473684           19
+                       Number               0.500000  0.500000            4
+                       Other                0.818182  0.181818           11
+                       Person               0.700000  0.300000           10
+Science and technology Date                 0.625000  0.375000           16
+                       Number               0.666667  0.333333            9
+                       Other                0.692308  0.307692           13
+                       Person               0.647059  0.352941           17
+Sports                 Date                 1.000000  0.000000            4
+                       Number               0.500000  0.500000            8
+                       Other                0.857143  0.142857            7
+                       Person               1.000000  0.000000            3
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  295
+Model:                          Logit   Df Residuals:                      283
+Method:                           MLE   Df Model:                           11
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.03508
+Time:                        22:55:47   Log-Likelihood:                -182.28
+converged:                       True   LL-Null:                       -188.91
+Covariance Type:            nonrobust   LLR p-value:                    0.2770
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -3.0726      1.675     -1.835      0.067      -6.355       0.210
+C(topic_grouped)[T.Geography]                  0.6860      0.509      1.349      0.177      -0.311       1.683
+C(topic_grouped)[T.Misc]                       0.3274      0.459      0.713      0.476      -0.573       1.227
+C(topic_grouped)[T.Music]                      0.0573      0.587      0.098      0.922      -1.092       1.207
+C(topic_grouped)[T.Other]                      0.7886      0.507      1.556      0.120      -0.205       1.782
+C(topic_grouped)[T.Politics]                   0.4305      0.462      0.931      0.352      -0.476       1.337
+C(topic_grouped)[T.Science and technology]     0.3762      0.436      0.862      0.389      -0.479       1.231
+C(topic_grouped)[T.Sports]                    -0.4674      0.619     -0.755      0.450      -1.680       0.746
+C(answer_type_grouped)[T.Number]               0.6923      0.370      1.870      0.062      -0.033       1.418
+C(answer_type_grouped)[T.Other]                0.3090      0.331      0.932      0.351      -0.341       0.959
+C(answer_type_grouped)[T.Person]              -0.1355      0.374     -0.362      0.717      -0.869       0.598
+q_length                                       0.4188      0.357      1.173      0.241      -0.281       1.118
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing gemini-2.5-flash-preview-04-17 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/gemini-2.5-flash-preview-04-17_SimpleMC_redacted_temp0.0_1750640278_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    96
+1    69
+Name: count, dtype: int64
+
+Answer change%: 0.4182 [0.34291867760398537, 0.49344495875965094] (n=165)
+P-value vs 25%: 1.188e-05; P-value vs 0%: 1.285e-27
+Phase 2 self-accuracy: 0.7246 [0.6192387376715818, 0.8300366246472588] (n=69)
+P-value vs 25%: 1.083e-18; P-value vs 33%: 3.27e-13
+                  Grouped rare topic into 'Misc'/'Other': ['Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Place']
+                  Topic Counts:
+ topic
+Science and technology    33
+Politics                  21
+Music                     18
+Art                       18
+TV shows                  15
+Other                     15
+Geography                 13
+Sports                    12
+Video games               11
+History                    9
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      54
+Number    35
+Person    34
+Other     32
+Place     10
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person
+topic_grouped                                      
+Art                        4       2      4       8
+Geography                  5       7      1       0
+Misc                       9       3      6       2
+Music                      5       3      7       3
+Other                      7       4      2       2
+Politics                  11       2      4       4
+Science and technology    11       7      6       9
+Sports                     0       6      3       3
+TV shows                   2       1      9       3
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.500000
+                        1                 0.500000
+Geography               1                 0.538462
+                        0                 0.461538
+Misc                    0                 0.600000
+                        1                 0.400000
+Music                   0                 0.611111
+                        1                 0.388889
+Other                   0                 0.733333
+                        1                 0.266667
+Politics                0                 0.619048
+                        1                 0.380952
+Science and technology  0                 0.636364
+                        1                 0.363636
+Sports                  0                 0.583333
+                        1                 0.416667
+TV shows                1                 0.600000
+                        0                 0.400000
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.666667
+                     1                 0.333333
+Number               0                 0.600000
+                     1                 0.400000
+Other                0                 0.523810
+                     1                 0.476190
+Person               0                 0.500000
+                     1                 0.500000
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.500000
+                        1                 0.500000
+Geography               1                 0.538462
+                        0                 0.461538
+Misc                    0                 0.600000
+                        1                 0.400000
+Music                   0                 0.611111
+                        1                 0.388889
+Other                   0                 0.733333
+                        1                 0.266667
+Politics                0                 0.619048
+                        1                 0.380952
+Science and technology  0                 0.636364
+                        1                 0.363636
+Sports                  0                 0.583333
+                        1                 0.416667
+TV shows                1                 0.600000
+                        0                 0.400000
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.666667
+                     1                 0.333333
+Number               0                 0.600000
+                     1                 0.400000
+Other                0                 0.523810
+                     1                 0.476190
+Person               0                 0.500000
+                     1                 0.500000
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.750000  0.250000            4
+                       Number               0.500000  0.500000            2
+                       Other                0.250000  0.750000            4
+                       Person               0.500000  0.500000            8
+Geography              Date                 0.400000  0.600000            5
+                       Number               0.428571  0.571429            7
+                       Other                1.000000  0.000000            1
+Misc                   Date                 0.555556  0.444444            9
+                       Number               1.000000  0.000000            3
+                       Other                0.500000  0.500000            6
+                       Person               0.500000  0.500000            2
+Music                  Date                 0.800000  0.200000            5
+                       Number               0.666667  0.333333            3
+                       Other                0.571429  0.428571            7
+                       Person               0.333333  0.666667            3
+Other                  Date                 0.714286  0.285714            7
+                       Number               0.750000  0.250000            4
+                       Other                1.000000  0.000000            2
+                       Person               0.500000  0.500000            2
+Politics               Date                 0.727273  0.272727           11
+                       Number               0.000000  1.000000            2
+                       Other                0.500000  0.500000            4
+                       Person               0.750000  0.250000            4
+Science and technology Date                 0.727273  0.272727           11
+                       Number               0.571429  0.428571            7
+                       Other                0.666667  0.333333            6
+                       Person               0.555556  0.444444            9
+Sports                 Number               0.833333  0.166667            6
+                       Other                0.333333  0.666667            3
+                       Person               0.333333  0.666667            3
+TV shows               Date                 0.500000  0.500000            2
+                       Number               0.000000  1.000000            1
+                       Other                0.444444  0.555556            9
+                       Person               0.333333  0.666667            3
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  165
+Model:                          Logit   Df Residuals:                      152
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.03821
+Time:                        22:55:47   Log-Likelihood:                -107.86
+converged:                       True   LL-Null:                       -112.15
+Covariance Type:            nonrobust   LLR p-value:                    0.7390
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                      1.3831      2.068      0.669      0.504      -2.670       5.436
+C(topic_grouped)[T.Geography]                  0.3856      0.774      0.498      0.619      -1.132       1.904
+C(topic_grouped)[T.Misc]                      -0.1951      0.679     -0.288      0.774      -1.525       1.135
+C(topic_grouped)[T.Music]                     -0.4482      0.698     -0.642      0.521      -1.816       0.920
+C(topic_grouped)[T.Other]                     -0.8805      0.775     -1.136      0.256      -2.400       0.639
+C(topic_grouped)[T.Politics]                  -0.2919      0.671     -0.435      0.664      -1.607       1.023
+C(topic_grouped)[T.Science and technology]    -0.4604      0.606     -0.760      0.447      -1.648       0.727
+C(topic_grouped)[T.Sports]                    -0.3210      0.779     -0.412      0.680      -1.847       1.205
+C(topic_grouped)[T.TV shows]                   0.3282      0.734      0.447      0.655      -1.110       1.767
+C(answer_type_grouped)[T.Number]               0.2004      0.483      0.415      0.678      -0.746       1.146
+C(answer_type_grouped)[T.Other]                0.4384      0.456      0.961      0.336      -0.455       1.332
+C(answer_type_grouped)[T.Person]               0.6251      0.479      1.305      0.192      -0.314       1.564
+q_length                                      -0.3904      0.427     -0.914      0.361      -1.228       0.447
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing gpt-4o-2024-08-06 (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/gpt-4o-2024-08-06_SimpleMC_redacted_temp0.0_1750625192_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    159
+1     88
+Name: count, dtype: int64
+
+Answer change%: 0.3563 [0.29655217378238724, 0.4159984335050621] (n=247)
+P-value vs 25%: 0.0004872; P-value vs 0%: 1.399e-31
+Phase 2 self-accuracy: 0.4773 [0.37291427155746926, 0.5816311829879853] (n=88)
+P-value vs 25%: 1.969e-05; P-value vs 33%: 0.006737
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      245
+Method:                           MLE   Df Model:                            1
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.1538
+Time:                        22:55:47   Log-Likelihood:                -136.11
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 1.991e-12
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.8853      0.437     -6.607      0.000      -3.741      -2.029
+capabilities_entropy     1.9954      0.332      6.014      0.000       1.345       2.646
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      245
+Method:                           MLE   Df Model:                            1
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.09219
+Time:                        22:55:47   Log-Likelihood:                -146.03
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 5.156e-08
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -1.9202      0.314     -6.118      0.000      -2.535      -1.305
+normalized_prob_entropy     1.4085      0.279      5.049      0.000       0.862       1.955
+===========================================================================================
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      244
+Method:                           MLE   Df Model:                            2
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.1562
+Time:                        22:55:47   Log-Likelihood:                -135.73
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 1.224e-11
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -2.9359      0.443     -6.634      0.000      -3.803      -2.068
+capabilities_entropy        1.7705      0.417      4.247      0.000       0.953       2.587
+normalized_prob_entropy     0.3235      0.372      0.871      0.384      -0.405       1.052
+===========================================================================================
+                  Grouped rare topic into 'Misc'/'Other': ['History', 'TV shows', 'Video games']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Place']
+                  Topic Counts:
+ topic
+Science and technology    54
+Politics                  38
+Art                       33
+Other                     25
+Geography                 22
+Music                     20
+Sports                    19
+History                   14
+TV shows                  13
+Video games                9
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      95
+Person    56
+Number    41
+Other     40
+Place     15
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Number  Other  Person
+topic_grouped                                      
+Art                       15       2      8       8
+Geography                  9      10      3       0
+Misc                      11       5     11       9
+Music                      8       2      8       2
+Other                      8       4      7       6
+Politics                  21       1      7       9
+Science and technology    18       7      9      20
+Sports                     5      10      2       2
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Art                     0                 0.606061
+                        1                 0.393939
+Geography               0                 0.681818
+                        1                 0.318182
+Misc                    0                 0.611111
+                        1                 0.388889
+Music                   0                 0.750000
+                        1                 0.250000
+Other                   0                 0.640000
+                        1                 0.360000
+Politics                0                 0.631579
+                        1                 0.368421
+Science and technology  0                 0.648148
+                        1                 0.351852
+Sports                  0                 0.631579
+                        1                 0.368421
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.600000
+                     1                 0.400000
+Number               0                 0.658537
+                     1                 0.341463
+Other                0                 0.727273
+                     1                 0.272727
+Person               0                 0.625000
+                     1                 0.375000
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Art                     0                 0.606061
+                        1                 0.393939
+Geography               0                 0.681818
+                        1                 0.318182
+Misc                    0                 0.611111
+                        1                 0.388889
+Music                   0                 0.750000
+                        1                 0.250000
+Other                   0                 0.640000
+                        1                 0.360000
+Politics                0                 0.631579
+                        1                 0.368421
+Science and technology  0                 0.648148
+                        1                 0.351852
+Sports                  0                 0.631579
+                        1                 0.368421
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.600000
+                     1                 0.400000
+Number               0                 0.658537
+                     1                 0.341463
+Other                0                 0.727273
+                     1                 0.272727
+Person               0                 0.625000
+                     1                 0.375000
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Art                    Date                 0.466667  0.533333           15
+                       Number               1.000000  0.000000            2
+                       Other                1.000000  0.000000            8
+                       Person               0.375000  0.625000            8
+Geography              Date                 0.555556  0.444444            9
+                       Number               0.700000  0.300000           10
+                       Other                1.000000  0.000000            3
+Misc                   Date                 0.727273  0.272727           11
+                       Number               1.000000  0.000000            5
+                       Other                0.636364  0.363636           11
+                       Person               0.222222  0.777778            9
+Music                  Date                 0.750000  0.250000            8
+                       Number               1.000000  0.000000            2
+                       Other                0.750000  0.250000            8
+                       Person               0.500000  0.500000            2
+Other                  Date                 0.625000  0.375000            8
+                       Number               0.500000  0.500000            4
+                       Other                0.714286  0.285714            7
+                       Person               0.666667  0.333333            6
+Politics               Date                 0.476190  0.523810           21
+                       Number               1.000000  0.000000            1
+                       Other                0.714286  0.285714            7
+                       Person               0.888889  0.111111            9
+Science and technology Date                 0.722222  0.277778           18
+                       Number               0.285714  0.714286            7
+                       Other                0.555556  0.444444            9
+                       Person               0.750000  0.250000           20
+Sports                 Date                 0.600000  0.400000            5
+                       Number               0.600000  0.400000           10
+                       Other                0.500000  0.500000            2
+                       Person               1.000000  0.000000            2
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      235
+Method:                           MLE   Df Model:                           11
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.01475
+Time:                        22:55:47   Log-Likelihood:                -158.48
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                    0.9428
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                      1.1330      1.761      0.643      0.520      -2.318       4.584
+C(topic_grouped)[T.Geography]                 -0.3490      0.605     -0.577      0.564      -1.534       0.836
+C(topic_grouped)[T.Misc]                       0.0710      0.501      0.142      0.887      -0.912       1.054
+C(topic_grouped)[T.Music]                     -0.6200      0.635     -0.977      0.328      -1.864       0.624
+C(topic_grouped)[T.Other]                     -0.1219      0.554     -0.220      0.826      -1.208       0.965
+C(topic_grouped)[T.Politics]                  -0.0885      0.500     -0.177      0.860      -1.069       0.892
+C(topic_grouped)[T.Science and technology]    -0.1801      0.463     -0.389      0.697      -1.087       0.727
+C(topic_grouped)[T.Sports]                    -0.0453      0.628     -0.072      0.942      -1.276       1.186
+C(answer_type_grouped)[T.Number]              -0.2279      0.420     -0.543      0.587      -1.051       0.595
+C(answer_type_grouped)[T.Other]               -0.5978      0.376     -1.591      0.112      -1.334       0.139
+C(answer_type_grouped)[T.Person]              -0.1833      0.359     -0.510      0.610      -0.888       0.521
+q_length                                      -0.3072      0.382     -0.804      0.422      -1.056       0.442
+==============================================================================================================
+
+                  Model 4.6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      234
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.1774
+Time:                        22:55:47   Log-Likelihood:                -132.32
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 7.646e-08
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.4401      2.001     -0.720      0.472      -5.363       2.482
+C(topic_grouped)[T.Geography]                 -0.7035      0.681     -1.033      0.302      -2.039       0.632
+C(topic_grouped)[T.Misc]                      -0.3938      0.563     -0.700      0.484      -1.497       0.709
+C(topic_grouped)[T.Music]                     -0.8874      0.710     -1.250      0.211      -2.279       0.504
+C(topic_grouped)[T.Other]                     -0.0554      0.617     -0.090      0.928      -1.266       1.155
+C(topic_grouped)[T.Politics]                  -0.4293      0.567     -0.757      0.449      -1.541       0.683
+C(topic_grouped)[T.Science and technology]    -0.4711      0.525     -0.897      0.370      -1.500       0.558
+C(topic_grouped)[T.Sports]                    -0.1691      0.697     -0.242      0.808      -1.536       1.198
+C(answer_type_grouped)[T.Number]              -0.1063      0.461     -0.231      0.818      -1.009       0.797
+C(answer_type_grouped)[T.Other]               -0.1449      0.423     -0.342      0.732      -0.975       0.685
+C(answer_type_grouped)[T.Person]               0.6289      0.429      1.467      0.142      -0.211       1.469
+q_length                                      -0.3194      0.425     -0.752      0.452      -1.151       0.513
+capabilities_entropy                           2.2268      0.366      6.079      0.000       1.509       2.945
+==============================================================================================================
+
+                  Model 4.8: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      234
+Method:                           MLE   Df Model:                           12
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.1045
+Time:                        22:55:47   Log-Likelihood:                -144.06
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 0.0007785
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -0.9855      1.921     -0.513      0.608      -4.750       2.779
+C(topic_grouped)[T.Geography]                 -0.1509      0.635     -0.238      0.812      -1.395       1.093
+C(topic_grouped)[T.Misc]                      -0.0243      0.533     -0.046      0.964      -1.068       1.019
+C(topic_grouped)[T.Music]                     -0.2686      0.673     -0.399      0.690      -1.588       1.051
+C(topic_grouped)[T.Other]                      0.0189      0.589      0.032      0.974      -1.135       1.173
+C(topic_grouped)[T.Politics]                   0.0114      0.533      0.021      0.983      -1.033       1.056
+C(topic_grouped)[T.Science and technology]    -0.0880      0.496     -0.177      0.859      -1.061       0.884
+C(topic_grouped)[T.Sports]                     0.3208      0.676      0.475      0.635      -1.003       1.645
+C(answer_type_grouped)[T.Number]              -0.4000      0.448     -0.893      0.372      -1.278       0.478
+C(answer_type_grouped)[T.Other]               -0.3578      0.403     -0.887      0.375      -1.149       0.433
+C(answer_type_grouped)[T.Person]               0.2738      0.394      0.695      0.487      -0.499       1.046
+q_length                                      -0.1963      0.407     -0.482      0.630      -0.994       0.602
+normalized_prob_entropy                        1.4665      0.294      4.983      0.000       0.890       2.043
+==============================================================================================================
+
+                  Model 4.95: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  247
+Model:                          Logit   Df Residuals:                      233
+Method:                           MLE   Df Model:                           13
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                  0.1792
+Time:                        22:55:47   Log-Likelihood:                -132.03
+converged:                       True   LL-Null:                       -160.86
+Covariance Type:            nonrobust   LLR p-value:                 1.374e-07
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.6301      2.022     -0.806      0.420      -5.592       2.332
+C(topic_grouped)[T.Geography]                 -0.6340      0.686     -0.924      0.355      -1.979       0.711
+C(topic_grouped)[T.Misc]                      -0.3818      0.563     -0.678      0.498      -1.486       0.722
+C(topic_grouped)[T.Music]                     -0.8077      0.718     -1.125      0.261      -2.215       0.599
+C(topic_grouped)[T.Other]                     -0.0400      0.619     -0.065      0.948      -1.254       1.174
+C(topic_grouped)[T.Politics]                  -0.3942      0.570     -0.692      0.489      -1.511       0.723
+C(topic_grouped)[T.Science and technology]    -0.4313      0.527     -0.818      0.413      -1.465       0.602
+C(topic_grouped)[T.Sports]                    -0.0946      0.707     -0.134      0.894      -1.480       1.291
+C(answer_type_grouped)[T.Number]              -0.1529      0.467     -0.328      0.743      -1.067       0.762
+C(answer_type_grouped)[T.Other]               -0.1346      0.425     -0.317      0.751      -0.967       0.698
+C(answer_type_grouped)[T.Person]               0.6551      0.430      1.523      0.128      -0.188       1.499
+q_length                                      -0.2966      0.426     -0.696      0.487      -1.133       0.539
+capabilities_entropy                           2.0264      0.448      4.524      0.000       1.148       2.904
+normalized_prob_entropy                        0.2945      0.388      0.759      0.448      -0.466       1.055
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
+
+--- Analyzing grok-3-latest (Redacted, 1 game files) ---
+              Game files for analysis: ['./secondchance_game_logs/grok-3-latest_SimpleMC_redacted_temp0.0_1750624999_game_data.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    115
+1     90
+Name: count, dtype: int64
+
+Answer change%: 0.4390 [0.37109034528209817, 0.5069584352057067] (n=205)
+P-value vs 25%: 4.938e-08; P-value vs 0%: 9.092e-37
+Phase 2 self-accuracy: 0.5667 [0.464289827116821, 0.6690435062165123] (n=90)
+P-value vs 25%: 1.341e-09; P-value vs 33%: 7.697e-06
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      203
+Method:                           MLE   Df Model:                            1
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.06517
+Time:                        22:55:47   Log-Likelihood:                -131.41
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                 1.866e-05
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.0777      0.253     -4.257      0.000      -1.574      -0.582
+capabilities_entropy     1.3283      0.323      4.107      0.000       0.694       1.962
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      203
+Method:                           MLE   Df Model:                            1
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.05200
+Time:                        22:55:47   Log-Likelihood:                -133.26
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                 0.0001317
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -0.8911      0.228     -3.901      0.000      -1.339      -0.443
+normalized_prob_entropy     1.1486      0.309      3.711      0.000       0.542       1.755
+===========================================================================================
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      202
+Method:                           MLE   Df Model:                            2
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.08945
+Time:                        22:55:47   Log-Likelihood:                -127.99
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                 3.460e-06
+===========================================================================================
+                              coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -1.3984      0.290     -4.815      0.000      -1.968      -0.829
+capabilities_entropy        1.0807      0.340      3.178      0.001       0.414       1.747
+normalized_prob_entropy     0.8442      0.325      2.594      0.009       0.206       1.482
+===========================================================================================
+                  Grouped rare topic into 'Misc'/'Other': ['Politics', 'Art', 'Geography', 'Other', 'Music', 'Sports', 'TV shows', 'Video games', 'History']
+                  Grouped rare answer_type into 'Misc'/'Other': ['Number', 'Other', 'Place']
+                  Topic Counts:
+ topic
+Science and technology    50
+Politics                  29
+Art                       27
+Geography                 22
+Other                     17
+Music                     17
+Sports                    15
+TV shows                  12
+Video games               11
+History                    5
+Name: count, dtype: int64
+                  Answer Type Counts:
+ answer_type
+Date      68
+Person    57
+Number    38
+Other     29
+Place     13
+Name: count, dtype: int64
+
+                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
+answer_type_grouped     Date  Misc  Person
+topic_grouped                             
+Misc                      54    66      35
+Science and technology    14    14      22
+                  Answer Changed by topic_grouped:
+topic_grouped           answer_changed
+Misc                    0                 0.56129
+                        1                 0.43871
+Science and technology  0                 0.56000
+                        1                 0.44000
+Name: proportion, dtype: float64
+
+                  Answer Changed by answer_type_grouped:
+answer_type_grouped  answer_changed
+Date                 0                 0.573529
+                     1                 0.426471
+Misc                 0                 0.512500
+                     1                 0.487500
+Person               0                 0.614035
+                     1                 0.385965
+Name: proportion, dtype: float64
+
+topic_grouped           answer_changed
+Misc                    0                 0.56129
+                        1                 0.43871
+Science and technology  0                 0.56000
+                        1                 0.44000
+Name: proportion, dtype: float64
+
+answer_type_grouped  answer_changed
+Date                 0                 0.573529
+                     1                 0.426471
+Misc                 0                 0.512500
+                     1                 0.487500
+Person               0                 0.614035
+                     1                 0.385965
+Name: proportion, dtype: float64
+
+                  topic+answer_type By answer_changed:
+
+answer_changed                                     0         1  total_count
+topic_grouped          answer_type_grouped                                 
+Misc                   Date                 0.592593  0.407407           54
+                       Misc                 0.530303  0.469697           66
+                       Person               0.571429  0.428571           35
+Science and technology Date                 0.500000  0.500000           14
+                       Misc                 0.428571  0.571429           14
+                       Person               0.681818  0.318182           22
+
+                  Model 4 (No Interactions): answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      200
+Method:                           MLE   Df Model:                            4
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                0.008891
+Time:                        22:55:47   Log-Likelihood:                -139.32
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                    0.6447
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.9561      1.685     -1.161      0.246      -5.258       1.346
+C(topic_grouped)[T.Science and technology]     0.0601      0.338      0.178      0.859      -0.603       0.723
+C(answer_type_grouped)[T.Misc]                 0.2888      0.336      0.861      0.389      -0.369       0.946
+C(answer_type_grouped)[T.Person]              -0.0862      0.384     -0.224      0.823      -0.840       0.667
+q_length                                       0.3524      0.357      0.987      0.323      -0.347       1.052
+==============================================================================================================
+
+                  Model 4.6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      199
+Method:                           MLE   Df Model:                            5
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.07484
+Time:                        22:55:47   Log-Likelihood:                -130.05
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                 0.0007963
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -2.6650      1.771     -1.505      0.132      -6.136       0.806
+C(topic_grouped)[T.Science and technology]    -0.0529      0.358     -0.148      0.882      -0.754       0.648
+C(answer_type_grouped)[T.Misc]                 0.4647      0.354      1.311      0.190      -0.230       1.160
+C(answer_type_grouped)[T.Person]               0.0861      0.404      0.213      0.831      -0.706       0.878
+q_length                                       0.3019      0.373      0.810      0.418      -0.429       1.033
+capabilities_entropy                           1.3609      0.330      4.124      0.000       0.714       2.008
+==============================================================================================================
+
+                  Model 4.8: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      199
+Method:                           MLE   Df Model:                            5
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.05856
+Time:                        22:55:47   Log-Likelihood:                -132.34
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                  0.005642
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -2.5003      1.743     -1.434      0.151      -5.917       0.916
+C(topic_grouped)[T.Science and technology]     0.1217      0.350      0.348      0.728      -0.564       0.807
+C(answer_type_grouped)[T.Misc]                 0.3815      0.349      1.092      0.275      -0.303       1.066
+C(answer_type_grouped)[T.Person]               0.2019      0.407      0.496      0.620      -0.597       1.001
+q_length                                       0.2997      0.367      0.817      0.414      -0.420       1.019
+normalized_prob_entropy                        1.1607      0.320      3.624      0.000       0.533       1.788
+==============================================================================================================
+
+                  Model 4.95: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy + normalized_prob_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  205
+Model:                          Logit   Df Residuals:                      198
+Method:                           MLE   Df Model:                            6
+Date:                Mon, 23 Jun 2025   Pseudo R-squ.:                 0.09782
+Time:                        22:55:47   Log-Likelihood:                -126.82
+converged:                       True   LL-Null:                       -140.57
+Covariance Type:            nonrobust   LLR p-value:                 0.0001166
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -2.9678      1.800     -1.648      0.099      -6.497       0.561
+C(topic_grouped)[T.Science and technology]    -0.0020      0.364     -0.006      0.996      -0.715       0.711
+C(answer_type_grouped)[T.Misc]                 0.5040      0.361      1.395      0.163      -0.204       1.212
+C(answer_type_grouped)[T.Person]               0.2676      0.421      0.635      0.525      -0.558       1.094
+q_length                                       0.2785      0.377      0.738      0.460      -0.461       1.018
+capabilities_entropy                           1.1250      0.347      3.245      0.001       0.445       1.805
+normalized_prob_entropy                        0.8441      0.335      2.519      0.012       0.187       1.501
+==============================================================================================================
+                    Skipping Model 6: No deterministic categories removed, would be same as Model 5.
