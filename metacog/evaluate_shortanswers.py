@@ -311,7 +311,7 @@ Subject response: {subject_answer}
         # Process each question
         file_subject_id_for_exclusion = test_data.get("subject_id", "") # Get once for the file
 
-        for question_id, result in results.items():
+        for ctr, (question_id, result) in enumerate(results.items()):
             # Skip questions that have already been evaluated
             if "evaluation_method" in result and result["evaluation_method"] not in ["pending", None, ""]:
                 # Recalculate stats for already evaluated items
@@ -357,6 +357,8 @@ Subject response: {subject_answer}
                 plurality_decisions += 1
             elif evaluation_outcome["evaluation_method"] in ["tie", "no_valid_judges", "llm_no_judgments_received", "llm_no_judgments_recorded"]:
                 no_consensus += 1
+
+            print(f"Finished evaluating {ctr + 1}/{total_questions}")
         
         # Calculate overall accuracy
         # Ensure 'results' is the correct key, it might be test_data["results"] or similar
@@ -467,6 +469,7 @@ Subject response: {subject_answer}
                 # Other outcomes like "no_valid_judges", "llm_no_judgments_received" are handled by _perform_evaluation_for_item
                 # and their 'is_correct' will be None. They don't increment llm_evaluated_count here
                 # as they didn't result in a plurality decision or tie from received judgments.
+                print(f"Finished evaluating {ctr + 1}")
             
         # Calculate overall accuracy for "Self" trials
         self_answered_correctly = 0
@@ -503,11 +506,11 @@ Subject response: {subject_answer}
         return output_file
 
 def main():
-    #test_data_file = "./capabilities_test_logs/claude-3-haiku-20240307_SimpleQA_500_1750550272_test_data.json"
-    #test_data_file = "./delegate_game_logs/gemini-1.5-pro_SimpleQA_50_500_nohistory_summary_team0.5_temp0.0_1750549205_game_data.json"
-    test_data_file = "./pass_game_logs/claude-3-5-sonnet-20241022_SimpleQA_noqcnt_nopcnt_noscnt_temp0.0_1750721190_game_data.json"
+    test_data_file = "./capabilities_test_logs/gemini-2.0-flash-001_SimpleQA_500_1750864388_test_data.json"
+    #test_data_file = "./delegate_game_logs/claude-3-sonnet-20240229_GPSA_50_500_team0.2_temp0.0_1750854313_game_data.json"
+    #test_data_file = "./pass_game_logs/claude-3-5-sonnet-20241022_SimpleQA_noqcnt_nopcnt_noscnt_temp0.0_1750721190_game_data.json"
     
-    judge_models = ["deepseek-chat", "gpt-4o-2024-08-06", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    judge_models = ["deepseek-chat", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
 
 
     print(f"Evaluating {test_data_file} using models: {judge_models}")

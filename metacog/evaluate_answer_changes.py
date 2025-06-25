@@ -243,7 +243,7 @@ Choose the single best option (A or B).
         
         file_subject_id_for_exclusion = game_data.get("subject_id", "")
 
-        for question_id, item_data in results_dict.items():
+        for ctr, (question_id, item_data) in enumerate(results_dict.items()):
             stats["total_items_processed"] += 1
             
             original_answer = item_data.get("original_answer")
@@ -300,6 +300,8 @@ Choose the single best option (A or B).
             elif method == "llm_no_judgments_received" or method == "llm_no_judgments_recorded":
                  stats["llm_no_judgments_received"] += 1
             # 'skipped_missing_data' is handled above
+
+            print(f"Finished evaluating {ctr + 1}/{total_items}")
         
         # Calculate overall summary statistics for answer changes
         num_determined_changed = sum(1 for res_item in results_dict.values() if res_item.get("answer_changed") is True)
@@ -345,9 +347,9 @@ Choose the single best option (A or B).
         return output_file
 
 def main():
-    test_data_file = "./secondchance_game_logs/claude-3-sonnet-20240229_SimpleQA_redacted_temp0.0_1750682543_game_data.json"
+    test_data_file = "./secondchance_game_logs/gemini-2.0-flash-001_SimpleQA_redacted_temp0.0_1750871470_game_data.json"
     
-    judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "gpt-4o-2024-08-06"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
 
     print(f"Evaluating answer changes in {test_data_file} using models: {judge_models}")
     

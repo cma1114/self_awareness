@@ -8,21 +8,41 @@ import warnings
 # Z-score for 95% CI
 Z_SCORE = norm.ppf(0.975)
 
-def parse_analysis_log(log_content, output_file, target_params, model_list, adj_int=True, adj_lift=True):
+def parse_analysis_log(log_content, output_file, target_params, model_list, int_score_type="adjusted", lift_score_type="adjusted"):
     
     block_start_regex = re.compile(
         r"--- Analyzing (\S+) \(" + re.escape(target_params) + r", \d+ game files\) ---"
     )
 
     adj_introspection_regex = re.compile(r"Adjusted introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
-    adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     raw_introspection_regex = re.compile(r"Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
+    filtered_introspection_regex = re.compile(r"Filtered Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
+    
+    adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    filtered_self_acc_lift_regex = re.compile(r"Filtered Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
-    introspection_regex = adj_introspection_regex if adj_int else raw_introspection_regex
-    self_acc_lift_regex = adj_self_acc_lift_regex if adj_lift else raw_self_acc_lift_regex
-    prefix_int = "adj" if adj_int else "raw"
-    prefix_lift = "adj" if adj_lift else "raw"
+
+    if int_score_type == "adjusted":
+        introspection_regex = adj_introspection_regex
+        prefix_int = "adj"
+    elif int_score_type == "filtered":
+        introspection_regex = filtered_introspection_regex
+        prefix_int = "filt"
+    else: # raw
+        introspection_regex = raw_introspection_regex
+        prefix_int = "raw"
+
+    if lift_score_type == "adjusted":
+        self_acc_lift_regex = adj_self_acc_lift_regex
+        prefix_lift = "adj"
+    elif lift_score_type == "filtered":
+        self_acc_lift_regex = filtered_self_acc_lift_regex
+        prefix_lift = "filt"
+    else: # raw
+        self_acc_lift_regex = raw_self_acc_lift_regex
+        prefix_lift = "raw"
     
     # Model section identifiers
     model4_start_regex = re.compile(r"^\s*Model 4.*\(No Interactions\).*:\s*delegate_choice ~")
@@ -265,8 +285,20 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, adj_
                     print(f"Warning: Model 4.8 normalized_prob_entropy coefficient not found for {subject_name}")
                 
                 # Write extracted info
-                prefix_int_cln = "Adjusted " if adj_int else "Raw "
-                prefix_lift_cln = "Adjusted " if adj_lift else "Raw "
+                if int_score_type == "adjusted":
+                    prefix_int_cln = "Adjusted "
+                elif int_score_type == "filtered":
+                    prefix_int_cln = "Filtered "
+                else:
+                    prefix_int_cln = "Raw "
+                
+                if lift_score_type == "adjusted":
+                    prefix_lift_cln = "Adjusted "
+                elif lift_score_type == "filtered":
+                    prefix_lift_cln = "Filtered "
+                else:
+                    prefix_lift_cln = "Raw "
+                    
                 outfile.write(f"  {prefix_int_cln}introspection score: {extracted_info[f'{prefix_int}_introspection']} [{extracted_info[f'{prefix_int}_introspection_ci_low']}, {extracted_info[f'{prefix_int}_introspection_ci_high']}]\n")
                 outfile.write(f"  {prefix_lift_cln}self-acc lift: {extracted_info[f'{prefix_lift}_self_acc_lift']} [{extracted_info[f'{prefix_lift}_self_acc_lift_ci_low']}, {extracted_info[f'{prefix_lift}_self_acc_lift_ci_high']}]\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
@@ -308,7 +340,12 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info = {"subject_name": line.split("Subject:")[1].strip()}
             elif "introspection score:" in line:
                 # Parse: "Adjusted introspection score: 0.167 [0.070, 0.262]"
-                prefix_int = "adj" if "Adjusted" in line else "raw"
+                if "Adjusted" in line:
+                    prefix_int = "adj"
+                elif "Filtered" in line:
+                    prefix_int = "filt"
+                else:
+                    prefix_int = "raw"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
                     current_subject_info[f"{prefix_int}_introspection"] = float(m.group(1))
@@ -316,7 +353,12 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info[f"{prefix_int}_introspection_ci_high"] = float(m.group(3))
             elif "self-acc lift:" in line:
                 # Parse: "Adjusted self-acc lift: 0.178 [0.062, 0.280]"
-                prefix_lift = "adj" if "Adjusted" in line else "raw"
+                if "Adjusted" in line:
+                    prefix_lift = "adj"
+                elif "Filtered" in line:
+                    prefix_lift = "filt"
+                else:
+                    prefix_lift = "raw"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
                     current_subject_info[f"{prefix_lift}_self_acc_lift"] = float(m.group(1))
@@ -364,13 +406,35 @@ def analyze_parsed_data(input_summary_file):
         subject_name = data.get("subject_name", "Unknown")
         
         # Get all the values, using np.nan for missing optional values
-        adj_introspection = data.get(f"{prefix_int}_introspection", np.nan)
-        adj_introspection_ci_low = data.get(f"{prefix_int}_introspection_ci_low", np.nan)
-        adj_introspection_ci_high = data.get(f"{prefix_int}_introspection_ci_high", np.nan)
+        # Determine prefixes based on what was actually parsed (could be mixed if file was appended)
+        # This part assumes that the prefixes determined during file parsing (adj, raw, filt) are consistent
+        # for introspection and lift within a single subject block in the *parsed file*.
+        # We need to find which prefix was used for this subject's introspection and lift.
         
-        adj_self_acc_lift = data.get(f"{prefix_lift}_self_acc_lift", np.nan)
-        adj_self_acc_lift_ci_low = data.get(f"{prefix_lift}_self_acc_lift_ci_low", np.nan)
-        adj_self_acc_lift_ci_high = data.get(f"{prefix_lift}_self_acc_lift_ci_high", np.nan)
+        # Try to infer the prefix used for introspection for this subject
+        current_prefix_int = "adj" # default
+        if f"adj_introspection" in data:
+            current_prefix_int = "adj"
+        elif f"filt_introspection" in data:
+            current_prefix_int = "filt"
+        elif f"raw_introspection" in data:
+            current_prefix_int = "raw"
+            
+        current_prefix_lift = "adj" # default
+        if f"adj_self_acc_lift" in data:
+            current_prefix_lift = "adj"
+        elif f"filt_self_acc_lift" in data:
+            current_prefix_lift = "filt"
+        elif f"raw_self_acc_lift" in data:
+            current_prefix_lift = "raw"
+
+        introspection_val = data.get(f"{current_prefix_int}_introspection", np.nan)
+        introspection_ci_low = data.get(f"{current_prefix_int}_introspection_ci_low", np.nan)
+        introspection_ci_high = data.get(f"{current_prefix_int}_introspection_ci_high", np.nan)
+        
+        self_acc_lift_val = data.get(f"{current_prefix_lift}_self_acc_lift", np.nan)
+        self_acc_lift_ci_low = data.get(f"{current_prefix_lift}_self_acc_lift_ci_low", np.nan)
+        self_acc_lift_ci_high = data.get(f"{current_prefix_lift}_self_acc_lift_ci_high", np.nan)
         
         si_coef = data.get("si_coef", np.nan)
         si_ci_low = data.get("si_coef_ci_low", np.nan)
@@ -403,12 +467,12 @@ def analyze_parsed_data(input_summary_file):
 
         results.append({
             "Subject": subject_name,
-            f"{prefix_int.capitalize()} Intro": adj_introspection,
-            f"{prefix_int.capitalize()}Intro_LB": adj_introspection_ci_low,
-            f"{prefix_int.capitalize()}Intro_UB": adj_introspection_ci_high,
-            f"{prefix_lift.capitalize()} Acc Lift": adj_self_acc_lift,
-            f"{prefix_lift.capitalize()}AccLift_LB": adj_self_acc_lift_ci_low,
-            f"{prefix_lift.capitalize()}AccLift_UB": adj_self_acc_lift_ci_high,
+            f"{current_prefix_int.capitalize()} Intro": introspection_val,
+            f"{current_prefix_int.capitalize()}Intro_LB": introspection_ci_low,
+            f"{current_prefix_int.capitalize()}Intro_UB": introspection_ci_high,
+            f"{current_prefix_lift.capitalize()} Acc Lift": self_acc_lift_val,
+            f"{current_prefix_lift.capitalize()}AccLift_LB": self_acc_lift_ci_low,
+            f"{current_prefix_lift.capitalize()}AccLift_UB": self_acc_lift_ci_high,
             "Cap Coef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
@@ -447,11 +511,27 @@ def break_subject_name(name, max_parts_per_line=3):
     return wrapped_name
 
 
-def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=True, adj_lift=True):
-    prefix_int = "Adj" if adj_int else "Raw"
-    prefix_lift = "Adj" if adj_lift else "Raw"
-    prefix_int_cln = "Adjusted " if adj_int else ""
-    prefix_lift_cln = "Adjusted " if adj_lift else ""
+def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_type="adjusted", lift_score_type="adjusted"):
+    if int_score_type == "adjusted":
+        prefix_int = "Adj"
+        prefix_int_cln = "Adjusted "
+    elif int_score_type == "filtered":
+        prefix_int = "Filt"
+        prefix_int_cln = "Filtered "
+    else: # raw
+        prefix_int = "Raw"
+        prefix_int_cln = "Raw "
+
+    if lift_score_type == "adjusted":
+        prefix_lift = "Adj"
+        prefix_lift_cln = "Adjusted "
+    elif lift_score_type == "filtered":
+        prefix_lift = "Filt"
+        prefix_lift_cln = "Filtered "
+    else: # raw
+        prefix_lift = "Raw"
+        prefix_lift_cln = "Raw "
+        
     if df_results.empty:
         print("No data to plot.")
         return
@@ -595,23 +675,23 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", adj_int=Tr
             axs[2, 1].axis('off')
 
     plt.tight_layout(pad=3.0, h_pad=4.0)
-    plt.savefig(f"subject_analysis_charts_{dataset_name}_{prefix_int}_{prefix_lift}.png", dpi=300)
-    print(f"Charts saved to subject_analysis_charts_{dataset_name}_{prefix_int}_{prefix_lift}.png")
+    plt.savefig(f"subject_analysis_charts_{dataset_name}_{prefix_int.lower()}_{prefix_lift.lower()}.png", dpi=300)
+    print(f"Charts saved to subject_analysis_charts_{dataset_name}_{prefix_int.lower()}_{prefix_lift.lower()}.png")
 
 
 if __name__ == "__main__":
     
     game_type = "aop" #"dg"#
-    dataset = "GPSA"
+    dataset = "SimpleQA"
     if game_type == "dg":
-        target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, NoHistory, NotFiltered"#
+        target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
     model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
 #    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
-    show_adjusted_introspection = False
-    show_adjusted_self_acc_lift = False
+    introspection_score_type = "adjusted" # "adjusted", "filtered", or "raw"
+    lift_score_type = "adjusted" # "adjusted", "filtered", or "raw"
 
     suffix = f"_{game_type}_full"
     if "Feedback_True" in target_params: suffix += "_fb"
@@ -627,14 +707,14 @@ if __name__ == "__main__":
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
             log_content_from_file = f.read()
-        parse_analysis_log(log_content_from_file, output_filename, target_params, model_list, adj_int=show_adjusted_introspection, adj_lift=show_adjusted_self_acc_lift)
+        parse_analysis_log(log_content_from_file, output_filename, target_params, model_list, int_score_type=introspection_score_type, lift_score_type=lift_score_type)
 
         df_results = analyze_parsed_data(output_filename)
         print("\n--- Calculated Data ---")
         print(df_results.to_string(formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")}))
         
         if not df_results.empty:
-            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}", adj_int=show_adjusted_introspection, adj_lift=show_adjusted_self_acc_lift)
+            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}", int_score_type=introspection_score_type, lift_score_type=lift_score_type)
         else:
             print("No results to plot.")
 

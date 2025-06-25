@@ -19,7 +19,7 @@ class SecondChanceGame(BaseGameClass):
     Game class for the Second-Chance experiment.
     """
     def __init__(self, subject_id, subject_name, dataset, capabilities_file_path, 
-                 num_questions=None, show_original_answer=True, is_human_player=False, seed=None, temperature=0.0):
+                 num_questions=None, show_original_answer=True, use_correct_answers=False, is_human_player=False, seed=None, temperature=0.0):
         """
         Initialize the game with configuration parameters.
         
@@ -37,6 +37,7 @@ class SecondChanceGame(BaseGameClass):
         self.capabilities_file_path = capabilities_file_path
         self.num_questions = num_questions
         self.show_original_answer = show_original_answer
+        self.use_correct_answers = use_correct_answers
         self.is_human_player = is_human_player
         self.temperature = temperature
         if seed is not None:
@@ -46,6 +47,7 @@ class SecondChanceGame(BaseGameClass):
         # Initialize state variables
         self.capabilities_data = None
         self.wrong_questions = []
+        self.right_questions = []
         self.selected_questions = []
         self.game_results = {}
         self.message_history = []
@@ -77,22 +79,35 @@ class SecondChanceGame(BaseGameClass):
             
             # Find questions that were answered incorrectly
             for q_id, result in capabilities_results.items():
-                if isinstance(result, dict) and not result.get('is_correct', True):
-                    question_data = result
-                    question_data['id'] = q_id
-                    question_data['correct_answer'] = result.get('correct_answer_label')
-                    question_data['original_answer'] = result.get('subject_answer')
+                if not isinstance(result, dict) or 'is_correct' not in result:
+                    self._log(f"Warning: Invalid result format for question {q_id}, skipping")
+                    continue
+                question_data = result
+                question_data['id'] = q_id
+                question_data['correct_answer'] = result.get('correct_answer_label')
+                question_data['original_answer'] = result.get('subject_answer')
                     
+                if not result['is_correct']:
                     # Add to wrong questions list
                     self.wrong_questions.append(question_data)
+                else:
+                    self.right_questions.append(question_data)
             
             self._log(f"Found {len(self.wrong_questions)} questions that were answered incorrectly")
+            self._log(f"Found {len(self.right_questions)} questions that were answered correctly")
             
-            if self.num_questions and len(self.wrong_questions) < self.num_questions:
-                self._log(f"Warning: Only {len(self.wrong_questions)} wrong questions available, but {self.num_questions} requested")
-                self.num_questions = len(self.wrong_questions)
-            if not self.num_questions:
-                self.num_questions = len(self.wrong_questions)
+            if self.use_correct_answers:
+                if self.num_questions and len(self.right_questions) < self.num_questions:
+                    self._log(f"Warning: Only {len(self.right_questions)} right questions available, but {self.num_questions} requested")
+                    self.num_questions = len(self.right_questions)
+                if not self.num_questions:
+                    self.num_questions = len(self.right_questions)
+            else:
+                if self.num_questions and len(self.wrong_questions) < self.num_questions:
+                    self._log(f"Warning: Only {len(self.wrong_questions)} wrong questions available, but {self.num_questions} requested")
+                    self.num_questions = len(self.wrong_questions)
+                if not self.num_questions:
+                    self.num_questions = len(self.wrong_questions)
             
             return True
         except Exception as e:
@@ -103,15 +118,27 @@ class SecondChanceGame(BaseGameClass):
         """
         Select a subset of questions for the game
         """
-        if not self.wrong_questions:
-            self._log("Error: No wrong questions available. Load capabilities data first.")
-            return False
-        
-        # Determine how many questions to use
-        num_to_use = min(self.num_questions, len(self.wrong_questions))
-        
-        # Randomly select questions
-        self.selected_questions = random.sample(self.wrong_questions, num_to_use)
+        if self.use_correct_answers:
+            if not self.right_questions:
+                self._log("Error: No right questions available. Load capabilities data first.")
+                return False
+            
+            # Determine how many questions to use
+            num_to_use = min(self.num_questions, len(self.right_questions))
+            
+            # Randomly select questions
+            self.selected_questions = random.sample(self.right_questions, num_to_use)
+        else:
+            if not self.wrong_questions:
+                self._log("Error: No wrong questions available. Load capabilities data first.")
+                return False
+            
+            # Determine how many questions to use
+            num_to_use = min(self.num_questions, len(self.wrong_questions))
+            
+            # Randomly select questions
+            self.selected_questions = random.sample(self.wrong_questions, num_to_use)
+
         self._log(f"Selected {len(self.selected_questions)} questions for the game")
         
         return True
@@ -174,7 +201,7 @@ class SecondChanceGame(BaseGameClass):
                     llm_prompt = q_text + "\nYour answer: "
                 else:
                     setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
-                    llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
+                    llm_prompt = q_text + "\nRespond only with the letter of your choice; do NOT output any other text.\nYour choice (A, B, C, or D): "
                 message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
                 content = original_answer if self.show_original_answer else "[redacted]"
                 message_history.append({"role": "assistant", "content": content})
@@ -314,6 +341,7 @@ def main(model_dataset_dict):
     # Configuration
     IS_HUMAN = False
     SHOW_ORIGINAL_ANSWER = False
+    USE_CORRECT_ANSWERS = False  # If True, use correct answers instead of wrong ones
     NUM_QUESTIONS = None  # Use all wrong questions if None
     seed = 42
     TEMPERATURE = 0.0 
@@ -335,6 +363,8 @@ def main(model_dataset_dict):
                 settings_suffix += "_shown"
             else:
                 settings_suffix += "_redacted"
+            if USE_CORRECT_ANSWERS:
+                settings_suffix += "_cor"
             settings_suffix += f"_temp{TEMPERATURE}"
 
             SUBJECT_ID = f"{SUBJECT_NAME.replace('/', '-')}_{DATASET}{settings_suffix}"
@@ -348,6 +378,7 @@ def main(model_dataset_dict):
                     capabilities_file_path=CAPABILITIES_FILE,
                     num_questions=NUM_QUESTIONS,
                     show_original_answer=SHOW_ORIGINAL_ANSWER,
+                    use_correct_answers=USE_CORRECT_ANSWERS,
                     is_human_player=IS_HUMAN,
                     seed=seed,
                     temperature=TEMPERATURE
@@ -376,4 +407,5 @@ if __name__ == "__main__":
         "grok-3-latest": ["GPQA", "GPSA", "SimpleQA"],
         "gpt-4o-2024-08-06": ["GPQA", "GPSA", "SimpleQA"],
         }
+    model_dataset_dict = {"gemini-2.0-flash-001": ["GPQA", "GPSA", "SimpleQA", "SimpleMC"]}  
     main(model_dataset_dict)

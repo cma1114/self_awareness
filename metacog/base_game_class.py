@@ -58,7 +58,7 @@ class BaseGameClass:
             elif self.provider == "OpenAI":
                 self.client = OpenAI()
             elif self.provider == "Google":
-                self.client = genai.Client(api_key=gemini_api_key)
+                self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1")###genai.Client(api_key=gemini_api_key)
             elif self.provider == "xAI":
                 self.client = OpenAI(api_key=xai_api_key, base_url="https://api.x.ai/v1",)
             elif self.provider == "NDIF":
@@ -324,10 +324,27 @@ class BaseGameClass:
                             **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
                             temperature=temp + attempt * temp_inc,
+                            response_logprobs=True,
+                            candidate_count=1,
+                            logprobs=len(options),
                         ), 
                     )
-                    resp = message.text.strip()
-                    return resp, None
+                    ###resp = message.text.strip()
+                    cand = message.candidates[0]
+                    resp = cand.content.parts[0].text.strip()
+                    logres = cand.logprobs_result  
+                    if len(options) == 1:                   # short answer – average over all tokens
+                        # chosen_candidates = one entry per generated token
+                        top_probs = [c.log_probability for c in logres.chosen_candidates]
+                        token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
+
+                    else:                                   # multiple-choice – inspect 1st token only
+                        # top_candidates[0].candidates = k alternatives for the 1st token
+                        first_step = logres.top_candidates[0].candidates
+                        tokens = [alt.token.strip() for alt in first_step]
+                        probs  = [math.exp(alt.log_probability) for alt in first_step]
+                        token_probs = dict(zip(tokens, probs))
+                    return resp, token_probs
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
             try:

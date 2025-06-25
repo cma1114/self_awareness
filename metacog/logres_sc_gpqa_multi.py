@@ -261,7 +261,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"#"GPQA" #
+    dataset = "GPQA" #"GPSA"#
     game_type = "sc"
 
 
@@ -326,6 +326,7 @@ if __name__ == "__main__":
     else:
         FILE_GROUPING_CRITERIA = [
             {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
+            {'name_prefix': "Correctness", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_cor_" in bn, "Correct", "Incorrect")},
         ]
 
     for model_name_part, game_files_for_model in model_game_files.items():

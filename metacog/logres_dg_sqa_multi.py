@@ -302,7 +302,8 @@ if __name__ == "__main__":
 
     dataset = "SimpleQA" #"SimpleMC"#
     game_type = "aop"#"dg" #
-
+    USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
+    USE_ADJUSTED_FOR_LOGRES = True #use adjusted capabilities for logres
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
     print(f"Loading main {dataset} dataset for features...")
@@ -458,6 +459,19 @@ if __name__ == "__main__":
                     delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
                     log_output(f"Filtered Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
                     log_output(f"Filtered Self-acc lift = {filt_stats['lift']:.3f} [{filt_stats['lift_ci'][0]:.3f}, {filt_stats['lift_ci'][1]:.3f}], p={filt_stats['p_lift']:.4g}")
+
+                    recall = TP / (TP + FN)
+                    ci_low, ci_high = smp.proportion_confint(TP, (TP + FN), alpha=0.05, method='normal')
+                    log_output(f"Filtered Recall: {recall:.4f} [{ci_low}, {ci_high}] (n={(TP + FN)})")
+                    precision = TP / (TP + FP)
+                    ci_low, ci_high = smp.proportion_confint(TP, (TP + FP), alpha=0.05, method='normal')
+                    log_output(f"Filtered Precision: {precision:.4f} [{ci_low}, {ci_high}] (n={(TP + FP)})")
+                    specificity = TN / (TN + FP)
+                    ci_low, ci_high = smp.proportion_confint(TN, (TN + FP), alpha=0.05, method='normal')
+                    log_output(f"Filtered Specificity: {specificity:.4f} [{ci_low}, {ci_high}] (n={(TN + FP)})")
+                    npv = TN / (TN + FN)
+                    ci_low, ci_high = smp.proportion_confint(TN, (TN + FN), alpha=0.05, method='normal')
+                    log_output(f"Filtered NPV: {npv:.4f} [{ci_low}, {ci_high}] (n={(TN + FN)})")
                     #####
 
                     cross_tab_s_i = pd.crosstab(df_model['delegate_choice'], df_model['s_i_capability'])
@@ -516,6 +530,22 @@ if __name__ == "__main__":
                         log_output(f"Cross-tabulation of s_i_capability vs. self_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
                         TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
                         log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+
+                if USE_FILTERED_FOR_LOGRES:
+                    log_output("Using filtered data for regression analysis.")
+                    df_model = df_clean
+                else:
+                    if USE_ADJUSTED_FOR_LOGRES:
+                        log_output("Using adjusted data for regression analysis.")
+                        df_model["cap_corr_bool"]   = df_model["s_i_capability"].astype(bool)
+                        df_model["team_corr_bool"]  = df_model["subject_correct"].fillna(0).astype(bool)
+                        # hybrid (“adjusted”) correctness: use in-game truth on kept rows,
+                        # fall back to capability truth on delegated rows
+                        df_model["s_i_capability"] = np.where(
+                                df_model["delegate_choice"] == 0,          # kept?
+                                df_model["team_corr_bool"],                # use game result
+                                df_model["cap_corr_bool"]                  # else capability
+                        ).astype(int)      # cast back to 0/1 
 
                 log_output("\n  Model 1: Delegate_Choice ~ S_i_capability")
                 try:
