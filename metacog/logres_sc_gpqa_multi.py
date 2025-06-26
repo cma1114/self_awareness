@@ -11,7 +11,7 @@ from collections import defaultdict
 from logres_helpers import *
 
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
+    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     dataset = "GPQA" #"GPSA"#
     game_type = "sc"
-
+    VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
     print(f"Loading main {dataset} dataset for features...")
@@ -482,14 +482,14 @@ if __name__ == "__main__":
                     if 'overlap_ratio' in df_model.columns:
                         base_model_terms.append('overlap_ratio')
 
-                    log_output(f"                  Domain Counts:\n {df_model['domain'].value_counts()}")
-                    
-                    # Logging for grouped variables
-                    for group_col in [domain_column_for_formula]:
-                        if group_col in df_model:
-                            log_output(f"                  Answer Changed by {group_col}:\n{df_model.groupby(group_col)['answer_changed'].value_counts(normalize=True)}\n")
+                    if VERBOSE:
+                        log_output(f"                  Domain Counts:\n {df_model['domain'].value_counts()}")                    
+                        # Logging for grouped variables
+                        for group_col in [domain_column_for_formula]:
+                            if group_col in df_model:
+                                log_output(f"                  Answer Changed by {group_col}:\n{df_model.groupby(group_col)['answer_changed'].value_counts(normalize=True)}\n")
 
-                    log_output(f"{df_model.groupby('domain_grouped')['answer_changed'].value_counts(normalize=True)}\n")
+                        log_output(f"{df_model.groupby('domain_grouped')['answer_changed'].value_counts(normalize=True)}\n")
 
                     conditional_regressors = ['summary', 'nobio', 'noeasy', 'noctr']
 

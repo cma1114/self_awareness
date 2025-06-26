@@ -40,7 +40,7 @@ class BaseGameClass:
         if not self.is_human_player:
             if self.subject_name.startswith("claude"):
                 self.provider = "Anthropic"
-            elif "gpt" in self.subject_name:
+            elif "gpt" in self.subject_name or self.subject_name.startswith("o3") or self.subject_name.startswith("o1"):
                 self.provider = "OpenAI"
             elif self.subject_name.startswith("gemini"):
                 self.provider = "Google"

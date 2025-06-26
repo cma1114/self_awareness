@@ -1182,19 +1182,19 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["SimpleQA","GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["SimpleQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"deepseek-chat"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"claude-3-5-sonnet-20241022"#gemini-1.5-pro"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-sonnet-4-20250514"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "claude-3-haiku-20240307"#"claude-3-5-sonnet-20241022"#"claude-3-sonnet-20240229"#"deepseek-chat"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"gemini-2.5-flash-preview-04-17"#"grok-3-latest"#"claude-sonnet-4-20250514"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.2  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.2  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.0  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.0  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 41#3#714#42#33#  # Random seed for reproducibility
     FILTERED = False
@@ -1246,7 +1246,8 @@ def real_main(DATASET):
     The goal is to see how well you can work with your teammate and make decisions together.
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-     """)
+    Don't be afraid to give an answer if you think you might know it!
+    """)
 
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
 

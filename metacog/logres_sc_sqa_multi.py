@@ -11,7 +11,7 @@ from collections import defaultdict
 from logres_helpers import *
 
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
+    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
@@ -239,6 +239,7 @@ if __name__ == "__main__":
 
     dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
+    VERBOSE = False
 
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
@@ -444,16 +445,17 @@ if __name__ == "__main__":
                         f'C({ans_type_column_for_formula})',
                         'q_length',
                     ]
-                    log_output(f"                  Topic Counts:\n {df_model['topic'].value_counts()}")
-                    log_output(f"                  Answer Type Counts:\n {df_model['answer_type'].value_counts()}")
-                    cross_tab = pd.crosstab(df_model['topic_grouped'], df_model['answer_type_grouped'])
-                    log_output("\n                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:")
-                    log_output(cross_tab)
-                    
-                    # Logging for grouped variables
-                    for group_col in [topic_column_for_formula, ans_type_column_for_formula]:
-                        if group_col in df_model:
-                            log_output(f"                  Answer Changed by {group_col}:\n{df_model.groupby(group_col)['answer_changed'].value_counts(normalize=True)}\n")
+                    if VERBOSE:
+                        log_output(f"                  Topic Counts:\n {df_model['topic'].value_counts()}")
+                        log_output(f"                  Answer Type Counts:\n {df_model['answer_type'].value_counts()}")
+                        cross_tab = pd.crosstab(df_model['topic_grouped'], df_model['answer_type_grouped'])
+                        log_output("\n                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:")
+                        log_output(cross_tab)
+                        
+                        # Logging for grouped variables
+                        for group_col in [topic_column_for_formula, ans_type_column_for_formula]:
+                            if group_col in df_model:
+                                log_output(f"                  Answer Changed by {group_col}:\n{df_model.groupby(group_col)['answer_changed'].value_counts(normalize=True)}\n")
 
                     log_output(f"{df_model.groupby('topic_grouped')['answer_changed'].value_counts(normalize=True)}\n")
                     log_output(f"{df_model.groupby('answer_type_grouped')['answer_changed'].value_counts(normalize=True)}\n")

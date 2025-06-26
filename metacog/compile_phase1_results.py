@@ -377,7 +377,7 @@ def main():
     # Hard-coded dataset - change this value to compile different datasets
     dataset = "GPQA"#"SimpleQA"#"SimpleMC"#"GPSA"# 
     
-    process_all_files(dataset, targ_model="gemini-2.0-flash-001")
+    process_all_files(dataset, targ_model="claude-sonnet-4-20250514")
     
     elapsed_time = time.time() - start_time
     print(f"Compilation completed in {elapsed_time:.2f} seconds")

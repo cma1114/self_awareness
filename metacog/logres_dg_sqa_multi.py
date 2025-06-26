@@ -10,7 +10,7 @@ from collections import defaultdict
 from logres_helpers import *
 
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'a', encoding='utf-8') as f:
+    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
@@ -300,8 +300,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA" #"SimpleMC"#
-    game_type = "aop"#"dg" #
+    dataset = "SimpleQA"#"SimpleQA" #
+    game_type = "dg" #"aop"#
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = True #use adjusted capabilities for logres
 
@@ -590,7 +590,7 @@ if __name__ == "__main__":
 
                 if len(df_model) > 20 :
                     min_obs_per_category=int(len(df_model)/15) + 1
-                    if 'grok' in model_name_part: min_obs_per_category = 40
+                    if 'grok' in model_name_part or '3-sonnet' in model_name_part: min_obs_per_category = 100
                     
                     for col, new_col_name in [('topic', 'topic_grouped'), ('answer_type', 'answer_type_grouped')]:
                         counts = df_model[col].value_counts()
