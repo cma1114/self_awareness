@@ -375,7 +375,7 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "GPQA"#"SimpleQA"#"SimpleMC"#"GPSA"# 
+    dataset = "SimpleQA"#"GPSA"# "SimpleMC"#"GPQA"#
     
     process_all_files(dataset, targ_model="claude-sonnet-4-20250514")
     

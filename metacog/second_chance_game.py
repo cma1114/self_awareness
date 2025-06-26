@@ -215,7 +215,7 @@ class SecondChanceGame(BaseGameClass):
                     message_history=message_history,
                     keep_appending=False,
                     setup_text="Respond ONLY with your answer\n" if self.is_short_answer else None,
-                    MAX_TOKENS=1 if not self.is_short_answer else None,
+                    MAX_TOKENS=None,#1 if not self.is_short_answer else None,
                     temp = self.temperature
                 )
             

@@ -17,68 +17,6 @@ Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=12)
 P-value vs 25%: 0; P-value vs 33%: 0
                   Grouped rare topic into 'Misc'/'Other': ['Music', 'History', 'TV shows', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': None
-                  Topic Counts:
- topic
-Politics                  33
-Science and technology    29
-Art                       21
-Other                     13
-Sports                    11
-Geography                 11
-Music                      8
-History                    7
-TV shows                   5
-Video games                5
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      57
-Person    31
-Other     31
-Number    12
-Place     12
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person  Place
-topic_grouped                                             
-Art                        9       1      3       7      1
-Geography                  5       2      1       0      3
-Misc                       8       4      6       5      2
-Other                      4       2      2       3      2
-Politics                  14       1     10       4      4
-Science and technology    13       1      6       9      0
-Sports                     4       1      3       3      0
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 1.000000
-Geography               0                 0.636364
-                        1                 0.363636
-Misc                    0                 0.920000
-                        1                 0.080000
-Other                   0                 1.000000
-Politics                0                 0.909091
-                        1                 0.090909
-Science and technology  0                 0.931034
-                        1                 0.068966
-Sports                  0                 0.909091
-                        1                 0.090909
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.947368
-                     1                 0.052632
-Number               0                 0.833333
-                     1                 0.166667
-Other                0                 0.870968
-                     1                 0.129032
-Person               0                 0.935484
-                     1                 0.064516
-Place                0                 0.916667
-                     1                 0.083333
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 1.000000
 Geography               0                 0.636364
@@ -150,8 +88,8 @@ Sports                 Date                 1.000000  0.000000            4
 Dep. Variable:         answer_changed   No. Observations:                  143
 Model:                          Logit   Df Residuals:                      131
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2229
-Time:                        14:17:43   Log-Likelihood:                -32.030
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2229
+Time:                        10:40:12   Log-Likelihood:                -32.030
 converged:                      False   LL-Null:                       -41.217
 Covariance Type:            nonrobust   LLR p-value:                   0.07331
 ==============================================================================================================
@@ -181,8 +119,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:         answer_changed   No. Observations:                  109
 Model:                          Logit   Df Residuals:                       99
 Method:                           MLE   Df Model:                            9
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.1524
-Time:                        14:17:43   Log-Likelihood:                -32.030
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.1524
+Time:                        10:40:12   Log-Likelihood:                -32.030
 converged:                       True   LL-Null:                       -37.791
 Covariance Type:            nonrobust   LLR p-value:                    0.2416
 ==============================================================================================================
@@ -218,74 +156,6 @@ Phase 2 self-accuracy: 0.1143 [0.06158374162022255, 0.16698768695120603] (n=140)
 P-value vs 25%: 4.484e-07; P-value vs 33%: 4.157e-16
                   Grouped rare topic into 'Misc'/'Other': ['History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    69
-Art                       54
-Politics                  44
-Other                     39
-Geography                 33
-Music                     32
-Sports                    29
-TV shows                  25
-History                   18
-Video games               14
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      112
-Person     89
-Other      69
-Number     66
-Place      21
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       12       8     14      20
-Geography                 10      16      7       0
-Misc                      14       6      8       4
-Music                     10       3     10       9
-Other                     14       5     10      10
-Politics                  22       5      6      11
-Science and technology    22      13     13      21
-Sports                     5      10      9       5
-TV shows                   3       0     13       9
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.592593
-                        1                 0.407407
-Geography               0                 0.606061
-                        1                 0.393939
-Misc                    0                 0.500000
-                        1                 0.500000
-Music                   0                 0.781250
-                        1                 0.218750
-Other                   0                 0.564103
-                        1                 0.435897
-Politics                0                 0.636364
-                        1                 0.363636
-Science and technology  0                 0.695652
-                        1                 0.304348
-Sports                  0                 0.517241
-                        1                 0.482759
-TV shows                1                 0.560000
-                        0                 0.440000
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.607143
-                     1                 0.392857
-Number               0                 0.621212
-                     1                 0.378788
-Other                0                 0.588889
-                     1                 0.411111
-Person               0                 0.617978
-                     1                 0.382022
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.592593
                         1                 0.407407
@@ -363,8 +233,8 @@ TV shows               Date                 0.666667  0.333333            3
 Dep. Variable:         answer_changed   No. Observations:                  357
 Model:                          Logit   Df Residuals:                      344
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.02695
-Time:                        14:17:43   Log-Likelihood:                -232.64
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.02695
+Time:                        10:40:12   Log-Likelihood:                -232.64
 converged:                       True   LL-Null:                       -239.08
 Covariance Type:            nonrobust   LLR p-value:                    0.3773
 ==============================================================================================================
@@ -404,71 +274,6 @@ Phase 2 self-accuracy: 0.0874 [0.03284337481436233, 0.14191390673903573] (n=103)
 P-value vs 25%: 5.081e-09; P-value vs 33%: 1.071e-18
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    88
-Art                       72
-Politics                  70
-Other                     52
-Geography                 42
-Music                     40
-Sports                    36
-TV shows                  29
-History                   23
-Video games               17
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      158
-Person    118
-Other      89
-Number     75
-Place      29
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       20       9     17      26
-Geography                 15      18      9       0
-Misc                      22       8     24      15
-Music                     12       4     12      12
-Other                     18       7     14      13
-Politics                  33       6     16      15
-Science and technology    30      12     16      30
-Sports                     8      11     10       7
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.763889
-                        1                 0.236111
-Geography               0                 0.595238
-                        1                 0.404762
-Misc                    0                 0.840580
-                        1                 0.159420
-Music                   0                 0.850000
-                        1                 0.150000
-Other                   0                 0.846154
-                        1                 0.153846
-Politics                0                 0.757143
-                        1                 0.242857
-Science and technology  0                 0.750000
-                        1                 0.250000
-Sports                  0                 0.861111
-                        1                 0.138889
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.835443
-                     1                 0.164557
-Number               0                 0.653333
-                     1                 0.346667
-Other                0                 0.703390
-                     1                 0.296610
-Person               0                 0.864407
-                     1                 0.135593
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.763889
                         1                 0.236111
@@ -541,8 +346,8 @@ Sports                 Date                 1.000000  0.000000            8
 Dep. Variable:         answer_changed   No. Observations:                  469
 Model:                          Logit   Df Residuals:                      457
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.07631
-Time:                        14:17:43   Log-Likelihood:                -228.05
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.07631
+Time:                        10:40:12   Log-Likelihood:                -228.05
 converged:                       True   LL-Null:                       -246.89
 Covariance Type:            nonrobust   LLR p-value:                 8.862e-05
 ==============================================================================================================
@@ -581,71 +386,6 @@ Phase 2 self-accuracy: 0.0133 [0.0, 0.031688446141489454] (n=150)
 P-value vs 25%: 6.602e-141; P-value vs 33%: 2.303e-255
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    90
-Art                       69
-Politics                  64
-Other                     47
-Geography                 43
-Music                     39
-Sports                    35
-TV shows                  30
-History                   25
-Video games               18
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      154
-Person    113
-Other      89
-Number     75
-Place      29
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       19       9     15      26
-Geography                 15      18     10       0
-Misc                      23       8     27      15
-Music                     12       4     12      11
-Other                     17       7     11      12
-Politics                  31       6     14      13
-Science and technology    29      12     19      30
-Sports                     8      11     10       6
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.753623
-                        1                 0.246377
-Geography               0                 0.767442
-                        1                 0.232558
-Misc                    0                 0.657534
-                        1                 0.342466
-Music                   0                 0.641026
-                        1                 0.358974
-Other                   0                 0.617021
-                        1                 0.382979
-Politics                0                 0.718750
-                        1                 0.281250
-Science and technology  0                 0.611111
-                        1                 0.388889
-Sports                  0                 0.628571
-                        1                 0.371429
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.688312
-                     1                 0.311688
-Number               0                 0.706667
-                     1                 0.293333
-Other                0                 0.627119
-                     1                 0.372881
-Person               0                 0.681416
-                     1                 0.318584
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.753623
                         1                 0.246377
@@ -718,8 +458,8 @@ Sports                 Date                 0.625000  0.375000            8
 Dep. Variable:         answer_changed   No. Observations:                  460
 Model:                          Logit   Df Residuals:                      448
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.01631
-Time:                        14:17:43   Log-Likelihood:                -285.70
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.01631
+Time:                        10:40:12   Log-Likelihood:                -285.70
 converged:                       True   LL-Null:                       -290.43
 Covariance Type:            nonrobust   LLR p-value:                    0.5784
 ==============================================================================================================
@@ -767,71 +507,6 @@ P-value vs 25%: 8.017e-165; P-value vs 33%: 1.642e-301
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    79
-Art                       57
-Politics                  54
-Other                     37
-Geography                 36
-Sports                    35
-Music                     33
-TV shows                  25
-History                   20
-Video games               18
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      129
-Person     98
-Other      83
-Number     60
-Place      24
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       15       6     14      22
-Geography                 12      15      9       0
-Misc                      19       7     23      14
-Music                     10       3     11       9
-Other                     14       3     10      10
-Politics                  26       3     14      11
-Science and technology    25      13     15      26
-Sports                     8      10     11       6
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     1                 0.631579
-                        0                 0.368421
-Geography               0                 0.555556
-                        1                 0.444444
-Misc                    1                 0.603175
-                        0                 0.396825
-Music                   1                 0.606061
-                        0                 0.393939
-Other                   1                 0.648649
-                        0                 0.351351
-Politics                1                 0.592593
-                        0                 0.407407
-Science and technology  1                 0.582278
-                        0                 0.417722
-Sports                  1                 0.600000
-                        0                 0.400000
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 1                 0.651163
-                     0                 0.348837
-Number               1                 0.583333
-                     0                 0.416667
-Other                1                 0.542056
-                     0                 0.457944
-Person               1                 0.571429
-                     0                 0.428571
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     1                 0.631579
                         0                 0.368421
@@ -904,8 +579,8 @@ Sports                 Date                 0.375000  0.625000            8
 Dep. Variable:         answer_changed   No. Observations:                  394
 Model:                          Logit   Df Residuals:                      382
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.01895
-Time:                        14:17:43   Log-Likelihood:                -261.43
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.01895
+Time:                        10:40:12   Log-Likelihood:                -261.43
 converged:                       True   LL-Null:                       -266.48
 Covariance Type:            nonrobust   LLR p-value:                    0.5215
 ==============================================================================================================
@@ -953,70 +628,6 @@ Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=11)
 P-value vs 25%: 0; P-value vs 33%: 0
                   Grouped rare topic into 'Misc'/'Other': ['History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': None
-                  Topic Counts:
- topic
-Politics                  18
-Science and technology    15
-Art                       14
-Other                      9
-Sports                     8
-Geography                  7
-Music                      7
-TV shows                   6
-History                    2
-Video games                2
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      31
-Person    26
-Other     13
-Number    12
-Place      6
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person  Place
-topic_grouped                                             
-Art                        6       0      1       5      2
-Geography                  4       2      0       0      1
-Music                      2       1      1       3      0
-Other                      4       5      1       2      1
-Politics                   8       1      4       4      1
-Science and technology     4       1      2       8      0
-Sports                     2       1      2       2      1
-TV shows                   1       1      2       2      0
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.928571
-                        1                 0.071429
-Geography               0                 0.714286
-                        1                 0.285714
-Music                   0                 0.857143
-                        1                 0.142857
-Other                   0                 0.846154
-                        1                 0.153846
-Politics                0                 1.000000
-Science and technology  0                 1.000000
-Sports                  0                 0.625000
-                        1                 0.375000
-TV shows                0                 0.666667
-                        1                 0.333333
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.838710
-                     1                 0.161290
-Number               0                 0.666667
-                     1                 0.333333
-Other                0                 0.923077
-                     1                 0.076923
-Person               0                 0.961538
-                     1                 0.038462
-Place                0                 1.000000
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.928571
                         1                 0.071429
@@ -1091,8 +702,8 @@ TV shows               Date                 1.000000  0.000000            1
 Dep. Variable:         answer_changed   No. Observations:                   88
 Model:                          Logit   Df Residuals:                       75
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.4136
-Time:                        14:17:43   Log-Likelihood:                -19.441
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.4136
+Time:                        10:40:12   Log-Likelihood:                -19.441
 converged:                      False   LL-Null:                       -33.156
 Covariance Type:            nonrobust   LLR p-value:                  0.006699
 ==============================================================================================================
@@ -1123,8 +734,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:         answer_changed   No. Observations:                   50
 Model:                          Logit   Df Residuals:                       40
 Method:                           MLE   Df Model:                            9
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2621
-Time:                        14:17:43   Log-Likelihood:                -19.441
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2621
+Time:                        10:40:12   Log-Likelihood:                -19.441
 converged:                       True   LL-Null:                       -26.345
 Covariance Type:            nonrobust   LLR p-value:                    0.1293
 ====================================================================================================
@@ -1160,71 +771,6 @@ Phase 2 self-accuracy: 0.0485 [0.01919590652714859, 0.07789147211362811] (n=206)
 P-value vs 25%: 2.914e-41; P-value vs 33%: 1.801e-80
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    83
-Art                       61
-Politics                  59
-Other                     43
-Geography                 37
-Music                     33
-Sports                    32
-TV shows                  24
-History                   23
-Video games               17
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      138
-Person     94
-Other      87
-Number     66
-Place      27
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       15       9     15      22
-Geography                 11      16     10       0
-Misc                      21       5     25      13
-Music                     10       3     11       9
-Other                     15       5     12      11
-Politics                  28       5     15      11
-Science and technology    31      13     17      22
-Sports                     7      10      9       6
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.540984
-                        1                 0.459016
-Geography               1                 0.594595
-                        0                 0.405405
-Misc                    0                 0.546875
-                        1                 0.453125
-Music                   0                 0.606061
-                        1                 0.393939
-Other                   1                 0.534884
-                        0                 0.465116
-Politics                1                 0.559322
-                        0                 0.440678
-Science and technology  1                 0.554217
-                        0                 0.445783
-Sports                  0                 0.625000
-                        1                 0.375000
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 1                 0.565217
-                     0                 0.434783
-Number               1                 0.590909
-                     0                 0.409091
-Other                0                 0.614035
-                     1                 0.385965
-Person               0                 0.521277
-                     1                 0.478723
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.540984
                         1                 0.459016
@@ -1297,8 +843,8 @@ Sports                 Date                 0.714286  0.285714            7
 Dep. Variable:         answer_changed   No. Observations:                  412
 Model:                          Logit   Df Residuals:                      400
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.03196
-Time:                        14:17:43   Log-Likelihood:                -276.45
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.03196
+Time:                        10:40:12   Log-Likelihood:                -276.45
 converged:                       True   LL-Null:                       -285.58
 Covariance Type:            nonrobust   LLR p-value:                   0.07586
 ==============================================================================================================
@@ -1342,8 +888,8 @@ P-value vs 25%: 0; P-value vs 33%: 0
 Dep. Variable:         answer_changed   No. Observations:                  118
 Model:                          Logit   Df Residuals:                      116
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2014
-Time:                        14:17:43   Log-Likelihood:                -51.634
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2014
+Time:                        10:40:12   Log-Likelihood:                -51.634
 converged:                       True   LL-Null:                       -64.656
 Covariance Type:            nonrobust   LLR p-value:                 3.337e-07
 ========================================================================================
@@ -1360,73 +906,6 @@ capabilities_entropy    14.9454      3.405      4.389      0.000       8.271    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': None
-                  Topic Counts:
- topic
-Science and technology    21
-Politics                  20
-Art                       16
-Geography                 13
-Music                     12
-Sports                    12
-Other                      9
-TV shows                   6
-History                    6
-Video games                3
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      43
-Other     29
-Person    25
-Number    12
-Place      9
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person  Place
-topic_grouped                                             
-Art                        6       1      5       4      0
-Geography                  5       4      1       0      3
-Misc                       3       2      5       3      2
-Music                      2       1      2       6      1
-Other                      3       2      3       0      1
-Politics                  10       0      4       4      2
-Science and technology    11       2      4       4      0
-Sports                     3       0      5       4      0
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.687500
-                        1                 0.312500
-Geography               0                 0.769231
-                        1                 0.230769
-Misc                    0                 0.666667
-                        1                 0.333333
-Music                   0                 0.666667
-                        1                 0.333333
-Other                   0                 0.888889
-                        1                 0.111111
-Politics                0                 0.900000
-                        1                 0.100000
-Science and technology  0                 0.809524
-                        1                 0.190476
-Sports                  0                 0.666667
-                        1                 0.333333
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.837209
-                     1                 0.162791
-Number               0                 0.583333
-                     1                 0.416667
-Other                0                 0.655172
-                     1                 0.344828
-Person               0                 0.800000
-                     1                 0.200000
-Place                0                 0.888889
-                     1                 0.111111
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.687500
                         1                 0.312500
@@ -1503,8 +982,8 @@ Sports                 Date                 0.666667  0.333333            3
 Dep. Variable:         answer_changed   No. Observations:                  118
 Model:                          Logit   Df Residuals:                      105
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.1028
-Time:                        14:17:43   Log-Likelihood:                -58.008
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.1028
+Time:                        10:40:12   Log-Likelihood:                -58.008
 converged:                       True   LL-Null:                       -64.656
 Covariance Type:            nonrobust   LLR p-value:                    0.3479
 ==============================================================================================================
@@ -1531,8 +1010,8 @@ q_length                                      -0.9386      0.762     -1.232     
 Dep. Variable:         answer_changed   No. Observations:                  118
 Model:                          Logit   Df Residuals:                      104
 Method:                           MLE   Df Model:                           13
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2484
-Time:                        14:17:43   Log-Likelihood:                -48.596
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2484
+Time:                        10:40:12   Log-Likelihood:                -48.596
 converged:                       True   LL-Null:                       -64.656
 Covariance Type:            nonrobust   LLR p-value:                  0.002305
 ==============================================================================================================
@@ -1584,8 +1063,8 @@ P-value vs 25%: 2.544e-29; P-value vs 33%: 9.601e-59
 Dep. Variable:         answer_changed   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      380
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.06892
-Time:                        14:17:44   Log-Likelihood:                -246.22
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.06892
+Time:                        10:40:12   Log-Likelihood:                -246.22
 converged:                       True   LL-Null:                       -264.45
 Covariance Type:            nonrobust   LLR p-value:                 1.567e-09
 ========================================================================================
@@ -1602,71 +1081,6 @@ capabilities_entropy     4.6960      0.828      5.674      0.000       3.074    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    77
-Art                       59
-Politics                  57
-Other                     43
-Geography                 31
-Sports                    28
-Music                     28
-TV shows                  24
-History                   19
-Video games               16
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      126
-Person     95
-Other      71
-Number     66
-Place      24
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       15       8     13      23
-Geography                 10      14      7       0
-Misc                      20       7     20      12
-Music                     10       3      9       6
-Other                     15       5     10      13
-Politics                  26       6     14      11
-Science and technology    24      12     15      26
-Sports                     6      11      7       4
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     1                 0.542373
-                        0                 0.457627
-Geography               1                 0.548387
-                        0                 0.451613
-Misc                    1                 0.542373
-                        0                 0.457627
-Music                   1                 0.607143
-                        0                 0.392857
-Other                   1                 0.604651
-                        0                 0.395349
-Politics                0                 0.508772
-                        1                 0.491228
-Science and technology  0                 0.571429
-                        1                 0.428571
-Sports                  0                 0.500000
-                        1                 0.500000
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 1                 0.579365
-                     0                 0.420635
-Number               0                 0.545455
-                     1                 0.454545
-Other                1                 0.578947
-                     0                 0.421053
-Person               0                 0.568421
-                     1                 0.431579
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     1                 0.542373
                         0                 0.457627
@@ -1739,8 +1153,8 @@ Sports                 Date                 0.333333  0.666667            6
 Dep. Variable:         answer_changed   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      370
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.02503
-Time:                        14:17:44   Log-Likelihood:                -257.83
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.02503
+Time:                        10:40:12   Log-Likelihood:                -257.83
 converged:                       True   LL-Null:                       -264.45
 Covariance Type:            nonrobust   LLR p-value:                    0.2781
 ==============================================================================================================
@@ -1766,8 +1180,8 @@ q_length                                      -0.2900      0.279     -1.039     
 Dep. Variable:         answer_changed   No. Observations:                  382
 Model:                          Logit   Df Residuals:                      369
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.1071
-Time:                        14:17:44   Log-Likelihood:                -236.14
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.1071
+Time:                        10:40:12   Log-Likelihood:                -236.14
 converged:                       True   LL-Null:                       -264.45
 Covariance Type:            nonrobust   LLR p-value:                 9.252e-08
 ==============================================================================================================
@@ -1813,71 +1227,6 @@ Phase 2 self-accuracy: 0.0829 [0.04270958073068163, 0.12303627562290953] (n=181)
 P-value vs 25%: 3.47e-16; P-value vs 33%: 2.882e-34
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    64
-Art                       48
-Politics                  44
-Other                     31
-Music                     28
-Geography                 28
-Sports                    23
-TV shows                  21
-History                   18
-Video games               13
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      111
-Person     81
-Other      59
-Number     49
-Place      18
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       12       6     12      18
-Geography                 12      10      6       0
-Misc                      17       4     20      11
-Music                     10       3      7       8
-Other                     13       5      5       8
-Politics                  22       3      9      10
-Science and technology    19      11     12      22
-Sports                     6       7      6       4
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     1                 0.604167
-                        0                 0.395833
-Geography               1                 0.535714
-                        0                 0.464286
-Misc                    1                 0.596154
-                        0                 0.403846
-Music                   1                 0.535714
-                        0                 0.464286
-Other                   1                 0.580645
-                        0                 0.419355
-Politics                1                 0.704545
-                        0                 0.295455
-Science and technology  0                 0.515625
-                        1                 0.484375
-Sports                  0                 0.521739
-                        1                 0.478261
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 1                 0.540541
-                     0                 0.459459
-Number               1                 0.591837
-                     0                 0.408163
-Other                1                 0.532468
-                     0                 0.467532
-Person               1                 0.629630
-                     0                 0.370370
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     1                 0.604167
                         0                 0.395833
@@ -1950,8 +1299,8 @@ Sports                 Date                 0.666667  0.333333            6
 Dep. Variable:         answer_changed   No. Observations:                  318
 Model:                          Logit   Df Residuals:                      306
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.02430
-Time:                        14:17:44   Log-Likelihood:                -212.09
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.02430
+Time:                        10:40:12   Log-Likelihood:                -212.09
 converged:                       True   LL-Null:                       -217.37
 Covariance Type:            nonrobust   LLR p-value:                    0.4805
 ==============================================================================================================
@@ -1995,8 +1344,8 @@ P-value vs 25%: 0.000808; P-value vs 33%: 1.552e-06
 Dep. Variable:         answer_changed   No. Observations:                  129
 Model:                          Logit   Df Residuals:                      127
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:               0.0002145
-Time:                        14:17:44   Log-Likelihood:                -50.269
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:               0.0002145
+Time:                        10:40:12   Log-Likelihood:                -50.269
 converged:                       True   LL-Null:                       -50.279
 Covariance Type:            nonrobust   LLR p-value:                    0.8832
 ========================================================================================
@@ -2013,70 +1362,6 @@ capabilities_entropy    -0.6045      4.151     -0.146      0.884      -8.741    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': None
-                  Topic Counts:
- topic
-Politics                  32
-Art                       19
-Science and technology    16
-Other                     15
-Music                     11
-Geography                 11
-Sports                     9
-TV shows                   8
-History                    6
-Video games                2
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      52
-Person    27
-Other     24
-Number    16
-Place     10
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person  Place
-topic_grouped                                             
-Art                        9       2      2       5      1
-Geography                  3       6      0       0      2
-Misc                       5       4      3       3      1
-Music                      3       0      3       5      0
-Other                      5       2      3       3      2
-Politics                  16       1      7       5      3
-Science and technology     7       1      5       3      0
-Sports                     4       0      1       3      1
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 1.000000
-Geography               0                 0.909091
-                        1                 0.090909
-Misc                    0                 0.937500
-                        1                 0.062500
-Music                   0                 0.818182
-                        1                 0.181818
-Other                   0                 0.933333
-                        1                 0.066667
-Politics                0                 0.812500
-                        1                 0.187500
-Science and technology  0                 0.750000
-                        1                 0.250000
-Sports                  0                 0.777778
-                        1                 0.222222
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.884615
-                     1                 0.115385
-Number               0                 1.000000
-Other                0                 0.833333
-                     1                 0.166667
-Person               0                 0.740741
-                     1                 0.259259
-Place                0                 1.000000
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 1.000000
 Geography               0                 0.909091
@@ -2151,8 +1436,8 @@ Sports                 Date                 0.750000  0.250000            4
 Dep. Variable:         answer_changed   No. Observations:                  129
 Model:                          Logit   Df Residuals:                      116
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2135
-Time:                        14:17:44   Log-Likelihood:                -39.542
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2135
+Time:                        10:40:12   Log-Likelihood:                -39.542
 converged:                      False   LL-Null:                       -50.279
 Covariance Type:            nonrobust   LLR p-value:                   0.04386
 ==============================================================================================================
@@ -2183,8 +1468,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:         answer_changed   No. Observations:                  129
 Model:                          Logit   Df Residuals:                      115
 Method:                           MLE   Df Model:                           13
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.2152
-Time:                        14:17:44   Log-Likelihood:                -39.459
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.2152
+Time:                        10:40:12   Log-Likelihood:                -39.459
 converged:                      False   LL-Null:                       -50.279
 Covariance Type:            nonrobust   LLR p-value:                   0.06120
 ==============================================================================================================
@@ -2222,8 +1507,8 @@ quasi-separation. In this case some parameters will not be identified.
 Dep. Variable:         answer_changed   No. Observations:                   87
 Model:                          Logit   Df Residuals:                       77
 Method:                           MLE   Df Model:                            9
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.07987
-Time:                        14:17:44   Log-Likelihood:                -39.542
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.07987
+Time:                        10:40:12   Log-Likelihood:                -39.542
 converged:                       True   LL-Null:                       -42.975
 Covariance Type:            nonrobust   LLR p-value:                    0.6512
 ==============================================================================================================
@@ -2247,8 +1532,8 @@ q_length                                       0.2799      0.764      0.366     
 Dep. Variable:         answer_changed   No. Observations:                   87
 Model:                          Logit   Df Residuals:                       76
 Method:                           MLE   Df Model:                           10
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.08180
-Time:                        14:17:44   Log-Likelihood:                -39.459
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.08180
+Time:                        10:40:12   Log-Likelihood:                -39.459
 converged:                       True   LL-Null:                       -42.975
 Covariance Type:            nonrobust   LLR p-value:                    0.7226
 ==============================================================================================================
@@ -2290,8 +1575,8 @@ P-value vs 25%: 1.849e-219; P-value vs 33%: 0
 Dep. Variable:         answer_changed   No. Observations:                  310
 Model:                          Logit   Df Residuals:                      308
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.04980
-Time:                        14:17:44   Log-Likelihood:                -200.33
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.04980
+Time:                        10:40:12   Log-Likelihood:                -200.33
 converged:                       True   LL-Null:                       -210.83
 Covariance Type:            nonrobust   LLR p-value:                 4.599e-06
 ========================================================================================
@@ -2308,71 +1593,6 @@ capabilities_entropy     5.3029      1.251      4.237      0.000       2.850    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    64
-Art                       49
-Politics                  35
-Other                     33
-Geography                 28
-Music                     26
-Sports                    26
-TV shows                  18
-History                   17
-Video games               14
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      103
-Person     78
-Other      60
-Number     54
-Place      15
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       12       5     13      19
-Geography                 11      11      6       0
-Misc                      16       5     17      11
-Music                      8       4      8       6
-Other                     13       5      6       9
-Politics                  17       4      7       7
-Science and technology    22      10     10      22
-Sports                     4      10      8       4
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.571429
-                        1                 0.428571
-Geography               0                 0.857143
-                        1                 0.142857
-Misc                    0                 0.530612
-                        1                 0.469388
-Music                   0                 0.576923
-                        1                 0.423077
-Other                   0                 0.515152
-                        1                 0.484848
-Politics                0                 0.600000
-                        1                 0.400000
-Science and technology  1                 0.531250
-                        0                 0.468750
-Sports                  0                 0.730769
-                        1                 0.269231
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.543689
-                     1                 0.456311
-Number               0                 0.592593
-                     1                 0.407407
-Other                0                 0.666667
-                     1                 0.333333
-Person               0                 0.538462
-                     1                 0.461538
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.571429
                         1                 0.428571
@@ -2445,8 +1665,8 @@ Sports                 Date                 0.500000  0.500000            4
 Dep. Variable:         answer_changed   No. Observations:                  310
 Model:                          Logit   Df Residuals:                      298
 Method:                           MLE   Df Model:                           11
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.05133
-Time:                        14:17:44   Log-Likelihood:                -200.00
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.05133
+Time:                        10:40:12   Log-Likelihood:                -200.00
 converged:                       True   LL-Null:                       -210.83
 Covariance Type:            nonrobust   LLR p-value:                   0.02730
 ==============================================================================================================
@@ -2472,8 +1692,8 @@ q_length                                       0.4027      0.329      1.223     
 Dep. Variable:         answer_changed   No. Observations:                  310
 Model:                          Logit   Df Residuals:                      297
 Method:                           MLE   Df Model:                           12
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.09873
-Time:                        14:17:44   Log-Likelihood:                -190.01
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.09873
+Time:                        10:40:12   Log-Likelihood:                -190.01
 converged:                       True   LL-Null:                       -210.83
 Covariance Type:            nonrobust   LLR p-value:                 3.843e-05
 ==============================================================================================================
@@ -2524,8 +1744,8 @@ P-value vs 25%: 0; P-value vs 33%: 0
 Dep. Variable:         answer_changed   No. Observations:                  153
 Model:                          Logit   Df Residuals:                      151
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.1100
-Time:                        14:17:44   Log-Likelihood:                -51.085
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.1100
+Time:                        10:40:12   Log-Likelihood:                -51.085
 converged:                       True   LL-Null:                       -57.402
 Covariance Type:            nonrobust   LLR p-value:                 0.0003788
 ========================================================================================
@@ -2542,46 +1762,6 @@ capabilities_entropy     7.6736      2.207      3.476      0.001       3.347    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['Science and technology', 'Politics', 'Other', 'Art', 'Geography', 'Sports', 'Music', 'Video games', 'TV shows', 'History']
                   Grouped rare answer_type into 'Misc'/'Other': ['Person', 'Other', 'Number', 'Place']
-                  Topic Counts:
- topic
-Science and technology    31
-Politics                  25
-Other                     22
-Art                       21
-Geography                 13
-Sports                    13
-Music                     12
-Video games                6
-TV shows                   5
-History                    5
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      44
-Person    37
-Other     34
-Number    27
-Place     11
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped  Date  Misc
-topic_grouped                  
-Misc                   44   109
-                  Answer Changed by topic_grouped:
-topic_grouped  answer_changed
-Misc           0                 0.875817
-               1                 0.124183
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.954545
-                     1                 0.045455
-Misc                 0                 0.844037
-                     1                 0.155963
-Name: proportion, dtype: float64
-
 topic_grouped  answer_changed
 Misc           0                 0.875817
                1                 0.124183
@@ -2607,8 +1787,8 @@ Misc          Date                 0.954545  0.045455           44
 Dep. Variable:         answer_changed   No. Observations:                  153
 Model:                          Logit   Df Residuals:                      150
 Method:                           MLE   Df Model:                            2
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.04007
-Time:                        14:17:44   Log-Likelihood:                -55.102
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.04007
+Time:                        10:40:12   Log-Likelihood:                -55.102
 converged:                       True   LL-Null:                       -57.402
 Covariance Type:            nonrobust   LLR p-value:                    0.1002
 ==================================================================================================
@@ -2625,8 +1805,8 @@ q_length                          -0.4701      0.712     -0.660      0.509      
 Dep. Variable:         answer_changed   No. Observations:                  153
 Model:                          Logit   Df Residuals:                      149
 Method:                           MLE   Df Model:                            3
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                  0.1333
-Time:                        14:17:44   Log-Likelihood:                -49.753
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                  0.1333
+Time:                        10:40:12   Log-Likelihood:                -49.753
 converged:                       True   LL-Null:                       -57.402
 Covariance Type:            nonrobust   LLR p-value:                  0.001578
 ==================================================================================================
@@ -2668,8 +1848,8 @@ P-value vs 25%: 4.773e-11; P-value vs 33%: 2.135e-23
 Dep. Variable:         answer_changed   No. Observations:                  296
 Model:                          Logit   Df Residuals:                      294
 Method:                           MLE   Df Model:                            1
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.06874
-Time:                        14:17:44   Log-Likelihood:                -190.00
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.06874
+Time:                        10:40:12   Log-Likelihood:                -190.00
 converged:                       True   LL-Null:                       -204.03
 Covariance Type:            nonrobust   LLR p-value:                 1.182e-07
 ========================================================================================
@@ -2686,59 +1866,6 @@ capabilities_entropy     4.9838      0.996      5.003      0.000       3.031    
                     Could not fit Model 1.7: Singular matrix
                   Grouped rare topic into 'Misc'/'Other': ['Other', 'Geography', 'Sports', 'Music', 'TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
-                  Topic Counts:
- topic
-Science and technology    57
-Art                       51
-Politics                  41
-Other                     27
-Geography                 27
-Sports                    24
-Music                     20
-TV shows                  19
-History                   18
-Video games               12
-Name: count, dtype: int64
-                  Answer Type Counts:
- answer_type
-Date      99
-Person    79
-Other     55
-Number    41
-Place     22
-Name: count, dtype: int64
-
-                  Cross-tabulation of Topic Grouped vs. Answer Type Grouped:
-answer_type_grouped     Date  Number  Other  Person
-topic_grouped                                      
-Art                       15       3     10      23
-Misc                      48      27     46      26
-Politics                  17       4      9      11
-Science and technology    19       7     12      19
-                  Answer Changed by topic_grouped:
-topic_grouped           answer_changed
-Art                     0                 0.568627
-                        1                 0.431373
-Misc                    0                 0.517007
-                        1                 0.482993
-Politics                0                 0.609756
-                        1                 0.390244
-Science and technology  0                 0.543860
-                        1                 0.456140
-Name: proportion, dtype: float64
-
-                  Answer Changed by answer_type_grouped:
-answer_type_grouped  answer_changed
-Date                 0                 0.585859
-                     1                 0.414141
-Number               0                 0.536585
-                     1                 0.463415
-Other                0                 0.610390
-                     1                 0.389610
-Person               1                 0.569620
-                     0                 0.430380
-Name: proportion, dtype: float64
-
 topic_grouped           answer_changed
 Art                     0                 0.568627
                         1                 0.431373
@@ -2788,8 +1915,8 @@ Science and technology Date                 0.684211  0.315789           19
 Dep. Variable:         answer_changed   No. Observations:                  296
 Model:                          Logit   Df Residuals:                      288
 Method:                           MLE   Df Model:                            7
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.02216
-Time:                        14:17:44   Log-Likelihood:                -199.51
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.02216
+Time:                        10:40:12   Log-Likelihood:                -199.51
 converged:                       True   LL-Null:                       -204.03
 Covariance Type:            nonrobust   LLR p-value:                    0.2495
 ==============================================================================================================
@@ -2811,8 +1938,8 @@ q_length                                      -0.2164      0.319     -0.679     
 Dep. Variable:         answer_changed   No. Observations:                  296
 Model:                          Logit   Df Residuals:                      287
 Method:                           MLE   Df Model:                            8
-Date:                Wed, 25 Jun 2025   Pseudo R-squ.:                 0.08534
-Time:                        14:17:44   Log-Likelihood:                -186.62
+Date:                Thu, 26 Jun 2025   Pseudo R-squ.:                 0.08534
+Time:                        10:40:12   Log-Likelihood:                -186.62
 converged:                       True   LL-Null:                       -204.03
 Covariance Type:            nonrobust   LLR p-value:                 2.879e-05
 ==============================================================================================================

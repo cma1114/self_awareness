@@ -681,14 +681,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "aop" #"dg"#
-    dataset = "GPQA"
+    game_type = "dg"#"aop" #
+    dataset = "SimpleQA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
+    model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
 #    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"

@@ -10,8 +10,15 @@ import re
 from collections import defaultdict
 from logres_helpers import *
 
+FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
+    global FIRST_PASS
+    if FIRST_PASS:
+        openstr = "w"
+        FIRST_PASS = False
+    else:
+        openstr = "a"
+    with open(LOG_FILENAME, openstr, encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)

@@ -599,7 +599,7 @@ class AnswerOrPassGame(BaseGameClass):
 def real_main(SUBJECT_NAME, DATASET):
     #SUBJECT_NAME = "claude-3-5-sonnet-20241022"#"deepseek-chat"#'gemini-2.0-flash-001'#"grok-3-latest"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"claude-3-haiku-20240307"#"gpt-4o-2024-08-06"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 33#714#42#41#3  # Random seed for reproducibility
+    SEED = 99#33#714#42#41#3  # Random seed for reproducibility
     
     ALL_QUESTIONS = True
     N_RIGHT = None    
@@ -716,8 +716,8 @@ def real_main(SUBJECT_NAME, DATASET):
 def main():
     """Main function to run the delegate game from completed results"""
     
-    DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    models = ["claude-3-haiku-20240307"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"gemini-1.5-pro"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    models = ["gemini-1.5-pro"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
 
     for model in models:
         for DATASET in DATASETS:

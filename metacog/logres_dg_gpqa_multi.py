@@ -9,8 +9,15 @@ import re
 from collections import defaultdict
 from logres_helpers import *
 
+FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
+    global FIRST_PASS
+    if FIRST_PASS:
+        openstr = "w"
+        FIRST_PASS = False
+    else:
+        openstr = "a"
+    with open(LOG_FILENAME, openstr, encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
@@ -326,7 +333,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "GPQA"# "GPSA"#
-    game_type = "aop"#"dg" #
+    game_type = "dg" #"aop"#
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -697,7 +704,26 @@ if __name__ == "__main__":
                             log_output(f"                  P-value for s_i_capability: {pval_s_i:.4g}")
                             log_output(f"                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): {odds_ratio_delegate_Si0_vs_Si1:.4f} [{ci_lower_or:.4f}, {ci_upper_or:.4f}]")
                     except Exception as e_full:
-                        log_output(f"                    Could not fit Model 4: {e_full}")
+                        if '3-haiku' in model_name_part:
+                            tmp = final_model_terms.copy()
+                            tmp.remove(f'C({domain_column_for_formula})')
+                            model_def_str_4 = 'delegate_choice ~ ' + ' + '.join(tmp)
+                            try:
+                                logit_model4 = smf.logit(model_def_str_4, data=df_model).fit(**fit_kwargs)
+                                log_output(logit_model4.summary())
+                                if 's_i_capability' in logit_model4.params:
+                                    coef_s_i = logit_model4.params['s_i_capability']
+                                    pval_s_i = logit_model4.pvalues['s_i_capability']
+                                    conf_int_s_i_log_odds = logit_model4.conf_int().loc['s_i_capability']
+                                    odds_ratio_delegate_Si0_vs_Si1 = np.exp(-coef_s_i)
+                                    ci_lower_or, ci_upper_or = np.exp(-conf_int_s_i_log_odds.iloc[1]), np.exp(-conf_int_s_i_log_odds.iloc[0])
+                                    log_output(f"\n                  --- Odds Ratio for S_i_capability on Delegation (Adjusted M4) ---")
+                                    log_output(f"                  P-value for s_i_capability: {pval_s_i:.4g}")
+                                    log_output(f"                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): {odds_ratio_delegate_Si0_vs_Si1:.4f} [{ci_lower_or:.4f}, {ci_upper_or:.4f}]")
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit Model 4: {e_full}")         
+                        else:                           
+                            log_output(f"                    Could not fit Model 4: {e_full}")
 
                     # Model 5 (No interaction)
                     final_model_terms_m5 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]

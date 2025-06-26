@@ -9,8 +9,15 @@ import re
 from collections import defaultdict
 from logres_helpers import *
 
+FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
-    with open(LOG_FILENAME, 'w', encoding='utf-8') as f:
+    global FIRST_PASS
+    if FIRST_PASS:
+        openstr = "w"
+        FIRST_PASS = False
+    else:
+        openstr = "a"
+    with open(LOG_FILENAME, openstr, encoding='utf-8') as f:
         f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
@@ -300,10 +307,10 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA"#"SimpleQA" #
+    dataset = "SimpleQA"#
     game_type = "dg" #"aop"#
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
-    USE_ADJUSTED_FOR_LOGRES = True #use adjusted capabilities for logres
+    USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
     print(f"Loading main {dataset} dataset for features...")
@@ -590,7 +597,7 @@ if __name__ == "__main__":
 
                 if len(df_model) > 20 :
                     min_obs_per_category=int(len(df_model)/15) + 1
-                    if 'grok' in model_name_part or '3-sonnet' in model_name_part: min_obs_per_category = 100
+                    if 'grok' in model_name_part or '3-sonnet' in model_name_part or '3-haiku' in model_name_part: min_obs_per_category = 100
                     
                     for col, new_col_name in [('topic', 'topic_grouped'), ('answer_type', 'answer_type_grouped')]:
                         counts = df_model[col].value_counts()

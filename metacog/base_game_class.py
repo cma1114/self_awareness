@@ -58,7 +58,7 @@ class BaseGameClass:
             elif self.provider == "OpenAI":
                 self.client = OpenAI()
             elif self.provider == "Google":
-                self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1")###genai.Client(api_key=gemini_api_key)
+                self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1") if 'gemini-1.5' not in self.subject_name else genai.Client(api_key=gemini_api_key)
             elif self.provider == "xAI":
                 self.client = OpenAI(api_key=xai_api_key, base_url="https://api.x.ai/v1",)
             elif self.provider == "NDIF":
@@ -316,7 +316,7 @@ class BaseGameClass:
                     if keep_appending:
                         message_history.append(user_msg)
                     #print(f"system_msg={system_msg}")                     
-                    #print(f"formatted_messages={formatted_messages}")             
+                    #print(f"formatted_messages={formatted_messages}")  
                     message = self.client.models.generate_content(
                         model=self.subject_name,
                         contents=formatted_messages,
@@ -324,12 +324,12 @@ class BaseGameClass:
                             **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
                             temperature=temp + attempt * temp_inc,
-                            response_logprobs=True,
+                            **({"response_logprobs": True} if '1.5' not in self.subject_name else {}),
                             candidate_count=1,
-                            logprobs=len(options),
+                            **({"logprobs": len(options)} if '1.5' not in self.subject_name else {})
                         ), 
                     )
-                    ###resp = message.text.strip()
+                    if '1.5' in self.subject_name: return message.text.strip(), None
                     cand = message.candidates[0]
                     resp = cand.content.parts[0].text.strip()
                     logres = cand.logprobs_result  
