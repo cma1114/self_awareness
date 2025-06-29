@@ -307,8 +307,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA"#
-    game_type = "dg" #"aop"#
+    dataset = "SimpleQA"
+    game_type = "aop"#"dg" #
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -496,6 +496,8 @@ if __name__ == "__main__":
                     TP, FN, FP, TN = contingency(delegated, cap_corr)
                     raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
+                    log_output(f"FP = {FP}")
+                    log_output(f"FN = {FN}")
                     delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
                     log_output(f"Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
 

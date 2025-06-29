@@ -522,7 +522,7 @@ if __name__ == "__main__":
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     
     model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 
-                  'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 
+                  'grok-3-latest', 'gpt-4o-2024-08-06', 'gpt-4.1-2025-04-14', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 
                   'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 
                   'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'claude-sonnet-4-20250514']
 

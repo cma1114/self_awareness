@@ -24,6 +24,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
 
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
 
+    fp_regex = re.compile(r"FP = ([-\d.]+)")
+    fn_regex = re.compile(r"FN = ([-\d.]+)")
+
     if int_score_type == "adjusted":
         introspection_regex = adj_introspection_regex
         prefix_int = "adj"
@@ -104,7 +107,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "delegation_rate": "Not found",
                     "phase1_accuracy": "Not found",
                     "total_n": "Not found",
-                    "game_test_change_rate": "Not found"
+                    "game_test_change_rate": "Not found",
+                    "fp": "Not found",
+                    "fn": "Not found"
                 }
                 
                 # Model parsing states
@@ -143,6 +148,16 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     m = game_test_change_regex.search(line)
                     if m:
                         extracted_info["game_test_change_rate"] = m.group(1)
+                        continue
+
+                    # Extract FP and FN
+                    m_fp = fp_regex.search(line)
+                    if m_fp:
+                        extracted_info["fp"] = m_fp.group(1)
+                        continue    
+                    m_fn = fn_regex.search(line)
+                    if m_fn:
+                        extracted_info["fn"] = m_fn.group(1)
                         continue
 
                     # Cross-tabulation parsing state machine
@@ -310,6 +325,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
                 outfile.write(f"  Total N: {extracted_info['total_n']}\n")
                 outfile.write(f"  Game-Test Change Rate: {extracted_info['game_test_change_rate']}\n")
+                outfile.write(f"  FP: {extracted_info['fp']}\n")
+                outfile.write(f"  FN: {extracted_info['fn']}\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -397,6 +414,10 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["total_n"] = parse_value(line, r":\s*(\d+)", as_type=int)
             elif "Game-Test Change Rate:" in line:
                 current_subject_info["game_test_change_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "FP:" in line:
+                current_subject_info["fp"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "FN:" in line:
+                current_subject_info["fn"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -467,19 +488,19 @@ def analyze_parsed_data(input_summary_file):
 
         results.append({
             "Subject": subject_name,
-            f"{current_prefix_int.capitalize()} Intro": introspection_val,
+            f"{current_prefix_int.capitalize()}Intro": introspection_val,
             f"{current_prefix_int.capitalize()}Intro_LB": introspection_ci_low,
             f"{current_prefix_int.capitalize()}Intro_UB": introspection_ci_high,
-            f"{current_prefix_lift.capitalize()} Acc Lift": self_acc_lift_val,
+            f"{current_prefix_lift.capitalize()}AccLift": self_acc_lift_val,
             f"{current_prefix_lift.capitalize()}AccLift_LB": self_acc_lift_ci_low,
             f"{current_prefix_lift.capitalize()}AccLift_UB": self_acc_lift_ci_high,
-            "Cap Coef": rev_si_coef,
+            "CapCoef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
-            "Cap Ent": cap_entropy_coef,
+            "CapEnt": cap_entropy_coef,
             "CapEnt_LB": cap_entropy_ci_low,
             "CapEnt_UB": cap_entropy_ci_high,
-            "Game Ent": norm_prob_entropy_coef,
+            "GameEnt": norm_prob_entropy_coef,
             "GameEnt_LB": norm_prob_entropy_ci_low,
             "GameEnt_UB": norm_prob_entropy_ci_high,
             "LL_Model4": LL4,
@@ -489,7 +510,9 @@ def analyze_parsed_data(input_summary_file):
             "Delegation_Rate": delegation_rate,
             "Phase1_Accuracy": phase1_accuracy,
             "Total_N": total_n,
-            "Change%": data.get("game_test_change_rate", np.nan)
+            "Change%": data.get("game_test_change_rate", np.nan),
+            "FP": data.get("fp", np.nan),
+            "FN": data.get("fn", np.nan)
         })
         
     return pd.DataFrame(results)
@@ -555,8 +578,8 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         return
 
     # Check if we have entropy coefficients
-    has_cap_entropy = not df_results["Cap Ent"].isna().all()
-    has_norm_prob_entropy = not df_results["Game Ent"].isna().all()
+    has_cap_entropy = not df_results["CapEnt"].isna().all()
+    has_norm_prob_entropy = not df_results["GameEnt"].isna().all()
     has_entropy = has_cap_entropy or has_norm_prob_entropy
     
     # Determine number of columns
@@ -589,12 +612,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     legend_fontsize = 12
 
     # --- Plot 1: Adjusted Introspection Score ---
-    yerr_intro_low = np.nan_to_num(df_results[f"{prefix_int} Intro"] - df_results[f"{prefix_int}Intro_LB"], nan=0.0)
-    yerr_intro_high = np.nan_to_num(df_results[f"{prefix_int}Intro_UB"] - df_results[f"{prefix_int} Intro"], nan=0.0)
+    yerr_intro_low = np.nan_to_num(df_results[f"{prefix_int}Intro"] - df_results[f"{prefix_int}Intro_LB"], nan=0.0)
+    yerr_intro_high = np.nan_to_num(df_results[f"{prefix_int}Intro_UB"] - df_results[f"{prefix_int}Intro"], nan=0.0)
     yerr_intro_low[yerr_intro_low < 0] = 0
     yerr_intro_high[yerr_intro_high < 0] = 0
     
-    axs[0, 0].bar(formatted_subject_names, df_results[f"{prefix_int} Intro"],
+    axs[0, 0].bar(formatted_subject_names, df_results[f"{prefix_int}Intro"],
                    color='mediumpurple',
                    yerr=[yerr_intro_low, yerr_intro_high], ecolor='gray', capsize=5, width=0.6)
     axs[0, 0].set_ylabel('Introspection Score', fontsize=label_fontsize)
@@ -604,12 +627,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     axs[0, 0].tick_params(axis='y', labelsize=tick_fontsize)
 
     # --- Plot 2: Reversed s_i_capability Coefficient ---
-    yerr_si_low = np.nan_to_num(df_results["Cap Coef"] - df_results["CapCoef_LB"], nan=0.0)
-    yerr_si_high = np.nan_to_num(df_results["CapCoef_UB"] - df_results["Cap Coef"], nan=0.0)
+    yerr_si_low = np.nan_to_num(df_results["CapCoef"] - df_results["CapCoef_LB"], nan=0.0)
+    yerr_si_high = np.nan_to_num(df_results["CapCoef_UB"] - df_results["CapCoef"], nan=0.0)
     yerr_si_low[yerr_si_low < 0] = 0
     yerr_si_high[yerr_si_high < 0] = 0
     
-    axs[1, 0].bar(formatted_subject_names, df_results["Cap Coef"],
+    axs[1, 0].bar(formatted_subject_names, df_results["CapCoef"],
                    color='mediumseagreen',
                    yerr=[yerr_si_low, yerr_si_high], ecolor='gray', capsize=5, width=0.6)
     axs[1, 0].set_ylabel('Coefficient Value (Log-Odds Scale)', fontsize=label_fontsize)
@@ -619,12 +642,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     axs[1, 0].tick_params(axis='y', labelsize=tick_fontsize)
 
     # --- Plot 3: Adjusted Self-Accuracy Lift ---
-    yerr_acc_lift_low = np.nan_to_num(df_results[f"{prefix_lift} Acc Lift"] - df_results[f"{prefix_lift}AccLift_LB"], nan=0.0)
-    yerr_acc_lift_high = np.nan_to_num(df_results[f"{prefix_lift}AccLift_UB"] - df_results[f"{prefix_lift} Acc Lift"], nan=0.0)
+    yerr_acc_lift_low = np.nan_to_num(df_results[f"{prefix_lift}AccLift"] - df_results[f"{prefix_lift}AccLift_LB"], nan=0.0)
+    yerr_acc_lift_high = np.nan_to_num(df_results[f"{prefix_lift}AccLift_UB"] - df_results[f"{prefix_lift}AccLift"], nan=0.0)
     yerr_acc_lift_low[yerr_acc_lift_low < 0] = 0
     yerr_acc_lift_high[yerr_acc_lift_high < 0] = 0
     
-    axs[2, 0].bar(formatted_subject_names, df_results[f"{prefix_lift} Acc Lift"],
+    axs[2, 0].bar(formatted_subject_names, df_results[f"{prefix_lift}AccLift"],
                    color='lightcoral',
                    yerr=[yerr_acc_lift_low, yerr_acc_lift_high], ecolor='gray', capsize=5, width=0.6)
     axs[2, 0].set_ylabel('Accuracy Difference', fontsize=label_fontsize)
@@ -640,12 +663,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         
         if has_cap_entropy:
             # --- Plot 4: Capabilities Entropy Coefficient ---
-            yerr_cap_low = np.nan_to_num(df_results["Cap Ent"] - df_results["CapEnt_LB"], nan=0.0)
-            yerr_cap_high = np.nan_to_num(df_results["CapEnt_UB"] - df_results["Cap Ent"], nan=0.0)
+            yerr_cap_low = np.nan_to_num(df_results["CapEnt"] - df_results["CapEnt_LB"], nan=0.0)
+            yerr_cap_high = np.nan_to_num(df_results["CapEnt_UB"] - df_results["CapEnt"], nan=0.0)
             yerr_cap_low[yerr_cap_low < 0] = 0
             yerr_cap_high[yerr_cap_high < 0] = 0
             
-            axs[1, 1].bar(formatted_subject_names, df_results["Cap Ent"],
+            axs[1, 1].bar(formatted_subject_names, df_results["CapEnt"],
                            color='cornflowerblue',
                            yerr=[yerr_cap_low, yerr_cap_high], ecolor='gray', capsize=5, width=0.6)
             axs[1, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
@@ -658,12 +681,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         
         if has_norm_prob_entropy:
             # --- Plot 5: Normalized Probability Entropy Coefficient ---
-            yerr_norm_low = np.nan_to_num(df_results["Game Ent"] - df_results["GameEnt_LB"], nan=0.0)
-            yerr_norm_high = np.nan_to_num(df_results["GameEnt_UB"] - df_results["Game Ent"], nan=0.0)
+            yerr_norm_low = np.nan_to_num(df_results["GameEnt"] - df_results["GameEnt_LB"], nan=0.0)
+            yerr_norm_high = np.nan_to_num(df_results["GameEnt_UB"] - df_results["GameEnt"], nan=0.0)
             yerr_norm_low[yerr_norm_low < 0] = 0
             yerr_norm_high[yerr_norm_high < 0] = 0
             
-            axs[2, 1].bar(formatted_subject_names, df_results["Game Ent"],
+            axs[2, 1].bar(formatted_subject_names, df_results["GameEnt"],
                            color='darkorange',
                            yerr=[yerr_norm_low, yerr_norm_high], ecolor='gray', capsize=5, width=0.6)
             axs[2, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
@@ -688,7 +711,7 @@ if __name__ == "__main__":
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 'grok-3-latest', 'gpt-4o-2024-08-06', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro']
+    model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
 #    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"
@@ -710,9 +733,9 @@ if __name__ == "__main__":
         parse_analysis_log(log_content_from_file, output_filename, target_params, model_list, int_score_type=introspection_score_type, lift_score_type=lift_score_type)
 
         df_results = analyze_parsed_data(output_filename)
-        print("\n--- Calculated Data ---")
-        print(df_results.to_string(formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")}))
-        
+        df_display = (df_results.set_index("Subject").reindex(model_list).reset_index())
+        print(df_display.to_string(index=False, formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")}))
+     
         if not df_results.empty:
             plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}", int_score_type=introspection_score_type, lift_score_type=lift_score_type)
         else:

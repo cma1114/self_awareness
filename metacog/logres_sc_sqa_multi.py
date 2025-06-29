@@ -244,7 +244,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA" #"SimpleMC"#
+    dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
     VERBOSE = False
 

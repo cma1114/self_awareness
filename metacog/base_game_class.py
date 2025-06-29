@@ -165,14 +165,15 @@ class BaseGameClass:
                     #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
                         model=self.subject_name,
-                        max_tokens=MAX_TOKENS,
-                        temperature=temp + attempt * temp_inc,
+                        **({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o") else {"max_tokens": MAX_TOKENS}),
+                        **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o") else {}),
                         messages=formatted_messages,
-                        logprobs=True,
-                        top_logprobs=len(options)# if len(options) > 1 or self.provider != "DeepSeek" else 2         
+                        **({"logprobs": True} if not self.subject_name.startswith("o") else {}),
+                        **({"top_logprobs": len(options)} if not self.subject_name.startswith("o") else {})
                     )   
                     #print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
+                    if 'o3' in self.subject_name: return resp, None
                     if len(options) == 1: #short answer, just average
                         token_logprobs = completion.choices[0].logprobs.content    
                         top_probs = []
@@ -324,8 +325,8 @@ class BaseGameClass:
                             **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
                             temperature=temp + attempt * temp_inc,
-                            **({"response_logprobs": True} if '1.5' not in self.subject_name else {}),
                             candidate_count=1,
+                            **({"response_logprobs": True} if '1.5' not in self.subject_name else {}),
                             **({"logprobs": len(options)} if '1.5' not in self.subject_name else {})
                         ), 
                     )

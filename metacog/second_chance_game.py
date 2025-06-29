@@ -407,5 +407,5 @@ if __name__ == "__main__":
         "grok-3-latest": ["GPQA", "GPSA", "SimpleQA"],
         "gpt-4o-2024-08-06": ["GPQA", "GPSA", "SimpleQA"],
         }
-    model_dataset_dict = {"claude-sonnet-4-20250514": ["GPQA"]}  
+    model_dataset_dict = {"gpt-4.1-2025-04-14": ["GPQA","SimpleMC"]}  
     main(model_dataset_dict)
