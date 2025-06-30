@@ -57,9 +57,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     logit_results_regex = re.compile(r"^\s*Logit Regression Results\s*$")
     
     # Coefficient extraction regexes
-    si_capability_coef_regex = re.compile(r"^\s*s_i_capability\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)")
-    capabilities_entropy_coef_regex = re.compile(r"^\s*capabilities_entropy\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)")
-    normalized_prob_entropy_coef_regex = re.compile(r"^\s*normalized_prob_entropy\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)")
+    si_capability_coef_regex = re.compile(r"^\s*s_i_capability\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)")
+    capabilities_entropy_coef_regex = re.compile(r"^\s*capabilities_entropy\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)")
+    normalized_prob_entropy_coef_regex = re.compile(r"^\s*normalized_prob_entropy\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)")
     
     # Log-likelihood regex
     log_likelihood_regex = re.compile(r"Log-Likelihood:\s*([-\d.]+)")
@@ -704,8 +704,8 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "dg"#"aop" #
-    dataset = "SimpleQA"
+    game_type = "aop" #"dg"#
+    dataset = "GPSA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

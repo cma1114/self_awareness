@@ -1,6 +1,7 @@
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from statsmodels.stats.proportion import proportion_confint
 import json
 import os
 import numpy as np
@@ -149,9 +150,13 @@ def prepare_regression_data_for_model(game_file_paths_list,
     create_noeasy_reg = len(set(f["noeasy_file"] for f in file_level_features_cache)) > 1
     create_noctr_reg = len(set(f["noctr_file"] for f in file_level_features_cache)) > 1
 
+    teammate_accs_phase1 = []
     for file_ctr, file_data in enumerate(file_level_features_cache):
         print(f"\nProcessing file {file_ctr + 1}/{len(file_level_features_cache)}: {game_file_paths_list[file_ctr]}")
         print(f"len(file_data['trials']) = {len(file_data['trials'])}")
+        if  file_data["teammate_accuracy_phase1_file"] is not None:
+            teammate_accs_phase1.append(file_data["teammate_accuracy_phase1_file"])
+
         for trial in file_data["trials"]:
             q_id = trial.get("question_id")
             delegation_choice_str = trial.get("delegation_choice")
@@ -210,6 +215,9 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 }
                 if trial.get('team_correct') is not None:
                     trial_data_dict['team_correct'] = trial['team_correct']
+                else: #set it randomly based on teammate_accuracy_phase1 (can happen when overruling delegate label based on not attempted)
+                    if file_data["teammate_accuracy_phase1_file"] is not None:
+                        trial_data_dict['team_correct'] = bool(np.random.binomial(1, file_data["teammate_accuracy_phase1_file"]))
 
                 if max_norm_prob_trial is not None:
                     trial_data_dict['max_normalized_prob'] = max_norm_prob_trial
@@ -244,7 +252,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
     if 'teammate_judge_delegate' in df_to_return.columns and not df_to_return['teammate_judge_delegate'].notna().any():
         df_to_return = df_to_return.drop(columns=['teammate_judge_delegate'])
     
-    return df_to_return, subject_acc_for_ratio_calc, phase2_corcnt, phase2_totalcnt
+    return df_to_return, subject_acc_for_ratio_calc, phase2_corcnt, phase2_totalcnt, np.mean(teammate_accs_phase1) if teammate_accs_phase1 else None
 
 # --- File Grouping Logic ---
 def get_feedback_status_from_file(file_path):
@@ -422,7 +430,7 @@ if __name__ == "__main__":
                 print(f"{'  '*(len(group_names_tuple)+1)}No game files for analysis for this group. Skipping.")
                 continue
             
-            df_model, subject_acc_phase1, phase2_corcnt, phase2_totalcnt = prepare_regression_data_for_model(current_game_files_for_analysis,
+            df_model, subject_acc_phase1, phase2_corcnt, phase2_totalcnt, teammate_acc_phase1 = prepare_regression_data_for_model(current_game_files_for_analysis,
                                                          sqa_feature_lookup,
                                                          s_i_map_for_this_model,
                                                          p_i_map_for_this_model,
@@ -487,13 +495,38 @@ if __name__ == "__main__":
                     kept_mask = ~delegated                       # True where model answered itself
                     cap_corr = np.array(df_model['s_i_capability'], bool)   # Baseline correctness from capabilities file
                     team_corr = np.where(df_model['delegate_choice'] == 0, df_model['subject_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
+
+                    try:
+                        N = len(df_model)
+                        if teammate_acc_phase1:
+                            p_const = max(subject_acc_phase1, teammate_acc_phase1) 
+                            team_correct = np.array(df_model['team_correct'], int)
+                            lo, hi  = proportion_confint(team_correct.sum(), N, method="wilson")
+                            excess  = team_correct.mean() - p_const
+                        else:#pass game
+                            p_const = max(cap_corr.mean(), 0.5)
+                            C = team_corr.astype(int).sum()
+                            pass_mask = df_model["delegate_choice"] == 1   # passed
+                            P = pass_mask.sum()
+                            p_team = (C + 0.5 * P) / N
+                            se = math.sqrt(p_team * (1 - p_team) / N)    # Wald SE
+                            lo = p_team - 1.96 * se
+                            hi = p_team + 1.96 * se
+                            excess = p_team - p_const
+                        ci_excess = (lo - p_const, hi - p_const)
+                        log_output(f"Team-acc lift = {excess:.3f} [{ci_excess[0]:.3f}, {ci_excess[1]:.3f}]")
+                    except Exception as e:
+                        log_output(f"Error calculating team-acc lift: {e}")
+
                     # Hybrid correctness label 
                     #    – use real game correctness when the model kept
                     #    – fallback to baseline correctness when it delegated
                     true_label = np.where(kept_mask, team_corr, cap_corr)   # 1 = model would be correct
 
                     #mcc, score, ci = mcc_ci_boot(TP=TP, FN=FN, FP=FP, TN=TN)
-                    TP, FN, FP, TN = contingency(delegated, cap_corr)
+                    TP, FN, FP, TN = contingency(delegated, cap_corr) #(TP=delegated, wrong in baseline, FP=delegated, correct in baseline, FN=answered, wrong in baseline, TN=answered, correct in baseline)
+                    Recall = TN / (TN + FP)
+                    Precision = TN / (TN + FN)
                     raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
                     log_output(f"FP = {FP}")

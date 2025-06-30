@@ -47,7 +47,7 @@ class BaseGameClass:
             elif self.subject_name.startswith("grok"):
                 self.provider = "xAI"
             elif re.match(r"meta-llama/Meta-Llama-3\.1-\d+B", self.subject_name):
-                self.provider = "Hyperbolic"###"NDIF"
+                self.provider = "NDIF"###"Hyperbolic"###
             elif "deepseek" in self.subject_name:
                 self.provider = "DeepSeek"
             else:
