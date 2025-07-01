@@ -23,6 +23,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     filtered_self_acc_lift_regex = re.compile(r"Filtered Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
 
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
+    game_test_good_change_regex = re.compile(r"Game-Test Good Change Rate: ([-\d.]+)")
 
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
@@ -108,6 +109,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "phase1_accuracy": "Not found",
                     "total_n": "Not found",
                     "game_test_change_rate": "Not found",
+                    "game_test_good_change_rate": "Not found",
                     "fp": "Not found",
                     "fn": "Not found"
                 }
@@ -148,6 +150,10 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     m = game_test_change_regex.search(line)
                     if m:
                         extracted_info["game_test_change_rate"] = m.group(1)
+                        continue
+                    m = game_test_good_change_regex.search(line)
+                    if m:
+                        extracted_info["game_test_good_change_rate"] = m.group(1)
                         continue
 
                     # Extract FP and FN
@@ -325,6 +331,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
                 outfile.write(f"  Total N: {extracted_info['total_n']}\n")
                 outfile.write(f"  Game-Test Change Rate: {extracted_info['game_test_change_rate']}\n")
+                outfile.write(f"  Game-Test Good Change Rate: {extracted_info['game_test_good_change_rate']}\n")
                 outfile.write(f"  FP: {extracted_info['fp']}\n")
                 outfile.write(f"  FN: {extracted_info['fn']}\n")
                 outfile.write("\n")
@@ -414,6 +421,8 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["total_n"] = parse_value(line, r":\s*(\d+)", as_type=int)
             elif "Game-Test Change Rate:" in line:
                 current_subject_info["game_test_change_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Game-Test Good Change Rate:" in line:
+                current_subject_info["game_test_good_change_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "FP:" in line:
                 current_subject_info["fp"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "FN:" in line:
@@ -511,6 +520,7 @@ def analyze_parsed_data(input_summary_file):
             "Phase1_Accuracy": phase1_accuracy,
             "Total_N": total_n,
             "Change%": data.get("game_test_change_rate", np.nan),
+            "Good_Change%": data.get("game_test_good_change_rate", np.nan),
             "FP": data.get("fp", np.nan),
             "FN": data.get("fn", np.nan)
         })
@@ -704,15 +714,16 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "aop" #"dg"#
-    dataset = "GPSA"
+    game_type = "dg"#"aop" #
+    dataset = "SimpleQA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
     model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
-#    model_list = ['claude-3-5-sonnet-20241022', 'gemini-2.0-flash-001', 'deepseek-chat', 'grok-3-latest', 'gpt-4o-2024-08-06', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 'claude-3-haiku-20240307']
+    model_list = ['claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'grok-3-latest', 'gemini-2.0-flash-001', 'deepseek-chat', 'claude-3-5-sonnet-20241022', 'gpt-4o-2024-08-06', 'gemini-1.5-pro', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
+    model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"
 

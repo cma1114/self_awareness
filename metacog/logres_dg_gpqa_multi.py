@@ -341,8 +341,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"# "GPQA"#
-    game_type = "aop"#"dg" #
+    dataset = "GPSA"#"GPQA"# 
+    game_type = "dg" #"aop"#
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -528,10 +528,10 @@ if __name__ == "__main__":
                             excess  = team_correct.mean() - p_const
                         else:#pass game
                             p_const = max(cap_corr.mean(), 0.5)
-                            C = team_corr.astype(int).sum()
+                            Cor = team_corr.astype(int).sum()
                             pass_mask = df_model["delegate_choice"] == 1   # passed
                             P = pass_mask.sum()
-                            p_team = (C + 0.5 * P) / N
+                            p_team = (Cor + 0.5 * P) / N
                             se = math.sqrt(p_team * (1 - p_team) / N)    # Wald SE
                             lo = p_team - 1.96 * se
                             hi = p_team + 1.96 * se
@@ -593,6 +593,7 @@ if __name__ == "__main__":
                         log_output(f"Cross-tabulation of s_i_capability vs. self_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
                         TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
                         log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+                        log_output(f"Game-Test Good Change Rate: {(TN)/(TP+TN+FP+FN):.4f}")
 
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")
@@ -667,7 +668,7 @@ if __name__ == "__main__":
 
                 if df_model['domain'].nunique() > 1 and len(df_model) > 20 : # Heuristic checks
                     min_obs_per_category=int(len(df_model)/15) + 1
-                    if 'haiku' in model_name_part or 'gemini-1.5' in model_name_part: min_obs_per_category = 100
+                    if 'haiku' in model_name_part or 'gemini-1.5' in model_name_part: min_obs_per_category = 40
                     
                     for col, new_col_name in [('domain', 'domain_grouped')]:
                         counts = df_model[col].value_counts()
@@ -684,10 +685,13 @@ if __name__ == "__main__":
                         's_i_capability',
                         'human_difficulty',
                         'q_length',
-                        f'C({domain_column_for_formula})',
                         'avg_word_length',
                         'percent_non_alphabetic_whitespace'
                     ]
+                    if df_model[domain_column_for_formula].nunique() > 1:
+                        base_model_terms.append(f'C({domain_column_for_formula})')
+                    else:
+                        log_output(f"                  Skipping '{domain_column_for_formula}' from model (only 1 category).")
                     if 'overlap_ratio' in df_model.columns:
                         base_model_terms.append('overlap_ratio')
 

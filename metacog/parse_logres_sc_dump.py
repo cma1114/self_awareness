@@ -521,10 +521,8 @@ if __name__ == "__main__":
     input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     
-    model_list = ['claude-3-5-sonnet-20241022', 'deepseek-chat', 'gemini-2.0-flash-001', 
-                  'grok-3-latest', 'gpt-4o-2024-08-06', 'gpt-4.1-2025-04-14', 'meta-llama-Meta-Llama-3.1-405B-Instruct', 
-                  'claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 
-                  'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'claude-sonnet-4-20250514']
+    model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
+
 
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
@@ -538,14 +536,15 @@ if __name__ == "__main__":
         if not df_results.empty:
             # ① choose the columns to show ── now include CI bounds + log-likelihoods
             display_columns = [
-                'Subject', 'Status', 'N',
+                'Subject', 'N', 'Status',
                 'Answer Change %', 'AnswerChange_CI_Low', 'AnswerChange_CI_High',
                 'Capabilities Entropy Coef', 'Norm Prob Entropy Coef',
                 'LL_Model4', 'LL_Model46',
                 'LR_stat', 'LR_pvalue'
             ]
 
-            df_display = df_results[display_columns].copy()
+            df_display = df_results.copy()#df_results[df_results['Status']=="Incorrect"][display_columns].copy()
+            #df_display = (df_display.set_index("Subject").reindex(model_list).reset_index())
 
             # ② basic formatting -----------------------------------------------------
             # integers

@@ -315,8 +315,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA"
-    game_type = "aop"#"dg" #
+    dataset = "SimpleMC"
+    game_type = "dg" #"aop"#
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -505,10 +505,10 @@ if __name__ == "__main__":
                             excess  = team_correct.mean() - p_const
                         else:#pass game
                             p_const = max(cap_corr.mean(), 0.5)
-                            C = team_corr.astype(int).sum()
+                            Cor = team_corr.astype(int).sum()
                             pass_mask = df_model["delegate_choice"] == 1   # passed
                             P = pass_mask.sum()
-                            p_team = (C + 0.5 * P) / N
+                            p_team = (Cor + 0.5 * P) / N
                             se = math.sqrt(p_team * (1 - p_team) / N)    # Wald SE
                             lo = p_team - 1.96 * se
                             hi = p_team + 1.96 * se
@@ -572,6 +572,7 @@ if __name__ == "__main__":
                         log_output(f"Cross-tabulation of s_i_capability vs. self_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
                         TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
                         log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+                        log_output(f"Game-Test Good Change Rate: {(TN)/(TP+TN+FP+FN):.4f}")
 
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")
