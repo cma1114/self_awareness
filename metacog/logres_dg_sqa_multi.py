@@ -213,6 +213,10 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
+
+                trial_data_dict['change'] = 1 if trial_data_dict['delegate_choice'] == 0 and trial_data_dict['subject_correct'] != bool(trial_data_dict['s_i_capability']) else 0
+                trial_data_dict['bad_change'] = 1 if trial_data_dict['delegate_choice'] == 0 and trial_data_dict['subject_correct'] == False and trial_data_dict['s_i_capability']==1 else 0
+
                 if trial.get('team_correct') is not None:
                     trial_data_dict['team_correct'] = trial['team_correct']
                 else: #set it randomly based on teammate_accuracy_phase1 (can happen when overruling delegate label based on not attempted)
@@ -316,7 +320,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleMC"
-    game_type = "dg" #"aop"#
+    game_type = "aop"#"dg" #
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -613,6 +617,23 @@ if __name__ == "__main__":
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.55: {e_full}")
 
+                    if 'change' in df_model.columns and df_model['change'].notna().any():
+                        log_output("\n  Model 1.56: Game Change ~ capabilities_entropy")
+                        try:
+                            logit_m2 = smf.logit('change ~ capabilities_entropy', data=df_model[df_model['delegate_choice']==0].dropna(subset=['capabilities_entropy', 'change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.56: {e_full}")
+
+                    if 'bad_change' in df_model.columns and df_model['bad_change'].notna().any():
+                        log_output("\n  Model 1.57: Bad Game Change ~ capabilities_entropy")
+                        try:
+                            logit_m2 = smf.logit('bad_change ~ capabilities_entropy', data=df_model[df_model['delegate_choice']==0].dropna(subset=['capabilities_entropy', 'bad_change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.57: {e_full}")
+
+
                 if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.6: normalized_prob_entropy alone
                     log_output("\n  Model 1.6: Delegate_Choice ~ Game Entropy")
@@ -621,6 +642,22 @@ if __name__ == "__main__":
                         log_output(logit_m2.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.6: {e_full}")
+
+                    if 'change' in df_model.columns and df_model['change'].notna().any():
+                        log_output("\n  Model 1.61: Game Change ~ Game Entropy")
+                        try:
+                            logit_m2 = smf.logit('change ~ normalized_prob_entropy', data=df_model[df_model['delegate_choice']==0].dropna(subset=['normalized_prob_entropy', 'change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.61: {e_full}")
+
+                    if 'bad_change' in df_model.columns and df_model['bad_change'].notna().any():
+                        log_output("\n  Model 1.62: Bad Game Change ~ Game Entropy")
+                        try:
+                            logit_m2 = smf.logit('bad_change ~ normalized_prob_entropy', data=df_model[df_model['delegate_choice']==0].dropna(subset=['normalized_prob_entropy', 'bad_change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.62: {e_full}")
 
                 if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.7: both entropy measures
