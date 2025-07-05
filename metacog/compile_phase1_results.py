@@ -19,8 +19,8 @@ from collections import defaultdict
 
 # Constants
 LOG_DIRS = {
-    "delegate_game_logs": "./delegate_game_logs",
-    "pass_game_logs": "./pass_game_logs",
+#    "delegate_game_logs": "./delegate_game_logs",
+#    "pass_game_logs": "./pass_game_logs",
     "capabilities_test_logs": "./capabilities_test_logs",
     "capabilities_results_sa": "./capabilities_results_sa",
 }
@@ -375,7 +375,7 @@ def main():
     start_time = time.time()
     
     # Hard-coded dataset - change this value to compile different datasets
-    dataset = "GPSA"#"SimpleQA"# "SimpleMC"#"GPQA"#
+    dataset = "SimpleMC"#"GPQA"#"GPSA"#"SimpleQA"# 
     
     process_all_files(dataset, targ_model="gpt-4.1-2025-04-14")
     

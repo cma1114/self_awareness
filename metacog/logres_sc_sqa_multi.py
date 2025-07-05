@@ -9,6 +9,11 @@ from load_and_format_datasets import load_and_format_dataset
 import re
 from collections import defaultdict
 from logres_helpers import *
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_auc_score
+from scipy.stats import wilcoxon
 
 FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
@@ -140,7 +145,9 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
             sqa_features = sqa_feature_lookup.get(q_id)
             s_i_capability = capabilities_s_i_map_for_model.get(q_id)
-            p_i_capability = p_i_map_for_this_model.get(q_id) if p_i_map_for_this_model else None
+            prob_dict = p_i_map_for_this_model.get(q_id)
+            p_i_capability = max(prob_dict.values()) if prob_dict else None
+
             capabilities_entropy = entropy_map_for_this_model.get(q_id) if entropy_map_for_this_model else None
 
             if sqa_features and s_i_capability is not None:
@@ -155,6 +162,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
                     'p_i_capability': p_i_capability,
+                    'base_probs': p_i_map_for_this_model.get(q_id) if p_i_map_for_this_model and p_i_map_for_this_model.get(q_id) else None,
+                    'game_probs': prob_dict_trial if norm_prob_entropy_trial else None,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
@@ -342,7 +351,7 @@ if __name__ == "__main__":
                     if subject_answer is not None and isinstance(probs_dict, dict):
                         prob_for_subject_answer = probs_dict.get(subject_answer)
                         if isinstance(prob_for_subject_answer, (int, float)):
-                            p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)
+                            p_i_map_for_this_model[q_id] = probs_dict#list(probs_dict.values())# float(prob_for_subject_answer)
                     
                     # Calculate and populate entropy_map_for_this_model
                     if isinstance(probs_dict, dict) and probs_dict:
@@ -403,7 +412,15 @@ if __name__ == "__main__":
                 z_stat_vs25, p_value_vs25 = smp.proportions_ztest(phase2_corcnt, phase2_totalcnt, 0.25)
                 z_stat_vs33, p_value_vs33 = smp.proportions_ztest(phase2_corcnt, phase2_totalcnt, 0.333)
                 log_output(f"P-value vs 25%: {p_value_vs25:.4g}; P-value vs 33%: {p_value_vs33:.4g}")
-    
+
+                if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
+                    log_output("\n  Model 1.4: Answer Changed ~ capabilities_prob")
+                    try:
+                        logit_m2 = smf.logit('answer_changed ~ p_i_capability', data=df_model.dropna(subset=['p_i_capability', 'answer_changed'])).fit(disp=0)
+                        log_output(logit_m2.summary())
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model 1.4: {e_full}")
+
                 if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                     # Model 1.5: capabilities_entropy alone
                     log_output("\n  Model 1.5: Answer Changed ~ capabilities_entropy")
@@ -412,6 +429,102 @@ if __name__ == "__main__":
                         log_output(logit_m2.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.5: {e_full}")
+
+                    if 'deepseek-chat' not in model_name_part.lower():
+                        df_model_tmp = df_model.copy()
+                        df_model = df_model.dropna(subset=["base_probs", "game_probs"])
+                        log_output("\n  Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change")
+                        def get_sorted_probs(prob_dict):
+                            if not isinstance(prob_dict, dict):
+                                return [None] * 4
+                            sorted_probs = sorted(prob_dict.values(), reverse=True)
+                            return (sorted_probs + [None] * 4)[:4]
+                        base_probs_sorted = pd.DataFrame(
+                            df_model["base_probs"].apply(get_sorted_probs).tolist(),
+                            columns=["p1", "p2", "p3", "p4"],
+                            index=df_model.index
+                        )
+                        df_model = pd.concat([df_model, base_probs_sorted], axis=1)
+
+                        game_probs_sorted = pd.DataFrame(
+                            df_model["game_probs"].apply(get_sorted_probs).tolist(),
+                            columns=["gp1", "gp2", "gp3", "gp4"],
+                            index=df_model.index
+                        )
+                        df_model = pd.concat([df_model, game_probs_sorted], axis=1)
+
+                        df_model["base_answer"] = df_model["base_probs"].apply(
+                            lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None
+                        )
+                        df_model["p_baselinechosentoken_game"] = df_model.apply(
+                            lambda r: r["game_probs"].get(r["base_answer"]) if isinstance(r["game_probs"], dict) else None,
+                            axis=1
+                        )
+                        df_model["delta_p"] = df_model["p1"] - df_model["p_baselinechosentoken_game"]
+                        
+                        delta_p_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_p"].dropna()
+                        if not delta_p_no_change.empty:
+                            stat, p = wilcoxon(delta_p_no_change)
+                        else:
+                            stat, p = (float('nan'), float('nan'))
+                        log_output(f"Wilcoxon delta_p: statistic={stat:.1f}, p={p:.3g}")
+
+                        log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
+                        m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
+                        log_output(m1.summary())
+
+                        log_output("\n  Idea 3: Entropy of unchosen tokens in game is lower than in baseline when the answer doesn't change")
+                        def rest_entropy(row, which):
+                            prob_dict = row.get(f"{which}_probs")
+                            base_answer = row.get("base_answer")
+                            if not isinstance(prob_dict, dict) or base_answer is None:
+                                return None
+
+                            probs = [p for ltr, p in prob_dict.items() if ltr != base_answer]
+                            
+                            prob_sum = sum(probs)
+                            if prob_sum > 1e-9:
+                                normalized_probs = [p / prob_sum for p in probs]
+                            else:
+                                return 0.0
+
+                            normalized_probs = np.clip(normalized_probs, 1e-12, 1)
+                            return -np.sum(normalized_probs * np.log2(normalized_probs))
+                        df_model["H_unchosen_base"] = df_model.apply(rest_entropy, axis=1, which="base")
+                        df_model["H_unchosen_game"] = df_model.apply(rest_entropy, axis=1, which="game")
+                        df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
+                        stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 0, "delta_H"])     
+                        log_output(f"Wilcoxon delta_H: statistic={stat:.1f}, p={p:.3g}")
+                        df_model = df_model_tmp.copy()  # Restore original df_model
+
+                        log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
+                        p_cols = ["p1", "p2", "p3", "p4"]
+                        df_model[p_cols] = pd.DataFrame(df_model["probs"].tolist(), index=df_model.index)
+                        df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
+                        #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
+                        df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
+                        df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
+                        df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
+                        logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
+                        #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
+                        log_output(logit_int.summary())
+                        auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
+                        log_output(f"AUC = {auc:.3f}")
+
+                        df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
+                        g = (df_model.groupby('p1_bin')['answer_changed']
+                            .agg(['mean', 'count'])
+                            .rename(columns={'mean':'flip'}))
+                        # Wilson CI
+                        from statsmodels.stats.proportion import proportion_confint
+                        lo, hi = proportion_confint((g['flip']*g['count']).round().astype(int),
+                                                    g['count'], method='wilson')
+                        plt.figure(figsize=(6,4))
+                        plt.errorbar(g.index.map(lambda b:b.mid), g['flip'],
+                                    yerr=[g['flip']-lo, hi-g['flip']], fmt='o-')
+                        plt.xlabel('p₁ (binned)'); plt.ylabel('flip rate')
+                        plt.tight_layout()
+                        plt.savefig(f"cap_entropy_binned_{log_context_str}.png", dpi=300)  
 
                 if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.6: normalized_prob_entropy alone

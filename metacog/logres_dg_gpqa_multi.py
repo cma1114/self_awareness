@@ -345,8 +345,9 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPSA"# 
-    game_type = "aop"#"dg" #
+    dataset = "GPQA"#"GPQA"#"GPSA"# 
+    game_type = "aop"#"dg"#
+    output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
@@ -402,6 +403,8 @@ if __name__ == "__main__":
         {'name_prefix': "SCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noscnt_" in bn, "NoSCtr", "SCtr")},
         ]
 
+    entropy_rows = []
+    entropy_ofile = f"entropy_{game_type}_npcp_summary.csv"
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
         if not game_files_for_model:
@@ -480,6 +483,65 @@ if __name__ == "__main__":
                 log_metrics_dict = extract_log_file_metrics(first_game_log_path)
                 for metric, value in log_metrics_dict.items():
                     log_output(f"                  {metric}: {value}")
+
+            if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any(): 
+                Ha_r = df_model.loc[df_model["s_i_capability"] == 1, "capabilities_entropy"]
+                Ha_w = df_model.loc[df_model["s_i_capability"] == 0, "capabilities_entropy"]
+                gap_all = Ha_w.mean() - Ha_r.mean() 
+                sd_pool = np.sqrt((Ha_w.var(ddof=1) + Ha_r.var(ddof=1)) / 2)
+                gap_all_d = gap_all / sd_pool if sd_pool else np.nan   # Cohen-d
+
+                kdf = df_model[df_model["delegate_choice"] == 0]    # ⇢ kept items only
+                Hr  = kdf.loc[kdf["s_i_capability"] == 1, "capabilities_entropy"]
+                Hw  = kdf.loc[kdf["s_i_capability"] == 0, "capabilities_entropy"]
+
+                if len(Hr) and len(Hw):
+                    gap_raw = Hw.mean() - Hr.mean()                 # ΔH in nats/bits
+
+                    sd_pool = np.sqrt((Hw.var(ddof=1) + Hr.var(ddof=1)) / 2)
+                    gap_d   = gap_raw / sd_pool if sd_pool else np.nan   # Cohen-d
+
+                    self_choice_df = df_model[df_model['delegate_choice'] == 0]
+                    if not self_choice_df.empty:
+                        cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['subject_correct'])
+                        TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
+                        npcp_ch = 2 * TN / (TP+TN) - 1
+                        npcp = (TN - TP) / (TP + TN + FP + FN) if (TP + TN + FP + FN) > 0 else np.nan
+
+                    row = {
+                        "model":       log_context_str,
+                        "experiment":  dataset,       
+                        "ΔH_raw": gap_raw,
+                        "ΔH_Cohen_d":  gap_d,
+                        "H_wrong": Hw.mean(),
+                        "H_right": Hr.mean(),
+                        "n_wrong_kept": len(Hw),
+                        "n_right_kept": len(Hr),
+                        "H_all_right": Ha_r.mean(),
+                        "H_all_wrong": Ha_w.mean(),
+                        "H_all_gap": gap_all,
+                        "H_all_gap_Cohen_d": gap_all_d,
+                        "NPCP_ch":        npcp_ch,
+                        "NPCP":        npcp,
+                    }
+
+                    entropy_rows.append(row)
+
+                    if output_entropy and 'deepseek-chat' not in model_name_part.lower() and ("Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered" in log_context_str or "NoMsgHist, NoQCtr, NoPCtr, NoSCtr" in log_context_str):
+                        pd.DataFrame([row]).to_csv(entropy_ofile, mode='a', index=False, header=not os.path.exists(entropy_ofile))
+
+                cap_entropy_mean = df_model.groupby('s_i_capability')['capabilities_entropy'].mean()
+                log_output(f"Mean capabilities entropy by baseline correctness:\n{cap_entropy_mean}\n")
+                cap_entropy_dif = cap_entropy_mean[0] - cap_entropy_mean[1] 
+                log_output(f"Capabilities entropy difference: {cap_entropy_dif:.3f}\n")
+
+            if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any(): 
+                cap_entropy_mean = df_model[df_model['delegate_choice']==0].groupby('s_i_capability')['capabilities_entropy'].mean()
+                log_output(f"Mean capabilities entropy by baseline correctness for answered questions:\n{cap_entropy_mean}\n")
+
+            if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                cap_entropy_mean = df_model[df_model['delegate_choice']==0].groupby('subject_correct')['normalized_prob_entropy'].mean()
+                log_output(f"Mean normalized game entropy by game correctness:\n{cap_entropy_mean}\n")
             
             try:
                 log_output(f"df_model['delegate_choice'].value_counts()= {df_model['delegate_choice'].value_counts(dropna=False)}\n")
@@ -621,6 +683,30 @@ if __name__ == "__main__":
                     log_output(logit_model1.summary())
                 except Exception as e_full:
                     log_output(f"                    Could not fit Model 1: {e_full}")
+
+                if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
+                    log_output("\n  Model 1.4: Delegate_Choice ~ capabilities_prob")
+                    try:
+                        logit_m2 = smf.logit('delegate_choice ~ p_i_capability', data=df_model.dropna(subset=['p_i_capability', 'delegate_choice'])).fit(disp=0)
+                        log_output(logit_m2.summary())
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model 1.4: {e_full}")
+
+                    if 'change' in df_model.columns and df_model['change'].notna().any():
+                        log_output("\n  Model 1.56: Game Change ~ capabilities_prob")
+                        try:
+                            logit_m2 = smf.logit('change ~ p_i_capability', data=df_model[df_model['delegate_choice']==0].dropna(subset=['p_i_capability', 'change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.46: {e_full}")
+
+                    if 'bad_change' in df_model.columns and df_model['bad_change'].notna().any():
+                        log_output("\n  Model 1.47: Bad Game Change ~ capabilities_prob")
+                        try:
+                            logit_m2 = smf.logit('bad_change ~ p_i_capability', data=df_model[df_model['delegate_choice']==0].dropna(subset=['p_i_capability', 'bad_change'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.47: {e_full}")
 
                 if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                     # Model 1.5: capabilities_entropy alone
@@ -1007,3 +1093,9 @@ if __name__ == "__main__":
                 print(f"                  Error during logistic regression for {log_context_str}: {e}")
             
             print("-" * 40)
+
+    entropy_tbl = pd.DataFrame(entropy_rows) \
+                    .sort_values("ΔH_Cohen_d", ascending=False)
+
+    log_output("\nEntropy gap summary (kept items; positive = higher entropy on wrongs)")
+    log_output(entropy_tbl.to_markdown(index=False, floatfmt=".3f"))

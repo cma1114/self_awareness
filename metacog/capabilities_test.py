@@ -230,7 +230,7 @@ class CapabilitiesTest(BaseGameClass):
 def main():
     IS_HUMAN = False
     DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4.1-2025-04-14"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#'gemini-2.0-flash-001'#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+    subject_name = "gpt-4.1-2025-04-14"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#'gemini-2.0-flash-001'#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
     temp = 0.0
     seed = 42

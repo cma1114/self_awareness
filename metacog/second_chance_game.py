@@ -341,7 +341,7 @@ def main(model_dataset_dict):
     # Configuration
     IS_HUMAN = False
     SHOW_ORIGINAL_ANSWER = False
-    USE_CORRECT_ANSWERS = True  # If True, use correct answers instead of wrong ones
+    USE_CORRECT_ANSWERS = False  # If True, use correct answers instead of wrong ones
     NUM_QUESTIONS = None  # Use all wrong questions if None
     seed = 42
     TEMPERATURE = 0.0 
@@ -407,5 +407,5 @@ if __name__ == "__main__":
         "grok-3-latest": ["GPQA", "GPSA", "SimpleQA"],
         "gpt-4o-2024-08-06": ["GPQA", "GPSA", "SimpleQA"],
         }
-    model_dataset_dict = {'claude-3-haiku-20240307': ["GPQA","SimpleMC"]}  
+    model_dataset_dict = {'gemini-2.0-flash-001': ["GPQA","SimpleMC"]}  
     main(model_dataset_dict)

@@ -187,12 +187,18 @@ class BaseGameClass:
                         token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
                     else:
                         entry = completion.choices[0].logprobs.content[0]
-                        tokens = [tl.token.strip() for tl in entry.top_logprobs]
-                        probs = [math.exp(tl.logprob) for tl in entry.top_logprobs]
-                        token_probs = dict(zip(tokens, probs))
+                        if len(entry.top_logprobs) < len(options) and callctr < MAX_CALL_ATTEMPTS - 1:  
+                            raise ValueError("full logprobs not returned")
+                        try:
+                            tokens = [tl.token for tl in entry.top_logprobs]
+                            probs = [math.exp(tl.logprob) for tl in entry.top_logprobs]
+                            token_probs = dict(zip(tokens, probs))
                         #logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
                         #prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
                         #token_probs = dict(zip(tokens, prob_tensor.tolist()))
+                        except Exception as e:
+                            if callctr < MAX_CALL_ATTEMPTS - 1: raise ValueError(f"Error processing logprobs: {e}")
+                            else: return resp, None
                     #print(f"resp={resp}, token_probs={token_probs}")
                     return resp, token_probs
                 elif self.provider == "Hyperbolic":
@@ -342,7 +348,7 @@ class BaseGameClass:
                     else:                                   # multiple-choice – inspect 1st token only
                         # top_candidates[0].candidates = k alternatives for the 1st token
                         first_step = logres.top_candidates[0].candidates
-                        tokens = [alt.token.strip() for alt in first_step]
+                        tokens = [alt.token for alt in first_step]
                         probs  = [math.exp(alt.log_probability) for alt in first_step]
                         token_probs = dict(zip(tokens, probs))
                     return resp, token_probs
