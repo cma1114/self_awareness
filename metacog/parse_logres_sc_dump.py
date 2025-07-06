@@ -281,29 +281,28 @@ def analyze_parsed_data(input_summary_file):
         results.append({
             "Subject": subject_name,
             "Status": correct_status,
-            "Answer Change %": answer_change_pct,
+            "AnswerChange%": answer_change_pct,
             "AnswerChange_CI_Low": answer_change_ci_low,
             "AnswerChange_CI_High": answer_change_ci_high,
             "N": n_value,
-            "Capabilities Entropy Coef": cap_entropy_coef,
+            "CapEntropyCoef": cap_entropy_coef,
             "CapEntropy_CI_Low": cap_entropy_ci_low,
             "CapEntropy_CI_High": cap_entropy_ci_high,
-            "Norm Prob Entropy Coef": norm_prob_entropy_coef,
-            "NormProbEntropy_CI_Low": norm_prob_entropy_ci_low,
-            "NormProbEntropy_CI_High": norm_prob_entropy_ci_high,
+#            "Norm Prob Entropy Coef": norm_prob_entropy_coef,
+#            "NormProbEntropy_CI_Low": norm_prob_entropy_ci_low,
+#            "NormProbEntropy_CI_High": norm_prob_entropy_ci_high,
             "LL_Model4": LL4,
             "LL_Model46": LL46,
             "LR_stat": LR_stat,
             "LR_pvalue": LR_pvalue,
-            "Singular_46": singular_46,
         })
         
     df = pd.DataFrame(results)
     
     # Ensure numeric columns are actually numeric
-    numeric_columns = ['Answer Change %', 'AnswerChange_CI_Low', 'AnswerChange_CI_High', 'N',
-                      'Capabilities Entropy Coef', 'CapEntropy_CI_Low', 'CapEntropy_CI_High',
-                      'Norm Prob Entropy Coef', 'NormProbEntropy_CI_Low', 'NormProbEntropy_CI_High',
+    numeric_columns = ['AnswerChange%', 'AnswerChange_CI_Low', 'AnswerChange_CI_High', 'N',
+                      'CapEntropyCoef', 'CapEntropy_CI_Low', 'CapEntropy_CI_High',
+#                      'Norm Prob Entropy Coef', 'NormProbEntropy_CI_Low', 'NormProbEntropy_CI_High',
                       'LL_Model4', 'LL_Model46', 'LR_stat', 'LR_pvalue']
     
     for col in numeric_columns:
@@ -354,9 +353,9 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
     has_norm_prob_entropy = False
     
     for df in [df_correct, df_incorrect]:
-        if not df.empty and "Capabilities Entropy Coef" in df.columns:
+        if not df.empty and "CapEntropyCoef" in df.columns:
             # Check if we have any non-NaN values
-            cap_values = df["Capabilities Entropy Coef"]
+            cap_values = df["CapEntropyCoef"]
             has_cap_entropy = has_cap_entropy or cap_values.notna().any()
             
         if not df.empty and "Norm Prob Entropy Coef" in df.columns:
@@ -406,12 +405,12 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
         formatted_subject_names = [break_subject_name(name, max_parts_per_line=3) for name in df["Subject"]]
         
         # --- Plot 1: Answer Change % ---
-        yerr_low = np.nan_to_num(df["Answer Change %"] - df["AnswerChange_CI_Low"], nan=0.0)
-        yerr_high = np.nan_to_num(df["AnswerChange_CI_High"] - df["Answer Change %"], nan=0.0)
+        yerr_low = np.nan_to_num(df["AnswerChange%"] - df["AnswerChange_CI_Low"], nan=0.0)
+        yerr_high = np.nan_to_num(df["AnswerChange_CI_High"] - df["AnswerChange%"], nan=0.0)
         yerr_low[yerr_low < 0] = 0
         yerr_high[yerr_high < 0] = 0
         
-        bars = axs[row_idx, 0].bar(formatted_subject_names, df["Answer Change %"],
+        bars = axs[row_idx, 0].bar(formatted_subject_names, df["AnswerChange%"],
                                    color='mediumslateblue' if status == 'Correct' else 'salmon',
                                    yerr=[yerr_low, yerr_high], ecolor='gray', capsize=5, width=0.6)
         
@@ -437,16 +436,9 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
             if has_cap_entropy:
                 # --- Plot 2: Capabilities Entropy Coefficient ---
                 # Convert to numeric values for plotting
-                cap_values = pd.to_numeric(df["Capabilities Entropy Coef"], errors='coerce')
+                cap_values = pd.to_numeric(df["CapEntropyCoef"], errors='coerce')
                 cap_ci_low = pd.to_numeric(df["CapEntropy_CI_Low"], errors='coerce')
                 cap_ci_high = pd.to_numeric(df["CapEntropy_CI_High"], errors='coerce')
-                singular_mask = df.get('Singular_46', pd.Series([False] * len(df)))
-                
-                # For singular cases, set values to 0 for plotting
-                cap_values[singular_mask] = 0
-                cap_ci_low[singular_mask] = 0
-                cap_ci_high[singular_mask] = 0
-                
                 yerr_cap_low = np.nan_to_num(cap_values - cap_ci_low, nan=0.0)
                 yerr_cap_high = np.nan_to_num(cap_ci_high - cap_values, nan=0.0)
                 yerr_cap_low[yerr_cap_low < 0] = 0
@@ -455,13 +447,6 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
                 bars = axs[row_idx, 1].bar(formatted_subject_names, cap_values,
                                color='cornflowerblue' if status == 'Correct' else 'lightcoral',
                                yerr=[yerr_cap_low, yerr_cap_high], ecolor='gray', capsize=5, width=0.6)
-                
-                # Add "Singular" text for singular values
-                for i, (bar, is_singular) in enumerate(zip(bars, singular_mask)):
-                    if is_singular:
-                        axs[row_idx, 1].text(bar.get_x() + bar.get_width()/2., 0.05, 
-                                           'Singular', ha='center', va='bottom', 
-                                           rotation=90, fontsize=9, color='red')
                 
                 axs[row_idx, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
                 axs[row_idx, 1].set_title(f'Capabilities Entropy (Model 4.6 ) - {status}', fontsize=title_fontsize)
@@ -477,13 +462,6 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
                 norm_values = pd.to_numeric(df["Norm Prob Entropy Coef"], errors='coerce')
                 norm_ci_low = pd.to_numeric(df["NormProbEntropy_CI_Low"], errors='coerce')
                 norm_ci_high = pd.to_numeric(df["NormProbEntropy_CI_High"], errors='coerce')
-                singular_mask = df.get('Singular_46', pd.Series([False] * len(df)))
-                
-                # For singular cases, set values to 0 for plotting
-                norm_values[singular_mask] = 0
-                norm_ci_low[singular_mask] = 0
-                norm_ci_high[singular_mask] = 0
-                
                 yerr_norm_low = np.nan_to_num(norm_values - norm_ci_low, nan=0.0)
                 yerr_norm_high = np.nan_to_num(norm_ci_high - norm_values, nan=0.0)
                 yerr_norm_low[yerr_norm_low < 0] = 0
@@ -492,13 +470,6 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
                 bars = axs[row_idx, 2].bar(formatted_subject_names, norm_values,
                                color='darkorange' if status == 'Correct' else 'gold',
                                yerr=[yerr_norm_low, yerr_norm_high], ecolor='gray', capsize=5, width=0.6)
-                
-                # Add "Singular" text for singular values
-                for i, (bar, is_singular) in enumerate(zip(bars, singular_mask)):
-                    if is_singular:
-                        axs[row_idx, 2].text(bar.get_x() + bar.get_width()/2., 0.05, 
-                                           'Singular', ha='center', va='bottom', 
-                                           rotation=90, fontsize=9, color='red')
                 
                 axs[row_idx, 2].set_ylabel('Coefficient Value', fontsize=label_fontsize)
                 axs[row_idx, 2].set_title(f'Normalized Prob Entropy (Model 4.6 ) - {status}', fontsize=title_fontsize)
@@ -515,7 +486,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
 
 if __name__ == "__main__":
     
-    dataset = "SimpleMC"
+    dataset = "SimpleMC"# "GPQA"#
     suffix = ""
 
     input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}.txt"
@@ -537,8 +508,8 @@ if __name__ == "__main__":
             # ① choose the columns to show ── now include CI bounds + log-likelihoods
             display_columns = [
                 'Subject', 'N', 'Status',
-                'Answer Change %', 'AnswerChange_CI_Low', 'AnswerChange_CI_High',
-                'Capabilities Entropy Coef', 'Norm Prob Entropy Coef',
+                'AnswerChange%', 'AnswerChange_CI_Low', 'AnswerChange_CI_High',
+                'CapEntropyCoef', #'Norm Prob Entropy Coef',
                 'LL_Model4', 'LL_Model46',
                 'LR_stat', 'LR_pvalue'
             ]
@@ -553,7 +524,7 @@ if __name__ == "__main__":
             )
 
             # percentages & their CIs
-            for col in ['Answer Change %', 'AnswerChange_CI_Low', 'AnswerChange_CI_High']:
+            for col in ['AnswerChange%', 'AnswerChange_CI_Low', 'AnswerChange_CI_High']:
                 df_display[col] = df_display[col].apply(
                     lambda x: f"{x:.3f}" if pd.notna(x) else ""
                 )
@@ -565,7 +536,8 @@ if __name__ == "__main__":
                 )
 
             # entropy coefficients (handle “Singular”)
-            for coef_col in ['Capabilities Entropy Coef', 'Norm Prob Entropy Coef']:
+            for coef_col in display_columns:
+                if 'coef' not in coef_col.lower(): continue
                 df_display[coef_col] = df_results.apply(
                     lambda row: ("Singular" if row.get('Singular_46', False)
                                 else ("" if pd.isna(row[coef_col])

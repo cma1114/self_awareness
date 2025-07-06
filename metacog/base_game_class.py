@@ -348,6 +348,8 @@ class BaseGameClass:
                     else:                                   # multiple-choice – inspect 1st token only
                         # top_candidates[0].candidates = k alternatives for the 1st token
                         first_step = logres.top_candidates[0].candidates
+                        if len(first_step) < len(options) and callctr < MAX_CALL_ATTEMPTS - 1:  
+                            raise ValueError("full logprobs not returned")
                         tokens = [alt.token for alt in first_step]
                         probs  = [math.exp(alt.log_probability) for alt in first_step]
                         token_probs = dict(zip(tokens, probs))

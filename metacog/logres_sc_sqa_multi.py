@@ -153,6 +153,11 @@ def prepare_regression_data_for_model(game_file_paths_list,
             if sqa_features and s_i_capability is not None:
                 answer_changed_numeric = 1 if trial["answer_changed"] else 0
                 
+                base_clean = {k.strip(): float(v) for k, v in (p_i_map_for_this_model.get(q_id) or {}).items()
+                            if k.strip() != "T" and isinstance(v, (int, float))}
+                game_clean = {k.strip(): float(v) for k, v in (prob_dict_trial or {}).items()
+                            if k.strip() != "T" and isinstance(v, (int, float))}
+                
                 trial_data_dict = {
                     'q_id': q_id, 
                     'answer_changed': answer_changed_numeric,
@@ -162,8 +167,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
                     'p_i_capability': p_i_capability,
-                    'base_probs': p_i_map_for_this_model.get(q_id) if p_i_map_for_this_model and p_i_map_for_this_model.get(q_id) else None,
-                    'game_probs': prob_dict_trial if norm_prob_entropy_trial else None,
+                    'base_probs': base_clean if len(base_clean) == 4 else None,     
+                    'game_probs': game_clean if norm_prob_entropy_trial and len(game_clean) == 4 else None,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
@@ -250,15 +255,38 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
             files_in_group, remaining_criteria, model_name_for_log, group_path_names + (group_name,)
         )
 
-# --- Main Analysis Logic ---
+def save_summary_data(all_results, filename="final_summary.csv"):
+    """Saves the collected results to a CSV file."""
+    if not all_results:
+        print("No summary data to save.")
+        return
+        
+    df = pd.DataFrame(all_results)
+    
+    # Reorder columns for clarity
+    cols = ['Model', 'Condition',
+            'Idea 0: Prop', 'Idea 0: CI', 'Idea 0: p-val',
+            'Idea 1: p-val',
+            'Idea 2: Coef', 'Idea 2: CI', 'Idea 2: p-val',
+            'Idea 3: p-val',
+            'M1.51: Coef', 'M1.51: CI', 'M1.51: p-val']
+    
+    df = df.reindex(columns=cols)
+    
+    df.to_csv(filename, index=False)
+    print(f"\n--- Summary data saved to {filename} ---")
+
+
 if __name__ == "__main__":
+    all_model_summary_data = []
 
     dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
+    sc_version = "_new"  # "_new" or ""
     VERBOSE = False
 
 
-    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}.txt"
     print(f"Loading main {dataset} dataset for features...")
     sqa_all_questions = load_and_format_dataset(dataset)
     sqa_feature_lookup = {
@@ -270,7 +298,7 @@ if __name__ == "__main__":
     }
     print(f"sqa feature lookup created with {len(sqa_feature_lookup)} entries.")
 
-    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/" if game_type == "aop" else "./secondchance_game_logs/"
+    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/" if game_type == "aop" else "./sc_logs_new/" if sc_version == "new" else "./secondchance_game_logs/"
     capabilities_dir = "./compiled_results_sqa/" if dataset == "SimpleQA" else "./compiled_results_smc/"
     game_file_suffix = "_evaluated" if dataset == "SimpleQA" else ""
 
@@ -327,7 +355,9 @@ if __name__ == "__main__":
 
         for group_names_tuple, current_game_files_for_analysis in process_file_groups(
                 game_files_for_model, FILE_GROUPING_CRITERIA, model_name_part):
-            
+
+            summary_data = {'Model': model_name_part, 'Condition': ', '.join(group_names_tuple)}
+
             capabilities_filename = f"{model_name_part}_phase1_compiled.json"
             capabilities_file_path = os.path.join(capabilities_dir, capabilities_filename)
 
@@ -433,6 +463,34 @@ if __name__ == "__main__":
                     if 'deepseek-chat' not in model_name_part.lower():
                         df_model_tmp = df_model.copy()
                         df_model = df_model.dropna(subset=["base_probs", "game_probs"])
+
+                        log_output("\n  Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)")
+                        df_changed = df_model[df_model['answer_changed'] == 1].copy()
+                        if not df_changed.empty:
+                            def get_second_choice(prob_dict):
+                                if not isinstance(prob_dict, dict) or len(prob_dict) < 2:
+                                    return None
+                                sorted_keys = sorted(prob_dict, key=prob_dict.get, reverse=True)
+                                return sorted_keys[1]
+
+                            df_changed['second_choice_base'] = df_changed['base_probs'].apply(get_second_choice)
+                            df_changed['game_answer'] = df_changed['game_probs'].apply(lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None)
+                            
+                            second_choice_successes = (df_changed['second_choice_base'] == df_changed['game_answer']).sum()
+                            total_changed_trials = len(df_changed)
+
+                            if total_changed_trials > 0:
+                                proportion_to_second = second_choice_successes / total_changed_trials
+                                ci_low, ci_high = smp.proportion_confint(second_choice_successes, total_changed_trials, alpha=0.05, method='normal')
+                                z_stat_vs33, p_value_vs33 = smp.proportions_ztest(second_choice_successes, total_changed_trials, value=1/3)
+                                log_output(f"                  Proportion of changes to 2nd choice: {proportion_to_second:.4f} [{ci_low:.4f}, {ci_high:.4f}] (n={total_changed_trials})")
+                                log_output(f"                  P-value vs 33.3%: {p_value_vs33:.4g}")
+                                summary_data['Idea 0: Prop'] = proportion_to_second
+                                summary_data['Idea 0: CI'] = f"[{ci_low:.3f}, {ci_high:.3f}]"
+                                summary_data['Idea 0: p-val'] = p_value_vs33
+                        else:
+                            log_output("                  No trials with answer changes found to analyze for Idea 0.")
+
                         log_output("\n  Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change")
                         def get_sorted_probs(prob_dict):
                             if not isinstance(prob_dict, dict):
@@ -468,10 +526,19 @@ if __name__ == "__main__":
                         else:
                             stat, p = (float('nan'), float('nan'))
                         log_output(f"Wilcoxon delta_p: statistic={stat:.1f}, p={p:.3g}")
+                        mean_dp = delta_p_no_change.mean()
+                        se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change)) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        summary_data['Idea 1: p-val'] = p
 
                         log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
                         m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
                         log_output(m1.summary())
+                        summary_data['Idea 2: Coef'] = m1.params['p1']
+                        summary_data['Idea 2: CI'] = f"[{m1.conf_int().loc['p1'][0]:.3f}, {m1.conf_int().loc['p1'][1]:.3f}]"
+                        summary_data['Idea 2: p-val'] = m1.pvalues['p1']
 
                         log_output("\n  Idea 3: Entropy of unchosen tokens in game is lower than in baseline when the answer doesn't change")
                         def rest_entropy(row, which):
@@ -495,22 +562,38 @@ if __name__ == "__main__":
                         df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
                         stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 0, "delta_H"])     
                         log_output(f"Wilcoxon delta_H: statistic={stat:.1f}, p={p:.3g}")
-                        df_model = df_model_tmp.copy()  # Restore original df_model
+                        mean_dp = df_model[df_model["answer_changed"] == 0]["delta_H"].mean()
+                        se       = df_model[df_model["answer_changed"] == 0]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 0]["delta_H"])) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean ΔH = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        summary_data['Idea 3: p-val'] = p
+                        stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 1, "delta_H"])     
+                        log_output(f"Wilcoxon delta_H Changed: statistic={stat:.1f}, p={p:.3g}")
+                        mean_dp = df_model[df_model["answer_changed"] == 1]["delta_H"].mean()
+                        se       = df_model[df_model["answer_changed"] == 1]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 1]["delta_H"])) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean ΔH Changed = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
 
                         log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
-                        p_cols = ["p1", "p2", "p3", "p4"]
-                        df_model[p_cols] = pd.DataFrame(df_model["probs"].tolist(), index=df_model.index)
-                        df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
-                        #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
-                        df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
-                        df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
-                        df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
-                        logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
-                        #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
-                        log_output(logit_int.summary())
-                        auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
-                        log_output(f"AUC = {auc:.3f}")
-
+                        try:
+                            df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
+                            #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
+                            df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
+                            df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
+                            df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
+                            logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
+                            #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
+                            log_output(logit_int.summary())
+                            auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
+                            log_output(f"AUC = {auc:.3f}")
+                            summary_data['M1.51: Coef'] = logit_int.params['I(p1_z ** 2)']
+                            summary_data['M1.51: CI'] = f"[{logit_int.conf_int().loc['I(p1_z ** 2)'][0]:.3f}, {logit_int.conf_int().loc['I(p1_z ** 2)'][1]:.3f}]"
+                            summary_data['M1.51: p-val'] = logit_int.pvalues['I(p1_z ** 2)']
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.51: {e_full}")
+                        """
                         df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
                         g = (df_model.groupby('p1_bin')['answer_changed']
                             .agg(['mean', 'count'])
@@ -524,7 +607,56 @@ if __name__ == "__main__":
                                     yerr=[g['flip']-lo, hi-g['flip']], fmt='o-')
                         plt.xlabel('p₁ (binned)'); plt.ylabel('flip rate')
                         plt.tight_layout()
-                        plt.savefig(f"cap_entropy_binned_{log_context_str}.png", dpi=300)  
+                        plt.savefig(f"cap_entropy_binned_{dataset}_{log_context_str}.png", dpi=300)  
+
+                        sns.regplot(
+                            data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed']),
+                            x="capabilities_entropy",
+                            y="answer_changed",
+                            logistic=True,
+                            ci=None,
+                            scatter_kws={"s": 25, "alpha": .4},
+                        )
+                        #plt.ylabel("P(answer_changed = 1)")
+                        #plt.tight_layout()
+                        ###plt.savefig(f"cap_entropy_vs_answer_changed_{log_context_str}.png", dpi=300)  
+                        #plt.close()
+
+                        sns.kdeplot(data=df_model, x="capabilities_entropy", hue="answer_changed",
+                                    common_norm=False, bw_adjust=.75, fill=True, alpha=.4)
+                        #plt.xlabel("capabilities_entropy")
+                        #plt.ylabel("Density")
+                        #plt.tight_layout()
+                        #plt.savefig(f"cap_entropy_density_split_{log_context_str}.png", dpi=300)
+                        #plt.close()
+
+                        # 10 equal-count bins; adjust q if you want finer / coarser slices
+                        df_model["entropy_bin"] = pd.qcut(df_model["capabilities_entropy"], q=10, duplicates="drop")
+                        g = (
+                            df_model.groupby("entropy_bin")["answer_changed"]
+                            .agg(["mean", "count"])
+                            .rename(columns={"mean": "rate"})
+                        )
+                        # 95 % Wilson CIs for a proportion
+                        low, hi = proportion_confint(
+                            count=(g["rate"] * g["count"]).round().astype(int),
+                            nobs=g["count"],
+                            method="wilson"
+                        )
+                        g["lo"], g["hi"] = low, hi
+                        #plt.errorbar(
+                        #    x=g.index.map(lambda i: i.mid),   # bin centres
+                        #    y=g["rate"],
+                        #    yerr=[g["rate"] - g["lo"], g["hi"] - g["rate"]],
+                        #    fmt="o-",
+                        #)
+                        #plt.xlabel("capabilities_entropy (binned)")
+                        #plt.ylabel("Empirical P(answer_changed = 1)")
+                        #plt.tight_layout()
+                        ###plt.savefig(f"cap_entropy_bins_vs_change_{log_context_str}.png", dpi=300)
+                        #plt.close()
+                        """
+                        df_model = df_model_tmp.copy()  # Restore original df_model
 
                 if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.6: normalized_prob_entropy alone
@@ -686,4 +818,7 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"                  Error during logistic regression for {log_context_str}: {e}")
             
+            all_model_summary_data.append(summary_data)
             print("-" * 40)
+    
+    save_summary_data(all_model_summary_data, filename=f"sc_summary{dataset}.csv")            

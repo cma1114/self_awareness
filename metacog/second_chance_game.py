@@ -205,7 +205,8 @@ class SecondChanceGame(BaseGameClass):
                 message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
                 content = original_answer if self.show_original_answer else "[redacted]"
                 message_history.append({"role": "assistant", "content": content})
-                content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
+                content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
+#                content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
                 #message_history.append({"role": "user", "content": content})
                 
                 # Get the answer without accumulating history
@@ -214,7 +215,7 @@ class SecondChanceGame(BaseGameClass):
                     content,
                     message_history=message_history,
                     keep_appending=False,
-                    setup_text="Respond ONLY with your answer\n" if self.is_short_answer else None,
+                    setup_text="Your previous answer was incorrect. Respond ONLY with your new answer\n",#"Respond ONLY with your answer\n" if self.is_short_answer else None,
                     MAX_TOKENS=None,#1 if not self.is_short_answer else None,
                     temp = self.temperature
                 )
@@ -402,10 +403,10 @@ def main(model_dataset_dict):
 if __name__ == "__main__":
     model_dataset_dict = {
         "claude-3-5-sonnet-20241022": ["GPSA", "SimpleQA"],
-        "deepseek-chat": ["GPSA", "SimpleQA"],
+        "gemini-1.5-pro": ["GPSA", "SimpleQA"],
         "gemini-2.0-flash-001": ["GPQA", "GPSA", "SimpleQA"],
         "grok-3-latest": ["GPQA", "GPSA", "SimpleQA"],
         "gpt-4o-2024-08-06": ["GPQA", "GPSA", "SimpleQA"],
         }
-    model_dataset_dict = {'gemini-2.0-flash-001': ["GPQA","SimpleMC"]}  
+    model_dataset_dict = {'gemini-1.5-pro': ["GPQA", "SimpleMC"]}  
     main(model_dataset_dict)

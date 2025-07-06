@@ -156,7 +156,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
             if isinstance(prob_dict_trial, dict):
                 non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "T" and isinstance(v, (int, float))]
                 
-                if non_t_probs_values and len(non_t_probs_values) == 4 and non_t_probs_values[0] >= 1/len(non_t_probs_values):
+                if non_t_probs_values and len(non_t_probs_values) == 4 and max(non_t_probs_values) >= 1/len(non_t_probs_values):
                     sum_non_t_probs = sum(non_t_probs_values)
                     if sum_non_t_probs > 1e-9:
                         normalized_probs = [p / sum_non_t_probs for p in non_t_probs_values]
@@ -175,10 +175,10 @@ def prepare_regression_data_for_model(game_file_paths_list,
             if gpqa_features and s_i_capability is not None:
                 answer_changed_numeric = 1 if trial["answer_changed"] else 0
 
-                base_clean = {k: float(v) for k, v in (p_i_map_for_this_model.get(q_id) or {}).items()
-                            if isinstance(v, (int, float))}            # keep numeric pairs only
-                game_clean = {k: float(v) for k, v in (prob_dict_trial or {}).items()
-                            if k != "T" and isinstance(v, (int, float))}
+                base_clean = {k.strip(): float(v) for k, v in (p_i_map_for_this_model.get(q_id) or {}).items()
+                            if k.strip() != "T" and isinstance(v, (int, float))}
+                game_clean = {k.strip(): float(v) for k, v in (prob_dict_trial or {}).items()
+                            if k.strip() != "T" and isinstance(v, (int, float))}
 
                 trial_data_dict = {
                     'q_id': q_id, 
@@ -280,13 +280,37 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
         )
 
 # --- Main Analysis Logic ---
+def save_summary_data(all_results, filename="final_summary.csv"):
+    """Saves the collected results to a CSV file."""
+    if not all_results:
+        print("No summary data to save.")
+        return
+        
+    df = pd.DataFrame(all_results)
+    
+    # Reorder columns for clarity
+    cols = ['Model', 'Condition',
+            'Idea 0: Prop', 'Idea 0: CI', 'Idea 0: p-val',
+            'Idea 1: p-val',
+            'Idea 2: Coef', 'Idea 2: CI', 'Idea 2: p-val',
+            'Idea 3: p-val',
+            'M1.51: Coef', 'M1.51: CI', 'M1.51: p-val']
+    
+    df = df.reindex(columns=cols)
+    
+    df.to_csv(filename, index=False)
+    print(f"\n--- Summary data saved to {filename} ---")
+
+
 if __name__ == "__main__":
+    all_model_summary_data = []
 
     dataset = "GPQA" #"GPSA"#
     game_type = "sc"
+    sc_version = "_new"  # "_new" or ""
     VERBOSE = False
 
-    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}.txt"
     print(f"Loading main {dataset} dataset for features...")
     gpqa_all_questions = load_and_format_dataset(dataset) 
 
@@ -300,7 +324,7 @@ if __name__ == "__main__":
     }
     print(f"GPQA feature lookup created with {len(gpqa_feature_lookup)} entries.")
 
-    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/" if game_type == "aop" else "./secondchance_game_logs/"
+    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/" if game_type == "aop" else "./sc_logs_new/" if sc_version == "new" else "./secondchance_game_logs/"
     capabilities_dir = "./completed_results_gpqa/" if dataset == "GPQA" else "./compiled_results_gpsa/"
     game_file_suffix = "_evaluated" if dataset == "GPSA" else ""
     test_file_suffix = "completed" if dataset == "GPQA" else "compiled"
@@ -359,6 +383,8 @@ if __name__ == "__main__":
         for group_names_tuple, current_game_files_for_analysis in process_file_groups(
                 game_files_for_model, FILE_GROUPING_CRITERIA, model_name_part):
             
+            summary_data = {'Model': model_name_part, 'Condition': ', '.join(group_names_tuple)}
+
             capabilities_filename = f"{model_name_part}_phase1_{test_file_suffix}.json"
             capabilities_file_path = os.path.join(capabilities_dir, capabilities_filename)
 
@@ -399,7 +425,7 @@ if __name__ == "__main__":
             if not s_i_map_for_this_model:
                 print(f"{'  '*(len(group_names_tuple)+1)}No S_i data loaded from {capabilities_file_path}. Skipping this group.")
                 continue
-
+            
             if not current_game_files_for_analysis: # Should be caught by process_file_groups, but as a safeguard
                 print(f"{'  '*(len(group_names_tuple)+1)}No game files for analysis for this group. Skipping.")
                 continue
@@ -443,7 +469,7 @@ if __name__ == "__main__":
                 z_stat_vs25, p_value_vs25 = smp.proportions_ztest(phase2_corcnt, phase2_totalcnt, 0.25)
                 z_stat_vs33, p_value_vs33 = smp.proportions_ztest(phase2_corcnt, phase2_totalcnt, 0.333)
                 log_output(f"P-value vs 25%: {p_value_vs25:.4g}; P-value vs 33%: {p_value_vs33:.4g}")
-    
+
                 if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
                     log_output("\n  Model 1.4: Answer Changed ~ capabilities_prob")
                     try:
@@ -465,6 +491,34 @@ if __name__ == "__main__":
 
                         df_model_tmp = df_model.copy()
                         df_model = df_model.dropna(subset=["base_probs", "game_probs"])
+
+                        log_output("\n  Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)")
+                        df_changed = df_model[df_model['answer_changed'] == 1].copy()
+                        if not df_changed.empty:
+                            def get_second_choice(prob_dict):
+                                if not isinstance(prob_dict, dict) or len(prob_dict) < 2:
+                                    return None
+                                sorted_keys = sorted(prob_dict, key=prob_dict.get, reverse=True)
+                                return sorted_keys[1]
+
+                            df_changed['second_choice_base'] = df_changed['base_probs'].apply(get_second_choice)
+                            df_changed['game_answer'] = df_changed['game_probs'].apply(lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None)
+                            
+                            second_choice_successes = (df_changed['second_choice_base'] == df_changed['game_answer']).sum()
+                            total_changed_trials = len(df_changed)
+
+                            if total_changed_trials > 0:
+                                proportion_to_second = second_choice_successes / total_changed_trials
+                                ci_low, ci_high = smp.proportion_confint(second_choice_successes, total_changed_trials, alpha=0.05, method='normal')
+                                z_stat_vs33, p_value_vs33 = smp.proportions_ztest(second_choice_successes, total_changed_trials, value=1/3)
+                                log_output(f"                  Proportion of changes to 2nd choice: {proportion_to_second:.4f} [{ci_low:.4f}, {ci_high:.4f}] (n={total_changed_trials})")
+                                log_output(f"                  P-value vs 33.3%: {p_value_vs33:.4g}")
+                                summary_data['Idea 0: Prop'] = proportion_to_second
+                                summary_data['Idea 0: CI'] = f"[{ci_low:.3f}, {ci_high:.3f}]"
+                                summary_data['Idea 0: p-val'] = p_value_vs33
+                        else:
+                            log_output("                  No trials with answer changes found to analyze for Idea 0.")
+
                         log_output("\n  Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change")
                         def get_sorted_probs(prob_dict):
                             if not isinstance(prob_dict, dict):
@@ -500,10 +554,19 @@ if __name__ == "__main__":
                         else:
                             stat, p = (float('nan'), float('nan'))
                         log_output(f"Wilcoxon delta_p: statistic={stat:.1f}, p={p:.3g}")
+                        mean_dp = delta_p_no_change.mean()
+                        se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change)) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        summary_data['Idea 1: p-val'] = p
 
                         log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
                         m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
                         log_output(m1.summary())
+                        summary_data['Idea 2: Coef'] = m1.params['p1']
+                        summary_data['Idea 2: CI'] = f"[{m1.conf_int().loc['p1'][0]:.3f}, {m1.conf_int().loc['p1'][1]:.3f}]"
+                        summary_data['Idea 2: p-val'] = m1.pvalues['p1']
 
                         log_output("\n  Idea 3: Entropy of unchosen tokens in game is lower than in baseline when the answer doesn't change")
                         def rest_entropy(row, which):
@@ -527,20 +590,38 @@ if __name__ == "__main__":
                         df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
                         stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 0, "delta_H"])     
                         log_output(f"Wilcoxon delta_H: statistic={stat:.1f}, p={p:.3g}")
-                        df_model = df_model_tmp.copy()  # Restore original df_model
+                        mean_dp = df_model[df_model["answer_changed"] == 0]["delta_H"].mean()
+                        se       = df_model[df_model["answer_changed"] == 0]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 0]["delta_H"])) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean ΔH = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        summary_data['Idea 3: p-val'] = p
+                        stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 1, "delta_H"])     
+                        log_output(f"Wilcoxon delta_H Changed: statistic={stat:.1f}, p={p:.3g}")
+                        mean_dp = df_model[df_model["answer_changed"] == 1]["delta_H"].mean()
+                        se       = df_model[df_model["answer_changed"] == 1]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 1]["delta_H"])) 
+                        ci_low   = mean_dp - 1.96 * se
+                        ci_up    = mean_dp + 1.96 * se
+                        log_output(f"Mean ΔH Changed = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
 
                         log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
-                        df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
-                        #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
-                        df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
-                        df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
-                        df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
-                        logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
-                        #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
-                        log_output(logit_int.summary())
-                        auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
-                        log_output(f"AUC = {auc:.3f}")
-
+                        try:
+                            df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
+                            #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
+                            df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
+                            df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
+                            df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
+                            logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
+                            #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
+                            log_output(logit_int.summary())
+                            auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
+                            log_output(f"AUC = {auc:.3f}")
+                            summary_data['M1.51: Coef'] = logit_int.params['I(p1_z ** 2)']
+                            summary_data['M1.51: CI'] = f"[{logit_int.conf_int().loc['I(p1_z ** 2)'][0]:.3f}, {logit_int.conf_int().loc['I(p1_z ** 2)'][1]:.3f}]"
+                            summary_data['M1.51: p-val'] = logit_int.pvalues['I(p1_z ** 2)']
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 1.51: {e_full}")
+                        """
                         df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
                         g = (df_model.groupby('p1_bin')['answer_changed']
                             .agg(['mean', 'count'])
@@ -602,6 +683,8 @@ if __name__ == "__main__":
                         #plt.tight_layout()
                         ###plt.savefig(f"cap_entropy_bins_vs_change_{log_context_str}.png", dpi=300)
                         #plt.close()
+                        """
+                        df_model = df_model_tmp.copy()  # Restore original df_model
 
                 if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.6: normalized_prob_entropy alone
@@ -612,27 +695,6 @@ if __name__ == "__main__":
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.6: {e_full}")
 
-                    if 'deepseek-chat' not in model_name_part.lower():
-                        sns.regplot(
-                            data=df_model.dropna(subset=['normalized_prob_entropy', 'answer_changed']),
-                            x="normalized_prob_entropy",
-                            y="answer_changed",
-                            logistic=True,
-                            ci=None,
-                            scatter_kws={"s": 25, "alpha": .4},
-                        )
-                        #plt.ylabel("P(answer_changed = 1)")
-                        #plt.tight_layout()
-                        ###plt.savefig(f"game_entropy_vs_answer_changed_{log_context_str}.png", dpi=300)  
-                        #plt.close()
-
-                        #sns.kdeplot(data=df_model, x="normalized_prob_entropy", hue="answer_changed",
-                        #            common_norm=False, bw_adjust=.75, fill=True, alpha=.4)
-                        #plt.xlabel("normalized_prob_entropy")
-                        #plt.ylabel("Density")
-                        #plt.tight_layout()
-                        #plt.savefig(f"game_entropy_density_split_{log_context_str}.png", dpi=300)
-                        #plt.close()
 
                 if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                     # Model 1.7: both entropy measures
@@ -750,4 +812,7 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"                  Error during logistic regression for {log_context_str}: {e}")
             
+            all_model_summary_data.append(summary_data)
             print("-" * 40)
+    
+    save_summary_data(all_model_summary_data, filename=f"sc_summary{dataset}.csv")            
