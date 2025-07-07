@@ -13,7 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
-from scipy.stats import wilcoxon
+from scipy.stats import wilcoxon, ttest_rel
 
 FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
@@ -97,8 +97,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       gpqa_feature_lookup,
                                       capabilities_s_i_map_for_model,
                                       p_i_map_for_this_model=None,
-                                      entropy_map_for_this_model=None,
-                                      game_file_suffix=""):
+                                      entropy_map_for_this_model=None):
     all_regression_data_for_model = []
     file_level_features_cache = []
 
@@ -150,19 +149,11 @@ def prepare_regression_data_for_model(game_file_paths_list,
             q_id = trial.get("id")
 
             prob_dict_trial = trial.get("probs")
-            max_norm_prob_trial = None
-            norm_prob_entropy_trial = None
+            entropy_trial = None
 
             if isinstance(prob_dict_trial, dict):
-                non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "T" and isinstance(v, (int, float))]
-                
-                if non_t_probs_values and len(non_t_probs_values) == 4 and max(non_t_probs_values) >= 1/len(non_t_probs_values):
-                    sum_non_t_probs = sum(non_t_probs_values)
-                    if sum_non_t_probs > 1e-9:
-                        normalized_probs = [p / sum_non_t_probs for p in non_t_probs_values]
-                        if normalized_probs:
-                            max_norm_prob_trial = max(normalized_probs)
-                            norm_prob_entropy_trial = -np.sum([p_norm * np.log2(p_norm) for p_norm in normalized_probs if p_norm > 1e-9])
+                prob_values = [float(v) for k, v in prob_dict_trial.items()]
+                entropy_trial = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9])        
 
             gpqa_features = gpqa_feature_lookup.get(q_id)
             s_i_capability = capabilities_s_i_map_for_model.get(q_id)
@@ -192,15 +183,11 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'percent_non_alphabetic_whitespace': get_percent_non_alphabetic_whitespace(gpqa_features.get('q_text', '')),
                     'p_i_capability': p_i_capability,
                     'base_probs': base_clean if len(base_clean) == 4 else None,     
-                    'game_probs': game_clean if norm_prob_entropy_trial and len(game_clean) == 4 else None,
+                    'game_probs': game_clean if entropy_trial and len(game_clean) == 4 else None,
                     'capabilities_entropy': capabilities_entropy,
+                    'game_entropy': entropy_trial,
                     "experiment_id": file_ctr,
                 }
-
-                if max_norm_prob_trial is not None:
-                    trial_data_dict['max_normalized_prob'] = max_norm_prob_trial
-                if norm_prob_entropy_trial is not None:
-                    trial_data_dict['normalized_prob_entropy'] = norm_prob_entropy_trial
                 
                 if create_summary_reg: trial_data_dict['summary'] = int(file_data["summary_file"])
                 if create_nobio_reg: trial_data_dict['nobio'] = int(file_data["nobio_file"])
@@ -210,7 +197,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 all_regression_data_for_model.append(trial_data_dict)
             else:
                 if not gpqa_features:
-                    print(f"Warning: No SQA features found for q_id {q_id} in file {game_file_paths_list[file_ctr]}. Skipping trial.")
+                    print(f"Warning: No GPQA features found for q_id {q_id} in file {game_file_paths_list[file_ctr]}. Skipping trial.")
                 if s_i_capability is None:
                     print(f"Warning: No S_i capability found for q_id {q_id} in file {game_file_paths_list[file_ctr]}. Skipping trial.")
     if not all_regression_data_for_model:
@@ -294,6 +281,7 @@ def save_summary_data(all_results, filename="final_summary.csv"):
             'Idea 1: p-val',
             'Idea 2: Coef', 'Idea 2: CI', 'Idea 2: p-val',
             'Idea 3: p-val',
+            'Idea 5: p-val',
             'M1.51: Coef', 'M1.51: CI', 'M1.51: p-val']
     
     df = df.reindex(columns=cols)
@@ -308,9 +296,10 @@ if __name__ == "__main__":
     dataset = "GPQA" #"GPSA"#
     game_type = "sc"
     sc_version = "_new"  # "_new" or ""
+    suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
-    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}.txt"
     print(f"Loading main {dataset} dataset for features...")
     gpqa_all_questions = load_and_format_dataset(dataset) 
 
@@ -324,7 +313,7 @@ if __name__ == "__main__":
     }
     print(f"GPQA feature lookup created with {len(gpqa_feature_lookup)} entries.")
 
-    game_logs_dir = "./delegate_game_logs/" if game_type == "dg" else "./pass_game_logs/" if game_type == "aop" else "./sc_logs_new/" if sc_version == "new" else "./secondchance_game_logs/"
+    game_logs_dir = "./sc_logs_new/" if sc_version == "_new" else "./secondchance_game_logs/"
     capabilities_dir = "./completed_results_gpqa/" if dataset == "GPQA" else "./compiled_results_gpsa/"
     game_file_suffix = "_evaluated" if dataset == "GPSA" else ""
     test_file_suffix = "completed" if dataset == "GPQA" else "compiled"
@@ -350,29 +339,13 @@ if __name__ == "__main__":
     subj_acc_override_pattern = re.compile(r"_subj\d+(\.\d+)?_")
     subj_game_override_pattern = re.compile(r"_subjgame\d+(\.\d+)?_")
 
-    if game_type == "dg":
-        FILE_GROUPING_CRITERIA = [
-            {'name_prefix': "Feedback", 'split_logic': split_by_feedback},
-            {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
-            {'name_prefix': "SubjAccOverride", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: subj_acc_override_pattern.search(bn), "SubjAccOverride", "NoSubjAccOverride")},
-            {'name_prefix': "SubjGameOverride", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: subj_game_override_pattern.search(bn), "SubjGameOverride", "NoSubjGameOverride")},
-            {'name_prefix': "Randomized", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_randomized_" in bn, "Randomized", "NotRandomized")},
-            {'name_prefix': "NoHistory", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_nohistory_" in bn, "NoHistory", "WithHistory")},
-    #        {'name_prefix': "Summary", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_summary_" in bn, "Summary", "NoSummary")},
-            {'name_prefix': "Filtered", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_filtered_" in bn, "Filtered", "NotFiltered")},
-        ]
-    elif game_type == "aop":
-        FILE_GROUPING_CRITERIA = [
-        {'name_prefix': "MsgHist", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_hist_" in bn, "MsgHist", "NoMsgHist")},
-        {'name_prefix': "QCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noqcnt_" in bn, "NoQCtr", "QCtr")},
-        {'name_prefix': "PCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_nopcnt_" in bn, "NoPCtr", "PCtr")},
-        {'name_prefix': "SCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noscnt_" in bn, "NoSCtr", "SCtr")},
-        ]
-    else:
-        FILE_GROUPING_CRITERIA = [
-            {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
-            {'name_prefix': "Correctness", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_cor_" in bn, "Correct", "Incorrect")},
-        ]
+    FILE_GROUPING_CRITERIA = [
+        {'name_prefix': "Redaction", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_redacted_" in bn, "Redacted", "Non_Redacted")},
+    ]
+    if suffix != "_all":
+        FILE_GROUPING_CRITERIA.append(
+        {'name_prefix': "Correctness", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_cor_" in bn, "Correct", "Incorrect")},
+        )
 
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
@@ -434,8 +407,7 @@ if __name__ == "__main__":
                                                          gpqa_feature_lookup,
                                                          s_i_map_for_this_model,
                                                          p_i_map_for_this_model,
-                                                         entropy_map_for_this_model,
-                                                         game_file_suffix=game_file_suffix)
+                                                         entropy_map_for_this_model)
 
             if df_model is None or df_model.empty:
                 print(f"{'  '*(len(group_names_tuple)+1)}No data for regression analysis for group: {model_name_part} ({', '.join(group_names_tuple)}).")
@@ -548,18 +520,21 @@ if __name__ == "__main__":
                         )
                         df_model["delta_p"] = df_model["p1"] - df_model["p_baselinechosentoken_game"]
                         
-                        delta_p_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_p"].dropna()
-                        if not delta_p_no_change.empty:
-                            stat, p = wilcoxon(delta_p_no_change)
+                        df_idea1 = df_model.loc[df_model["answer_changed"] == 0, ["p1", "p_baselinechosentoken_game"]].dropna()
+                        if not df_idea1.empty and len(df_idea1) > 1:
+                            t_stat, t_p = ttest_rel(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
+                            w_stat, w_p = wilcoxon(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
                         else:
-                            stat, p = (float('nan'), float('nan'))
-                        log_output(f"Wilcoxon delta_p: statistic={stat:.1f}, p={p:.3g}")
+                            t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
+                        log_output(f"Paired t-test delta_p: statistic={t_stat:.2f}, p={t_p:.3g}")
+                        log_output(f"Wilcoxon delta_p: statistic={w_stat:.2f}, p={w_p:.3g}")
+                        delta_p_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_p"].dropna()
                         mean_dp = delta_p_no_change.mean()
-                        se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change)) 
+                        se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change))
                         ci_low   = mean_dp - 1.96 * se
                         ci_up    = mean_dp + 1.96 * se
                         log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
-                        summary_data['Idea 1: p-val'] = p
+                        summary_data['Idea 1: p-val'] = w_p
 
                         log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
                         m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
@@ -588,21 +563,52 @@ if __name__ == "__main__":
                         df_model["H_unchosen_base"] = df_model.apply(rest_entropy, axis=1, which="base")
                         df_model["H_unchosen_game"] = df_model.apply(rest_entropy, axis=1, which="game")
                         df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
-                        stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 0, "delta_H"])     
-                        log_output(f"Wilcoxon delta_H: statistic={stat:.1f}, p={p:.3g}")
-                        mean_dp = df_model[df_model["answer_changed"] == 0]["delta_H"].mean()
-                        se       = df_model[df_model["answer_changed"] == 0]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 0]["delta_H"])) 
-                        ci_low   = mean_dp - 1.96 * se
-                        ci_up    = mean_dp + 1.96 * se
-                        log_output(f"Mean ΔH = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
-                        summary_data['Idea 3: p-val'] = p
-                        stat, p = wilcoxon(df_model.loc[df_model["answer_changed"] == 1, "delta_H"])     
-                        log_output(f"Wilcoxon delta_H Changed: statistic={stat:.1f}, p={p:.3g}")
-                        mean_dp = df_model[df_model["answer_changed"] == 1]["delta_H"].mean()
-                        se       = df_model[df_model["answer_changed"] == 1]["delta_H"].std(ddof=1) / np.sqrt(len(df_model[df_model["answer_changed"] == 1]["delta_H"])) 
-                        ci_low   = mean_dp - 1.96 * se
-                        ci_up    = mean_dp + 1.96 * se
-                        log_output(f"Mean ΔH Changed = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        df_idea3 = df_model.loc[df_model["answer_changed"] == 0, ["H_unchosen_base", "H_unchosen_game"]].dropna()
+                        if not df_idea3.empty and len(df_idea3) > 1:
+                            t_stat, t_p = ttest_rel(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
+                            w_stat, w_p = wilcoxon(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
+                        else:
+                            t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
+                        log_output(f"Paired t-test delta_H: statistic={t_stat:.2f}, p={t_p:.3g}")
+                        log_output(f"Wilcoxon delta_H: statistic={w_stat:.2f}, p={w_p:.3g}")
+                        delta_H_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_H"].dropna()
+                        mean_dH = delta_H_no_change.mean()
+                        se_dH = delta_H_no_change.std(ddof=1) / np.sqrt(len(delta_H_no_change)) if len(delta_H_no_change) > 0 else 0
+                        ci_low_dH = mean_dH - 1.96 * se_dH
+                        ci_up_dH = mean_dH + 1.96 * se_dH
+                        log_output(f"Mean ΔH = {mean_dH:.4f}  [{ci_low_dH:.4f}, {ci_up_dH:.4f}]")
+                        summary_data['Idea 3: p-val'] = w_p
+                        
+                        df_idea3_changed = df_model.loc[df_model["answer_changed"] == 1, ["H_unchosen_base", "H_unchosen_game"]].dropna()
+                        if not df_idea3_changed.empty and len(df_idea3_changed) > 1:
+                            t_stat, t_p = ttest_rel(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
+                            w_stat, w_p = wilcoxon(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
+                            log_output(f"Paired t-test delta_H Changed: statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Wilcoxon delta_H Changed: statistic={w_stat:.2f}, p={w_p:.3g}")
+                            delta_H_changed = df_model.loc[df_model["answer_changed"] == 1, "delta_H"].dropna()
+                            mean_dH_changed = delta_H_changed.mean()
+                            se_dH_changed = delta_H_changed.std(ddof=1) / np.sqrt(len(delta_H_changed))
+                            ci_low_dH_changed = mean_dH_changed - 1.96 * se_dH_changed
+                            ci_up_dH_changed = mean_dH_changed + 1.96 * se_dH_changed
+                            log_output(f"Mean ΔH Changed = {mean_dH_changed:.4f}  [{ci_low_dH_changed:.4f}, {ci_up_dH_changed:.4f}]")
+
+                        log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
+                        df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
+                        if not df_idea5.empty and len(df_idea5) > 1:
+                            t_stat, t_p = ttest_rel(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                            w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                            log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
+                            
+                            delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
+                            mean_delta_entropy = delta_entropy.mean()
+                            se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
+                            ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
+                            ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
+                            log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
+                            summary_data['Idea 5: p-val'] = w_p
+                        else:
+                            log_output("                  Not enough data for Idea 5 analysis.")
 
                         log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
                         try:
@@ -686,21 +692,21 @@ if __name__ == "__main__":
                         """
                         df_model = df_model_tmp.copy()  # Restore original df_model
 
-                if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                if 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
                     # Model 1.6: normalized_prob_entropy alone
                     log_output("\n  Model 1.6: Answer Changed ~ Game Entropy")
                     try:
-                        logit_m2 = smf.logit('answer_changed ~ normalized_prob_entropy', data=df_model.dropna(subset=['normalized_prob_entropy', 'answer_changed'])).fit(disp=0)
+                        logit_m2 = smf.logit('answer_changed ~ game_entropy', data=df_model.dropna(subset=['game_entropy', 'answer_changed'])).fit(disp=0)
                         log_output(logit_m2.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.6: {e_full}")
 
 
-                if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
                     # Model 1.7: both entropy measures
                     log_output("\n  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy")
                     try:
-                        logit_m2 = smf.logit('answer_changed ~ capabilities_entropy + normalized_prob_entropy', data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed'])).fit(disp=0)
+                        logit_m2 = smf.logit('answer_changed ~ capabilities_entropy + game_entropy', data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed'])).fit(disp=0)
                         log_output(logit_m2.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.7: {e_full}")
@@ -780,27 +786,27 @@ if __name__ == "__main__":
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.6: {e_full}")
 
-                    if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                    if 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
                         # Model 4.6: normalized_prob_entropy in full model w/o s_i_capability
                         final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
-                        final_model_terms_m45.append('normalized_prob_entropy')
+                        final_model_terms_m45.append('game_entropy')
                         model_def_str_4_5 = 'answer_changed ~ ' + ' + '.join(final_model_terms_m45)
                         log_output(f"\n                  Model 4.8: {model_def_str_4_5}")
                         try:
-                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['normalized_prob_entropy', 'answer_changed'])).fit(disp=0)
+                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['game_entropy', 'answer_changed'])).fit(disp=0)
                             log_output(logit_m2.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.8: {e_full}")
 
-                    if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                    if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
                         # Model 4.6: both entropies in full model w/o s_i_capability
                         final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
                         final_model_terms_m45.append('capabilities_entropy')
-                        final_model_terms_m45.append('normalized_prob_entropy')
+                        final_model_terms_m45.append('game_entropy')
                         model_def_str_4_5 = 'answer_changed ~ ' + ' + '.join(final_model_terms_m45)
                         log_output(f"\n                  Model 4.95: {model_def_str_4_5}")
                         try:
-                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['normalized_prob_entropy', 'answer_changed'])).fit(disp=0)
+                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['game_entropy', 'answer_changed'])).fit(disp=0)
                             log_output(logit_m2.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.95: {e_full}")

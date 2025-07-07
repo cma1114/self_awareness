@@ -435,18 +435,22 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
         if has_entropy:
             if has_cap_entropy:
                 # --- Plot 2: Capabilities Entropy Coefficient ---
+                # Filter for this plot only to avoid empty bars
+                df_cap = df.dropna(subset=['CapEntropyCoef'])
+                formatted_cap_subjects = [break_subject_name(name, max_parts_per_line=3) for name in df_cap["Subject"]]
+
                 # Convert to numeric values for plotting
-                cap_values = pd.to_numeric(df["CapEntropyCoef"], errors='coerce')
-                cap_ci_low = pd.to_numeric(df["CapEntropy_CI_Low"], errors='coerce')
-                cap_ci_high = pd.to_numeric(df["CapEntropy_CI_High"], errors='coerce')
+                cap_values = pd.to_numeric(df_cap["CapEntropyCoef"], errors='coerce')
+                cap_ci_low = pd.to_numeric(df_cap["CapEntropy_CI_Low"], errors='coerce')
+                cap_ci_high = pd.to_numeric(df_cap["CapEntropy_CI_High"], errors='coerce')
                 yerr_cap_low = np.nan_to_num(cap_values - cap_ci_low, nan=0.0)
                 yerr_cap_high = np.nan_to_num(cap_ci_high - cap_values, nan=0.0)
                 yerr_cap_low[yerr_cap_low < 0] = 0
                 yerr_cap_high[yerr_cap_high < 0] = 0
                 
-                bars = axs[row_idx, 1].bar(formatted_subject_names, cap_values,
-                               color='cornflowerblue' if status == 'Correct' else 'lightcoral',
-                               yerr=[yerr_cap_low, yerr_cap_high], ecolor='gray', capsize=5, width=0.6)
+                bars = axs[row_idx, 1].bar(formatted_cap_subjects, cap_values,
+                                   color='cornflowerblue' if status == 'Correct' else 'lightcoral',
+                                   yerr=[yerr_cap_low, yerr_cap_high], ecolor='gray', capsize=5, width=0.6)
                 
                 axs[row_idx, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
                 axs[row_idx, 1].set_title(f'Capabilities Entropy (Model 4.6 ) - {status}', fontsize=title_fontsize)
@@ -489,7 +493,7 @@ if __name__ == "__main__":
     dataset = "SimpleMC"# "GPQA"#
     suffix = ""
 
-    input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}.txt"
+    input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}_new.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     
     model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']

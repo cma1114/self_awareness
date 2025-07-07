@@ -81,41 +81,45 @@ def random_effects_meta(est):
 
 
 # ── regexes ────────────────────────────────────────────────────────────────────
-HDR_RE    = re.compile(r'^--- Analyzing (.*?) \((?:Redacted,\s*)?(Correct|Incorrect),',
-                       re.MULTILINE)
+HDR_RE_CORRECTNESS = re.compile(r'^--- Analyzing (.*?) \((?:Redacted,\s*)?(Correct|Incorrect),', re.MULTILINE)
+HDR_RE_NO_CORRECTNESS = re.compile(r'^--- Analyzing (.*?)(?:\s\(|,|$)', re.MULTILINE)
 IDEA0_RE  = re.compile(r'Proportion of changes to 2nd choice:\s+([\d.]+)\s+\[([\d.]+),\s+([\d.]+)\]\s+\(n=(\d+)\)')
 IDEA1_P_RE = re.compile(r'Wilcoxon delta_p:[^\n]*?p=([\d.eE-]+)')
 IDEA1_MEAN_RE = re.compile(r'Mean Δp\s*=\s*([-\d.]+)\s*\[\s*([-\d.]+),\s*([-\d.]+)\]')
-IDEA2_RE  = re.compile(r'^\s*p1\s+([-\d.]+)\s+([-\d.]+)', re.MULTILINE)
+IDEA2_RE  = re.compile(r'^\s*p1\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([\d.eE-]+)', re.MULTILINE)
 IDEA3_P_RE = re.compile(r'Wilcoxon delta_H:[^\n]*?p=([\d.eE-]+)')
 IDEA3_MEAN_RE = re.compile(r'Mean ΔH\s*=\s*([-\d.]+)\s*\[\s*([-\d.]+),\s*([-\d.]+)\]')
 IDEA3b_P_RE = re.compile(r'Wilcoxon delta_H Changed:[^\n]*?p=([\d.eE-]+)')
 IDEA3b_MEAN_RE = re.compile(r'Mean ΔH Changed\s*=\s*([-\d.]+)\s*\[\s*([-\d.]+),\s*([-\d.]+)\]')
-M151_RE   = re.compile(r'I\(p1_z \*\* 2\)\s+([-\d.]+)\s+([-\d.]+)')
-
+M151_RE   = re.compile(r'I\(p1_z \*\* 2\)\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([\d.eE-]+)')
+IDEA5_P_RE = re.compile(r'Wilcoxon (game_entropy vs capabilities_entropy):[^\n]*?p=([\d.eE-]+)')
+IDEA5_MEAN_RE = re.compile(r'Mean capabilities_entropy-game_entropy\s*=\s*([-\d.]+)\s*\[\s*([-\d.]+),\s*([-\d.]+)\]')
 
 # ── parsing --------------------------------------------------------------------
-def parse_log(path: Path) -> pd.DataFrame:
+def parse_log(path: Path, breakout_by_correctness: bool) -> pd.DataFrame:
     text = path.read_text(encoding='utf-8', errors='ignore')
     rows = []
+    HDR_RE = HDR_RE_CORRECTNESS if breakout_by_correctness else HDR_RE_NO_CORRECTNESS
     headers = list(HDR_RE.finditer(text))
 
     for i, h in enumerate(headers):
         block = text[h.end(): headers[i + 1].start() if i + 1 < len(headers) else None]
 
         row = dict(model=h.group(1).strip(),
-                   cor_incor=h.group(2),
+                   cor_incor=h.group(2) if breakout_by_correctness else "All",
                    # Idea 0
                    idea0_prop=math.nan, idea0_low=math.nan, idea0_up=math.nan, idea0_n=0,
                    # Idea 1
                    idea1_p=math.nan, idea1_mean=math.nan, idea1_low=math.nan, idea1_up=math.nan,
                    # Idea 2
-                   idea2_coef=math.nan, idea2_se=math.nan,
+                   idea2_coef=math.nan, idea2_p=math.nan,
                    # Idea 3
                    idea3_p=math.nan, idea3_mean=math.nan, idea3_low=math.nan, idea3_up=math.nan,
                    idea3b_p=math.nan, idea3b_mean=math.nan, idea3b_low=math.nan, idea3b_up=math.nan,
                    # Model 1.51
-                   m151_quad_coef=math.nan, m151_quad_se=math.nan)
+                   m151_quad_coef=math.nan, m151_quad_p=math.nan,
+                   # Idea 5
+                   idea5_p=math.nan, idea5_mean=math.nan, idea5_low=math.nan, idea5_up=math.nan)
 
         if (m := IDEA0_RE.search(block)):
             row.update(dict(idea0_prop=float(m.group(1)),
@@ -129,7 +133,7 @@ def parse_log(path: Path) -> pd.DataFrame:
                             idea1_low=float(m.group(2)),
                             idea1_up=float(m.group(3))))
         if (m := IDEA2_RE.search(block)):
-            row['idea2_coef'], row['idea2_se'] = map(float, m.groups())
+            row['idea2_coef'], row['idea2_p'] = map(float, m.groups())
         if (m := IDEA3_P_RE.search(block)):
             row['idea3_p'] = float(m.group(1))
         if (m := IDEA3_MEAN_RE.search(block)):
@@ -143,7 +147,13 @@ def parse_log(path: Path) -> pd.DataFrame:
                             idea3b_low=float(m.group(2)),
                             idea3b_up=float(m.group(3))))
         if (m := M151_RE.search(block)):
-            row['m151_quad_coef'], row['m151_quad_se'] = map(float, m.groups())
+            row['m151_quad_coef'], row['m151_quad_p'] = map(float, m.groups())
+        if (m := IDEA5_P_RE.search(block)):
+            row['idea5_p'] = float(m.group(1))
+        if (m := IDEA5_MEAN_RE.search(block)):
+            row.update(dict(idea5_mean=float(m.group(1)),
+                            idea5_low=float(m.group(2)),
+                            idea5_up=float(m.group(3))))
 
         rows.append(row)
 
@@ -173,6 +183,9 @@ def aggregate(df: pd.DataFrame, subset: str) -> dict:
     # Model 1.51
     mq, lq, uq, pq = random_effects_meta(sub.m151_quad_coef.tolist())
 
+    # Idea 5
+    m5, l5, u5, p5 = random_effects_meta(sub.idea5_mean.dropna().tolist())
+
     return dict(
         subset=subset,
         # Idea 0
@@ -184,30 +197,37 @@ def aggregate(df: pd.DataFrame, subset: str) -> dict:
         # Idea 3
         idea3_mean=m3, idea3_low=l3, idea3_up=u3, idea3_p=p3,
         idea3b_mean=m3b, idea3b_low=l3b, idea3b_up=u3b, idea3b_p=p3b,
+        # Idea 5
+        idea5_mean=m5, idea5_low=l5, idea5_up=u5, idea5_p=p5,
         # Model 1.51
         m151_quad=mq, m151_low=lq, m151_up=uq, m151_p=pq
     )
 
 
 # ── pretty printing ------------------------------------------------------------
-def print_tables(df_models: pd.DataFrame, df_pool: pd.DataFrame):
+def print_tables(df_models: pd.DataFrame, df_pool: pd.DataFrame, breakout_by_correctness: bool):
     pd.set_option('display.precision', 3)
 
     print("\n=== Per-model results (unaggregated) ===")
     cols = [
-        'model', 'cor_incor',
+        'model',
         # Idea 0
         'idea0_prop', 'idea0_low', 'idea0_up', 'idea0_n',
         # Idea 1
         'idea1_mean', 'idea1_low', 'idea1_up', 'idea1_p',
         # Idea 2
-        'idea2_coef', 'idea2_se',
+        'idea2_coef', 'idea2_p',
         # Idea 3
         'idea3_mean', 'idea3_low', 'idea3_up', 'idea3_p',
         'idea3b_mean', 'idea3b_low', 'idea3b_up', 'idea3b_p',
         # Model 1.51
-        'm151_quad_coef', 'm151_quad_se'
+        'm151_quad_coef', 'm151_quad_p',
+        # Idea 5
+        'idea5_mean', 'idea5_low', 'idea5_up', 'idea5_p'
     ]
+    if breakout_by_correctness:
+        cols.insert(1, 'cor_incor')
+    
     print(df_models[cols].to_string(index=False))
 
     print("\n=== Pooled results (aggregated) ===")
@@ -223,29 +243,39 @@ def print_tables(df_models: pd.DataFrame, df_pool: pd.DataFrame):
         'idea3_mean', 'idea3_low', 'idea3_up', 'idea3_p',
         'idea3b_mean', 'idea3b_low', 'idea3b_up', 'idea3b_p',
         # Model 1.51
-        'm151_quad', 'm151_low', 'm151_up', 'm151_p'
+        'm151_quad', 'm151_low', 'm151_up', 'm151_p',
+        # Idea 5
+        'idea5_mean', 'idea5_low', 'idea5_up', 'idea5_p'
     ]
     print(df_pool[cols2].to_string(index=False))
 
 
 # ── CLI entry point ------------------------------------------------------------
 def main():
-    fname="analysis_log_multi_logres_sc_gpqa_new.txt"
-    ap = argparse.ArgumentParser(description="Aggregate Idea results across models.")
-    ap.add_argument('logfile', nargs='?', default=fname)
-    args = ap.parse_args()
-
-    fp = Path(args.logfile)
+    BREAKOUT_BY_CORRECTNESS = False
+    dataset = "gpqa" #"simplemc" # 
+    sc_version = "_new"  # "_new" or ""
+    suffix = "_all" if not BREAKOUT_BY_CORRECTNESS else ""
+    fname=f"analysis_log_multi_logres_sc_{dataset}{sc_version}{suffix}.txt"
+    
+    fp = Path(fname)
     if not fp.exists():
-        sys.exit(f"{fp} not found")
+        sys.exit(f"{fname} not found")
 
-    df = parse_log(fp)
+    df = parse_log(fp, BREAKOUT_BY_CORRECTNESS)
     if df.empty:
         sys.exit("No model blocks were parsed – header regex may need tweaking.")
 
-    pooled = pd.DataFrame([aggregate(df, s) for s in ['Correct', 'Incorrect']])
-    print(f"Reseults for {fname}:\n")
-    print_tables(df, pooled)
+    # Filter out subjects that don't have Idea 1-5 or model 1.51 data
+    idea_cols = [c for c in df.columns if (c.startswith('idea') and not c.startswith('idea0')) or c.startswith('m151')]
+    df = df.dropna(subset=idea_cols, how='all').reset_index(drop=True)
+    if df.empty:
+        sys.exit("No models with Idea 1-5 or model 1.51 data found.")
+
+    subsets_to_process = ['Correct', 'Incorrect'] if BREAKOUT_BY_CORRECTNESS else ['All']
+    pooled = pd.DataFrame([aggregate(df, s) for s in subsets_to_process])
+    print(f"Results for {fname}:\n")
+    print_tables(df, pooled, BREAKOUT_BY_CORRECTNESS)
 
 
 if __name__ == '__main__':
