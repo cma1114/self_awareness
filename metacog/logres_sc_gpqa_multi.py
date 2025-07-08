@@ -281,6 +281,8 @@ def save_summary_data(all_results, filename="final_summary.csv"):
             'Idea 1: p-val',
             'Idea 2: Coef', 'Idea 2: CI', 'Idea 2: p-val',
             'Idea 3: p-val',
+            'Idea 4: p-val',
+            'Idea 4.5: p-val',
             'Idea 5: p-val',
             'M1.51: Coef', 'M1.51: CI', 'M1.51: p-val']
     
@@ -295,7 +297,7 @@ if __name__ == "__main__":
 
     dataset = "GPQA" #"GPSA"#
     game_type = "sc"
-    sc_version = "_new"  # "_new" or ""
+    sc_version = "_neut"  # "_new" or "" or "_neut"
     suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
@@ -313,7 +315,7 @@ if __name__ == "__main__":
     }
     print(f"GPQA feature lookup created with {len(gpqa_feature_lookup)} entries.")
 
-    game_logs_dir = "./sc_logs_new/" if sc_version == "_new" else "./secondchance_game_logs/"
+    game_logs_dir = "./sc_logs_new/" if sc_version == "_new" else "./sc_logs_neutral/" if sc_version == "_neut" else "./secondchance_game_logs/"
     capabilities_dir = "./completed_results_gpqa/" if dataset == "GPQA" else "./compiled_results_gpsa/"
     game_file_suffix = "_evaluated" if dataset == "GPSA" else ""
     test_file_suffix = "completed" if dataset == "GPQA" else "compiled"
@@ -534,6 +536,7 @@ if __name__ == "__main__":
                         ci_low   = mean_dp - 1.96 * se
                         ci_up    = mean_dp + 1.96 * se
                         log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                        log_output((f"Idea 1 N = {len(delta_p_no_change)}; "))
                         summary_data['Idea 1: p-val'] = w_p
 
                         log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
@@ -592,6 +595,70 @@ if __name__ == "__main__":
                             ci_up_dH_changed = mean_dH_changed + 1.96 * se_dH_changed
                             log_output(f"Mean ΔH Changed = {mean_dH_changed:.4f}  [{ci_low_dH_changed:.4f}, {ci_up_dH_changed:.4f}]")
 
+                        log_output("\n  Idea 4: Percentage of probability mass devoted to top two tokens in the game is higher than in baseline (sharpening)")
+                        df_model['p_top2_base'] = df_model['p1'] + df_model['p2']
+                        df_model['p_top2_game'] = df_model['gp1'] + df_model['gp2']
+                        df_idea4 = df_model[['p_top2_base', 'p_top2_game']].dropna()
+
+                        if not df_idea4.empty and len(df_idea4) > 1:
+                            # Game is expected to be higher, so test game vs base
+                            t_stat, t_p = ttest_rel(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
+                            w_stat, w_p = wilcoxon(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
+                            
+                            log_output(f"Paired t-test (p_top2_game vs p_top2_base): statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Wilcoxon (p_top2_game vs p_top2_base): statistic={w_stat:.2f}, p={w_p:.3g}")
+                            
+                            delta_p_top2 = (df_idea4['p_top2_game'] - df_idea4['p_top2_base']).dropna()
+                            mean_delta = delta_p_top2.mean()
+                            se_delta = delta_p_top2.std(ddof=1) / np.sqrt(len(delta_p_top2))
+                            ci_low_delta = mean_delta - 1.96 * se_delta
+                            ci_up_delta = mean_delta + 1.96 * se_delta
+                            
+                            log_output(f"Mean Δp_top2 = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_p_top2)})")
+                            summary_data['Idea 4: p-val'] = w_p
+                        else:
+                            log_output("                  Not enough data for Idea 4 analysis.")
+
+                        log_output("\n  Idea 4.5: Game entropy over the tokens that were NOT the top token in the baseline is lower than over the same tokens in the baseline")
+                        
+                        def entropy_of_baseline_unchosen_set(prob_dict, baseline_top_token):
+                            if not isinstance(prob_dict, dict) or baseline_top_token is None:
+                                return None
+                            # Explicitly use the set of tokens unchosen in the baseline
+                            unchosen_probs = [p for token, p in prob_dict.items() if token != baseline_top_token]
+                            prob_sum = sum(unchosen_probs)
+                            if prob_sum <= 1e-9:
+                                return 0.0
+                            normalized_probs = [p / prob_sum for p in unchosen_probs]
+                            normalized_probs = np.clip(normalized_probs, 1e-12, 1)
+                            return -np.sum(p * np.log2(p) for p in normalized_probs)
+
+                        H_base_set_in_base = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['base_probs'], row['base_answer']), axis=1)
+                        H_base_set_in_game = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['game_probs'], row['base_answer']), axis=1)
+
+                        df_idea45 = pd.DataFrame({
+                            'H_base_set_in_base': H_base_set_in_base,
+                            'H_base_set_in_game': H_base_set_in_game
+                        }).dropna()
+
+                        if not df_idea45.empty and len(df_idea45) > 1:
+                            # Game entropy is expected to be lower
+                            t_stat, t_p = ttest_rel(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
+                            w_stat, w_p = wilcoxon(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
+                            
+                            log_output(f"Paired t-test (H_base_set_in_base vs H_base_set_in_game): statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Wilcoxon (H_base_set_in_base vs H_base_set_in_game): statistic={w_stat:.2f}, p={w_p:.3g}")
+                            
+                            delta_H_all = (df_idea45['H_base_set_in_base'] - df_idea45['H_base_set_in_game']).dropna()
+                            mean_delta = delta_H_all.mean()
+                            se_delta = delta_H_all.std(ddof=1) / np.sqrt(len(delta_H_all)) if len(delta_H_all) > 0 else 0
+                            ci_low_delta = mean_delta - 1.96 * se_delta
+                            ci_up_delta = mean_delta + 1.96 * se_delta
+                            
+                            log_output(f"Mean ΔH_unchosen_baseline_set = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_H_all)})")
+                            summary_data['Idea 4.5: p-val'] = w_p
+                        else:
+                            log_output("                  Not enough data for Idea 4.5 analysis.")
                         log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
                         df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
                         if not df_idea5.empty and len(df_idea5) > 1:

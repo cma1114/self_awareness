@@ -476,8 +476,9 @@ if __name__ == "__main__":
     
     dataset = "SimpleMC"# "GPQA"#
     suffix = ""
+    sc_version = ""  # "_new" or "" or "_neut"
 
-    input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}_new_all.txt"
+    input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}{sc_version}_all.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     
     model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']

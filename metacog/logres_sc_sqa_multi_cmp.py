@@ -388,6 +388,7 @@ def perform_paired_comparison(game_changes, neutral_changes):
     bootstrap_game_rates = []
     bootstrap_neutral_rates = []
     bootstrap_normalized_lifts = []
+    bootstrap_absolute_lifts = []
     
     n_pairs = len(game_changes)
     for _ in range(n_bootstrap):
@@ -398,9 +399,11 @@ def perform_paired_comparison(game_changes, neutral_changes):
         
         boot_game_rate = np.mean(boot_game)
         boot_neutral_rate = np.mean(boot_neutral)
+        boot_absolute_lift = boot_game_rate - boot_neutral_rate
         
         bootstrap_game_rates.append(boot_game_rate)
         bootstrap_neutral_rates.append(boot_neutral_rate)
+        bootstrap_absolute_lifts.append(boot_absolute_lift)
         
         # Normalized lift for this bootstrap sample
         if boot_neutral_rate < 1.0:
@@ -410,6 +413,7 @@ def perform_paired_comparison(game_changes, neutral_changes):
     # Calculate 95% confidence intervals
     game_rate_ci = np.percentile(bootstrap_game_rates, [2.5, 97.5])
     neutral_rate_ci = np.percentile(bootstrap_neutral_rates, [2.5, 97.5])
+    absolute_lift_ci = np.percentile(bootstrap_absolute_lifts, [2.5, 97.5])
     
     # For normalized lift, only use valid values (where neutral rate < 1)
     valid_lifts = [x for x in bootstrap_normalized_lifts if not np.isnan(x)]
@@ -424,6 +428,7 @@ def perform_paired_comparison(game_changes, neutral_changes):
         'neutral_change_rate': neutral_change_rate,
         'neutral_change_rate_ci': neutral_rate_ci,
         'absolute_lift': game_change_rate - neutral_change_rate,
+        'absolute_lift_ci': absolute_lift_ci,
         'normalized_lift': normalized_lift,
         'normalized_lift_ci': normalized_lift_ci,
         'both_changed': both_changed,
@@ -669,7 +674,8 @@ if __name__ == "__main__":
                 log_output(f"    Game:    {paired_results['game_change_rate']:.3f} (95% CI: [{paired_results['game_change_rate_ci'][0]:.3f}, {paired_results['game_change_rate_ci'][1]:.3f}])")
                 log_output(f"    Neutral: {paired_results['neutral_change_rate']:.3f} (95% CI: [{paired_results['neutral_change_rate_ci'][0]:.3f}, {paired_results['neutral_change_rate_ci'][1]:.3f}])")
                 log_output(f"\n  Lift Measures:")
-                log_output(f"    Absolute lift: {paired_results['absolute_lift']:.3f} ({paired_results['absolute_lift']*100:.1f} percentage points)")
+                log_output(f"    Absolute lift: {paired_results['absolute_lift']:.3f} (95% CI: [{paired_results['absolute_lift_ci'][0]:.3f}, {paired_results['absolute_lift_ci'][1]:.3f}])")
+                log_output(f"                   ({paired_results['absolute_lift']*100:.1f} percentage points)")
                 if not np.isnan(paired_results['normalized_lift']):
                     log_output(f"    Normalized lift: {paired_results['normalized_lift']:.3f} (95% CI: [{paired_results['normalized_lift_ci'][0]:.3f}, {paired_results['normalized_lift_ci'][1]:.3f}])")
                     log_output(f"    → Captured {paired_results['normalized_lift']*100:.1f}% of possible improvement from neutral baseline")

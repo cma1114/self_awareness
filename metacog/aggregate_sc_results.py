@@ -253,8 +253,8 @@ def print_tables(df_models: pd.DataFrame, df_pool: pd.DataFrame, breakout_by_cor
 # ── CLI entry point ------------------------------------------------------------
 def main():
     BREAKOUT_BY_CORRECTNESS = False
-    dataset = "gpqa" #"simplemc" # 
-    sc_version = "_new"  # "_new" or ""
+    dataset = "simplemc" #"gpqa" # 
+    sc_version = "_neut"  # "_new" or "" or "_neut"
     suffix = "_all" if not BREAKOUT_BY_CORRECTNESS else ""
     fname=f"analysis_log_multi_logres_sc_{dataset}{sc_version}{suffix}.txt"
     
