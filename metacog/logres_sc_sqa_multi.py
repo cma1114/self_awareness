@@ -13,7 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
-from scipy.stats import wilcoxon, ttest_rel
+from scipy.stats import wilcoxon, ttest_rel, rankdata
 
 FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
@@ -153,6 +153,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                 trial_data_dict = {
                     'q_id': q_id, 
                     'answer_changed': answer_changed_numeric,
+                    'correct_answer': trial.get('correct_answer', None),
                     's_i_capability': s_i_capability,
                     'subject_correct': False if trial.get('is_correct') is None else trial['is_correct'],
                     'answer_type': sqa_features['answer_type'],
@@ -273,7 +274,7 @@ if __name__ == "__main__":
 
     dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
-    sc_version = "_neut"  # "_new" or "" or "_neut"
+    sc_version = "_new"  # "_new" or "" or "_neut"
     suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
@@ -530,6 +531,92 @@ if __name__ == "__main__":
                         log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
                         log_output((f"Idea 1 N = {len(delta_p_no_change)}; "))
                         summary_data['Idea 1: p-val'] = w_p
+
+                        log_output("\n  Idea 1.5: Calibration Metrics")
+                        y = df_model['s_i_capability'].to_numpy()
+                        p_correct = df_model.apply(lambda r: (r['base_probs'] or {}).get(r.get('correct_answer'), np.nan), axis=1).to_numpy()
+                        # drop rows where we could not find the correct label
+                        mask = ~np.isnan(p_correct)
+                        y       = y[mask]
+                        p_hat   = np.clip(p_correct[mask], 1e-15, 1 - 1e-15)
+                        nll   = -np.log(p_hat).mean()                     
+                        brier = np.mean((p_hat - y) ** 2) 
+                        def brier_decomposition(p, y, n_bins=10):
+                            """
+                            p : 1-D array of forecast probabilities for the event (here: model is correct)
+                            y : 1-D array of 0/1 outcomes (s_i_capability)
+                            """
+                            p = np.asarray(p, float)
+                            y = np.asarray(y, int)
+                            N = len(p)
+
+                            # 1. bin forecasts exactly as for ECE
+                            bins = np.linspace(0, 1, n_bins + 1)
+                            bin_id = np.digitize(p, bins[1:-1], right=True)
+
+                            rel = res = 0.0
+                            for k in range(n_bins):
+                                mask = bin_id == k
+                                if not mask.any():
+                                    continue
+                                pk = p[mask].mean()
+                                yk = y[mask].mean()
+                                wk = mask.mean()          # n_k / N
+                                rel += wk * (pk - yk)**2
+                                # resolution term uses yk and overall mean later
+
+                            y_bar = y.mean()
+                            for k in range(n_bins):
+                                mask = bin_id == k
+                                if mask.any():
+                                    yk = y[mask].mean()
+                                    wk = mask.mean()
+                                    res += wk * (yk - y_bar)**2
+
+                            unc = y_bar * (1 - y_bar)
+                            bs  = ((p - y)**2).mean()
+                            # sanity: bs == rel - res + unc (float precision)
+                            return {"brier": bs, "reliability": rel, "resolution": res, "uncertainty": unc}
+                        brier_decomp = brier_decomposition(p_hat, y)
+                        # ECE
+                        n_bins = 10
+                        bin_edges = np.linspace(0, 1, n_bins + 1)
+                        bin_ids   = np.digitize(p_hat, bin_edges[1:-1], right=True)
+                        ece, signed_ece = 0.0, 0.0
+                        for b in range(n_bins):
+                            mask = bin_ids == b
+                            if not mask.any():               # skip empty bins
+                                continue
+                            acc   = y[mask].mean()
+                            conf  = p_hat[mask].mean()
+                            ece  += np.abs(acc - conf) * mask.mean()
+                            signed_ece += (conf-acc) * mask.mean()
+                        metrics = {"nll": nll, "brier": brier, "ece": ece}
+                        def auroc(p, y):
+                            """
+                            p : array-like, predicted probabilities for the positive class (correct answer)
+                            y : array-like, binary 0/1 ground truth (1 = correct)
+                            """
+                            p = np.asarray(p, float)
+                            y = np.asarray(y,  int)
+
+                            # Mann-Whitney U formulation: AUROC = (rank sum of positives − m(m+1)/2) / (m*n)
+                            ranks = rankdata(p, method="average")          # smallest => rank 1
+                            pos_ranks = ranks[y == 1].sum()
+                            m = (y == 1).sum()                             # # positives
+                            n = (y == 0).sum()                             # # negatives
+                            if m == 0 or n == 0:
+                                return np.nan                              # undefined if only one class
+                            u_stat = pos_ranks - m * (m + 1) / 2
+                            return u_stat / (m * n)
+
+                        auroc_score = auroc(p_hat, y)
+                        log_output(f"  NLL: {metrics['nll']:.4f}, Signed ECE (overconf pos under neg): {signed_ece:.4f}, ECE: {metrics['ece']:.4f} (n={len(mask)})")
+                        log_output(f"  Brier: {brier_decomp['brier']:.4f}, "
+                                   f"Reliability (absolute calibration error; lower better): {brier_decomp['reliability']:.4f}, "
+                                   f"Resolution (relative calibration quality; higher better): {brier_decomp['resolution']:.4f}, "
+                                   f"Uncertainty: {brier_decomp['uncertainty']:.4f} (n={len(mask)})")
+                        log_output(f"  AUROC: {auroc_score:.4f}")
 
                         log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
                         m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
@@ -839,6 +926,7 @@ if __name__ == "__main__":
                         final_model_terms_m45.append('capabilities_entropy')
                         model_def_str_4_5 = 'answer_changed ~ ' + ' + '.join(final_model_terms_m45)
                         log_output(f"\n                  Model 4.6: {model_def_str_4_5}")
+                        log_output(f"Mean capabilities_entropy = {df_model['capabilities_entropy'].mean():.4f}")
                         try:
                             logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed'])).fit(disp=0)
                             log_output(logit_m2.summary())

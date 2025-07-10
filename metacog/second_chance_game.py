@@ -207,8 +207,8 @@ class SecondChanceGame(BaseGameClass):
                 message_history.append({"role": "assistant", "content": content})
 #                content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
 #                content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
-#                content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt 
-                content = "Your response was lost in transmission. Respond again with the same answer.\n\n" + llm_prompt 
+                content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt 
+#                content = "Your response was lost in transmission. Respond again with the same answer.\n\n" + llm_prompt 
                 #message_history.append({"role": "user", "content": content})
                 
                 # Get the answer without accumulating history
@@ -344,10 +344,10 @@ def main(model_dataset_dict):
     # Configuration
     IS_HUMAN = False
     SHOW_ORIGINAL_ANSWER = False
-    USE_CORRECT_ANSWERS = True  # If True, use correct answers instead of wrong ones
+    USE_CORRECT_ANSWERS = False  # If True, use correct answers instead of wrong ones
     NUM_QUESTIONS = None  # Use all wrong questions if None
     seed = 42
-    TEMPERATURE = 0.0 
+    TEMPERATURE = 0.7 
     for SUBJECT_NAME, datasets in model_dataset_dict.items():
         for DATASET in datasets:
     
@@ -410,5 +410,5 @@ if __name__ == "__main__":
         "claude-3-sonnet-20240229": ["GPQA", "SimpleMC"],
         "claude-3-haiku-20240307": ["GPQA", "SimpleMC"],
         }
-    model_dataset_dict = {'gemini-2.0-flash-001': ["GPQA", "SimpleMC"]}
+    model_dataset_dict = {'gemini-2.0-flash-001': ["SimpleMC"]}
     main(model_dataset_dict)
