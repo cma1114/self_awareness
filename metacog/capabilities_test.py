@@ -1,14 +1,14 @@
 import time
 import json
 from load_and_format_datasets import load_and_format_dataset
-from base_game_class import BaseGameClass
+from base_game_class import *
 import random
 
 class CapabilitiesTest(BaseGameClass):
     """
     Just ask independent multiple-choice or short answer questions and record responses.
     """
-    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None, temperature=0.0):
+    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None, temperature=0.0, resample_for_probs=False):
         """
         Args:
             subject_id (str): Identifier for the subject/session
@@ -28,7 +28,8 @@ class CapabilitiesTest(BaseGameClass):
         self.total_count = 0
         self.accuracy = None
         self.temperature = temperature
-        self.log_suffix = "_test_data"            
+        self.log_suffix = "_test_data"
+        self.resample_for_probs = resample_for_probs
 
         if len(questions) < self.n_questions:
             raise ValueError(f"Not enough questions provided ({len(questions)}); ({self.n_questions} needed)")
@@ -104,20 +105,28 @@ class CapabilitiesTest(BaseGameClass):
                     subject_answer = ""
                     probs = None
                 else:
-                    subject_answer, _, probs = self._get_llm_answer(
-                        list(question["options"].keys()),
-                        setup_prompt + "\n\n" + llm_prompt,
-                        [], # no history
-                        keep_appending=False,
-                        MAX_TOKENS=None,#1,
-                        temp=self.temperature
-                    )
+                    if self.resample_for_probs:
+                        subject_answer, _, probs = self.estimate_probs_sequential(
+                            setup_prompt + "\n\n" + llm_prompt,
+                            list(question["options"].keys()),
+                            [], # no history
+                            epsilon=0.05,
+                        )   
+                    else:
+                        subject_answer, _, probs = self._get_llm_answer(
+                            list(question["options"].keys()),
+                            setup_prompt + "\n\n" + llm_prompt,
+                            [], # no history
+                            keep_appending=False,
+                            MAX_TOKENS=None,#1,
+                            temp=self.temperature
+                        )
             
             # Check correctness
             if len(subject_answer) == 0:
                 subject_decision = subject_answer
             else:
-                arr=subject_answer.rstrip(".").split()
+                arr=subject_answer.upper().rstrip(".").split()
                 if arr[0] in list(question["options"].keys()):
                     subject_decision = arr[0]
                 elif arr[-1] in list(question["options"].keys()):
@@ -229,10 +238,11 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = 'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"gpt-4.1-2025-04-14"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"deepseek-chat"#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"gpt-4.1-2025-04-14"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gemini-1.5-pro"#"claude-3-5-sonnet-20241022" #"gpt-4o-2024-08-06"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    temp = 0.7#0.0
+    RESAMPLE = True
+    temp = 0.0
     seed = 42
     
     N_QUESTIONS = 447 if DATASET_NAME.startswith("GP") else 500#   # Number of questions for capabilities measurement
@@ -257,7 +267,8 @@ def main():
             n_questions=N_QUESTIONS,
             is_human_player=IS_HUMAN,
             resume_from=resume_from,
-            temperature=temp
+            temperature=temp,
+            resample_for_probs=RESAMPLE
         )
                     
         # Run capabilities measurement

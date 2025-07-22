@@ -89,8 +89,8 @@ Sports                 Date                 0.555556  0.444444            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03836
-Time:                        18:23:23   Log-Likelihood:                -286.90
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03836
+Time:                        12:41:17   Log-Likelihood:                -286.90
 converged:                       True   LL-Null:                       -298.35
 Covariance Type:            nonrobust   LLR p-value:                   0.01833
 ==============================================================================================================
@@ -127,6 +127,44 @@ Answer change%: 0.2240 [0.18745584210716204, 0.26054415789283797] (n=500)
 P-value vs 25%: 0.1632; P-value vs 0%: 3.009e-33
 Phase 2 self-accuracy: 0.2411 [0.16185552105552511, 0.32028733608733206] (n=112)
 P-value vs 25%: 0.8252; P-value vs 33%: 0.02294
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  500
+Model:                          Logit   Df Residuals:                      498
+Method:                           MLE   Df Model:                            1
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04028
+Time:                        12:41:17   Log-Likelihood:                -255.25
+converged:                       True   LL-Null:                       -265.96
+Covariance Type:            nonrobust   LLR p-value:                 3.678e-06
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          1.8702      0.664      2.818      0.005       0.570       3.171
+p_i_capability    -3.5006      0.744     -4.703      0.000      -4.959      -2.042
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  500
+Model:                          Logit   Df Residuals:                      498
+Method:                           MLE   Df Model:                            1
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04666
+Time:                        12:41:17   Log-Likelihood:                -253.55
+converged:                       True   LL-Null:                       -265.96
+Covariance Type:            nonrobust   LLR p-value:                 6.296e-07
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.0609      0.204    -10.125      0.000      -2.460      -1.662
+capabilities_entropy     1.7272      0.344      5.016      0.000       1.052       2.402
+========================================================================================
+
+  Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
+                  Proportion of changes to 2nd choice: 0.2500 [0.1698, 0.3302] (n=112)
+                  P-value vs 33.3%: 0.04168
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
 topic_grouped           answer_changed
@@ -201,8 +239,8 @@ Sports                 Date                 0.555556  0.444444            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.01872
-Time:                        18:23:23   Log-Likelihood:                -260.98
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.01872
+Time:                        12:41:17   Log-Likelihood:                -260.98
 converged:                       True   LL-Null:                       -265.96
 Covariance Type:            nonrobust   LLR p-value:                    0.5344
 ==============================================================================================================
@@ -220,6 +258,35 @@ C(answer_type_grouped)[T.Number]              -0.1241      0.339     -0.366     
 C(answer_type_grouped)[T.Other]               -0.1340      0.285     -0.470      0.638      -0.693       0.425
 C(answer_type_grouped)[T.Person]               0.0175      0.295      0.059      0.953      -0.561       0.596
 q_length                                      -0.3318      0.302     -1.100      0.271      -0.923       0.259
+==============================================================================================================
+
+                  Model 4.6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy
+Mean capabilities_entropy = 0.4423
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  500
+Model:                          Logit   Df Residuals:                      487
+Method:                           MLE   Df Model:                           12
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.06354
+Time:                        12:41:17   Log-Likelihood:                -249.06
+converged:                       True   LL-Null:                       -265.96
+Covariance Type:            nonrobust   LLR p-value:                 0.0007257
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -0.8512      1.469     -0.579      0.562      -3.731       2.029
+C(topic_grouped)[T.Geography]                  0.5220      0.458      1.139      0.255      -0.376       1.420
+C(topic_grouped)[T.Misc]                       0.1360      0.400      0.340      0.734      -0.648       0.920
+C(topic_grouped)[T.Music]                     -0.1076      0.489     -0.220      0.826      -1.066       0.851
+C(topic_grouped)[T.Other]                     -0.0219      0.444     -0.049      0.961      -0.892       0.848
+C(topic_grouped)[T.Politics]                  -0.1774      0.423     -0.419      0.675      -1.007       0.652
+C(topic_grouped)[T.Science and technology]    -0.5180      0.406     -1.275      0.202      -1.314       0.278
+C(topic_grouped)[T.Sports]                     0.4317      0.454      0.950      0.342      -0.459       1.322
+C(answer_type_grouped)[T.Number]              -0.0957      0.352     -0.272      0.786      -0.785       0.594
+C(answer_type_grouped)[T.Other]               -0.0857      0.295     -0.291      0.771      -0.663       0.492
+C(answer_type_grouped)[T.Person]               0.1499      0.305      0.492      0.623      -0.447       0.747
+q_length                                      -0.2656      0.314     -0.845      0.398      -0.882       0.351
+capabilities_entropy                           1.7268      0.353      4.897      0.000       1.036       2.418
 ==============================================================================================================
                     Skipping Model 6: No deterministic categories removed, would be same as Model 5.
 
@@ -239,6 +306,44 @@ Answer change%: 0.3840 [0.34136963440733187, 0.42663036559266815] (n=500)
 P-value vs 25%: 7.24e-10; P-value vs 0%: 9.364e-70
 Phase 2 self-accuracy: 0.2552 [0.19353998643958548, 0.31687668022708115] (n=192)
 P-value vs 25%: 0.8685; P-value vs 33%: 0.01342
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  330
+Model:                          Logit   Df Residuals:                      328
+Method:                           MLE   Df Model:                            1
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1372
+Time:                        12:41:17   Log-Likelihood:                -188.02
+converged:                       True   LL-Null:                       -217.93
+Covariance Type:            nonrobust   LLR p-value:                 1.043e-14
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          2.8368      0.479      5.925      0.000       1.898       3.775
+p_i_capability    -4.9918      0.707     -7.059      0.000      -6.378      -3.606
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  330
+Model:                          Logit   Df Residuals:                      328
+Method:                           MLE   Df Model:                            1
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1304
+Time:                        12:41:17   Log-Likelihood:                -189.52
+converged:                       True   LL-Null:                       -217.93
+Covariance Type:            nonrobust   LLR p-value:                 4.768e-14
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.7269      0.364     -7.490      0.000      -3.440      -2.013
+capabilities_entropy     1.9325      0.284      6.797      0.000       1.375       2.490
+========================================================================================
+
+  Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
+                  Proportion of changes to 2nd choice: 0.3171 [0.2348, 0.3993] (n=123)
+                  P-value vs 33.3%: 0.6984
                   Grouped rare topic into 'Misc'/'Other': ['TV shows', 'History', 'Video games']
                   Grouped rare answer_type into 'Misc'/'Other': ['Place']
 topic_grouped           answer_changed
@@ -313,8 +418,8 @@ Sports                 Date                 0.444444  0.555556            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.04057
-Time:                        18:23:23   Log-Likelihood:                -319.48
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04057
+Time:                        12:41:17   Log-Likelihood:                -319.48
 converged:                       True   LL-Null:                       -332.99
 Covariance Type:            nonrobust   LLR p-value:                  0.004564
 ==============================================================================================================
@@ -332,6 +437,35 @@ C(answer_type_grouped)[T.Number]               0.4274      0.287      1.491     
 C(answer_type_grouped)[T.Other]               -0.5813      0.253     -2.301      0.021      -1.077      -0.086
 C(answer_type_grouped)[T.Person]              -0.2696      0.256     -1.054      0.292      -0.771       0.231
 q_length                                      -0.1155      0.254     -0.456      0.649      -0.613       0.381
+==============================================================================================================
+
+                  Model 4.6: answer_changed ~ C(topic_grouped) + C(answer_type_grouped) + q_length + capabilities_entropy
+Mean capabilities_entropy = 1.0787
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  330
+Model:                          Logit   Df Residuals:                      317
+Method:                           MLE   Df Model:                           12
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1791
+Time:                        12:41:17   Log-Likelihood:                -178.89
+converged:                       True   LL-Null:                       -217.93
+Covariance Type:            nonrobust   LLR p-value:                 9.623e-12
+==============================================================================================================
+                                                 coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------------------------
+Intercept                                     -1.0665      1.670     -0.639      0.523      -4.340       2.207
+C(topic_grouped)[T.Geography]                  0.5532      0.533      1.037      0.300      -0.492       1.599
+C(topic_grouped)[T.Misc]                      -0.5683      0.498     -1.141      0.254      -1.545       0.408
+C(topic_grouped)[T.Music]                     -0.5874      0.608     -0.967      0.334      -1.778       0.604
+C(topic_grouped)[T.Other]                      0.9206      0.517      1.781      0.075      -0.092       1.934
+C(topic_grouped)[T.Politics]                   0.3886      0.472      0.823      0.411      -0.537       1.314
+C(topic_grouped)[T.Science and technology]     0.0672      0.430      0.156      0.876      -0.775       0.909
+C(topic_grouped)[T.Sports]                     0.0437      0.517      0.085      0.933      -0.969       1.056
+C(answer_type_grouped)[T.Number]               0.2295      0.403      0.570      0.569      -0.560       1.019
+C(answer_type_grouped)[T.Other]               -0.8716      0.339     -2.569      0.010      -1.537      -0.207
+C(answer_type_grouped)[T.Person]               0.0570      0.357      0.160      0.873      -0.643       0.757
+q_length                                      -0.4000      0.357     -1.121      0.262      -1.100       0.300
+capabilities_entropy                           2.1208      0.316      6.707      0.000       1.501       2.741
 ==============================================================================================================
                     Skipping Model 6: No deterministic categories removed, would be same as Model 5.
 
@@ -425,8 +559,8 @@ Sports                 Date                 0.222222  0.777778            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.02666
-Time:                        18:23:23   Log-Likelihood:                -337.24
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.02666
+Time:                        12:41:17   Log-Likelihood:                -337.24
 converged:                       True   LL-Null:                       -346.47
 Covariance Type:            nonrobust   LLR p-value:                   0.07123
 ==============================================================================================================
@@ -549,8 +683,8 @@ Sports                 Date                 0.777778  0.222222            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.01556
-Time:                        18:23:23   Log-Likelihood:                -259.35
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.01556
+Time:                        12:41:17   Log-Likelihood:                -259.35
 converged:                       True   LL-Null:                       -263.45
 Covariance Type:            nonrobust   LLR p-value:                    0.6953
 ==============================================================================================================
@@ -671,8 +805,8 @@ Sports                 Date                 1.000000  0.000000            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03088
-Time:                        18:23:23   Log-Likelihood:                -223.95
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03088
+Time:                        12:41:17   Log-Likelihood:                -223.95
 converged:                       True   LL-Null:                       -231.09
 Covariance Type:            nonrobust   LLR p-value:                    0.2182
 ==============================================================================================================
@@ -716,8 +850,8 @@ P-value vs 25%: 0.5241; P-value vs 33%: 0.04477
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.04430
-Time:                        18:23:23   Log-Likelihood:                -321.60
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04430
+Time:                        12:41:17   Log-Likelihood:                -321.60
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 4.747e-08
 ==================================================================================
@@ -733,8 +867,8 @@ p_i_capability    -3.3845      0.648     -5.219      0.000      -4.656      -2.1
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.06028
-Time:                        18:23:23   Log-Likelihood:                -316.22
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.06028
+Time:                        12:41:17   Log-Likelihood:                -316.22
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 1.897e-10
 ========================================================================================
@@ -745,8 +879,8 @@ capabilities_entropy     1.3590      0.223      6.095      0.000       0.922    
 ========================================================================================
 
   Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
-                  Proportion of changes to 2nd choice: 0.5321 [0.4538, 0.6104] (n=156)
-                  P-value vs 33.3%: 6.552e-07
+                  Proportion of changes to 2nd choice: 0.5924 [0.5155, 0.6692] (n=157)
+                  P-value vs 33.3%: 3.982e-11
 
   Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change
 Paired t-test delta_p: statistic=6.18, p=5.02e-09
@@ -765,8 +899,8 @@ Idea 1 N = 165;
 Dep. Variable:                delta_p   R-squared:                       0.607
 Model:                            OLS   Adj. R-squared:                  0.603
 Method:                 Least Squares   F-statistic:                     160.2
-Date:                Tue, 08 Jul 2025   Prob (F-statistic):           9.07e-63
-Time:                        18:23:23   Log-Likelihood:                 7.4465
+Date:                Tue, 22 Jul 2025   Prob (F-statistic):           9.07e-63
+Time:                        12:41:17   Log-Likelihood:                 7.4465
 No. Observations:                 315   AIC:                            -6.893
 Df Residuals:                     311   BIC:                             8.117
 Df Model:                           3                                         
@@ -817,8 +951,8 @@ Mean capabilities_entropy-game_entropy = -0.2920  [-0.3582, -0.2257] (n=322)
 Dep. Variable:         answer_changed   No. Observations:                  322
 Model:                          Logit   Df Residuals:                      319
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03490
-Time:                        18:23:23   Log-Likelihood:                -215.25
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03490
+Time:                        12:41:17   Log-Likelihood:                -215.25
 converged:                       True   LL-Null:                       -223.04
 Covariance Type:            nonrobust   LLR p-value:                 0.0004160
 ================================================================================
@@ -836,8 +970,8 @@ AUC = 0.638
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1106
-Time:                        18:23:23   Log-Likelihood:                -299.29
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1106
+Time:                        12:41:17   Log-Likelihood:                -299.29
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 6.264e-18
 ================================================================================
@@ -853,8 +987,8 @@ game_entropy     1.5215      0.188      8.098      0.000       1.153       1.890
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      497
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1314
-Time:                        18:23:23   Log-Likelihood:                -292.28
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1314
+Time:                        12:41:17   Log-Likelihood:                -292.28
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 6.208e-20
 ========================================================================================
@@ -938,8 +1072,8 @@ Sports                 Date                 0.666667  0.333333            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03790
-Time:                        18:23:23   Log-Likelihood:                -323.75
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03790
+Time:                        12:41:17   Log-Likelihood:                -323.75
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                  0.007682
 ==============================================================================================================
@@ -966,8 +1100,8 @@ Mean capabilities_entropy = 0.3301
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.08914
-Time:                        18:23:23   Log-Likelihood:                -306.51
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.08914
+Time:                        12:41:17   Log-Likelihood:                -306.51
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 2.263e-08
 ==============================================================================================================
@@ -994,8 +1128,8 @@ capabilities_entropy                           1.3099      0.233      5.630     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1239
-Time:                        18:23:23   Log-Likelihood:                -294.80
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1239
+Time:                        12:41:17   Log-Likelihood:                -294.80
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 9.222e-13
 ==============================================================================================================
@@ -1022,8 +1156,8 @@ game_entropy                                   1.4486      0.200      7.227     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      486
 Method:                           MLE   Df Model:                           13
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1449
-Time:                        18:23:23   Log-Likelihood:                -287.75
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1449
+Time:                        12:41:17   Log-Likelihood:                -287.75
 converged:                       True   LL-Null:                       -336.51
 Covariance Type:            nonrobust   LLR p-value:                 5.037e-15
 ==============================================================================================================
@@ -1069,8 +1203,8 @@ P-value vs 25%: 0.03625; P-value vs 33%: 0.7956
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                0.002049
-Time:                        18:23:23   Log-Likelihood:                -323.67
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                0.002049
+Time:                        12:41:17   Log-Likelihood:                -323.67
 converged:                       True   LL-Null:                       -324.34
 Covariance Type:            nonrobust   LLR p-value:                    0.2489
 ================================================================================
@@ -1153,8 +1287,8 @@ Sports                 Date                 0.888889  0.111111            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.04375
-Time:                        18:23:23   Log-Likelihood:                -310.15
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04375
+Time:                        12:41:17   Log-Likelihood:                -310.15
 converged:                       True   LL-Null:                       -324.34
 Covariance Type:            nonrobust   LLR p-value:                  0.002833
 ==============================================================================================================
@@ -1180,8 +1314,8 @@ q_length                                       0.0730      0.260      0.281     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.04530
-Time:                        18:23:23   Log-Likelihood:                -309.65
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04530
+Time:                        12:41:17   Log-Likelihood:                -309.65
 converged:                       True   LL-Null:                       -324.34
 Covariance Type:            nonrobust   LLR p-value:                  0.003453
 ==============================================================================================================
@@ -1226,8 +1360,8 @@ P-value vs 25%: 9.665e-05; P-value vs 33%: 0.1225
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      490
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.05409
-Time:                        18:23:23   Log-Likelihood:                -310.85
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.05409
+Time:                        12:41:17   Log-Likelihood:                -310.85
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 2.484e-09
 ==================================================================================
@@ -1243,8 +1377,8 @@ p_i_capability    -3.0763      0.533     -5.775      0.000      -4.120      -2.0
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      490
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.06625
-Time:                        18:23:23   Log-Likelihood:                -306.85
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.06625
+Time:                        12:41:17   Log-Likelihood:                -306.85
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 4.145e-11
 ========================================================================================
@@ -1255,8 +1389,8 @@ capabilities_entropy     1.1421      0.180      6.361      0.000       0.790    
 ========================================================================================
 
   Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
-                  Proportion of changes to 2nd choice: 0.7077 [0.6295, 0.7859] (n=130)
-                  P-value vs 33.3%: 6.313e-21
+                  Proportion of changes to 2nd choice: 0.7143 [0.6429, 0.7856] (n=154)
+                  P-value vs 33.3%: 1.254e-25
 
   Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change
 Paired t-test delta_p: statistic=-4.48, p=1.59e-05
@@ -1275,8 +1409,8 @@ Idea 1 N = 135;
 Dep. Variable:                delta_p   R-squared:                       0.906
 Model:                            OLS   Adj. R-squared:                  0.905
 Method:                 Least Squares   F-statistic:                     835.1
-Date:                Tue, 08 Jul 2025   Prob (F-statistic):          1.96e-133
-Time:                        18:23:23   Log-Likelihood:                 158.96
+Date:                Tue, 22 Jul 2025   Prob (F-statistic):          1.96e-133
+Time:                        12:41:17   Log-Likelihood:                 158.96
 No. Observations:                 265   AIC:                            -309.9
 Df Residuals:                     261   BIC:                            -295.6
 Df Model:                           3                                         
@@ -1327,8 +1461,8 @@ Mean capabilities_entropy-game_entropy = 0.1970  [0.1277, 0.2664] (n=265)
 Dep. Variable:         answer_changed   No. Observations:                  265
 Model:                          Logit   Df Residuals:                      262
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.01734
-Time:                        18:23:23   Log-Likelihood:                -180.45
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.01734
+Time:                        12:41:17   Log-Likelihood:                -180.45
 converged:                       True   LL-Null:                       -183.64
 Covariance Type:            nonrobust   LLR p-value:                   0.04144
 ================================================================================
@@ -1346,8 +1480,8 @@ AUC = 0.523
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      490
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.08517
-Time:                        18:23:23   Log-Likelihood:                -300.64
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.08517
+Time:                        12:41:17   Log-Likelihood:                -300.64
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 7.335e-14
 ================================================================================
@@ -1363,8 +1497,8 @@ game_entropy     1.6878      0.238      7.098      0.000       1.222       2.154
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      489
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1046
-Time:                        18:23:23   Log-Likelihood:                -294.24
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1046
+Time:                        12:41:17   Log-Likelihood:                -294.24
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 1.162e-15
 ========================================================================================
@@ -1458,8 +1592,8 @@ Sports                 Date                 0.777778  0.222222            9
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      479
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.04418
-Time:                        18:23:23   Log-Likelihood:                -314.11
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.04418
+Time:                        12:41:17   Log-Likelihood:                -314.11
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                  0.003893
 ==============================================================================================================
@@ -1487,8 +1621,8 @@ Mean capabilities_entropy = 0.4489
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      478
 Method:                           MLE   Df Model:                           13
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.09198
-Time:                        18:23:23   Log-Likelihood:                -298.40
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.09198
+Time:                        12:41:17   Log-Likelihood:                -298.40
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 4.361e-08
 ==============================================================================================================
@@ -1516,8 +1650,8 @@ capabilities_entropy                           1.0340      0.189      5.466     
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      478
 Method:                           MLE   Df Model:                           13
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1157
-Time:                        18:23:23   Log-Likelihood:                -290.61
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1157
+Time:                        12:41:17   Log-Likelihood:                -290.61
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 6.095e-11
 ==============================================================================================================
@@ -1545,8 +1679,8 @@ game_entropy                                   1.6645      0.255      6.537     
 Dep. Variable:         answer_changed   No. Observations:                  492
 Model:                          Logit   Df Residuals:                      477
 Method:                           MLE   Df Model:                           14
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1294
-Time:                        18:23:23   Log-Likelihood:                -286.11
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1294
+Time:                        12:41:17   Log-Likelihood:                -286.11
 converged:                       True   LL-Null:                       -328.63
 Covariance Type:            nonrobust   LLR p-value:                 3.252e-12
 ==============================================================================================================
@@ -1593,8 +1727,8 @@ P-value vs 25%: 0.002664; P-value vs 33%: 0.2568
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.07488
-Time:                        18:23:23   Log-Likelihood:                -254.91
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.07488
+Time:                        12:41:17   Log-Likelihood:                -254.91
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 1.330e-10
 ==================================================================================
@@ -1610,8 +1744,8 @@ p_i_capability    -2.5797      0.419     -6.153      0.000      -3.401      -1.7
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2024
-Time:                        18:23:23   Log-Likelihood:                -219.77
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2024
+Time:                        12:41:17   Log-Likelihood:                -219.77
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 4.496e-26
 ========================================================================================
@@ -1622,8 +1756,8 @@ capabilities_entropy     2.0562      0.234      8.770      0.000       1.597    
 ========================================================================================
 
   Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
-                  Proportion of changes to 2nd choice: 0.7311 [0.6514, 0.8108] (n=119)
-                  P-value vs 33.3%: 1.293e-22
+                  Proportion of changes to 2nd choice: 0.7333 [0.6542, 0.8125] (n=120)
+                  P-value vs 33.3%: 3.817e-23
 
   Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change
 Paired t-test delta_p: statistic=-2.35, p=0.0194
@@ -1642,8 +1776,8 @@ Idea 1 N = 351;
 Dep. Variable:                delta_p   R-squared:                       0.702
 Model:                            OLS   Adj. R-squared:                  0.700
 Method:                 Least Squares   F-statistic:                     365.2
-Date:                Tue, 08 Jul 2025   Prob (F-statistic):          6.14e-122
-Time:                        18:23:23   Log-Likelihood:                 307.38
+Date:                Tue, 22 Jul 2025   Prob (F-statistic):          6.14e-122
+Time:                        12:41:17   Log-Likelihood:                 307.38
 No. Observations:                 470   AIC:                            -606.8
 Df Residuals:                     466   BIC:                            -590.1
 Df Model:                           3                                         
@@ -1694,8 +1828,8 @@ Mean capabilities_entropy-game_entropy = 0.0725  [0.0388, 0.1062] (n=470)
 Dep. Variable:         answer_changed   No. Observations:                  470
 Model:                          Logit   Df Residuals:                      467
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1934
-Time:                        18:23:23   Log-Likelihood:                -214.50
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1934
+Time:                        12:41:17   Log-Likelihood:                -214.50
 converged:                       True   LL-Null:                       -265.93
 Covariance Type:            nonrobust   LLR p-value:                 4.612e-23
 ================================================================================
@@ -1713,8 +1847,8 @@ AUC = 0.797
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1577
-Time:                        18:23:23   Log-Likelihood:                -232.08
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1577
+Time:                        12:41:17   Log-Likelihood:                -232.08
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 1.133e-20
 ================================================================================
@@ -1730,8 +1864,8 @@ game_entropy     1.7968      0.217      8.275      0.000       1.371       2.222
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      497
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2063
-Time:                        18:23:23   Log-Likelihood:                -218.69
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2063
+Time:                        12:41:17   Log-Likelihood:                -218.69
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 2.047e-25
 ========================================================================================
@@ -1815,8 +1949,8 @@ Sports                 Date                 0.666667  0.333333            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03349
-Time:                        18:23:23   Log-Likelihood:                -266.31
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03349
+Time:                        12:41:17   Log-Likelihood:                -266.31
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                   0.07156
 ==============================================================================================================
@@ -1843,8 +1977,8 @@ Mean capabilities_entropy = 0.8282
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2283
-Time:                        18:23:23   Log-Likelihood:                -212.64
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2283
+Time:                        12:41:17   Log-Likelihood:                -212.64
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 4.289e-21
 ==============================================================================================================
@@ -1871,8 +2005,8 @@ capabilities_entropy                           2.2109      0.257      8.610     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1938
-Time:                        18:23:23   Log-Likelihood:                -222.13
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1938
+Time:                        12:41:17   Log-Likelihood:                -222.13
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 2.534e-17
 ==============================================================================================================
@@ -1899,8 +2033,8 @@ game_entropy                                   1.9859      0.240      8.287     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      486
 Method:                           MLE   Df Model:                           13
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2370
-Time:                        18:23:23   Log-Likelihood:                -210.23
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2370
+Time:                        12:41:17   Log-Likelihood:                -210.23
 converged:                       True   LL-Null:                       -275.54
 Covariance Type:            nonrobust   LLR p-value:                 1.573e-21
 ==============================================================================================================
@@ -1946,8 +2080,8 @@ P-value vs 25%: 0.003246; P-value vs 33%: 0.479
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.07609
-Time:                        18:23:23   Log-Likelihood:                -294.25
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.07609
+Time:                        12:41:17   Log-Likelihood:                -294.25
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 3.355e-12
 ==================================================================================
@@ -1963,8 +2097,8 @@ p_i_capability    -3.8695      0.592     -6.535      0.000      -5.030      -2.7
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1263
-Time:                        18:23:23   Log-Likelihood:                -278.27
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1263
+Time:                        12:41:17   Log-Likelihood:                -278.27
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 3.018e-19
 ========================================================================================
@@ -1975,8 +2109,8 @@ capabilities_entropy     1.8794      0.225      8.365      0.000       1.439    
 ========================================================================================
 
   Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)
-                  Proportion of changes to 2nd choice: 0.6048 [0.5306, 0.6789] (n=167)
-                  P-value vs 33.3%: 7.212e-13
+                  Proportion of changes to 2nd choice: 0.5988 [0.5245, 0.6731] (n=167)
+                  P-value vs 33.3%: 2.573e-12
 
   Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change
 Paired t-test delta_p: statistic=4.25, p=2.8e-05
@@ -1995,8 +2129,8 @@ Idea 1 N = 330;
 Dep. Variable:                delta_p   R-squared:                       0.819
 Model:                            OLS   Adj. R-squared:                  0.818
 Method:                 Least Squares   F-statistic:                     744.1
-Date:                Tue, 08 Jul 2025   Prob (F-statistic):          1.44e-182
-Time:                        18:23:23   Log-Likelihood:                 256.90
+Date:                Tue, 22 Jul 2025   Prob (F-statistic):          1.44e-182
+Time:                        12:41:17   Log-Likelihood:                 256.90
 No. Observations:                 497   AIC:                            -505.8
 Df Residuals:                     493   BIC:                            -489.0
 Df Model:                           3                                         
@@ -2047,8 +2181,8 @@ Mean capabilities_entropy-game_entropy = -0.1796  [-0.2259, -0.1332] (n=497)
 Dep. Variable:         answer_changed   No. Observations:                  497
 Model:                          Logit   Df Residuals:                      494
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1266
-Time:                        18:23:23   Log-Likelihood:                -277.10
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1266
+Time:                        12:41:17   Log-Likelihood:                -277.10
 converged:                       True   LL-Null:                       -317.26
 Covariance Type:            nonrobust   LLR p-value:                 3.607e-18
 ================================================================================
@@ -2066,8 +2200,8 @@ AUC = 0.762
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      498
 Method:                           MLE   Df Model:                            1
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1660
-Time:                        18:23:23   Log-Likelihood:                -265.61
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1660
+Time:                        12:41:17   Log-Likelihood:                -265.61
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 8.309e-25
 ================================================================================
@@ -2083,8 +2217,8 @@ game_entropy     1.9366      0.207      9.371      0.000       1.532       2.342
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      497
 Method:                           MLE   Df Model:                            2
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2098
-Time:                        18:23:23   Log-Likelihood:                -251.68
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2098
+Time:                        12:41:17   Log-Likelihood:                -251.68
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 9.651e-30
 ========================================================================================
@@ -2168,8 +2302,8 @@ Sports                 Date                 0.555556  0.444444            9
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      488
 Method:                           MLE   Df Model:                           11
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                 0.03502
-Time:                        18:23:23   Log-Likelihood:                -307.33
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                 0.03502
+Time:                        12:41:17   Log-Likelihood:                -307.33
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                   0.02211
 ==============================================================================================================
@@ -2196,8 +2330,8 @@ Mean capabilities_entropy = 0.4188
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1641
-Time:                        18:23:23   Log-Likelihood:                -266.24
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1641
+Time:                        12:41:17   Log-Likelihood:                -266.24
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 7.273e-17
 ==============================================================================================================
@@ -2224,8 +2358,8 @@ capabilities_entropy                           1.9734      0.235      8.412     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      487
 Method:                           MLE   Df Model:                           12
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.1930
-Time:                        18:23:23   Log-Likelihood:                -257.03
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.1930
+Time:                        12:41:17   Log-Likelihood:                -257.03
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 1.613e-20
 ==============================================================================================================
@@ -2252,8 +2386,8 @@ game_entropy                                   1.9707      0.216      9.133     
 Dep. Variable:         answer_changed   No. Observations:                  500
 Model:                          Logit   Df Residuals:                      486
 Method:                           MLE   Df Model:                           13
-Date:                Tue, 08 Jul 2025   Pseudo R-squ.:                  0.2416
-Time:                        18:23:23   Log-Likelihood:                -241.54
+Date:                Tue, 22 Jul 2025   Pseudo R-squ.:                  0.2416
+Time:                        12:41:17   Log-Likelihood:                -241.54
 converged:                       True   LL-Null:                       -318.49
 Covariance Type:            nonrobust   LLR p-value:                 3.386e-26
 ==============================================================================================================

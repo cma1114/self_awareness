@@ -23,6 +23,26 @@ gemini_api_key = os.environ.get("GEMINI_API_KEY")
 xai_api_key = os.environ.get("XAI_API_KEY")
 deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY")    
 
+from collections import Counter
+from typing import List, Dict, Tuple
+
+################################################################################
+# 95 % Wilson interval for a single binomial proportion
+################################################################################
+def wilson_ci(successes: int, n: int, z: float = 1.96) -> Tuple[float, float]:
+    """
+    Return (lower, upper) bounds of the 95% Wilson CI.
+    """
+    if n == 0:
+        return (0.0, 1.0)
+    phat = successes / n
+    denom = 1 + z**2 / n
+    centre = phat + z**2 / (2 * n)
+    half_width = z * math.sqrt(phat * (1 - phat) / n + z**2 / (4 * n**2))
+    lower = (centre - half_width) / denom
+    upper = (centre + half_width) / denom
+    return lower, upper
+
 class BaseGameClass:
     """Base class for all games with common functionality."""
 
@@ -112,7 +132,7 @@ class BaseGameClass:
             # Re-raise for retry handling
             raise
 
-    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1, temp=0.0, accept_any=True):
+    def _get_llm_answer(self, options, q_text, message_history, keep_appending=True, setup_text="", MAX_TOKENS=1, temp=0.0, accept_any=True, top_p=None, top_k=None):
         """Gets answer from LLM model"""
         # Prepare common data
         user_msg = {"role": "user", "content": q_text}
@@ -148,6 +168,8 @@ class BaseGameClass:
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
                         temperature=temp + attempt * temp_inc,
                         **({"system": system_msg} if system_msg != "" else {}),
+                        **({"top_p": top_p} if top_p else {}),
+                        **({"top_k": top_k} if top_k else {}),
                         messages=formatted_messages
                     )
                     #print(f"message={message}")
@@ -420,3 +442,50 @@ class BaseGameClass:
         
         formatted_question += "-" * 30
         return formatted_question
+
+
+    ################################################################################
+    # Sequential‑sampling estimator
+    ################################################################################
+    def estimate_probs_sequential(self,
+        prompt: str,
+        options: List[str],
+        message_history: List[str],
+        epsilon: float = 0.05,
+        min_samples: int = 30,
+        max_samples: int = 1000,
+    ) -> Dict[str, float]:
+        """
+        Keep querying the LLM until every option's 95% Wilson CI half-width <= epsilon.
+
+        Returns:
+            probs: dict mapping option -> posterior mean prob (Jeffreys prior)
+        """
+        counts = Counter({opt: 0 for opt in options})
+        n = 0
+        alpha = 0.5  # Jeffreys(½) smoothing beats Laplace(1) for small n
+
+        def all_ci_within_tolerance() -> bool:
+            for opt in options:
+                lower, upper = wilson_ci(counts[opt], n)
+                if (upper - lower) / 2 > epsilon:
+                    return False
+            return n >= min_samples  # never stop before min_samples
+        # -------------------------------------------------------------------------
+
+        while n < max_samples and not all_ci_within_tolerance():
+            choice, _, _ = self._get_llm_answer(options, prompt, message_history, keep_appending = False, MAX_TOKENS=1, accept_any=False, temp=1.0, top_p=1.0, top_k=0)
+            choice = choice.upper().rstrip(".")
+            if choice not in options:
+                self._log(f"Invalid choice: {choice}. Options were: {options}, prompt: {prompt}")
+                continue  # skip malformed output
+            counts[choice] += 1
+            n += 1
+        self._log(f"Final counts: {counts}, n={n}, options={options}, choice={choice}")
+
+        # Jeffreys‑smoothed posterior mean  (counts + ½) / (n + k/2)
+        k = len(options)
+        probs = {opt: (counts[opt] + alpha) / (n + alpha * k) for opt in options}
+        probs = dict(sorted(probs.items(), key=lambda item: item[1], reverse=True))
+        return choice, message_history, probs
+    

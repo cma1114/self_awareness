@@ -96,6 +96,7 @@ def identify_and_handle_deterministic_categories(df_input, outcome_var, categori
 def prepare_regression_data_for_model(game_file_paths_list,
                                       gpqa_feature_lookup,
                                       capabilities_s_i_map_for_model,
+                                      a_i_map_for_this_model,
                                       p_i_map_for_this_model=None,
                                       entropy_map_for_this_model=None):
     all_regression_data_for_model = []
@@ -175,6 +176,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'q_id': q_id, 
                     'correct_answer': trial.get('correct_answer', None),
                     'answer_changed': answer_changed_numeric,
+                    'subject_answer': trial.get('new_answer'),
                     's_i_capability': s_i_capability,
                     'subject_correct': False if trial.get('is_correct') is None else trial['is_correct'],
                     'human_difficulty': gpqa_features['difficulty'],
@@ -298,7 +300,7 @@ if __name__ == "__main__":
 
     dataset = "GPQA" #"GPSA"#
     game_type = "sc"
-    sc_version = "_neut"  # "_new" or "" or "_neut"
+    sc_version = "_new"  # "_new" or "" or "_neut"
     suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
@@ -370,6 +372,7 @@ if __name__ == "__main__":
 
             s_i_map_for_this_model = {}
             p_i_map_for_this_model = {}
+            a_i_map_for_this_model = {}
             entropy_map_for_this_model = {}
             try:
                 with open(capabilities_file_path, 'r', encoding='utf-8') as f_cap:
@@ -380,6 +383,7 @@ if __name__ == "__main__":
 
                     probs_dict = res_info.get("probs")
                     subject_answer = res_info.get("subject_answer")
+                    a_i_map_for_this_model[q_id] = subject_answer
                     # Populate p_i_map_for_this_model
                     if subject_answer is not None and isinstance(probs_dict, dict):
                         prob_for_subject_answer = probs_dict.get(subject_answer)
@@ -409,6 +413,7 @@ if __name__ == "__main__":
             df_model, phase2_corcnt, phase2_totalcnt = prepare_regression_data_for_model(current_game_files_for_analysis,
                                                          gpqa_feature_lookup,
                                                          s_i_map_for_this_model,
+                                                         a_i_map_for_this_model,
                                                          p_i_map_for_this_model,
                                                          entropy_map_for_this_model)
 
@@ -462,10 +467,10 @@ if __name__ == "__main__":
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.5: {e_full}")
 
-                    if 'deepseek-chat' not in model_name_part.lower() and 'base_probs' in df_model.columns and df_model['base_probs'].notna().any() and 'game_probs' in df_model.columns and df_model['game_probs'].notna().any():
+                    if 'deepseek-chat' not in model_name_part.lower() and 'base_probs' in df_model.columns and df_model['base_probs'].notna().any():
 
                         df_model_tmp = df_model.copy()
-                        df_model = df_model.dropna(subset=["base_probs", "game_probs"])
+                        df_model = df_model.dropna(subset=["base_probs"])
 
                         log_output("\n  Idea 0: On Change trials, second-choice token in baseline gets selected in the game more often than chance (33%)")
                         df_changed = df_model[df_model['answer_changed'] == 1].copy()
@@ -477,9 +482,9 @@ if __name__ == "__main__":
                                 return sorted_keys[1]
 
                             df_changed['second_choice_base'] = df_changed['base_probs'].apply(get_second_choice)
-                            df_changed['game_answer'] = df_changed['game_probs'].apply(lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None)
+                            ###df_changed['game_answer'] = df_changed['game_probs'].apply(lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None)
                             
-                            second_choice_successes = (df_changed['second_choice_base'] == df_changed['game_answer']).sum()
+                            second_choice_successes = (df_changed['second_choice_base'] == df_changed['subject_answer']).sum()
                             total_changed_trials = len(df_changed)
 
                             if total_changed_trials > 0:
@@ -493,358 +498,360 @@ if __name__ == "__main__":
                                 summary_data['Idea 0: p-val'] = p_value_vs33
                         else:
                             log_output("                  No trials with answer changes found to analyze for Idea 0.")
-
-                        log_output("\n  Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change")
-                        def get_sorted_probs(prob_dict):
-                            if not isinstance(prob_dict, dict):
-                                return [None] * 4
-                            sorted_probs = sorted(prob_dict.values(), reverse=True)
-                            return (sorted_probs + [None] * 4)[:4]
-                        base_probs_sorted = pd.DataFrame(
-                            df_model["base_probs"].apply(get_sorted_probs).tolist(),
-                            columns=["p1", "p2", "p3", "p4"],
-                            index=df_model.index
-                        )
-                        df_model = pd.concat([df_model, base_probs_sorted], axis=1)
-
-                        game_probs_sorted = pd.DataFrame(
-                            df_model["game_probs"].apply(get_sorted_probs).tolist(),
-                            columns=["gp1", "gp2", "gp3", "gp4"],
-                            index=df_model.index
-                        )
-                        df_model = pd.concat([df_model, game_probs_sorted], axis=1)
-
-                        df_model["base_answer"] = df_model["base_probs"].apply(
-                            lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None
-                        )
-                        df_model["p_baselinechosentoken_game"] = df_model.apply(
-                            lambda r: r["game_probs"].get(r["base_answer"]) if isinstance(r["game_probs"], dict) else None,
-                            axis=1
-                        )
-                        df_model["delta_p"] = df_model["p1"] - df_model["p_baselinechosentoken_game"]
-                        
-                        df_idea1 = df_model.loc[df_model["answer_changed"] == 0, ["p1", "p_baselinechosentoken_game"]].dropna()
-                        if not df_idea1.empty and len(df_idea1) > 1:
-                            t_stat, t_p = ttest_rel(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
-                            w_stat, w_p = wilcoxon(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
-                        else:
-                            t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
-                        log_output(f"Paired t-test delta_p: statistic={t_stat:.2f}, p={t_p:.3g}")
-                        log_output(f"Wilcoxon delta_p: statistic={w_stat:.2f}, p={w_p:.3g}")
-                        delta_p_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_p"].dropna()
-                        mean_dp = delta_p_no_change.mean()
-                        se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change))
-                        ci_low   = mean_dp - 1.96 * se
-                        ci_up    = mean_dp + 1.96 * se
-                        log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
-                        log_output((f"Idea 1 N = {len(delta_p_no_change)}; "))
-                        summary_data['Idea 1: p-val'] = w_p
-
-                        log_output("\n  Idea 1.5: Calibration Metrics")
-                        y = df_model['s_i_capability'].to_numpy()
-                        p_correct = df_model.apply(lambda r: (r['base_probs'] or {}).get(r.get('correct_answer'), np.nan), axis=1).to_numpy()
-                        # drop rows where we could not find the correct label
-                        mask = ~np.isnan(p_correct)
-                        y       = y[mask]
-                        p_hat   = np.clip(p_correct[mask], 1e-15, 1 - 1e-15)
-                        nll   = -np.log(p_hat).mean()                     
-                        brier = np.mean((p_hat - y) ** 2) 
-                        def brier_decomposition(p, y, n_bins=10):
-                            """
-                            p : 1-D array of forecast probabilities for the event (here: model is correct)
-                            y : 1-D array of 0/1 outcomes (s_i_capability)
-                            """
-                            p = np.asarray(p, float)
-                            y = np.asarray(y, int)
-                            N = len(p)
-
-                            # 1. bin forecasts exactly as for ECE
-                            bins = np.linspace(0, 1, n_bins + 1)
-                            bin_id = np.digitize(p, bins[1:-1], right=True)
-
-                            rel = res = 0.0
-                            for k in range(n_bins):
-                                mask = bin_id == k
-                                if not mask.any():
-                                    continue
-                                pk = p[mask].mean()
-                                yk = y[mask].mean()
-                                wk = mask.mean()          # n_k / N
-                                rel += wk * (pk - yk)**2
-                                # resolution term uses yk and overall mean later
-
-                            y_bar = y.mean()
-                            for k in range(n_bins):
-                                mask = bin_id == k
-                                if mask.any():
-                                    yk = y[mask].mean()
-                                    wk = mask.mean()
-                                    res += wk * (yk - y_bar)**2
-
-                            unc = y_bar * (1 - y_bar)
-                            bs  = ((p - y)**2).mean()
-                            # sanity: bs == rel - res + unc (float precision)
-                            return {"brier": bs, "reliability": rel, "resolution": res, "uncertainty": unc}
-                        brier_decomp = brier_decomposition(p_hat, y)
-                        # ECE
-                        n_bins = 10
-                        bin_edges = np.linspace(0, 1, n_bins + 1)
-                        bin_ids   = np.digitize(p_hat, bin_edges[1:-1], right=True)
-                        ece, signed_ece = 0.0, 0.0
-                        for b in range(n_bins):
-                            mask = bin_ids == b
-                            if not mask.any():               # skip empty bins
-                                continue
-                            acc   = y[mask].mean()
-                            conf  = p_hat[mask].mean()
-                            ece  += np.abs(acc - conf) * mask.mean()
-                            signed_ece += (conf-acc) * mask.mean()
-                        metrics = {"nll": nll, "brier": brier, "ece": ece}
-                        def auroc(p, y):
-                            """
-                            p : array-like, predicted probabilities for the positive class (correct answer)
-                            y : array-like, binary 0/1 ground truth (1 = correct)
-                            """
-                            p = np.asarray(p, float)
-                            y = np.asarray(y,  int)
-
-                            # Mann-Whitney U formulation: AUROC = (rank sum of positives − m(m+1)/2) / (m*n)
-                            ranks = rankdata(p, method="average")          # smallest => rank 1
-                            pos_ranks = ranks[y == 1].sum()
-                            m = (y == 1).sum()                             # # positives
-                            n = (y == 0).sum()                             # # negatives
-                            if m == 0 or n == 0:
-                                return np.nan                              # undefined if only one class
-                            u_stat = pos_ranks - m * (m + 1) / 2
-                            return u_stat / (m * n)
-
-                        auroc_score = auroc(p_hat, y)
-                        log_output(f"  NLL: {metrics['nll']:.4f}, Signed ECE (overconf pos under neg): {signed_ece:.4f}, ECE: {metrics['ece']:.4f} (n={len(mask)})")
-                        log_output(f"  Brier: {brier_decomp['brier']:.4f}, "
-                                   f"Reliability (absolute calibration error; lower better): {brier_decomp['reliability']:.4f}, "
-                                   f"Resolution (relative calibration quality; higher better): {brier_decomp['resolution']:.4f}, "
-                                   f"Uncertainty: {brier_decomp['uncertainty']:.4f} (n={len(mask)})")
-                        log_output(f"  AUROC: {auroc_score:.4f}")
-
-
-                        log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
-                        m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
-                        log_output(m1.summary())
-                        summary_data['Idea 2: Coef'] = m1.params['p1']
-                        summary_data['Idea 2: CI'] = f"[{m1.conf_int().loc['p1'][0]:.3f}, {m1.conf_int().loc['p1'][1]:.3f}]"
-                        summary_data['Idea 2: p-val'] = m1.pvalues['p1']
-
-                        log_output("\n  Idea 3: Entropy of unchosen tokens in game is lower than in baseline when the answer doesn't change")
-                        def rest_entropy(row, which):
-                            prob_dict = row.get(f"{which}_probs")
-                            base_answer = row.get("base_answer")
-                            if not isinstance(prob_dict, dict) or base_answer is None:
-                                return None
-
-                            probs = [p for ltr, p in prob_dict.items() if ltr != base_answer]
                             
-                            prob_sum = sum(probs)
-                            if prob_sum > 1e-9:
-                                normalized_probs = [p / prob_sum for p in probs]
+                        if 'game_probs' in df_model.columns and df_model['game_probs'].notna().any():
+                            df_model = df_model.dropna(subset=["game_probs"])
+                            log_output("\n  Idea 1: Chosen token in baseline gets lower prob in game even when the answer does not change")
+                            def get_sorted_probs(prob_dict):
+                                if not isinstance(prob_dict, dict):
+                                    return [None] * 4
+                                sorted_probs = sorted(prob_dict.values(), reverse=True)
+                                return (sorted_probs + [None] * 4)[:4]
+                            base_probs_sorted = pd.DataFrame(
+                                df_model["base_probs"].apply(get_sorted_probs).tolist(),
+                                columns=["p1", "p2", "p3", "p4"],
+                                index=df_model.index
+                            )
+                            df_model = pd.concat([df_model, base_probs_sorted], axis=1)
+
+                            game_probs_sorted = pd.DataFrame(
+                                df_model["game_probs"].apply(get_sorted_probs).tolist(),
+                                columns=["gp1", "gp2", "gp3", "gp4"],
+                                index=df_model.index
+                            )
+                            df_model = pd.concat([df_model, game_probs_sorted], axis=1)
+
+                            df_model["base_answer"] = df_model["base_probs"].apply(
+                                lambda d: max(d, key=d.get) if isinstance(d, dict) and d else None
+                            )
+                            df_model["p_baselinechosentoken_game"] = df_model.apply(
+                                lambda r: r["game_probs"].get(r["base_answer"]) if isinstance(r["game_probs"], dict) else None,
+                                axis=1
+                            )
+                            df_model["delta_p"] = df_model["p1"] - df_model["p_baselinechosentoken_game"]
+                            
+                            df_idea1 = df_model.loc[df_model["answer_changed"] == 0, ["p1", "p_baselinechosentoken_game"]].dropna()
+                            if not df_idea1.empty and len(df_idea1) > 1:
+                                t_stat, t_p = ttest_rel(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
+                                w_stat, w_p = wilcoxon(df_idea1["p1"], df_idea1["p_baselinechosentoken_game"])
                             else:
-                                return 0.0
+                                t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
+                            log_output(f"Paired t-test delta_p: statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Wilcoxon delta_p: statistic={w_stat:.2f}, p={w_p:.3g}")
+                            delta_p_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_p"].dropna()
+                            mean_dp = delta_p_no_change.mean()
+                            se       = delta_p_no_change.std(ddof=1) / np.sqrt(len(delta_p_no_change))
+                            ci_low   = mean_dp - 1.96 * se
+                            ci_up    = mean_dp + 1.96 * se
+                            log_output(f"Mean Δp = {mean_dp:.4f}  [{ci_low:.4f}, {ci_up:.4f}]")
+                            log_output((f"Idea 1 N = {len(delta_p_no_change)}; "))
+                            summary_data['Idea 1: p-val'] = w_p
 
-                            normalized_probs = np.clip(normalized_probs, 1e-12, 1)
-                            return -np.sum(normalized_probs * np.log2(normalized_probs))
-                        df_model["H_unchosen_base"] = df_model.apply(rest_entropy, axis=1, which="base")
-                        df_model["H_unchosen_game"] = df_model.apply(rest_entropy, axis=1, which="game")
-                        df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
-                        df_idea3 = df_model.loc[df_model["answer_changed"] == 0, ["H_unchosen_base", "H_unchosen_game"]].dropna()
-                        if not df_idea3.empty and len(df_idea3) > 1:
-                            t_stat, t_p = ttest_rel(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
-                            w_stat, w_p = wilcoxon(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
-                        else:
-                            t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
-                        log_output(f"Paired t-test delta_H: statistic={t_stat:.2f}, p={t_p:.3g}")
-                        log_output(f"Wilcoxon delta_H: statistic={w_stat:.2f}, p={w_p:.3g}")
-                        delta_H_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_H"].dropna()
-                        mean_dH = delta_H_no_change.mean()
-                        se_dH = delta_H_no_change.std(ddof=1) / np.sqrt(len(delta_H_no_change)) if len(delta_H_no_change) > 0 else 0
-                        ci_low_dH = mean_dH - 1.96 * se_dH
-                        ci_up_dH = mean_dH + 1.96 * se_dH
-                        log_output(f"Mean ΔH = {mean_dH:.4f}  [{ci_low_dH:.4f}, {ci_up_dH:.4f}]")
-                        summary_data['Idea 3: p-val'] = w_p
-                        
-                        df_idea3_changed = df_model.loc[df_model["answer_changed"] == 1, ["H_unchosen_base", "H_unchosen_game"]].dropna()
-                        if not df_idea3_changed.empty and len(df_idea3_changed) > 1:
-                            t_stat, t_p = ttest_rel(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
-                            w_stat, w_p = wilcoxon(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
-                            log_output(f"Paired t-test delta_H Changed: statistic={t_stat:.2f}, p={t_p:.3g}")
-                            log_output(f"Wilcoxon delta_H Changed: statistic={w_stat:.2f}, p={w_p:.3g}")
-                            delta_H_changed = df_model.loc[df_model["answer_changed"] == 1, "delta_H"].dropna()
-                            mean_dH_changed = delta_H_changed.mean()
-                            se_dH_changed = delta_H_changed.std(ddof=1) / np.sqrt(len(delta_H_changed))
-                            ci_low_dH_changed = mean_dH_changed - 1.96 * se_dH_changed
-                            ci_up_dH_changed = mean_dH_changed + 1.96 * se_dH_changed
-                            log_output(f"Mean ΔH Changed = {mean_dH_changed:.4f}  [{ci_low_dH_changed:.4f}, {ci_up_dH_changed:.4f}]")
+                            log_output("\n  Idea 1.5: Calibration Metrics")
+                            y = df_model['s_i_capability'].to_numpy()
+                            p_correct = df_model.apply(lambda r: (r['base_probs'] or {}).get(r.get('correct_answer'), np.nan), axis=1).to_numpy()
+                            # drop rows where we could not find the correct label
+                            mask = ~np.isnan(p_correct)
+                            y       = y[mask]
+                            p_hat   = np.clip(p_correct[mask], 1e-15, 1 - 1e-15)
+                            nll   = -np.log(p_hat).mean()                     
+                            brier = np.mean((p_hat - y) ** 2) 
+                            def brier_decomposition(p, y, n_bins=10):
+                                """
+                                p : 1-D array of forecast probabilities for the event (here: model is correct)
+                                y : 1-D array of 0/1 outcomes (s_i_capability)
+                                """
+                                p = np.asarray(p, float)
+                                y = np.asarray(y, int)
+                                N = len(p)
 
-                        log_output("\n  Idea 4: Percentage of probability mass devoted to top two tokens in the game is higher than in baseline (sharpening)")
-                        df_model['p_top2_base'] = df_model['p1'] + df_model['p2']
-                        df_model['p_top2_game'] = df_model['gp1'] + df_model['gp2']
-                        df_idea4 = df_model[['p_top2_base', 'p_top2_game']].dropna()
+                                # 1. bin forecasts exactly as for ECE
+                                bins = np.linspace(0, 1, n_bins + 1)
+                                bin_id = np.digitize(p, bins[1:-1], right=True)
 
-                        if not df_idea4.empty and len(df_idea4) > 1:
-                            # Game is expected to be higher, so test game vs base
-                            t_stat, t_p = ttest_rel(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
-                            w_stat, w_p = wilcoxon(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
+                                rel = res = 0.0
+                                for k in range(n_bins):
+                                    mask = bin_id == k
+                                    if not mask.any():
+                                        continue
+                                    pk = p[mask].mean()
+                                    yk = y[mask].mean()
+                                    wk = mask.mean()          # n_k / N
+                                    rel += wk * (pk - yk)**2
+                                    # resolution term uses yk and overall mean later
+
+                                y_bar = y.mean()
+                                for k in range(n_bins):
+                                    mask = bin_id == k
+                                    if mask.any():
+                                        yk = y[mask].mean()
+                                        wk = mask.mean()
+                                        res += wk * (yk - y_bar)**2
+
+                                unc = y_bar * (1 - y_bar)
+                                bs  = ((p - y)**2).mean()
+                                # sanity: bs == rel - res + unc (float precision)
+                                return {"brier": bs, "reliability": rel, "resolution": res, "uncertainty": unc}
+                            brier_decomp = brier_decomposition(p_hat, y)
+                            # ECE
+                            n_bins = 10
+                            bin_edges = np.linspace(0, 1, n_bins + 1)
+                            bin_ids   = np.digitize(p_hat, bin_edges[1:-1], right=True)
+                            ece, signed_ece = 0.0, 0.0
+                            for b in range(n_bins):
+                                mask = bin_ids == b
+                                if not mask.any():               # skip empty bins
+                                    continue
+                                acc   = y[mask].mean()
+                                conf  = p_hat[mask].mean()
+                                ece  += np.abs(acc - conf) * mask.mean()
+                                signed_ece += (conf-acc) * mask.mean()
+                            metrics = {"nll": nll, "brier": brier, "ece": ece}
+                            def auroc(p, y):
+                                """
+                                p : array-like, predicted probabilities for the positive class (correct answer)
+                                y : array-like, binary 0/1 ground truth (1 = correct)
+                                """
+                                p = np.asarray(p, float)
+                                y = np.asarray(y,  int)
+
+                                # Mann-Whitney U formulation: AUROC = (rank sum of positives − m(m+1)/2) / (m*n)
+                                ranks = rankdata(p, method="average")          # smallest => rank 1
+                                pos_ranks = ranks[y == 1].sum()
+                                m = (y == 1).sum()                             # # positives
+                                n = (y == 0).sum()                             # # negatives
+                                if m == 0 or n == 0:
+                                    return np.nan                              # undefined if only one class
+                                u_stat = pos_ranks - m * (m + 1) / 2
+                                return u_stat / (m * n)
+
+                            auroc_score = auroc(p_hat, y)
+                            log_output(f"  NLL: {metrics['nll']:.4f}, Signed ECE (overconf pos under neg): {signed_ece:.4f}, ECE: {metrics['ece']:.4f} (n={len(mask)})")
+                            log_output(f"  Brier: {brier_decomp['brier']:.4f}, "
+                                    f"Reliability (absolute calibration error; lower better): {brier_decomp['reliability']:.4f}, "
+                                    f"Resolution (relative calibration quality; higher better): {brier_decomp['resolution']:.4f}, "
+                                    f"Uncertainty: {brier_decomp['uncertainty']:.4f} (n={len(mask)})")
+                            log_output(f"  AUROC: {auroc_score:.4f}")
+
+
+                            log_output("\n  Idea 2: Decrease in game prob of chosen token scales with its baseline probability")
+                            m1 = smf.ols("delta_p ~ p1 * answer_changed", data=df_model).fit()
+                            log_output(m1.summary())
+                            summary_data['Idea 2: Coef'] = m1.params['p1']
+                            summary_data['Idea 2: CI'] = f"[{m1.conf_int().loc['p1'][0]:.3f}, {m1.conf_int().loc['p1'][1]:.3f}]"
+                            summary_data['Idea 2: p-val'] = m1.pvalues['p1']
+
+                            log_output("\n  Idea 3: Entropy of unchosen tokens in game is lower than in baseline when the answer doesn't change")
+                            def rest_entropy(row, which):
+                                prob_dict = row.get(f"{which}_probs")
+                                base_answer = row.get("base_answer")
+                                if not isinstance(prob_dict, dict) or base_answer is None:
+                                    return None
+
+                                probs = [p for ltr, p in prob_dict.items() if ltr != base_answer]
+                                
+                                prob_sum = sum(probs)
+                                if prob_sum > 1e-9:
+                                    normalized_probs = [p / prob_sum for p in probs]
+                                else:
+                                    return 0.0
+
+                                normalized_probs = np.clip(normalized_probs, 1e-12, 1)
+                                return -np.sum(normalized_probs * np.log2(normalized_probs))
+                            df_model["H_unchosen_base"] = df_model.apply(rest_entropy, axis=1, which="base")
+                            df_model["H_unchosen_game"] = df_model.apply(rest_entropy, axis=1, which="game")
+                            df_model["delta_H"] = df_model["H_unchosen_base"] - df_model["H_unchosen_game"] 
+                            df_idea3 = df_model.loc[df_model["answer_changed"] == 0, ["H_unchosen_base", "H_unchosen_game"]].dropna()
+                            if not df_idea3.empty and len(df_idea3) > 1:
+                                t_stat, t_p = ttest_rel(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
+                                w_stat, w_p = wilcoxon(df_idea3["H_unchosen_base"], df_idea3["H_unchosen_game"])
+                            else:
+                                t_stat, t_p, w_stat, w_p = (float('nan'), float('nan'), float('nan'), float('nan'))
+                            log_output(f"Paired t-test delta_H: statistic={t_stat:.2f}, p={t_p:.3g}")
+                            log_output(f"Wilcoxon delta_H: statistic={w_stat:.2f}, p={w_p:.3g}")
+                            delta_H_no_change = df_model.loc[df_model["answer_changed"] == 0, "delta_H"].dropna()
+                            mean_dH = delta_H_no_change.mean()
+                            se_dH = delta_H_no_change.std(ddof=1) / np.sqrt(len(delta_H_no_change)) if len(delta_H_no_change) > 0 else 0
+                            ci_low_dH = mean_dH - 1.96 * se_dH
+                            ci_up_dH = mean_dH + 1.96 * se_dH
+                            log_output(f"Mean ΔH = {mean_dH:.4f}  [{ci_low_dH:.4f}, {ci_up_dH:.4f}]")
+                            summary_data['Idea 3: p-val'] = w_p
                             
-                            log_output(f"Paired t-test (p_top2_game vs p_top2_base): statistic={t_stat:.2f}, p={t_p:.3g}")
-                            log_output(f"Wilcoxon (p_top2_game vs p_top2_base): statistic={w_stat:.2f}, p={w_p:.3g}")
+                            df_idea3_changed = df_model.loc[df_model["answer_changed"] == 1, ["H_unchosen_base", "H_unchosen_game"]].dropna()
+                            if not df_idea3_changed.empty and len(df_idea3_changed) > 1:
+                                t_stat, t_p = ttest_rel(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
+                                w_stat, w_p = wilcoxon(df_idea3_changed["H_unchosen_base"], df_idea3_changed["H_unchosen_game"])
+                                log_output(f"Paired t-test delta_H Changed: statistic={t_stat:.2f}, p={t_p:.3g}")
+                                log_output(f"Wilcoxon delta_H Changed: statistic={w_stat:.2f}, p={w_p:.3g}")
+                                delta_H_changed = df_model.loc[df_model["answer_changed"] == 1, "delta_H"].dropna()
+                                mean_dH_changed = delta_H_changed.mean()
+                                se_dH_changed = delta_H_changed.std(ddof=1) / np.sqrt(len(delta_H_changed))
+                                ci_low_dH_changed = mean_dH_changed - 1.96 * se_dH_changed
+                                ci_up_dH_changed = mean_dH_changed + 1.96 * se_dH_changed
+                                log_output(f"Mean ΔH Changed = {mean_dH_changed:.4f}  [{ci_low_dH_changed:.4f}, {ci_up_dH_changed:.4f}]")
+
+                            log_output("\n  Idea 4: Percentage of probability mass devoted to top two tokens in the game is higher than in baseline (sharpening)")
+                            df_model['p_top2_base'] = df_model['p1'] + df_model['p2']
+                            df_model['p_top2_game'] = df_model['gp1'] + df_model['gp2']
+                            df_idea4 = df_model[['p_top2_base', 'p_top2_game']].dropna()
+
+                            if not df_idea4.empty and len(df_idea4) > 1:
+                                # Game is expected to be higher, so test game vs base
+                                t_stat, t_p = ttest_rel(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
+                                w_stat, w_p = wilcoxon(df_idea4['p_top2_game'], df_idea4['p_top2_base'])
+                                
+                                log_output(f"Paired t-test (p_top2_game vs p_top2_base): statistic={t_stat:.2f}, p={t_p:.3g}")
+                                log_output(f"Wilcoxon (p_top2_game vs p_top2_base): statistic={w_stat:.2f}, p={w_p:.3g}")
+                                
+                                delta_p_top2 = (df_idea4['p_top2_game'] - df_idea4['p_top2_base']).dropna()
+                                mean_delta = delta_p_top2.mean()
+                                se_delta = delta_p_top2.std(ddof=1) / np.sqrt(len(delta_p_top2))
+                                ci_low_delta = mean_delta - 1.96 * se_delta
+                                ci_up_delta = mean_delta + 1.96 * se_delta
+                                
+                                log_output(f"Mean Δp_top2 = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_p_top2)})")
+                                summary_data['Idea 4: p-val'] = w_p
+                            else:
+                                log_output("                  Not enough data for Idea 4 analysis.")
+
+                            log_output("\n  Idea 4.5: Game entropy over the tokens that were NOT the top token in the baseline is lower than over the same tokens in the baseline")
                             
-                            delta_p_top2 = (df_idea4['p_top2_game'] - df_idea4['p_top2_base']).dropna()
-                            mean_delta = delta_p_top2.mean()
-                            se_delta = delta_p_top2.std(ddof=1) / np.sqrt(len(delta_p_top2))
-                            ci_low_delta = mean_delta - 1.96 * se_delta
-                            ci_up_delta = mean_delta + 1.96 * se_delta
-                            
-                            log_output(f"Mean Δp_top2 = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_p_top2)})")
-                            summary_data['Idea 4: p-val'] = w_p
-                        else:
-                            log_output("                  Not enough data for Idea 4 analysis.")
+                            def entropy_of_baseline_unchosen_set(prob_dict, baseline_top_token):
+                                if not isinstance(prob_dict, dict) or baseline_top_token is None:
+                                    return None
+                                # Explicitly use the set of tokens unchosen in the baseline
+                                unchosen_probs = [p for token, p in prob_dict.items() if token != baseline_top_token]
+                                prob_sum = sum(unchosen_probs)
+                                if prob_sum <= 1e-9:
+                                    return 0.0
+                                normalized_probs = [p / prob_sum for p in unchosen_probs]
+                                normalized_probs = np.clip(normalized_probs, 1e-12, 1)
+                                return -np.sum(p * np.log2(p) for p in normalized_probs)
 
-                        log_output("\n  Idea 4.5: Game entropy over the tokens that were NOT the top token in the baseline is lower than over the same tokens in the baseline")
-                        
-                        def entropy_of_baseline_unchosen_set(prob_dict, baseline_top_token):
-                            if not isinstance(prob_dict, dict) or baseline_top_token is None:
-                                return None
-                            # Explicitly use the set of tokens unchosen in the baseline
-                            unchosen_probs = [p for token, p in prob_dict.items() if token != baseline_top_token]
-                            prob_sum = sum(unchosen_probs)
-                            if prob_sum <= 1e-9:
-                                return 0.0
-                            normalized_probs = [p / prob_sum for p in unchosen_probs]
-                            normalized_probs = np.clip(normalized_probs, 1e-12, 1)
-                            return -np.sum(p * np.log2(p) for p in normalized_probs)
+                            H_base_set_in_base = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['base_probs'], row['base_answer']), axis=1)
+                            H_base_set_in_game = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['game_probs'], row['base_answer']), axis=1)
 
-                        H_base_set_in_base = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['base_probs'], row['base_answer']), axis=1)
-                        H_base_set_in_game = df_model.apply(lambda row: entropy_of_baseline_unchosen_set(row['game_probs'], row['base_answer']), axis=1)
+                            df_idea45 = pd.DataFrame({
+                                'H_base_set_in_base': H_base_set_in_base,
+                                'H_base_set_in_game': H_base_set_in_game
+                            }).dropna()
 
-                        df_idea45 = pd.DataFrame({
-                            'H_base_set_in_base': H_base_set_in_base,
-                            'H_base_set_in_game': H_base_set_in_game
-                        }).dropna()
+                            if not df_idea45.empty and len(df_idea45) > 1:
+                                # Game entropy is expected to be lower
+                                t_stat, t_p = ttest_rel(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
+                                w_stat, w_p = wilcoxon(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
+                                
+                                log_output(f"Paired t-test (H_base_set_in_base vs H_base_set_in_game): statistic={t_stat:.2f}, p={t_p:.3g}")
+                                log_output(f"Wilcoxon (H_base_set_in_base vs H_base_set_in_game): statistic={w_stat:.2f}, p={w_p:.3g}")
+                                
+                                delta_H_all = (df_idea45['H_base_set_in_base'] - df_idea45['H_base_set_in_game']).dropna()
+                                mean_delta = delta_H_all.mean()
+                                se_delta = delta_H_all.std(ddof=1) / np.sqrt(len(delta_H_all)) if len(delta_H_all) > 0 else 0
+                                ci_low_delta = mean_delta - 1.96 * se_delta
+                                ci_up_delta = mean_delta + 1.96 * se_delta
+                                
+                                log_output(f"Mean ΔH_unchosen_baseline_set = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_H_all)})")
+                                summary_data['Idea 4.5: p-val'] = w_p
+                            else:
+                                log_output("                  Not enough data for Idea 4.5 analysis.")
+                            log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
+                            df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
+                            if not df_idea5.empty and len(df_idea5) > 1:
+                                t_stat, t_p = ttest_rel(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                                w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                                log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
+                                
+                                delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
+                                mean_delta_entropy = delta_entropy.mean()
+                                se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
+                                ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
+                                ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
+                                log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
+                                log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
+                                summary_data['Idea 5: p-val'] = w_p
+                            else:
+                                log_output("                  Not enough data for Idea 5 analysis.")
 
-                        if not df_idea45.empty and len(df_idea45) > 1:
-                            # Game entropy is expected to be lower
-                            t_stat, t_p = ttest_rel(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
-                            w_stat, w_p = wilcoxon(df_idea45['H_base_set_in_base'], df_idea45['H_base_set_in_game'])
-                            
-                            log_output(f"Paired t-test (H_base_set_in_base vs H_base_set_in_game): statistic={t_stat:.2f}, p={t_p:.3g}")
-                            log_output(f"Wilcoxon (H_base_set_in_base vs H_base_set_in_game): statistic={w_stat:.2f}, p={w_p:.3g}")
-                            
-                            delta_H_all = (df_idea45['H_base_set_in_base'] - df_idea45['H_base_set_in_game']).dropna()
-                            mean_delta = delta_H_all.mean()
-                            se_delta = delta_H_all.std(ddof=1) / np.sqrt(len(delta_H_all)) if len(delta_H_all) > 0 else 0
-                            ci_low_delta = mean_delta - 1.96 * se_delta
-                            ci_up_delta = mean_delta + 1.96 * se_delta
-                            
-                            log_output(f"Mean ΔH_unchosen_baseline_set = {mean_delta:.4f}  [{ci_low_delta:.4f}, {ci_up_delta:.4f}] (n={len(delta_H_all)})")
-                            summary_data['Idea 4.5: p-val'] = w_p
-                        else:
-                            log_output("                  Not enough data for Idea 4.5 analysis.")
-                        log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
-                        df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
-                        if not df_idea5.empty and len(df_idea5) > 1:
-                            t_stat, t_p = ttest_rel(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
-                            w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
-                            log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
-                            
-                            delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
-                            mean_delta_entropy = delta_entropy.mean()
-                            se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
-                            ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
-                            ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
-                            log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
-                            log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
-                            summary_data['Idea 5: p-val'] = w_p
-                        else:
-                            log_output("                  Not enough data for Idea 5 analysis.")
+                            log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
+                            try:
+                                df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
+                                #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
+                                df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
+                                df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
+                                df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
+                                logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
+                                #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
+                                log_output(logit_int.summary())
+                                auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
+                                log_output(f"AUC = {auc:.3f}")
+                                summary_data['M1.51: Coef'] = logit_int.params['I(p1_z ** 2)']
+                                summary_data['M1.51: CI'] = f"[{logit_int.conf_int().loc['I(p1_z ** 2)'][0]:.3f}, {logit_int.conf_int().loc['I(p1_z ** 2)'][1]:.3f}]"
+                                summary_data['M1.51: p-val'] = logit_int.pvalues['I(p1_z ** 2)']
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit Model 1.51: {e_full}")
+                            """
+                            df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
+                            g = (df_model.groupby('p1_bin')['answer_changed']
+                                .agg(['mean', 'count'])
+                                .rename(columns={'mean':'flip'}))
+                            # Wilson CI
+                            from statsmodels.stats.proportion import proportion_confint
+                            lo, hi = proportion_confint((g['flip']*g['count']).round().astype(int),
+                                                        g['count'], method='wilson')
+                            plt.figure(figsize=(6,4))
+                            plt.errorbar(g.index.map(lambda b:b.mid), g['flip'],
+                                        yerr=[g['flip']-lo, hi-g['flip']], fmt='o-')
+                            plt.xlabel('p₁ (binned)'); plt.ylabel('flip rate')
+                            plt.tight_layout()
+                            plt.savefig(f"cap_entropy_binned_{dataset}_{log_context_str}.png", dpi=300)  
 
-                        log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
-                        try:
-                            df_model["posterior_top"] = df_model["p2"] / (1.0 - df_model["p1"] + 1e-12 )
-                            #logit_int = smf.logit("answer_changed ~ posterior_top + p1", data=df_model).fit()
-                            df_model["surprise"] = -np.log(np.clip(1.0 - df_model["p1"], 1e-12, None))
-                            df_model["surprise_z"] = (df_model["surprise"] - df_model["surprise"].mean()) / df_model["surprise"].std(ddof=0)
-                            df_model["p1_z"] = StandardScaler().fit_transform(df_model[["p1"]])
-                            logit_int = smf.logit("answer_changed ~ p1_z + I(p1_z**2)", data=df_model).fit()
-                            #logit_int = smf.logit("answer_changed ~ surprise_z + I(surprise_z**2)",data=df_model).fit()
-                            log_output(logit_int.summary())
-                            auc = roc_auc_score(df_model["answer_changed"], logit_int.predict(df_model))
-                            log_output(f"AUC = {auc:.3f}")
-                            summary_data['M1.51: Coef'] = logit_int.params['I(p1_z ** 2)']
-                            summary_data['M1.51: CI'] = f"[{logit_int.conf_int().loc['I(p1_z ** 2)'][0]:.3f}, {logit_int.conf_int().loc['I(p1_z ** 2)'][1]:.3f}]"
-                            summary_data['M1.51: p-val'] = logit_int.pvalues['I(p1_z ** 2)']
-                        except Exception as e_full:
-                            log_output(f"                    Could not fit Model 1.51: {e_full}")
-                        """
-                        df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
-                        g = (df_model.groupby('p1_bin')['answer_changed']
-                            .agg(['mean', 'count'])
-                            .rename(columns={'mean':'flip'}))
-                        # Wilson CI
-                        from statsmodels.stats.proportion import proportion_confint
-                        lo, hi = proportion_confint((g['flip']*g['count']).round().astype(int),
-                                                    g['count'], method='wilson')
-                        plt.figure(figsize=(6,4))
-                        plt.errorbar(g.index.map(lambda b:b.mid), g['flip'],
-                                    yerr=[g['flip']-lo, hi-g['flip']], fmt='o-')
-                        plt.xlabel('p₁ (binned)'); plt.ylabel('flip rate')
-                        plt.tight_layout()
-                        plt.savefig(f"cap_entropy_binned_{dataset}_{log_context_str}.png", dpi=300)  
+                            sns.regplot(
+                                data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed']),
+                                x="capabilities_entropy",
+                                y="answer_changed",
+                                logistic=True,
+                                ci=None,
+                                scatter_kws={"s": 25, "alpha": .4},
+                            )
+                            #plt.ylabel("P(answer_changed = 1)")
+                            #plt.tight_layout()
+                            ###plt.savefig(f"cap_entropy_vs_answer_changed_{log_context_str}.png", dpi=300)  
+                            #plt.close()
 
-                        sns.regplot(
-                            data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed']),
-                            x="capabilities_entropy",
-                            y="answer_changed",
-                            logistic=True,
-                            ci=None,
-                            scatter_kws={"s": 25, "alpha": .4},
-                        )
-                        #plt.ylabel("P(answer_changed = 1)")
-                        #plt.tight_layout()
-                        ###plt.savefig(f"cap_entropy_vs_answer_changed_{log_context_str}.png", dpi=300)  
-                        #plt.close()
+                            sns.kdeplot(data=df_model, x="capabilities_entropy", hue="answer_changed",
+                                        common_norm=False, bw_adjust=.75, fill=True, alpha=.4)
+                            #plt.xlabel("capabilities_entropy")
+                            #plt.ylabel("Density")
+                            #plt.tight_layout()
+                            #plt.savefig(f"cap_entropy_density_split_{log_context_str}.png", dpi=300)
+                            #plt.close()
 
-                        sns.kdeplot(data=df_model, x="capabilities_entropy", hue="answer_changed",
-                                    common_norm=False, bw_adjust=.75, fill=True, alpha=.4)
-                        #plt.xlabel("capabilities_entropy")
-                        #plt.ylabel("Density")
-                        #plt.tight_layout()
-                        #plt.savefig(f"cap_entropy_density_split_{log_context_str}.png", dpi=300)
-                        #plt.close()
-
-                        # 10 equal-count bins; adjust q if you want finer / coarser slices
-                        df_model["entropy_bin"] = pd.qcut(df_model["capabilities_entropy"], q=10, duplicates="drop")
-                        g = (
-                            df_model.groupby("entropy_bin")["answer_changed"]
-                            .agg(["mean", "count"])
-                            .rename(columns={"mean": "rate"})
-                        )
-                        # 95 % Wilson CIs for a proportion
-                        low, hi = proportion_confint(
-                            count=(g["rate"] * g["count"]).round().astype(int),
-                            nobs=g["count"],
-                            method="wilson"
-                        )
-                        g["lo"], g["hi"] = low, hi
-                        #plt.errorbar(
-                        #    x=g.index.map(lambda i: i.mid),   # bin centres
-                        #    y=g["rate"],
-                        #    yerr=[g["rate"] - g["lo"], g["hi"] - g["rate"]],
-                        #    fmt="o-",
-                        #)
-                        #plt.xlabel("capabilities_entropy (binned)")
-                        #plt.ylabel("Empirical P(answer_changed = 1)")
-                        #plt.tight_layout()
-                        ###plt.savefig(f"cap_entropy_bins_vs_change_{log_context_str}.png", dpi=300)
-                        #plt.close()
-                        """
+                            # 10 equal-count bins; adjust q if you want finer / coarser slices
+                            df_model["entropy_bin"] = pd.qcut(df_model["capabilities_entropy"], q=10, duplicates="drop")
+                            g = (
+                                df_model.groupby("entropy_bin")["answer_changed"]
+                                .agg(["mean", "count"])
+                                .rename(columns={"mean": "rate"})
+                            )
+                            # 95 % Wilson CIs for a proportion
+                            low, hi = proportion_confint(
+                                count=(g["rate"] * g["count"]).round().astype(int),
+                                nobs=g["count"],
+                                method="wilson"
+                            )
+                            g["lo"], g["hi"] = low, hi
+                            #plt.errorbar(
+                            #    x=g.index.map(lambda i: i.mid),   # bin centres
+                            #    y=g["rate"],
+                            #    yerr=[g["rate"] - g["lo"], g["hi"] - g["rate"]],
+                            #    fmt="o-",
+                            #)
+                            #plt.xlabel("capabilities_entropy (binned)")
+                            #plt.ylabel("Empirical P(answer_changed = 1)")
+                            #plt.tight_layout()
+                            ###plt.savefig(f"cap_entropy_bins_vs_change_{log_context_str}.png", dpi=300)
+                            #plt.close()
+                            """
                         df_model = df_model_tmp.copy()  # Restore original df_model
 
                 if 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():

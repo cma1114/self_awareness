@@ -70,6 +70,7 @@ def identify_and_handle_deterministic_categories(df_input, outcome_var, categori
 def prepare_regression_data_for_model(game_file_paths_list,
                                       sqa_feature_lookup,
                                       capabilities_s_i_map_for_model,
+                                      a_i_map_for_this_model,
                                       p_i_map_for_this_model=None,
                                       entropy_map_for_this_model=None,
                                       game_file_suffix=""):
@@ -204,6 +205,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'delegate_choice': delegate_choice_numeric,
                     's_i_capability': s_i_capability,
                     'subject_correct': False if trial.get('subject_correct') is None else trial['subject_correct'],
+                    'answer_changed': False if a_i_map_for_this_model[q_id] == trial.get('subject_answer') else True,
                     'answer_type': sqa_features['answer_type'],
                     'q_length': np.log(len(sqa_features.get('q_text', '')) + 1e-9), # Add epsilon for empty q_text
                     'topic': sqa_features.get('topic', ''),
@@ -320,7 +322,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleMC"
-    game_type = "aop"#"dg" #
+    game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -401,6 +403,7 @@ if __name__ == "__main__":
 
             s_i_map_for_this_model = {}
             p_i_map_for_this_model = {}
+            a_i_map_for_this_model = {}
             entropy_map_for_this_model = {}
             try:
                 with open(capabilities_file_path, 'r', encoding='utf-8') as f_cap:
@@ -411,6 +414,7 @@ if __name__ == "__main__":
 
                     probs_dict = res_info.get("probs")
                     subject_answer = res_info.get("subject_answer")
+                    a_i_map_for_this_model[q_id] = subject_answer
                     # Populate p_i_map_for_this_model
                     if subject_answer is not None and isinstance(probs_dict, dict):
                         prob_for_subject_answer = probs_dict.get(subject_answer)
@@ -440,6 +444,7 @@ if __name__ == "__main__":
             df_model, subject_acc_phase1, phase2_corcnt, phase2_totalcnt, teammate_acc_phase1 = prepare_regression_data_for_model(current_game_files_for_analysis,
                                                          sqa_feature_lookup,
                                                          s_i_map_for_this_model,
+                                                         a_i_map_for_this_model,
                                                          p_i_map_for_this_model,
                                                          entropy_map_for_this_model,
                                                          game_file_suffix=game_file_suffix)
@@ -639,6 +644,10 @@ if __name__ == "__main__":
                         TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
                         log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
                         log_output(f"Game-Test Good Change Rate: {(TN)/(TP+TN+FP+FN):.4f}")
+                        cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 0) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 0])
+                        log_output(f"Game-Test Change on Incor Rate: {cir}")
+                        cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 1) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 1])
+                        log_output(f"Game-Test Change on Cor Rate: {cir}")
 
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")

@@ -347,8 +347,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPQA"#"GPSA"# 
-    game_type = "aop"#"dg"#
+    dataset = "GPQA"#"GPSA"# 
+    game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres

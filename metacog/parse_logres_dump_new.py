@@ -715,7 +715,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "SimpleMC"
+    dataset = "GPQA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
