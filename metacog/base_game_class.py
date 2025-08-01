@@ -454,6 +454,7 @@ class BaseGameClass:
         epsilon: float = 0.05,
         min_samples: int = 30,
         max_samples: int = 1000,
+        setup_text: str = ""
     ) -> Dict[str, float]:
         """
         Keep querying the LLM until every option's 95% Wilson CI half-width <= epsilon.
@@ -474,7 +475,7 @@ class BaseGameClass:
         # -------------------------------------------------------------------------
 
         while n < max_samples and not all_ci_within_tolerance():
-            choice, _, _ = self._get_llm_answer(options, prompt, message_history, keep_appending = False, MAX_TOKENS=1, accept_any=False, temp=1.0, top_p=1.0, top_k=0)
+            choice, _, _ = self._get_llm_answer(options, prompt, message_history, keep_appending = False, setup_text=setup_text, MAX_TOKENS=1, accept_any=False, temp=1.0, top_p=1.0, top_k=0)
             choice = choice.upper().rstrip(".")
             if choice not in options:
                 self._log(f"Invalid choice: {choice}. Options were: {options}, prompt: {prompt}")
@@ -487,5 +488,5 @@ class BaseGameClass:
         k = len(options)
         probs = {opt: (counts[opt] + alpha) / (n + alpha * k) for opt in options}
         probs = dict(sorted(probs.items(), key=lambda item: item[1], reverse=True))
-        return choice, message_history, probs
+        return list(probs.keys())[0], message_history, probs
     

@@ -19,7 +19,7 @@ class SecondChanceGame(BaseGameClass):
     Game class for the Second-Chance experiment.
     """
     def __init__(self, subject_id, subject_name, dataset, capabilities_file_path, 
-                 num_questions=None, show_original_answer=True, use_correct_answers=False, is_human_player=False, seed=None, temperature=0.0):
+                 num_questions=None, show_original_answer=True, use_correct_answers=False, is_human_player=False, PROMPT_VARIANT = "", seed=None, temperature=0.0, resample=False):
         """
         Initialize the game with configuration parameters.
         
@@ -39,11 +39,13 @@ class SecondChanceGame(BaseGameClass):
         self.show_original_answer = show_original_answer
         self.use_correct_answers = use_correct_answers
         self.is_human_player = is_human_player
+        self.PROMPT_VARIANT = PROMPT_VARIANT
         self.temperature = temperature
         if seed is not None:
             random.seed(seed)
         self.is_short_answer = True if self.dataset.lower() in ["simpleqa", "gpsa"] else False
-                
+        self.resample_for_probs = resample
+                    
         # Initialize state variables
         self.capabilities_data = None
         self.wrong_questions = []
@@ -82,9 +84,9 @@ class SecondChanceGame(BaseGameClass):
                 if not isinstance(result, dict) or 'is_correct' not in result:
                     self._log(f"Warning: Invalid result format for question {q_id}, skipping")
                     continue
-                question_data = result
+                question_data = result['question'] if isinstance(result['question'], dict) else result
                 question_data['id'] = q_id
-                question_data['correct_answer'] = result.get('correct_answer_label')
+                question_data['correct_answer'] = result.get('correct_answer_label', result['question']['correct_answer_label'])
                 question_data['original_answer'] = result.get('subject_answer')
                     
                 if not result['is_correct']:
@@ -166,6 +168,7 @@ class SecondChanceGame(BaseGameClass):
         correct_after_feedback = 0
         
         # Process each question
+        skipped = 0
         for i, question in enumerate(self.selected_questions):
             q_id = question.get('id', f"q_{i}")
             original_answer = question.get('original_answer')
@@ -173,6 +176,7 @@ class SecondChanceGame(BaseGameClass):
             
             if not original_answer or not correct_answer:
                 self._log(f"Warning: Missing data for question {q_id}, skipping")
+                skipped += 1
                 continue
             
             # Format question
@@ -205,22 +209,42 @@ class SecondChanceGame(BaseGameClass):
                 message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
                 content = original_answer if self.show_original_answer else "[redacted]"
                 message_history.append({"role": "assistant", "content": content})
-#                content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
-#                content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
-                content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt 
-#                content = "Your response was lost in transmission. Respond again with the same answer.\n\n" + llm_prompt 
+                if self.PROMPT_VARIANT == "_pos":
+                    content = "Your answer was correct! Unfortunately, it was mistakenly deleted. Please respond again with the same answer for our records.\n\n" + llm_prompt
+                elif self.PROMPT_VARIANT == "_neut":
+                    content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt
+#                   content = "Your response was lost in transmission. Respond again with the same answer.\n\n" + llm_prompt
+                else:
+                    content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
+#                   content = "Your answer was incorrect. Choose again.\n\n" + llm_prompt # I lost your original answer, but I know it was wrong. Try to figure out what your first choice would have been, and then pick a different answer\n\n" + llm_prompt
                 #message_history.append({"role": "user", "content": content})
-                
+                if self.is_short_answer:
+                    setup_text = "Respond ONLY with your answer\n" 
+                else:
+                    if self.PROMPT_VARIANT == "_pos": setup_text = None#"Respond again with the same answer\n" 
+                    elif self.PROMPT_VARIANT == "_neut": setup_text = None
+                    else: setup_text = "Your previous answer was incorrect. Respond ONLY with your new answer\n"
+                if i - skipped == 0:
+                    self._log(f"Setup text: {setup_text}, content: {content}")
                 # Get the answer without accumulating history
-                new_answer, _, probs = self._get_llm_answer(
-                    list(question["options"].keys()) if not self.is_short_answer else None,
-                    content,
-                    message_history=message_history,
-                    keep_appending=False,
-                    setup_text="Respond ONLY with your answer\n" if self.is_short_answer else None,#"Your previous answer was incorrect. Respond ONLY with your new answer\n",#
-                    MAX_TOKENS=None,#1 if not self.is_short_answer else None,
-                    temp = self.temperature
-                )
+                if self.resample_for_probs and not self.is_short_answer:
+                    new_answer, _, probs = self.estimate_probs_sequential(
+                        content,
+                        list(question["options"].keys()),
+                        message_history,
+                        epsilon=0.05,
+                        setup_text=setup_text,
+                    )   
+                else:
+                    new_answer, _, probs = self._get_llm_answer(
+                        list(question["options"].keys()) if not self.is_short_answer else None,
+                        content,
+                        message_history=message_history,
+                        keep_appending=False,
+                        setup_text=setup_text,
+                        MAX_TOKENS=None,#1 if not self.is_short_answer else None,
+                        temp = self.temperature
+                    )
             
             # Check if answer was changed
             answer_changed = (new_answer != original_answer) and new_answer in question["options"]
@@ -343,11 +367,13 @@ def main(model_dataset_dict):
     """
     # Configuration
     IS_HUMAN = False
+    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
-    USE_CORRECT_ANSWERS = False  # If True, use correct answers instead of wrong ones
-    NUM_QUESTIONS = None  # Use all wrong questions if None
+    USE_CORRECT_ANSWERS = False  
+    NUM_QUESTIONS = None  # Use all questions if None
+    RESAMPLE = True
     seed = 42
-    TEMPERATURE = 0.7 
+    TEMPERATURE = 0.0
     for SUBJECT_NAME, datasets in model_dataset_dict.items():
         for DATASET in datasets:
     
@@ -361,7 +387,7 @@ def main(model_dataset_dict):
             else:
                 CAPABILITIES_FILE = f"./completed_results_{DATASET.lower()}/{SUBJECT_NAME.replace("/","-")}_phase1_completed.json"
                 
-            settings_suffix=""
+            settings_suffix = PROMPT_VARIANT
             if SHOW_ORIGINAL_ANSWER:
                 settings_suffix += "_shown"
             else:
@@ -383,8 +409,10 @@ def main(model_dataset_dict):
                     show_original_answer=SHOW_ORIGINAL_ANSWER,
                     use_correct_answers=USE_CORRECT_ANSWERS,
                     is_human_player=IS_HUMAN,
+                    PROMPT_VARIANT=PROMPT_VARIANT,
                     seed=seed,
-                    temperature=TEMPERATURE
+                    temperature=TEMPERATURE,
+                    resample=RESAMPLE
                 )
                 
                 # Run the game
@@ -410,5 +438,5 @@ if __name__ == "__main__":
         "claude-3-sonnet-20240229": ["GPQA", "SimpleMC"],
         "claude-3-haiku-20240307": ["GPQA", "SimpleMC"],
         }
-    model_dataset_dict = {'gemini-2.0-flash-001': ["SimpleMC"]}
+    model_dataset_dict = {'claude-3-5-sonnet-20241022': ["GPQA"]}
     main(model_dataset_dict)
