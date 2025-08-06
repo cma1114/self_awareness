@@ -50,8 +50,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     
     # Model section identifiers
     model4_start_regex = re.compile(r"^\s*Model 4.*\(No Interactions\).*:\s*delegate_choice ~")
-    model46_start_regex = re.compile(r"^\s*Model 4\.6.*:\s*delegate_choice ~")
-    model48_start_regex = re.compile(r"^\s*Model 4\.8.*:\s*delegate_choice ~")
+    model46_start_regex = re.compile(r"^\s*Model 4\.6:\s*delegate_choice ~")
+    model463_start_regex = re.compile(r"^\s*Model 4\.63:\s*delegate_choice ~")
+    model48_start_regex = re.compile(r"^\s*Model 4\.8:\s*delegate_choice ~")
     model7_start_regex = re.compile(r"^\s*Model 7.*:\s*delegate_choice ~")
     
     # Logit regression results marker
@@ -101,6 +102,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "model46_cap_entropy_coef": "Not found",
                     "model46_cap_entropy_ci_low": "Not found",
                     "model46_cap_entropy_ci_high": "Not found",
+                    "model463_cap_entropy_coef": "Not found",
+                    "model463_cap_entropy_ci_low": "Not found",
+                    "model463_cap_entropy_ci_high": "Not found",
                     "model48_norm_prob_entropy_coef": "Not found",
                     "model48_norm_prob_entropy_ci_low": "Not found",
                     "model48_norm_prob_entropy_ci_high": "Not found",
@@ -117,6 +121,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 # Model parsing states
                 in_model4 = False
                 in_model46 = False
+                in_model463 = False
                 in_model48 = False
                 in_model7 = False
                 found_logit_results = False
@@ -167,7 +172,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         continue
 
                     # Cross-tabulation parsing state machine
-                    if not parsing_crosstab and not any([in_model4, in_model46, in_model48, in_model7]) and crosstab_title_regex.match(line):
+                    if not parsing_crosstab and not any([in_model4, in_model46, in_model463, in_model48, in_model7]) and crosstab_title_regex.match(line):
                         parsing_crosstab = True
                         expecting_crosstab_col_header = True
                         expecting_crosstab_row_header_label = False
@@ -210,6 +215,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     if model4_start_regex.search(line):
                         in_model4 = True
                         in_model46 = False
+                        in_model463 = False
                         in_model48 = False
                         in_model7 = False
                         found_logit_results = False
@@ -218,6 +224,16 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     elif model46_start_regex.search(line):
                         in_model4 = False
                         in_model46 = True
+                        in_model463 = False
+                        in_model48 = False
+                        in_model7 = False
+                        found_logit_results = False
+                        parsing_crosstab = False
+                        continue
+                    elif model463_start_regex.search(line):
+                        in_model4 = False
+                        in_model46 = False
+                        in_model463 = True
                         in_model48 = False
                         in_model7 = False
                         found_logit_results = False
@@ -226,6 +242,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     elif model48_start_regex.search(line):
                         in_model4 = False
                         in_model46 = False
+                        in_model463 = False
                         in_model48 = True
                         in_model7 = False
                         found_logit_results = False
@@ -234,6 +251,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     elif model7_start_regex.search(line):
                         in_model4 = False
                         in_model46 = False
+                        in_model463 = False
                         in_model48 = False
                         in_model7 = True
                         found_logit_results = False
@@ -268,6 +286,14 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                                 extracted_info["model46_cap_entropy_ci_low"] = m.group(5)
                                 extracted_info["model46_cap_entropy_ci_high"] = m.group(6)
                         
+                        elif in_model463 and found_logit_results:
+                            # Look for capabilities_entropy coefficient
+                            m = capabilities_entropy_coef_regex.match(line)
+                            if m:
+                                extracted_info["model463_cap_entropy_coef"] = m.group(1)
+                                extracted_info["model463_cap_entropy_ci_low"] = m.group(5)
+                                extracted_info["model463_cap_entropy_ci_high"] = m.group(6)
+                        
                         elif in_model48 and found_logit_results:
                             # Look for normalized_prob_entropy coefficient
                             m = normalized_prob_entropy_coef_regex.match(line)
@@ -286,6 +312,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         if line.strip().startswith("Model ") and not any([
                             model4_start_regex.search(line),
                             model46_start_regex.search(line),
+                            model463_start_regex.search(line),
                             model48_start_regex.search(line),
                             model7_start_regex.search(line)
                         ]):
@@ -325,6 +352,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
                 outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
                 outfile.write(f"  Model 4.6 capabilities_entropy: {extracted_info['model46_cap_entropy_coef']} [{extracted_info['model46_cap_entropy_ci_low']}, {extracted_info['model46_cap_entropy_ci_high']}]\n")
+                outfile.write(f"  Model 4.63 capabilities_entropy: {extracted_info['model463_cap_entropy_coef']} [{extracted_info['model463_cap_entropy_ci_low']}, {extracted_info['model463_cap_entropy_ci_high']}]\n")
                 outfile.write(f"  Model 4.8 normalized_prob_entropy: {extracted_info['model48_norm_prob_entropy_coef']} [{extracted_info['model48_norm_prob_entropy_ci_low']}, {extracted_info['model48_norm_prob_entropy_ci_high']}]\n")
                 outfile.write(f"  Model 7 Log-Likelihood: {extracted_info['model7_log_lik']}\n")
                 outfile.write(f"  Delegation rate: {extracted_info['delegation_rate']}\n")
@@ -399,6 +427,13 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["loglik4"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "Model 4.6 capabilities_entropy:" in line:
                 # Parse: "Model 4.6 capabilities_entropy: 2.7523 [1.396, 4.109]"
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["cap_entropy_coef"] = float(m.group(1))
+                    current_subject_info["cap_entropy_ci_low"] = float(m.group(2))
+                    current_subject_info["cap_entropy_ci_high"] = float(m.group(3))
+            elif "Model 4.63 capabilities_entropy:" in line:
+                # Override non-controlled
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
                     current_subject_info["cap_entropy_coef"] = float(m.group(1))
@@ -715,7 +750,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "SimpleMC"
+    dataset = "GPQA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

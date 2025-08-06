@@ -474,7 +474,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
 
 if __name__ == "__main__":
     
-    dataset = "SimpleMC"# "GPQA"#
+    dataset = "GPQA"#"SimpleMC"# 
     suffix = ""
     sc_version = "_new"  # "_new" or "" or "_neut"
 

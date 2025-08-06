@@ -8,7 +8,7 @@ class CapabilitiesTest(BaseGameClass):
     """
     Just ask independent multiple-choice or short answer questions and record responses.
     """
-    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None, temperature=0.0, resample_for_probs=False):
+    def __init__(self, subject_id, subject_name, questions, n_questions=None, is_human_player=False, resume_from=None, temperature=0.0, resample_for_probs=False, nested=None):
         """
         Args:
             subject_id (str): Identifier for the subject/session
@@ -18,7 +18,8 @@ class CapabilitiesTest(BaseGameClass):
             is_human_player (bool): Whether the subject is a human player or an LLM
             resume_from (string): Filename to resume from (in case game got interrupted)
         """
-        super().__init__(subject_id, subject_name, is_human_player, "capabilities_test_logs")
+        filepath = "capabilities_test_logs" if not nested else "capabilities_3p_test_logs" if nested == "Other" else "capabilities_1p_test_logs"
+        super().__init__(subject_id, subject_name, is_human_player, filepath)
         self.n_questions = len(questions) if not n_questions else n_questions
 
         # Set up state variables
@@ -30,6 +31,7 @@ class CapabilitiesTest(BaseGameClass):
         self.temperature = temperature
         self.log_suffix = "_test_data"
         self.resample_for_probs = resample_for_probs
+        self.nested = nested
 
         if len(questions) < self.n_questions:
             raise ValueError(f"Not enough questions provided ({len(questions)}); ({self.n_questions} needed)")
@@ -99,8 +101,29 @@ class CapabilitiesTest(BaseGameClass):
                     return False
             else:
                 # For LLM subject
-                llm_prompt = q_text + "\nYour choice (A, B, C, or D): "
-                setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best. Respond only with the letter of your choice; do NOT output any other text."
+                if self.nested == "Other":
+#                    option_dict = {"A": "<20%", "B": "20-40%", "C": "40-60%", "D": "60-80%", "E": ">80%"}
+#                    RANGE_MIDPOINTS = {"A": 0.1, "B": 0.3, "C": 0.5,  "D": 0.7, "E": 0.9}
+#                    option_dict = {"A": "<10%", "B": "10-20%", "C": "20-40%", "D": "40-60%", "E": "60-80%", "F": ">80%"}
+#                    RANGE_MIDPOINTS = {"A": 0.05, "B": 0.15, "C": 0.3,  "D": 0.5, "E": 0.7, "F": 0.9}
+                    option_dict = {"A": "<5%", "B": "5-10%", "C": "10-20%", "D": "20-40%", "E": "40-60%", "F": "60-80%", "G": ">80%"}
+                    RANGE_MIDPOINTS = {"A": 0.025, "B": 0.075, "C": 0.15,  "D": 0.3, "E": 0.5, "F": 0.7, "G": 0.9}
+                    options = list(option_dict.keys())
+                    q_text = self._present_nested_question(question, "What percentage of college-educated people would get this question right?", option_dict)
+                    setup_prompt = "I want your help calibrating question difficulty. I'm going to show you a multiple-choice question, and I want you to tell me approximately what percentage of college-educated people you think would get it right. Respond only with the letter corresponding to the percentage range you choose; do NOT output any other text."
+                elif self.nested == "Self":
+                    option_dict = {"0": "<5%", "1": "5-15%", "2": "15-25%", "3": "25-35%", "4": "35-45%", "5": "45-55%", "6": "55-65%", "7": "65-75%", "8": "75-85%", "9": "85-95%", "10": ">95%"}
+                    RANGE_MIDPOINTS = {"0": 0.025, "1": 0.1, "2": 0.2,  "3": 0.3, "4": 0.4, "5": 0.5, "6": 0.6, "7": 0.7, "8": 0.8, "9": 0.9, "10": 0.975}
+#                    option_dict = {"A": "<5%", "B": "5-10%", "C": "10-20%", "D": "20-40%", "E": "40-60%", "F": "60-80%", "G": "80-90%", "H": ">90%"}
+#                    RANGE_MIDPOINTS = {"A": 0.025, "B": 0.075, "C": 0.15,  "D": 0.3, "E": 0.5, "F": 0.7, "G": 0.85, "G": 0.95}
+                    options = list(option_dict.keys())
+                    q_text = self._present_nested_question(question, "How confident are you that you would get this question right?", option_dict)
+                    setup_prompt = "I'm going to show you a multiple-choice question, and I want you to tell me your level of confidence that you would get the question right. Respond only with the letter corresponding to the percentage range you choose; do NOT output any other text."
+                else:
+                    options = list(question["options"].keys())
+                    setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best. Respond only with the letter of your choice; do NOT output any other text."
+                options_str = " or ".join(options) if len(options) == 2 else ", ".join(options[:-1]) + f", or {options[-1]}"
+                llm_prompt = q_text + f"\nYour choice ({options_str}): "
                 if False:#question['id'] == "gpqa_train_rec42yAdAZnQgoibP" or question['id'] == "gpqa_train_recnTTKdBzfuoZ7w7": 
                     subject_answer = ""
                     probs = None
@@ -108,13 +131,13 @@ class CapabilitiesTest(BaseGameClass):
                     if self.resample_for_probs:
                         subject_answer, _, probs = self.estimate_probs_sequential(
                             setup_prompt + "\n\n" + llm_prompt,
-                            list(question["options"].keys()),
+                            options,
                             [], # no history
                             epsilon=0.05,
                         )   
                     else:
                         subject_answer, _, probs = self._get_llm_answer(
-                            list(question["options"].keys()),
+                            options,
                             setup_prompt + "\n\n" + llm_prompt,
                             [], # no history
                             keep_appending=False,
@@ -127,14 +150,21 @@ class CapabilitiesTest(BaseGameClass):
                 subject_decision = subject_answer
             else:
                 arr=subject_answer.upper().rstrip(".").split()
-                if arr[0] in list(question["options"].keys()):
+                if arr[0] in options:
                     subject_decision = arr[0]
-                elif arr[-1] in list(question["options"].keys()):
+                elif arr[-1] in options:
                     subject_decision = arr[-1]
                 else:
                     subject_decision = subject_answer
 
-            is_correct = (subject_decision == question["correct_answer"])
+            if self.nested:
+                is_correct = sum(
+                    RANGE_MIDPOINTS[key.strip()] * mass
+                    for key, mass in probs.items()
+                    if key.strip() in RANGE_MIDPOINTS
+                )
+            else:
+                is_correct = (subject_decision == question["correct_answer"])
             if is_correct:
                 self.correct_count += 1
             
@@ -238,10 +268,11 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "GPQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "claude-3-5-sonnet-20241022" #"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#'gemini-2.0-flash-001'#"gemini-2.5-flash-preview-04-17"#"gpt-4.1-2025-04-14"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gemini-1.5-pro"#"gpt-4o-2024-08-06"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"grok-3-latest"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"claude-sonnet-4-20250514"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/meta-llama-Meta-Llama-3.1-405B-Instruct_GPQA_447_1746367623_test_data.json" 
-    RESAMPLE = True
+    RESAMPLE = False
+    NESTED = "Self" #values: None, "Self", "Other"
     temp = 0.0
     seed = 42
     
@@ -268,7 +299,8 @@ def main():
             is_human_player=IS_HUMAN,
             resume_from=resume_from,
             temperature=temp,
-            resample_for_probs=RESAMPLE
+            resample_for_probs=RESAMPLE,
+            nested = NESTED
         )
                     
         # Run capabilities measurement

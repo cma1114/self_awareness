@@ -86,7 +86,10 @@ class SecondChanceGame(BaseGameClass):
                     continue
                 question_data = result['question'] if isinstance(result['question'], dict) else result
                 question_data['id'] = q_id
-                question_data['correct_answer'] = result.get('correct_answer_label', result['question']['correct_answer_label'])
+                try:
+                    question_data['correct_answer'] = result.get('correct_answer_label', result['question']['correct_answer_label'])
+                except KeyError:
+                    question_data['correct_answer'] = result.get('correct_answer', result['question']['correct_answer'])
                 question_data['original_answer'] = result.get('subject_answer')
                     
                 if not result['is_correct']:
@@ -144,8 +147,177 @@ class SecondChanceGame(BaseGameClass):
         self._log(f"Selected {len(self.selected_questions)} questions for the game")
         
         return True
-    
+
     def run_game(self):
+        """
+        Run the Second-Chance Game.
+        Uses parallel execution for resampling if configured.
+        """
+        # Load capabilities data
+        if not self.capabilities_data:
+            if not self.load_capabilities_data():
+                return False
+        
+        # Select questions
+        if not self.selected_questions:
+            if not self.select_questions():
+                return False
+        
+        self._log("\n" + "="*10 + " Starting Second-Chance Game " + "="*10)
+        
+        # This condition diverts the logic to the parallel path
+        if self.resample_for_probs and not self.is_human_player and not self.is_short_answer:
+            #################################################################
+            # PARALLEL PATH: For resampling LLM multiple-choice questions
+            #################################################################
+            
+            # --- Phase 1: Prepare all tasks for parallel execution ---
+            self._log(f"Preparing {len(self.selected_questions)} questions for parallel resampling...")
+            estimation_tasks = []
+            for i, question in enumerate(self.selected_questions):
+                original_answer = question.get('original_answer')
+                correct_answer = question.get('correct_answer')
+
+                if not original_answer or not correct_answer:
+                    self._log(f"Warning: Missing data for question {question.get('id', i)}, skipping preparation.")
+                    continue
+                
+                q_text = self._present_question(question)
+                setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
+                llm_prompt = q_text + "\nRespond only with the letter of your choice; do NOT output any other text.\nYour choice (A, B, C, or D): "
+                message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
+                content = original_answer if self.show_original_answer else "[redacted]"
+                message_history.append({"role": "assistant", "content": content})
+                
+                if self.PROMPT_VARIANT == "_pos":
+                    content = "Your answer was correct! Unfortunately, it was mistakenly deleted. Please respond again with the same answer for our records.\n\n" + llm_prompt
+                elif self.PROMPT_VARIANT == "_neut":
+                    content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt
+                else:
+                    content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt
+
+                if self.PROMPT_VARIANT == "_pos" or self.PROMPT_VARIANT == "_neut":
+                    setup_text = None
+                else:
+                    setup_text = "Your previous answer was incorrect. Respond ONLY with your new answer\n"
+                
+                # Bundle everything needed for the parallel task.
+                task = {
+                    "question_obj": question, # Pass the whole object to retain all data
+                    "prompt": content,
+                    "options": list(question["options"].keys()),
+                    "message_history": message_history,
+                    "setup_text": setup_text,
+                    "epsilon": 0.05,
+                }
+                estimation_tasks.append(task)
+            
+            # --- Phase 2: Execute all prepared tasks in parallel ---
+            parallel_results = self.run_estimations_in_parallel(estimation_tasks, max_workers=20)
+
+            # --- Phase 3: Process the results from the parallel execution ---
+            self._log("Processing results from parallel execution...")
+            for result_item in parallel_results:
+                if result_item.get('error'):
+                    self._log(f"Task failed for prompt: {result_item['task']['prompt'][:60]}... Error: {result_item['error']}")
+                    continue
+
+                # Unpack results and the original question data from the task
+                new_answer, _, probs = result_item['result']
+                question = result_item['task']['question_obj']
+                q_id = question.get('id')
+                original_answer = question.get('original_answer')
+                correct_answer = question.get('correct_answer')
+                
+                # Perform the same result analysis as the sequential loop
+                answer_changed = (new_answer != original_answer) and new_answer in question["options"]
+                is_correct = (new_answer == correct_answer)
+
+                self.game_results[q_id] = {
+                    "question": question, "original_answer": original_answer, "new_answer": new_answer,
+                    "correct_answer": correct_answer, "answer_changed": answer_changed,
+                    "is_correct": is_correct, "probs": probs
+                }
+                self._log(f"Result for {q_id}: New answer: {new_answer}, Changed: {answer_changed}, Correct: {is_correct}")
+
+        else:
+            #################################################################
+            # SEQUENTIAL PATH: For humans, short-answer, or single-sample runs
+            #################################################################
+            # (This original logic block remains unchanged)
+            message_history = []
+            probs = None
+            skipped = 0
+            for i, question in enumerate(self.selected_questions):
+                q_id = question.get('id', f"q_{i}")
+                original_answer = question.get('original_answer')
+                correct_answer = question.get('correct_answer')
+                
+                if not original_answer or not correct_answer:
+                    self._log(f"Warning: Missing data for question {q_id}, skipping")
+                    skipped += 1
+                    continue
+                
+                q_text = self._present_question(question)
+                self._log(f"\nPresenting question {i+1-skipped}/{len(self.selected_questions)-skipped}")
+                self._log(f"Original answer: {original_answer}, Correct answer: {correct_answer}")
+                
+                if self.is_human_player:
+                    original_feedback = f"You previously answered this question and selected option {original_answer}, which was incorrect."
+                    redacted_feedback = f"You previously answered this question and selected [redacted], which was incorrect."
+                    feedback = original_feedback if self.show_original_answer else redacted_feedback
+                    prompt = f"{q_text}\n\n{feedback}\n\nPlease try again. Select the correct answer (A, B, C, or D): "
+                    print(prompt)
+                    new_answer = self._get_subject_answer(list(question["options"].keys()), "Your answer (A, B, C, or D): ")
+                    if new_answer is None: return False
+                else:
+                    if self.is_short_answer:
+                        setup_prompt = "I'm going to ask you a series of short answer questions. For each one, respond as succinctly as possible. Answer as best you can, even if you're not certain."
+                        llm_prompt = q_text + "\nYour answer: "
+                    else:
+                        setup_prompt = "I'm going to ask you a series of multiple choice questions. For each one, select the answer you think is best."
+                        llm_prompt = q_text + "\nRespond only with the letter of your choice; do NOT output any other text.\nYour choice (A, B, C, or D): "
+                    message_history = [{"role": "user", "content": setup_prompt + "\n\n" + llm_prompt}]
+                    content = original_answer if self.show_original_answer else "[redacted]"
+                    message_history.append({"role": "assistant", "content": content})
+                    if self.PROMPT_VARIANT == "_pos":
+                        content = "Your answer was correct! Unfortunately, it was mistakenly deleted. Please respond again with the same answer for our records.\n\n" + llm_prompt
+                    elif self.PROMPT_VARIANT == "_neut":
+                        content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt
+                    else:
+                        content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt
+                    
+                    if self.is_short_answer: setup_text = "Respond ONLY with your answer\n" 
+                    else:
+                        if self.PROMPT_VARIANT == "_pos" or self.PROMPT_VARIANT == "_neut": setup_text = None
+                        else: setup_text = "Your previous answer was incorrect. Respond ONLY with your new answer\n"
+                    
+                    if i - skipped == 0: self._log(f"Setup text: {setup_text}, content: {content}")
+                    
+                    new_answer, _, probs = self._get_llm_answer(
+                        list(question["options"].keys()) if not self.is_short_answer else None,
+                        content, message_history=message_history, keep_appending=False,
+                        setup_text=setup_text, MAX_TOKENS=None if self.is_short_answer else 1,
+                        temp = self.temperature
+                    )
+                
+                answer_changed = (new_answer != original_answer) and new_answer in question["options"]
+                is_correct = (new_answer == correct_answer)
+                
+                self.game_results[q_id] = {
+                    "question": question, "original_answer": original_answer, "new_answer": new_answer,
+                    "correct_answer": correct_answer, "answer_changed": answer_changed,
+                    "is_correct": is_correct, "probs": probs
+                }
+                self._log(f"New answer: {new_answer}, Changed: {answer_changed}, Correct: {is_correct}")
+
+        # --- Post-execution steps are common to both paths ---
+        self._save_results()
+        self.analyze_results()
+        
+        return True
+    
+    def run_game_orig(self):
         """
         Run the Second-Chance Game
         """
@@ -361,15 +533,15 @@ class SecondChanceGame(BaseGameClass):
         # Return for further use
         return analysis
 
-def main(model_dataset_dict):
+def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
     """
     Main function to run the Second-Chance Game
     """
     # Configuration
     IS_HUMAN = False
-    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
+    PROMPT_VARIANT = "_neut" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
-    USE_CORRECT_ANSWERS = False  
+    #USE_CORRECT_ANSWERS = False  
     NUM_QUESTIONS = None  # Use all questions if None
     RESAMPLE = True
     seed = 42
@@ -438,5 +610,6 @@ if __name__ == "__main__":
         "claude-3-sonnet-20240229": ["GPQA", "SimpleMC"],
         "claude-3-haiku-20240307": ["GPQA", "SimpleMC"],
         }
-    model_dataset_dict = {'claude-3-5-sonnet-20241022': ["GPQA"]}
-    main(model_dataset_dict)
+    model_dataset_dict = {'deepseek-chat': ["GPQA", "SimpleMC"]}
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=False)
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=True)

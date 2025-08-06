@@ -4,7 +4,8 @@ import time
 import re
 import math
 import copy
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
+from tqdm import tqdm
 import anthropic
 from openai import OpenAI
 from nnsight import LanguageModel
@@ -22,6 +23,7 @@ CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
 xai_api_key = os.environ.get("XAI_API_KEY")
 deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY")    
+openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
 
 from collections import Counter
 from typing import List, Dict, Tuple
@@ -76,7 +78,7 @@ class BaseGameClass:
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
             elif self.provider == "OpenAI":
-                self.client = OpenAI()
+                self.client = OpenAI(api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1")####OpenAI()
             elif self.provider == "Google":
                 self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1") if 'gemini-1.5' not in self.subject_name else genai.Client(api_key=gemini_api_key)
             elif self.provider == "xAI":
@@ -176,6 +178,7 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -186,7 +189,7 @@ class BaseGameClass:
                         formatted_messages.append(user_msg)
                     #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
-                        model=self.subject_name,
+                        model=model_name,
                         **({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o") else {"max_tokens": MAX_TOKENS}),
                         **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o") else {}),
                         messages=formatted_messages,
@@ -443,6 +446,26 @@ class BaseGameClass:
         formatted_question += "-" * 30
         return formatted_question
 
+    def _present_nested_question(self, question_data, outer_question, outer_options = None):
+        """Formats a nested question for display"""
+        formatted_question = ""
+        formatted_question += "-" * 30 + "\n"
+        
+        formatted_question += outer_question + "\n"
+        formatted_question += "-" * 10 + "\n"        
+            
+        formatted_question += question_data["question"] + "\n"
+        if "options" in question_data:
+            for key, value in question_data["options"].items():
+                formatted_question += f"  {key}: {value}\n"
+        formatted_question += "-" * 10 + "\n"        
+
+        if outer_options:
+            for key, value in outer_options.items():
+                formatted_question += f"  {key}: {value}\n"
+        
+        formatted_question += "-" * 30
+        return formatted_question
 
     ################################################################################
     # Sequential‑sampling estimator
@@ -490,3 +513,52 @@ class BaseGameClass:
         probs = dict(sorted(probs.items(), key=lambda item: item[1], reverse=True))
         return list(probs.keys())[0], message_history, probs
     
+    def run_estimations_in_parallel(
+        self,
+        estimation_tasks: List[Dict],
+        max_workers: int = 20
+    ) -> List[Dict]:
+        """
+        Runs multiple probability estimations in parallel.
+        """
+        results = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_task = {}
+            for task_data in estimation_tasks:
+                # 1. Copy the full task dictionary to preserve it.
+                args_for_function = task_data.copy()
+                
+                # 2. Remove any keys that are NOT arguments for estimate_probs_sequential.
+                #    We pop them from the copy, so they won't be passed to the function.
+                #    The original `task_data` dictionary remains untouched and is stored below.
+                args_for_function.pop('question_obj', None) 
+                
+                if 'message_history' in args_for_function:
+                    args_for_function['message_history'] = copy.deepcopy(
+                        args_for_function.get('message_history', [])
+                    )
+
+                future = executor.submit(self.estimate_probs_sequential, **args_for_function)
+                # Store the original, complete task dictionary to retrieve 'question_obj' later.
+                future_to_task[future] = task_data 
+
+            self._log(f"Submitted {len(estimation_tasks)} tasks to {max_workers} workers.")
+            
+            for future in tqdm(as_completed(future_to_task), total=len(estimation_tasks), desc="Estimating Probabilities"):
+                original_task = future_to_task[future]
+                try:
+                    result_data = future.result()
+                    results.append({
+                        'task': original_task, # Contains the full original task data, including 'question_obj'
+                        'result': result_data
+                    })
+                except Exception as exc:
+                    # The traceback you saw was generated from this line
+                    self._log(f"Task for prompt '{original_task.get('prompt', 'N/A')[:50]}...' generated an exception: {exc}")
+                    results.append({
+                        'task': original_task,
+                        'result': None,
+                        'error': exc
+                    })
+        return results

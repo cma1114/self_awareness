@@ -467,7 +467,7 @@ if __name__ == "__main__":
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.5: {e_full}")
 
-                    if 'deepseek-chat' not in model_name_part.lower() and 'base_probs' in df_model.columns and df_model['base_probs'].notna().any():
+                    if 'base_probs' in df_model.columns and df_model['base_probs'].notna().any():
 
                         df_model_tmp = df_model.copy()
                         df_model = df_model.dropna(subset=["base_probs"])

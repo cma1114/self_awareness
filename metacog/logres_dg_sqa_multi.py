@@ -9,6 +9,7 @@ from load_and_format_datasets import load_and_format_dataset
 import re
 from collections import defaultdict
 from logres_helpers import *
+from pathlib import Path
 
 FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
@@ -73,6 +74,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       a_i_map_for_this_model,
                                       p_i_map_for_this_model=None,
                                       entropy_map_for_this_model=None,
+                                      o_map_for_this_model=None,
+                                      sp_map_for_this_model=None,
                                       game_file_suffix=""):
     all_regression_data_for_model = []
     file_level_features_cache = []
@@ -212,6 +215,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     'judge_delegate': file_data.get("judgment_data", {}).get(q_id, np.nan),
                     'teammate_judge_delegate': file_data.get("teammate_judgment_data", {}).get(q_id, np.nan),
                     'p_i_capability': p_i_capability,
+                    'o_prob': o_map_for_this_model.get(q_id) if o_map_for_this_model else None,
+                    'sp_prob': sp_map_for_this_model.get(q_id) if sp_map_for_this_model else None,
                     'capabilities_entropy': capabilities_entropy,
                     "experiment_id": file_ctr,
                 }
@@ -428,11 +433,31 @@ if __name__ == "__main__":
                             entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9])
                             entropy_map_for_this_model[q_id] = entropy
 
-
             except Exception as e:
                 print(f"{'  '*(len(group_names_tuple)+1)}Error loading Capabilities file {capabilities_file_path}: {e}. Skipping this group.")
                 continue
-            
+
+            o_map_for_this_model = {}
+            from pathlib import Path
+            capabilities_3p_file_path = next(Path("capabilities_3p_test_logs/").glob(f"{model_name_part}_{dataset}*.json"), None)
+            try:
+                with open(capabilities_3p_file_path, 'r', encoding='utf-8') as f_cap:
+                    cap_data = json.load(f_cap)
+                for q_id, res_info in cap_data.get("results", {}).items():
+                    o_map_for_this_model[q_id] = res_info.get("is_correct")
+            except Exception as e:
+                print(f"{'  '*(len(group_names_tuple)+1)}Error loading 3P Capabilities file {capabilities_3p_file_path}: {e}.")
+
+            sp_map_for_this_model = {}
+            capabilities_1p_file_path = next(Path("capabilities_1p_test_logs/").glob(f"{model_name_part}_{dataset}*.json"), None)
+            try:
+                with open(capabilities_1p_file_path, 'r', encoding='utf-8') as f_cap:
+                    cap_data = json.load(f_cap)
+                for q_id, res_info in cap_data.get("results", {}).items():
+                    sp_map_for_this_model[q_id] = res_info.get("is_correct")
+            except Exception as e:
+                print(f"{'  '*(len(group_names_tuple)+1)}Error loading 1P Capabilities file {capabilities_1p_file_path}: {e}.")
+
             if not s_i_map_for_this_model:
                 print(f"{'  '*(len(group_names_tuple)+1)}No S_i data loaded from {capabilities_file_path}. Skipping this group.")
                 continue
@@ -447,6 +472,8 @@ if __name__ == "__main__":
                                                          a_i_map_for_this_model,
                                                          p_i_map_for_this_model,
                                                          entropy_map_for_this_model,
+                                                         o_map_for_this_model,
+                                                         sp_map_for_this_model,
                                                          game_file_suffix=game_file_suffix)
 
             if df_model is None or df_model.empty:
@@ -510,7 +537,7 @@ if __name__ == "__main__":
 
                     entropy_rows.append(row)
 
-                    if output_entropy and 'deepseek-chat' not in model_name_part.lower() and ("Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered" in log_context_str or "NoMsgHist, NoQCtr, NoPCtr, NoSCtr" in log_context_str):
+                    if output_entropy and ("Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered" in log_context_str or "NoMsgHist, NoQCtr, NoPCtr, NoSCtr" in log_context_str):
                         pd.DataFrame([row]).to_csv(entropy_ofile, mode='a', index=False, header=not os.path.exists(entropy_ofile))
                
                 cap_entropy_mean = df_model.groupby('s_i_capability')['capabilities_entropy'].mean()
@@ -672,6 +699,21 @@ if __name__ == "__main__":
                 except Exception as e_full:
                     log_output(f"                    Could not fit Model 1: {e_full}")
 
+                if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                    log_output("\n  Model 1.3: Delegate_Choice ~ Other's Prob")
+                    try:
+                        logit_m2 = smf.logit('delegate_choice ~ o_prob', data=df_model.dropna(subset=['o_prob', 'delegate_choice'])).fit(disp=0)
+                        log_output(logit_m2.summary())
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model 1.3: {e_full}")
+
+                if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                    log_output("\n  Model 1.31: Delegate_Choice ~ Self Prob")
+                    try:
+                        logit_m2 = smf.logit('delegate_choice ~ sp_prob', data=df_model.dropna(subset=['sp_prob', 'delegate_choice'])).fit(disp=0)
+                        log_output(logit_m2.summary())
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model 1.31: {e_full}")
 
                 if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
                     log_output("\n  Model 1.4: Delegate_Choice ~ capabilities_prob")
@@ -776,7 +818,14 @@ if __name__ == "__main__":
                         if grouped_counts.get('Misc', 0) < min_obs_per_category and 'Misc' in grouped_counts : # Check 'Misc' exists before trying to replace
                             df_model[new_col_name] = df_model[new_col_name].replace({'Misc': 'Other'})
                         log_output(f"                  Grouped rare {col} into 'Misc'/'Other': {rare_items if rare_items else 'None'}")
-                    
+
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                        log_output("\n                  Correlation between Other's Prob and Self Prob:")
+                        log_output(df_model['o_prob'].corr(df_model['sp_prob']))
+                        log_output("\n                  Correlation between Cap_p1 and Self Prob:")
+                        log_output(df_model['p_i_capability'].corr(df_model['sp_prob']))
+                        df_model['sp_binary'] = (df_model['sp_prob'] >= 0.5).astype(int)
+
                     topic_column_for_formula = 'topic_grouped' if 'topic_grouped' in df_model else 'topic'
                     ans_type_column_for_formula = 'answer_type_grouped' if 'answer_type_grouped' in df_model else 'answer_type'
 
@@ -877,6 +926,63 @@ if __name__ == "__main__":
                             log_output(logit_m2.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.6: {e_full}")
+
+                        if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                            final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
+                            final_model_terms_m45.append('capabilities_entropy')
+                            model_def_str_4_5 = 'sp_binary ~ ' + ' + '.join(final_model_terms_m45)
+                            log_output(f"\n                  Model 4.6b: {model_def_str_4_5}")
+                            try:
+                                logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['capabilities_entropy', 'sp_binary'])).fit(disp=0)
+                                log_output(logit_m2.summary())
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit Model 4.6b: {e_full}")
+
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                        # Model 4.61: o_prob in full model
+                        final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
+                        final_model_terms_m45.append('o_prob')
+                        model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                        log_output(f"\n                  Model 4.61: {model_def_str_4_5}")
+                        try:
+                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['o_prob', 'delegate_choice'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 4.61: {e_full}")
+
+                        # Model 4.62: o_prob in full model w/o s_i_capability
+                        final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
+                        final_model_terms_m45.append('o_prob')
+                        model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                        log_output(f"\n                  Model 4.62: {model_def_str_4_5}")
+                        try:
+                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['o_prob', 'delegate_choice'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 4.62: {e_full}")
+
+                        final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
+                        final_model_terms_m45.append('sp_prob')
+                        model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                        log_output(f"\n                  Model 4.62b: {model_def_str_4_5}")
+                        try:
+                            logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['sp_prob', 'delegate_choice'])).fit(disp=0)
+                            log_output(logit_m2.summary())
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Model 4.62b: {e_full}")
+
+                        if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
+                            # Model 4.63: o_prob in full model with capabilities_entropy
+                            final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
+                            final_model_terms_m45.append('o_prob')
+                            final_model_terms_m45.append('capabilities_entropy')
+                            model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                            log_output(f"\n                  Model 4.63: {model_def_str_4_5}")
+                            try:
+                                logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['capabilities_entropy', 'o_prob', 'delegate_choice'])).fit(disp=0)
+                                log_output(logit_m2.summary())
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit Model 4.63: {e_full}")
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: normalized_prob_entropy in full model
