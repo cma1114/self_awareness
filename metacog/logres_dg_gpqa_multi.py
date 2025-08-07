@@ -352,7 +352,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPSA"# 
+    dataset = "GPSA"# "GPQA"#
     game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -446,13 +446,15 @@ if __name__ == "__main__":
                     if subject_answer is not None and isinstance(probs_dict, dict):
                         prob_for_subject_answer = probs_dict.get(subject_answer)
                         if isinstance(prob_for_subject_answer, (int, float)):
-                            p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)
-                    
+                            if len(probs_dict.keys()) > 1:
+                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)
+                            else:
+                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)**(len(subject_answer)//2) #approx token count
                     # Calculate and populate entropy_map_for_this_model
                     if isinstance(probs_dict, dict) and probs_dict:
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
                         if prob_values:
-                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9])
+                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else p_i_map_for_this_model[q_id]
                             entropy_map_for_this_model[q_id] = entropy
 
 

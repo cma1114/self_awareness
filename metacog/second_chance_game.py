@@ -87,9 +87,9 @@ class SecondChanceGame(BaseGameClass):
                 question_data = result['question'] if isinstance(result['question'], dict) else result
                 question_data['id'] = q_id
                 try:
-                    question_data['correct_answer'] = result.get('correct_answer_label', result['question']['correct_answer_label'])
+                    question_data['correct_answer'] = result.get('correct_answer_label', question_data.get('correct_answer_label'))
                 except KeyError:
-                    question_data['correct_answer'] = result.get('correct_answer', result['question']['correct_answer'])
+                    question_data['correct_answer'] = result.get('correct_answer', question_data.get('correct_answer'))
                 question_data['original_answer'] = result.get('subject_answer')
                     
                 if not result['is_correct']:

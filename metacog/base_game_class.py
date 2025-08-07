@@ -209,7 +209,7 @@ class BaseGameClass:
                                 top_logprob_value = token_logprob.top_logprobs[0].logprob
                             top_prob = top_logprob_value
                             top_probs.append(top_prob)
-                        token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
+                        token_probs = {resp: math.exp(sum(top_probs))}# / len(top_probs))}
                     else:
                         entry = completion.choices[0].logprobs.content[0]
                         if len(entry.top_logprobs) < len(options) and callctr < MAX_CALL_ATTEMPTS - 1:  
@@ -368,7 +368,7 @@ class BaseGameClass:
                     if len(options) == 1:                   # short answer – average over all tokens
                         # chosen_candidates = one entry per generated token
                         top_probs = [c.log_probability for c in logres.chosen_candidates]
-                        token_probs = {resp: math.exp(sum(top_probs) / len(top_probs))}
+                        token_probs = {resp: math.exp(sum(top_probs))} # / len(top_probs))}
 
                     else:                                   # multiple-choice – inspect 1st token only
                         # top_candidates[0].candidates = k alternatives for the 1st token

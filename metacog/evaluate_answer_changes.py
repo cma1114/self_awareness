@@ -347,9 +347,9 @@ Choose the single best option (A or B).
         return output_file
 
 def main():
-    test_data_file = "./secondchance_game_logs/claude-sonnet-4-20250514_GPQA_redacted_cor_temp0.0_1750937990_game_data.json"
+    test_data_file = "./secondchance_game_logs/gpt-4.1-2025-04-14_SimpleQA_neut_redacted_cor_temp0.0_1754526911_game_data.json"
     
-    judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
 
     print(f"Evaluating answer changes in {test_data_file} using models: {judge_models}")
     
