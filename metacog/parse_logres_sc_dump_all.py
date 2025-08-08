@@ -474,9 +474,9 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
 
 if __name__ == "__main__":
     
-    dataset = "SimpleQA"#"GPQA"#"SimpleMC"# 
+    dataset = "SimpleQA"#"GPSA" #"GPQA"#"SimpleMC"# 
     suffix = ""
-    sc_version = "_neut"  # "_new" or "" or "_neut"
+    sc_version = "_new"  # "_new" or "" or "_neut"
 
     input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}{sc_version}_all.txt"
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"

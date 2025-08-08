@@ -153,8 +153,11 @@ def prepare_regression_data_for_model(game_file_paths_list,
             entropy_trial = None
 
             if isinstance(prob_dict_trial, dict):
+                new_answer = trial.get("new_answer")
+#                if len(prob_dict_trial.keys()) == 1: prob_dict_trial = {new_answer: float(prob_dict_trial.get(new_answer))**(len(new_answer)//2)} #approx token count
+
                 prob_values = [float(v) for k, v in prob_dict_trial.items()]
-                entropy_trial = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9])        
+                entropy_trial = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(prob_dict_trial) > 1 else (1-prob_dict_trial.get(new_answer))
 
             gpqa_features = gpqa_feature_lookup.get(q_id)
             s_i_capability = capabilities_s_i_map_for_model.get(q_id)
@@ -298,7 +301,7 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "GPQA" #"GPSA"#
+    dataset = "GPSA"#"GPQA" #
     game_type = "sc"
     sc_version = "_new"  # "_new" or "" or "_neut"
     suffix = "_all"  # "_all" or ""
@@ -388,15 +391,18 @@ if __name__ == "__main__":
                     if subject_answer is not None and isinstance(probs_dict, dict):
                         prob_for_subject_answer = probs_dict.get(subject_answer)
                         if isinstance(prob_for_subject_answer, (int, float)):
+                            p_i_map_for_this_model[q_id] = probs_dict#list(probs_dict.values())# float(prob_for_subject_answer)
+                            """
                             if len(probs_dict.keys()) > 1:
                                 p_i_map_for_this_model[q_id] = probs_dict#list(probs_dict.values())# float(prob_for_subject_answer)
                             else:
                                 p_i_map_for_this_model[q_id] = {subject_answer: float(prob_for_subject_answer)**(len(subject_answer)//2)} #approx token count
+                            """
                     # Calculate and populate entropy_map_for_this_model
                     if isinstance(probs_dict, dict) and probs_dict:
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
                         if prob_values:
-                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else p_i_map_for_this_model[q_id][subject_answer]
+                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else (1-p_i_map_for_this_model[q_id][subject_answer])
                             entropy_map_for_this_model[q_id] = entropy
 
 
@@ -756,23 +762,6 @@ if __name__ == "__main__":
                                 summary_data['Idea 4.5: p-val'] = w_p
                             else:
                                 log_output("                  Not enough data for Idea 4.5 analysis.")
-                            log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
-                            df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
-                            if not df_idea5.empty and len(df_idea5) > 1:
-                                t_stat, t_p = ttest_rel(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
-                                w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
-                                log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
-                                
-                                delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
-                                mean_delta_entropy = delta_entropy.mean()
-                                se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
-                                ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
-                                ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
-                                log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
-                                log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
-                                summary_data['Idea 5: p-val'] = w_p
-                            else:
-                                log_output("                  Not enough data for Idea 5 analysis.")
 
                             log_output("\n  Model 1.51: Answer Changed ~ p1_z + I(p1_z**2)")
                             try:
@@ -791,69 +780,6 @@ if __name__ == "__main__":
                                 summary_data['M1.51: p-val'] = logit_int.pvalues['I(p1_z ** 2)']
                             except Exception as e_full:
                                 log_output(f"                    Could not fit Model 1.51: {e_full}")
-                            """
-                            df_model['p1_bin'] = pd.qcut(df_model['p1'], q=10, duplicates='drop')
-                            g = (df_model.groupby('p1_bin')['answer_changed']
-                                .agg(['mean', 'count'])
-                                .rename(columns={'mean':'flip'}))
-                            # Wilson CI
-                            from statsmodels.stats.proportion import proportion_confint
-                            lo, hi = proportion_confint((g['flip']*g['count']).round().astype(int),
-                                                        g['count'], method='wilson')
-                            plt.figure(figsize=(6,4))
-                            plt.errorbar(g.index.map(lambda b:b.mid), g['flip'],
-                                        yerr=[g['flip']-lo, hi-g['flip']], fmt='o-')
-                            plt.xlabel('p₁ (binned)'); plt.ylabel('flip rate')
-                            plt.tight_layout()
-                            plt.savefig(f"cap_entropy_binned_{dataset}_{log_context_str}.png", dpi=300)  
-
-                            sns.regplot(
-                                data=df_model.dropna(subset=['capabilities_entropy', 'answer_changed']),
-                                x="capabilities_entropy",
-                                y="answer_changed",
-                                logistic=True,
-                                ci=None,
-                                scatter_kws={"s": 25, "alpha": .4},
-                            )
-                            #plt.ylabel("P(answer_changed = 1)")
-                            #plt.tight_layout()
-                            ###plt.savefig(f"cap_entropy_vs_answer_changed_{log_context_str}.png", dpi=300)  
-                            #plt.close()
-
-                            sns.kdeplot(data=df_model, x="capabilities_entropy", hue="answer_changed",
-                                        common_norm=False, bw_adjust=.75, fill=True, alpha=.4)
-                            #plt.xlabel("capabilities_entropy")
-                            #plt.ylabel("Density")
-                            #plt.tight_layout()
-                            #plt.savefig(f"cap_entropy_density_split_{log_context_str}.png", dpi=300)
-                            #plt.close()
-
-                            # 10 equal-count bins; adjust q if you want finer / coarser slices
-                            df_model["entropy_bin"] = pd.qcut(df_model["capabilities_entropy"], q=10, duplicates="drop")
-                            g = (
-                                df_model.groupby("entropy_bin")["answer_changed"]
-                                .agg(["mean", "count"])
-                                .rename(columns={"mean": "rate"})
-                            )
-                            # 95 % Wilson CIs for a proportion
-                            low, hi = proportion_confint(
-                                count=(g["rate"] * g["count"]).round().astype(int),
-                                nobs=g["count"],
-                                method="wilson"
-                            )
-                            g["lo"], g["hi"] = low, hi
-                            #plt.errorbar(
-                            #    x=g.index.map(lambda i: i.mid),   # bin centres
-                            #    y=g["rate"],
-                            #    yerr=[g["rate"] - g["lo"], g["hi"] - g["rate"]],
-                            #    fmt="o-",
-                            #)
-                            #plt.xlabel("capabilities_entropy (binned)")
-                            #plt.ylabel("Empirical P(answer_changed = 1)")
-                            #plt.tight_layout()
-                            ###plt.savefig(f"cap_entropy_bins_vs_change_{log_context_str}.png", dpi=300)
-                            #plt.close()
-                            """
                         df_model = df_model_tmp.copy()  # Restore original df_model
 
                 if 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
@@ -867,6 +793,23 @@ if __name__ == "__main__":
 
 
                 if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'game_entropy' in df_model.columns and df_model['game_entropy'].notna().any():
+                    log_output("\n  Idea 5: Game entropy is different than capabilities entropy")
+                    df_idea5 = df_model[['game_entropy', 'capabilities_entropy']].dropna()
+                    if not df_idea5.empty and len(df_idea5) > 1:
+                        t_stat, t_p = ttest_rel(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                        w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
+                        log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
+                        
+                        delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
+                        mean_delta_entropy = delta_entropy.mean()
+                        se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
+                        ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
+                        ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
+                        log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
+                        log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
+                        summary_data['Idea 5: p-val'] = w_p
+                    else:
+                        log_output("                  Not enough data for Idea 5 analysis.")
                     # Model 1.7: both entropy measures
                     log_output("\n  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy")
                     try:

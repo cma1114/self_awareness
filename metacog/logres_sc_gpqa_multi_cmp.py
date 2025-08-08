@@ -96,11 +96,8 @@ def identify_and_handle_deterministic_categories(df_input, outcome_var, categori
 
 def extract_file_key(filename):
     """Extract the key components from filename for matching game and neutral files."""
-    # Remove the file extension and any suffix like "_game_data.json"
-    base = filename.replace("_game_data.json", "").replace(".json", "")
-    
     # Split on underscores
-    parts = base.split("_")
+    parts =filename.split("_")
     
     # Find where "temp" appears - everything before it is our key
     temp_idx = None
@@ -117,12 +114,13 @@ def extract_file_key(filename):
     key_parts = parts[:temp_idx]
     return "_".join(key_parts)
 
-def build_neutral_file_lookup(neutral_logs_dir):
+def build_neutral_file_lookup(neutral_logs_dir, dataset_name):
     """Build a lookup dictionary for neutral files based on their key components."""
     lookup = {}
+    suffix = "_game_data.json" if dataset_name == "SimpleMC" else "_game_data_evaluated.json"
     
     for filename in os.listdir(neutral_logs_dir):
-        if filename.endswith("_game_data.json"):
+        if filename.endswith(suffix):
             file_key = extract_file_key(filename)
             if file_key:
                 if file_key in lookup:
@@ -130,7 +128,7 @@ def build_neutral_file_lookup(neutral_logs_dir):
                     print(f"  - {lookup[file_key]}")
                     print(f"  - {filename}")
                     exit(1)
-                lookup[file_key] = filename
+                lookup[file_key.replace("_neut","")] = filename
     
     return lookup
 
@@ -159,7 +157,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                                       capabilities_s_i_map_for_model,
                                       p_i_map_for_this_model=None,
                                       entropy_map_for_this_model=None,
-                                      neutral_logs_dir="./sc_logs_neutral/"):
+                                      neutral_logs_dir="./sc_logs_neutral/",
+                                      dataset_name="GPQA"):
     all_regression_data_for_model = []
     file_level_features_cache = []
 
@@ -174,7 +173,7 @@ def prepare_regression_data_for_model(game_file_paths_list,
     
     # Build neutral file lookup
     print(f"\nBuilding neutral file lookup from {neutral_logs_dir}...")
-    neutral_lookup = build_neutral_file_lookup(neutral_logs_dir)
+    neutral_lookup = build_neutral_file_lookup(neutral_logs_dir, dataset_name)
     print(f"Found {len(neutral_lookup)} neutral files in directory.")
     
     # First pass: check which files can be matched
@@ -528,10 +527,10 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "GPQA" #"GPSA"#
+    dataset = "GPSA"#"GPQA" #
     game_type = "sc"
     sc_version = "_new"  # "_new" or ""
-    suffix = ""  # "_all" or ""
+    suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}_vs_neutral.txt"
@@ -644,7 +643,8 @@ if __name__ == "__main__":
                 s_i_map_for_this_model,
                 p_i_map_for_this_model,
                 entropy_map_for_this_model,
-                neutral_logs_dir=neutral_logs_dir
+                neutral_logs_dir=neutral_logs_dir,
+                dataset_name=dataset
             )
             
             # Handle the case where no data was returned

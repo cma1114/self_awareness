@@ -507,22 +507,36 @@ Subject response: {subject_answer}
 
 def main():
     #test_data_file = "./capabilities_test_logs/gpt-4.1-2025-04-14_SimpleQA_500_1751159442_test_data.json"
-    test_data_file = "./delegate_game_logs/gpt-4.1-2025-04-14_SimpleQA_50_500_team0.6_temp0.0_1751166555_game_data.json"
+    #test_data_file = "./delegate_game_logs/gpt-4.1-2025-04-14_SimpleQA_50_500_team0.6_temp0.0_1751166555_game_data.json"
     #test_data_file = "pass_game_logs/claude-sonnet-4-20250514_SimpleQA_noqcnt_nopcnt_noscnt_temp0.0_1751003273_game_data.json"
-    
-    judge_models = ["deepseek-chat", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    file_list = ["capabilities_test_logs/gemini-2.0-flash-001_GPSA_447_1754673988_test_data.json",
+"capabilities_test_logs/gemini-2.0-flash-001_SimpleQA_500_1754673747_test_data.json",
+"capabilities_test_logs/gpt-4.1-2025-04-14_GPSA_447_1754667523_test_data.json",
+"capabilities_test_logs/gpt-4.1-2025-04-14_SimpleQA_500_1754673181_test_data.json",
+"capabilities_test_logs/gpt-4o-2024-08-06_GPSA_447_1754665510_test_data.json",
+"capabilities_test_logs/gpt-4o-2024-08-06_SimpleQA_500_1754664876_test_data.json",
+"capabilities_test_logs/grok-3-latest_GPSA_447_1754674324_test_data.json",
+"capabilities_test_logs/grok-3-latest_SimpleQA_500_1754675963_test_data.json"]
+    for test_data_file in file_list:
+        if 'claude' in test_data_file:
+            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+        elif 'gemini' in test_data_file:
+            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]
+        elif 'gpt' in test_data_file:
+            judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gemini-2.0-flash-001"]
+        else:
+            judge_models = ["gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-001"]
 
+        print(f"Evaluating {test_data_file} using models: {judge_models}")
+        
+        evaluator = ShortAnswerEvaluator(judge_models)
 
-    print(f"Evaluating {test_data_file} using models: {judge_models}")
-    
-    evaluator = ShortAnswerEvaluator(judge_models)
-
-    if "_game_logs" in test_data_file:
-        print(f"Detected delegate game log file: {test_data_file}")
-        evaluator.evaluate_delegate_game_file(test_data_file)
-    else:
-        print(f"Detected standard test results file: {test_data_file}")
-        evaluator.evaluate_test_results(test_data_file)
+        if "_game_logs" in test_data_file:
+            print(f"Detected delegate game log file: {test_data_file}")
+            evaluator.evaluate_delegate_game_file(test_data_file)
+        else:
+            print(f"Detected standard test results file: {test_data_file}")
+            evaluator.evaluate_test_results(test_data_file)
 
 if __name__ == "__main__":
     main()

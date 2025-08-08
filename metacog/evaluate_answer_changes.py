@@ -347,14 +347,36 @@ Choose the single best option (A or B).
         return output_file
 
 def main():
-    test_data_file = "./secondchance_game_logs/gpt-4.1-2025-04-14_SimpleQA_neut_redacted_cor_temp0.0_1754526911_game_data.json"
-    
-    judge_models = ["gemini-2.0-flash-001", "deepseek-chat", "claude-3-5-sonnet-20241022"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+    file_list = ["secondchance_game_logs/claude-3-5-sonnet-20241022_GPSA_neut_redacted_cor_temp0.0_1754612584_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_GPSA_neut_redacted_temp0.0_1754611557_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_GPSA_redacted_cor_temp0.0_1754612347_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_GPSA_redacted_temp0.0_1754611585_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleQA_neut_redacted_cor_temp0.0_1754621595_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleQA_neut_redacted_temp0.0_1754613154_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleQA_redacted_cor_temp0.0_1754619595_game_data.json",
+    "secondchance_game_logs/claude-3-5-sonnet-20241022_SimpleQA_redacted_temp0.0_1754612549_game_data.json",
+    "secondchance_game_logs/claude-3-haiku-20240307_SimpleQA_neut_redacted_cor_temp0.0_1754621824_game_data.json",
+    "secondchance_game_logs/claude-3-haiku-20240307_SimpleQA_neut_redacted_temp0.0_1754613867_game_data.json",
+    "secondchance_game_logs/claude-3-haiku-20240307_SimpleQA_redacted_cor_temp0.0_1754619854_game_data.json",
+    "secondchance_game_logs/claude-3-haiku-20240307_SimpleQA_redacted_temp0.0_1754613331_game_data.json",
+    "secondchance_game_logs/deepseek-chat_GPSA_neut_redacted_temp0.0_1754616514_game_data.json",
+    "secondchance_game_logs/deepseek-chat_GPSA_neut_redacted_cor_temp0.0_1754622404_game_data.json",
+    "secondchance_game_logs/deepseek-chat_GPSA_redacted_cor_temp0.0_1754620397_game_data.json",
+    "secondchance_game_logs/deepseek-chat_GPSA_redacted_temp0.0_1754615785_game_data.json"]
 
-    print(f"Evaluating answer changes in {test_data_file} using models: {judge_models}")
-    
-    evaluator = AnswerChangeEvaluator(judge_models)
-    evaluator.evaluate_answer_changes_in_file(test_data_file)
+#    test_data_file = "./secondchance_game_logs/claude-3-haiku-20240307_GPSA_neut_redacted_cor_temp0.0_1754609361_game_data.json"
+    for test_data_file in file_list:
+        if 'claude' in test_data_file:
+            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
+        elif 'gemini' in test_data_file:
+            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]
+        else:
+            judge_models = ["gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-001"]
+
+        print(f"Evaluating answer changes in {test_data_file} using models: {judge_models}")
+        
+        evaluator = AnswerChangeEvaluator(judge_models)
+        evaluator.evaluate_answer_changes_in_file(test_data_file)
 
 if __name__ == "__main__":
     main()

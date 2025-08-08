@@ -90,6 +90,7 @@ class SecondChanceGame(BaseGameClass):
                     question_data['correct_answer'] = result.get('correct_answer_label', question_data.get('correct_answer_label'))
                 except KeyError:
                     question_data['correct_answer'] = result.get('correct_answer', question_data.get('correct_answer'))
+
                 question_data['original_answer'] = result.get('subject_answer')
                     
                 if not result['is_correct']:
@@ -260,7 +261,7 @@ class SecondChanceGame(BaseGameClass):
                 
                 q_text = self._present_question(question)
                 self._log(f"\nPresenting question {i+1-skipped}/{len(self.selected_questions)-skipped}")
-                self._log(f"Original answer: {original_answer}, Correct answer: {correct_answer}")
+                #self._log(f"Original answer: {original_answer}, Correct answer: {correct_answer}")
                 
                 if self.is_human_player:
                     original_feedback = f"You previously answered this question and selected option {original_answer}, which was incorrect."
@@ -282,16 +283,16 @@ class SecondChanceGame(BaseGameClass):
                     message_history.append({"role": "assistant", "content": content})
                     if self.PROMPT_VARIANT == "_pos":
                         content = "Your answer was correct! Unfortunately, it was mistakenly deleted. Please respond again with the same answer for our records.\n\n" + llm_prompt
+                        setup_text = None#"Respond again with the same answer\n" 
                     elif self.PROMPT_VARIANT == "_neut":
-                        content = "Your response was lost in transmission. Choose again.\n\n" + llm_prompt
+                        verb = "Answer" if self.is_short_answer else "Choose"
+                        content = f"Your response was lost in transmission. {verb} again.\n\n" + llm_prompt
+                        setup_text = None
                     else:
-                        content = "Your answer was incorrect. Choose a different answer.\n\n" + llm_prompt
-                    
-                    if self.is_short_answer: setup_text = "Respond ONLY with your answer\n" 
-                    else:
-                        if self.PROMPT_VARIANT == "_pos" or self.PROMPT_VARIANT == "_neut": setup_text = None
-                        else: setup_text = "Your previous answer was incorrect. Respond ONLY with your new answer\n"
-                    
+                        verb = "Give" if self.is_short_answer else "Choose"
+                        content = f"Your answer was incorrect. {verb} a different answer.\n\n" + llm_prompt
+                        setup_text = "Your previous answer was incorrect. Respond ONLY with your new answer\n"
+
                     if i - skipped == 0: self._log(f"Setup text: {setup_text}, content: {content}")
                     
                     new_answer, _, probs = self._get_llm_answer(
@@ -309,7 +310,7 @@ class SecondChanceGame(BaseGameClass):
                     "correct_answer": correct_answer, "answer_changed": answer_changed,
                     "is_correct": is_correct, "probs": probs
                 }
-                self._log(f"New answer: {new_answer}, Changed: {answer_changed}, Correct: {is_correct}")
+                #self._log(f"New answer: {new_answer}, Changed: {answer_changed}, Correct: {is_correct}")
 
         # --- Post-execution steps are common to both paths ---
         self._save_results()
@@ -539,11 +540,11 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
     """
     # Configuration
     IS_HUMAN = False
-    PROMPT_VARIANT = "_neut" # "_pos" or "_neut" or ""
+    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
     #USE_CORRECT_ANSWERS = False  
     NUM_QUESTIONS = None  # Use all questions if None
-    RESAMPLE = True
+    RESAMPLE = False
     seed = 42
     TEMPERATURE = 0.0
     for SUBJECT_NAME, datasets in model_dataset_dict.items():
@@ -604,12 +605,10 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        "deepseek-chat": ["GPQA", "SimpleMC"],
-        "gemini-1.5-pro": ["GPQA", "SimpleMC"],
-        "gpt-4o-2024-08-06": ["GPQA", "SimpleMC"],
-        "claude-3-sonnet-20240229": ["GPQA", "SimpleMC"],
-        "claude-3-haiku-20240307": ["GPQA", "SimpleMC"],
+        'claude-3-5-sonnet-20241022': ["SimpleQA"],
+        'claude-3-haiku-20240307': ["SimpleQA"],
+        'gemini-1.5-pro': ["SimpleQA","GPSA"],
+        'deepseek-chat': ["SimpleQA","GPSA"]
         }
-    model_dataset_dict = {'deepseek-chat': ["GPQA", "SimpleMC"]}
     main(model_dataset_dict, USE_CORRECT_ANSWERS=False)
     main(model_dataset_dict, USE_CORRECT_ANSWERS=True)

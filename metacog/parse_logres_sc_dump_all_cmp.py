@@ -374,9 +374,9 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_Game_vs_Neut
 
 if __name__ == "__main__":
     
-    dataset = "SimpleMC" #"GPQA"#
+    dataset = "GPSA" #"SimpleQA" #"SimpleMC" #"GPQA"#
     suffix = "_vs_neutral"
-    corstr  = "_incor" # "_cor", "_incor", ""
+    corstr  = "" # "_cor", "_incor", ""
     sc_version = "_new"  # "_new" or "" or "_neut"
 
     corsuffix = "_all" if corstr == "" else ""
