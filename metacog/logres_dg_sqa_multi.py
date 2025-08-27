@@ -240,6 +240,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
                 if create_teammate_skill_ratio_reg and file_data["teammate_accuracy_phase1_file"] is not None:
                     trial_data_dict['teammate_skill_ratio'] = file_data["teammate_accuracy_phase1_file"] / subject_acc_for_ratio_calc
+                if file_data["teammate_accuracy_phase1_file"] is not None:
+                    trial_data_dict['teammate_skill'] = file_data["teammate_accuracy_phase1_file"]
                 
                 if create_summary_reg: trial_data_dict['summary'] = int(file_data["summary_file"])
                 if create_nobio_reg: trial_data_dict['nobio'] = int(file_data["nobio_file"])
@@ -452,6 +454,7 @@ if __name__ == "__main__":
 
             sp_map_for_this_model = {}
             capabilities_1p_file_path = next(Path("capabilities_1p_test_logs/").glob(f"{model_name_part}_{dataset}*.json"), None)
+            print("capabilities_1p_file_path=", capabilities_1p_file_path)
             try:
                 with open(capabilities_1p_file_path, 'r', encoding='utf-8') as f_cap:
                     cap_data = json.load(f_cap)
@@ -487,6 +490,9 @@ if __name__ == "__main__":
                 df_model['teammate_skill_ratio'] = df_model['teammate_skill_ratio'] - mean_skill_ratio
             
             log_context_str = f"{model_name_part} ({', '.join(group_names_tuple)}, {len(current_game_files_for_analysis)} game files)"
+
+            if not ((game_type == "dg" and "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered" in log_context_str) or (game_type == "aop" and "NoMsgHist, NoQCtr, NoPCtr, NoSCtr" in log_context_str)): continue
+
             log_output(f"\n--- Analyzing {log_context_str} ---", print_to_console=True)
             log_output(f"              Game files for analysis: {current_game_files_for_analysis}\n")
             
@@ -716,6 +722,74 @@ if __name__ == "__main__":
                         log_output(logit_m2.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 1.31: {e_full}")
+
+
+                    implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
+                    results = compare_predictors_of_answer(
+                        np.array(df_model['sp_prob']),
+                        np.array(df_model[implicit_prob_str]),
+                        np.array(df_model['delegate_choice'])
+                    )
+                    log_output("\n  Predicting delegate_choice")
+                    log_output(f"Stated AUC: {results['auc_stated']:.3f}")
+                    log_output(f"Implicit AUC: {results['auc_implicit']:.3f}")
+                    log_output(f"Combined AUC: {results['auc_both']:.3f}")
+                    log_output(f"Standardized coef (stated): {results['coef_stated']:.3f}")
+                    log_output(f"Standardized coef (implicit): {results['coef_implicit']:.3f}")
+                    log_output(f"p_implicit_adds_to_stated: {results['p_implicit_adds_to_stated']:.4f}")
+                    log_output(f"p_stated_adds_to_implicit: {results['p_stated_adds_to_implicit']}")
+                    better_standalone = 'stated' if results['auc_stated'] > results['auc_implicit'] else 'implicit'
+                    better_in_combined = 'stated' if abs(results['coef_stated']) > abs(results['coef_implicit']) else 'implicit'
+                    log_output(f"better_standalone: {better_standalone}")
+                    log_output(f"better_in_combined: {better_in_combined}")
+
+                    results = compare_predictors_of_answer(
+                        np.array(df_model['sp_prob']),
+                        np.array(df_model[implicit_prob_str]),
+                        np.array(df_model['s_i_capability'])
+                    )
+                    log_output("\nPredicting baseline correctness (s_i_capability):")
+                    log_output(f"Stated AUC: {results['auc_stated']:.3f}")
+                    log_output(f"Implicit AUC: {results['auc_implicit']:.3f}")
+                    log_output(f"Combined AUC: {results['auc_both']:.3f}")
+                    log_output(f"Standardized coef (stated): {results['coef_stated']:.3f}")
+                    log_output(f"Standardized coef (implicit): {results['coef_implicit']:.3f}")
+                    log_output(f"p_implicit_adds_to_stated: {results['p_implicit_adds_to_stated']:.4f}")
+                    log_output(f"p_stated_adds_to_implicit: {results['p_stated_adds_to_implicit']}")
+                    better_standalone = 'stated' if results['auc_stated'] > results['auc_implicit'] else 'implicit'
+                    better_in_combined = 'stated' if abs(results['coef_stated']) > abs(results['coef_implicit']) else 'implicit'
+                    log_output(f"better_standalone: {better_standalone}")
+                    log_output(f"better_in_combined: {better_in_combined}")
+
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                        results = compare_predictors_of_answer(
+                            np.array(df_model['sp_prob']),
+                            np.array(df_model['o_prob']),
+                            np.array(df_model['delegate_choice'])
+                        )                    
+                        log_output(f"Self AUC: {results['auc_stated']:.3f}")
+                        log_output(f"Other AUC: {results['auc_implicit']:.3f}")
+                        log_output(f"Combined AUC: {results['auc_both']:.3f}")
+                        log_output(f"Standardized coef (self): {results['coef_stated']:.3f}")
+                        log_output(f"Standardized coef (other): {results['coef_implicit']:.3f}")
+                        log_output(f"p_other_adds_to_self: {results['p_implicit_adds_to_stated']:.4f}")
+                        log_output(f"p_self_adds_to_other: {results['p_stated_adds_to_implicit']}")
+                        better_standalone = 'self' if results['auc_stated'] > results['auc_implicit'] else 'other'
+                        better_in_combined = 'self' if abs(results['coef_stated']) > abs(results['coef_implicit']) else 'other'
+                        log_output(f"better_standalone: {better_standalone}")
+                        log_output(f"better_in_combined: {better_in_combined}")
+
+                    if game_type == "aop":
+                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < 0.5).astype(int), df_model['delegate_choice'],df_model[implicit_prob_str])
+                    else:
+                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < df_model['teammate_skill']).astype(int), df_model['delegate_choice'],df_model[implicit_prob_str])
+                    log_output(f"\nActual pass correlation: {results['corr_actual']:.3f} (p={results['p_actual']:.4f})")
+                    log_output(f"Stated pass correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
+                    log_output(f"Actual-Stated Difference: p={results['p_diff']:.4f}")
+                    #now leave as continuous
+                    results = compare_predictors_of_implicit_conf(np.array([1-p for p in df_model['sp_prob']]), df_model['delegate_choice'],df_model[implicit_prob_str])
+                    log_output(f"Stated pass continuous correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
+                    log_output(f"Actual-Continuous Stated Difference: p={results['p_diff']:.4f}")
 
                 if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
                     log_output("\n  Model 1.4: Delegate_Choice ~ capabilities_prob")

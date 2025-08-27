@@ -19,7 +19,7 @@ class SecondChanceGame(BaseGameClass):
     Game class for the Second-Chance experiment.
     """
     def __init__(self, subject_id, subject_name, dataset, capabilities_file_path, 
-                 num_questions=None, show_original_answer=True, use_correct_answers=False, is_human_player=False, PROMPT_VARIANT = "", seed=None, temperature=0.0, resample=False):
+                 num_questions=None, show_original_answer=True, use_correct_answers=False, is_human_player=False, PROMPT_VARIANT = "", seed=None, temperature=0.0, resample=False, resume_from=None):
         """
         Initialize the game with configuration parameters.
         
@@ -45,6 +45,7 @@ class SecondChanceGame(BaseGameClass):
             random.seed(seed)
         self.is_short_answer = True if self.dataset.lower() in ["simpleqa", "gpsa"] else False
         self.resample_for_probs = resample
+        self.resume_from = resume_from
                     
         # Initialize state variables
         self.capabilities_data = None
@@ -53,13 +54,42 @@ class SecondChanceGame(BaseGameClass):
         self.selected_questions = []
         self.game_results = {}
         self.message_history = []
+        self.skipped_question_ids = set()
                 
         # Initialize log file
         setup_log_str = f"Second-Chance Game Log for Subject: {subject_id}\n"
         setup_log_str += f"Configuration: Questions={num_questions}, Show Original Answer={show_original_answer}\n"
+        if resume_from: setup_log_str += f"Resuming from: {resume_from}\n"
         setup_log_str += f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}"
         self._log(setup_log_str)
-        
+
+    def load_previous_results(self):
+        """
+        Load previous results and identify skipped questions
+        """
+        if not self.resume_from:
+            return True
+            
+        try:
+            self._log(f"Loading previous results from: {self.resume_from}")
+            with open(self.resume_from, 'r', encoding='utf-8') as f:
+                previous_data = json.load(f)
+            
+            # Load existing results
+            self.game_results = previous_data.get('results', {})
+            
+            # Identify skipped questions (those with empty new_answer)
+            for q_id, result in self.game_results.items():
+                if result.get('new_answer', '') == '':
+                    self.skipped_question_ids.add(q_id)
+            
+            self._log(f"Found {len(self.skipped_question_ids)} skipped questions to process")
+            return True
+            
+        except Exception as e:
+            self._log(f"Error loading previous results: {e}")
+            return False
+                
     def load_capabilities_data(self):
         """
         Load capabilities data from the provided file path
@@ -86,10 +116,7 @@ class SecondChanceGame(BaseGameClass):
                     continue
                 question_data = result['question'] if isinstance(result['question'], dict) else result
                 question_data['id'] = q_id
-                try:
-                    question_data['correct_answer'] = result.get('correct_answer_label', question_data.get('correct_answer_label'))
-                except KeyError:
-                    question_data['correct_answer'] = result.get('correct_answer', question_data.get('correct_answer'))
+                if 'correct_answer_label' in question_data.keys(): question_data['correct_answer'] = question_data.get('correct_answer_label')
 
                 question_data['original_answer'] = result.get('subject_answer')
                     
@@ -124,28 +151,42 @@ class SecondChanceGame(BaseGameClass):
         """
         Select a subset of questions for the game
         """
-        if self.use_correct_answers:
-            if not self.right_questions:
-                self._log("Error: No right questions available. Load capabilities data first.")
+        if self.resume_from and self.skipped_question_ids:
+            if self.use_correct_answers:
+                available_questions = [q for q in self.right_questions if q.get('id') in self.skipped_question_ids]
+            else:
+                available_questions = [q for q in self.wrong_questions if q.get('id') in self.skipped_question_ids]
+            
+            if not available_questions:
+                self._log("No skipped questions found in the available question pool")
                 return False
             
-            # Determine how many questions to use
-            num_to_use = min(self.num_questions, len(self.right_questions))
+            self.selected_questions = available_questions
+            self._log(f"Selected {len(self.selected_questions)} skipped questions for processing")
             
-            # Randomly select questions
-            self.selected_questions = random.sample(self.right_questions, num_to_use)
         else:
-            if not self.wrong_questions:
-                self._log("Error: No wrong questions available. Load capabilities data first.")
-                return False
-            
-            # Determine how many questions to use
-            num_to_use = min(self.num_questions, len(self.wrong_questions))
-            
-            # Randomly select questions
-            self.selected_questions = random.sample(self.wrong_questions, num_to_use)
+            if self.use_correct_answers:
+                if not self.right_questions:
+                    self._log("Error: No right questions available. Load capabilities data first.")
+                    return False
+                
+                # Determine how many questions to use
+                num_to_use = min(self.num_questions, len(self.right_questions))
+                
+                # Randomly select questions
+                self.selected_questions = random.sample(self.right_questions, num_to_use)
+            else:
+                if not self.wrong_questions:
+                    self._log("Error: No wrong questions available. Load capabilities data first.")
+                    return False
+                
+                # Determine how many questions to use
+                num_to_use = min(self.num_questions, len(self.wrong_questions))
+                
+                # Randomly select questions
+                self.selected_questions = random.sample(self.wrong_questions, num_to_use)
 
-        self._log(f"Selected {len(self.selected_questions)} questions for the game")
+            self._log(f"Selected {len(self.selected_questions)} questions for the game")
         
         return True
 
@@ -154,6 +195,11 @@ class SecondChanceGame(BaseGameClass):
         Run the Second-Chance Game.
         Uses parallel execution for resampling if configured.
         """
+        # Load previous results if resuming
+        if self.resume_from:
+            if not self.load_previous_results():
+                return False
+            
         # Load capabilities data
         if not self.capabilities_data:
             if not self.load_capabilities_data():
@@ -460,11 +506,16 @@ class SecondChanceGame(BaseGameClass):
             "timestamp": time.time(),
             "results": self.game_results,
         }
-            
-        with open(self.game_data_filename, 'w', encoding='utf-8') as f:
+
+        if self.resume_from:
+            output_filename = self.resume_from
+        else:
+            output_filename = self.game_data_filename
+
+        with open(output_filename, 'w', encoding='utf-8') as f:
             json.dump(game_data, f, indent=2, ensure_ascii=False)
             
-        self._log(f"Game data saved to: {self.game_data_filename}")
+        self._log(f"Game data saved to: {output_filename}")
     
     def analyze_results(self):
         """
@@ -539,8 +590,9 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
     Main function to run the Second-Chance Game
     """
     # Configuration
+    resume_from = None#"./secondchance_game_logs/qwen3-235b-a22b-2507_GPQA_redacted_cor_temp0.0_1756235281_game_data.json" #
     IS_HUMAN = False
-    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
+    PROMPT_VARIANT = "_neut" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
     #USE_CORRECT_ANSWERS = False  
     NUM_QUESTIONS = None  # Use all questions if None
@@ -585,7 +637,8 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
                     PROMPT_VARIANT=PROMPT_VARIANT,
                     seed=seed,
                     temperature=TEMPERATURE,
-                    resample=RESAMPLE
+                    resample=RESAMPLE,
+                    resume_from=resume_from
                 )
                 
                 # Run the game
@@ -605,10 +658,7 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        'claude-3-5-sonnet-20241022': ["SimpleQA"],
-        'claude-3-haiku-20240307': ["SimpleQA"],
-        'gemini-1.5-pro': ["SimpleQA","GPSA"],
-        'deepseek-chat': ["SimpleQA","GPSA"]
+        'gemini-2.5-flash-lite': ["GPQA", "SimpleMC"]
         }
     main(model_dataset_dict, USE_CORRECT_ANSWERS=False)
     main(model_dataset_dict, USE_CORRECT_ANSWERS=True)

@@ -4,9 +4,12 @@ import numpy as np
 import re
 
 import math
-from scipy.stats import binomtest
+from scipy.stats import binomtest, rankdata, pointbiserialr, norm, pearsonr, chi2
 from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.proportion import proportion_confint
+
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LogisticRegression
 
 def contingency(delegate: np.ndarray, correct: np.ndarray):
     """
@@ -175,3 +178,92 @@ def extract_log_file_metrics(log_filepath):
     except Exception as e:
         print(f"An error occurred while reading log file {log_filepath}: {e}")
     return extracted_log_metrics
+
+
+def compare_predictors_of_answer(stated_confs, implicit_confs, pass_decisions):
+    """Compare which confidence measure better predicts passing."""
+    mask = ~(np.isnan(stated_confs) | np.isnan(implicit_confs) | np.isnan(pass_decisions))
+    stated_confs = stated_confs[mask]
+    implicit_confs = implicit_confs[mask]
+    pass_decisions = pass_decisions[mask]
+    #stated_ranks = rankdata(stated_confs) / len(stated_confs)
+    #implicit_ranks = rankdata(implicit_confs) / len(implicit_confs)
+    #X_stated = stated_ranks.reshape(-1, 1)
+    #X_implicit = implicit_ranks.reshape(-1, 1)          
+    X_stated = np.log((stated_confs+1e-6)/(1-stated_confs+1e-6)).reshape(-1, 1)
+    eps = 1e-6 
+    p     = np.clip(implicit_confs.astype(float), eps, 1 - eps)
+    X_implicit = np.log(p / (1 - p)).reshape(-1, 1) 
+
+    #X_stated = stated_confs.reshape(-1, 1)
+    #X_implicit = implicit_confs.reshape(-1, 1)
+    X_both = np.column_stack([stated_confs, implicit_confs])
+    y = pass_decisions
+    
+    # Fit three models
+    lr_stated = LogisticRegression().fit(X_stated, y)
+    lr_implicit = LogisticRegression().fit(X_implicit, y)  
+    lr_both = LogisticRegression().fit(X_both, y)
+    
+    # Cross-validated AUC scores
+    auc_stated = cross_val_score(LogisticRegression(), X_stated, y, 
+                                cv=5, scoring='roc_auc').mean()
+    auc_implicit = cross_val_score(LogisticRegression(), X_implicit, y,
+                                    cv=5, scoring='roc_auc').mean()
+    auc_both = cross_val_score(LogisticRegression(), X_both, y,
+                                cv=5, scoring='roc_auc').mean()
+    
+    # Get log-likelihoods (fixing the calculation)
+    from sklearn.metrics import log_loss
+    ll_stated = -log_loss(y, lr_stated.predict_proba(X_stated)[:,1], normalize=False)
+    ll_implicit = -log_loss(y, lr_implicit.predict_proba(X_implicit)[:,1], normalize=False)
+    ll_both = -log_loss(y, lr_both.predict_proba(X_both)[:,1], normalize=False)
+    
+    # Likelihood ratio test: does implicit add to stated?
+    lr_stat_implicit_adds = 2 * (ll_both - ll_stated)
+    p_value_implicit_adds = 1 - chi2.cdf(lr_stat_implicit_adds, df=1)
+    
+    # Likelihood ratio test: does stated add to implicit?
+    lr_stat_stated_adds = 2 * (ll_both - ll_implicit)
+    p_value_stated_adds = 1 - chi2.cdf(lr_stat_stated_adds, df=1)
+    
+    # Get standardized coefficients for interpretation
+    X_both_std = (X_both - X_both.mean(axis=0)) / X_both.std(axis=0)
+    lr_std = LogisticRegression().fit(X_both_std, y)
+    
+    results = {
+        'auc_stated': auc_stated,
+        'auc_implicit': auc_implicit,
+        'auc_both': auc_both,
+        'coef_stated': lr_std.coef_[0][0],
+        'coef_implicit': lr_std.coef_[0][1],
+        'p_implicit_adds_to_stated': p_value_implicit_adds,
+        'p_stated_adds_to_implicit': p_value_stated_adds,
+    }
+    
+    return results
+
+def compare_predictors_of_implicit_conf(stated, behavior, implicit_confs):
+    mask = ~(np.isnan(stated) | np.isnan(implicit_confs) | np.isnan(behavior))
+    stated = stated[mask]
+    implicit_confs = implicit_confs[mask]
+    behavior = behavior[mask]
+    eps = 1e-6 
+    implicit_confs = np.clip(implicit_confs.astype(float), eps, 1 - eps)
+    corr_actual, p_actual = pointbiserialr(behavior, implicit_confs)
+    if stated.dtype == np.dtype('int'):
+        corr_stated, p_stated = pointbiserialr(stated, implicit_confs)
+    else:
+        corr_stated, p_stated = pearsonr(stated, implicit_confs)
+    # Test if correlations are significantly different using Fisher's z-transformation
+    z_actual = np.arctanh(corr_actual)
+    z_stated = np.arctanh(corr_stated)
+    z_diff = (z_actual - z_stated) / np.sqrt(2/(len(implicit_confs)-3))
+    p_diff = 2*(1 - norm.cdf(abs(z_diff)))
+    return {
+        'corr_actual': corr_actual,
+        'p_actual': p_actual,
+        'corr_stated': corr_stated,
+        'p_stated': p_stated,
+        'p_diff': p_diff
+    }

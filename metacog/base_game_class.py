@@ -73,11 +73,11 @@ class BaseGameClass:
             elif "deepseek" in self.subject_name:
                 self.provider = "DeepSeek"
             else:
-                self.provider = "Hyperbolic"
+                self.provider = "OpenRouter"#"Hyperbolic"
 
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-            elif self.provider == "OpenAI":
+            elif self.provider == "OpenAI" or self.provider == "OpenRouter":
                 self.client = OpenAI(api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1")####OpenAI()
             elif self.provider == "Google":
                 self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1") if 'gemini-1.5' not in self.subject_name else genai.Client(api_key=gemini_api_key)
@@ -146,7 +146,7 @@ class BaseGameClass:
             options = " " #just to have len(options) be 1 for number of logprobs to return in short answer case
         
         MAX_ATTEMPTS = 10 #for bad resp format
-        MAX_CALL_ATTEMPTS = 4 #for rate limit/timeout/server errors
+        MAX_CALL_ATTEMPTS = 10 #for rate limit/timeout/server errors
         delay = 1.0
         attempt = 0
         temp_inc = -0.05 if temp > 0.5 else 0.05
@@ -177,8 +177,8 @@ class BaseGameClass:
                     #print(f"message={message}")
                     resp = message.content[0].text.strip()
                     return resp, None
-                elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else self.subject_name
+                elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-5" if self.subject_name == "gpt-5"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -194,9 +194,10 @@ class BaseGameClass:
                         **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o") else {}),
                         messages=formatted_messages,
                         **({"logprobs": True} if not self.subject_name.startswith("o") else {}),
-                        **({"top_logprobs": len(options)} if not self.subject_name.startswith("o") else {})
+                        **({"top_logprobs": len(options)} if not self.subject_name.startswith("o") else {}),
+                        **({"reasoning_effort": "low"} if 'gpt-5' in self.subject_name else {})
                     )   
-                    #print(f"completion={completion}") 
+                    print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
                     if 'o3' in self.subject_name: return resp, None
                     if len(options) == 1: #short answer, just average
@@ -405,7 +406,7 @@ class BaseGameClass:
 
         if keep_appending: message_history.append({"role": "assistant", "content": resp})
         if resp.upper() not in options and options != " ":
-            self._log(f"Failed to get valid response for text: {q_text}; response: {resp}")
+            self._log(f"Failed to get valid response for text: {q_text}; response: ||{resp}||")
         return resp, message_history, token_probs
 
     def _get_subject_answer(self, options, prompt):

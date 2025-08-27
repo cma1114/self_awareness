@@ -1,0 +1,2476 @@
+
+--- Analyzing claude-3-5-sonnet-20241022 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-3-5-sonnet-20241022_GPSA_redacted_cor_temp0.0_1754612347_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    60
+1    23
+Name: count, dtype: int64
+
+Answer change%: 0.2771 [0.1808208040815466, 0.3733960633883329] (n=83)
+P-value vs 25%: 0.5811; P-value vs 0%: 1.694e-08
+Phase 2 self-accuracy: 0.0870 [0.0, 0.20211103983040427] (n=23)
+P-value vs 25%: 0.005519; P-value vs 33%: 2.818e-05
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   83
+Model:                          Logit   Df Residuals:                       81
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006524
+Time:                        11:35:09   Log-Likelihood:                -48.667
+converged:                       True   LL-Null:                       -48.987
+Covariance Type:            nonrobust   LLR p-value:                    0.4240
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -0.1308      1.063     -0.123      0.902      -2.213       1.952
+human_difficulty    -0.3499      0.441     -0.793      0.428      -1.215       0.515
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   83
+Model:                          Logit   Df Residuals:                       76
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05537
+Time:                        11:35:09   Log-Likelihood:                -46.274
+converged:                       True   LL-Null:                       -48.987
+Covariance Type:            nonrobust   LLR p-value:                    0.4906
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             2.8879      3.570      0.809      0.419      -4.110       9.886
+C(domain_grouped)[T.chemistry]       -0.2094      0.957     -0.219      0.827      -2.085       1.666
+C(domain_grouped)[T.physics]          0.6771      0.814      0.832      0.405      -0.918       2.272
+human_difficulty                     -0.3793      0.475     -0.798      0.425      -1.311       0.553
+q_length                             -0.9296      0.508     -1.829      0.067      -1.926       0.067
+avg_word_length                       0.4372      0.445      0.983      0.325      -0.434       1.309
+percent_non_alphabetic_whitespace     0.0302      0.054      0.554      0.580      -0.077       0.137
+=====================================================================================================
+
+--- Analyzing claude-3-5-sonnet-20241022 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-3-5-sonnet-20241022_GPSA_redacted_temp0.0_1754611585_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    204
+0    140
+Name: count, dtype: int64
+
+Answer change%: 0.5930 [0.5411086538326721, 0.6449378577952349] (n=344)
+P-value vs 25%: 2.338e-38; P-value vs 0%: 5.063e-111
+Phase 2 self-accuracy: 0.0343 [0.009334154636565714, 0.05929329634382645] (n=204)
+P-value vs 25%: 3.029e-64; P-value vs 33%: 1.848e-121
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  344
+Model:                          Logit   Df Residuals:                      342
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.001197
+Time:                        11:35:09   Log-Likelihood:                -232.18
+converged:                       True   LL-Null:                       -232.45
+Covariance Type:            nonrobust   LLR p-value:                    0.4557
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.7107      0.462      1.538      0.124      -0.195       1.616
+human_difficulty    -0.1418      0.190     -0.746      0.456      -0.515       0.231
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  344
+Model:                          Logit   Df Residuals:                      337
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02562
+Time:                        11:35:09   Log-Likelihood:                -226.50
+converged:                       True   LL-Null:                       -232.45
+Covariance Type:            nonrobust   LLR p-value:                   0.06394
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.1687      1.639     -0.103      0.918      -3.380       3.043
+C(domain_grouped)[T.chemistry]        0.7654      0.349      2.194      0.028       0.082       1.449
+C(domain_grouped)[T.physics]          0.8452      0.364      2.322      0.020       0.132       1.558
+human_difficulty                      0.0122      0.200      0.061      0.951      -0.381       0.405
+q_length                             -0.0615      0.182     -0.337      0.736      -0.419       0.296
+avg_word_length                       0.0031      0.181      0.017      0.986      -0.352       0.358
+percent_non_alphabetic_whitespace     0.0231      0.021      1.094      0.274      -0.018       0.064
+=====================================================================================================
+
+--- Analyzing claude-3-haiku-20240307 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-3-haiku-20240307_GPSA_redacted_cor_temp0.0_1754609344_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    23
+1    15
+Name: count, dtype: int64
+
+Answer change%: 0.3947 [0.2393256672292503, 0.550148016981276] (n=38)
+P-value vs 25%: 0.06795; P-value vs 0%: 6.417e-07
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=15)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   38
+Model:                          Logit   Df Residuals:                       36
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06365
+Time:                        11:35:09   Log-Likelihood:                -23.869
+converged:                       True   LL-Null:                       -25.491
+Covariance Type:            nonrobust   LLR p-value:                   0.07163
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            2.0315      1.465      1.387      0.166      -0.840       4.903
+human_difficulty    -1.0039      0.590     -1.700      0.089      -2.161       0.153
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   38
+Model:                          Logit   Df Residuals:                       31
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.08541
+Time:                        11:35:09   Log-Likelihood:                -23.314
+converged:                       True   LL-Null:                       -25.491
+Covariance Type:            nonrobust   LLR p-value:                    0.6288
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             3.8721      5.374      0.720      0.471      -6.662      14.406
+C(domain_grouped)[T.chemistry]        1.0591      1.363      0.777      0.437      -1.612       3.730
+C(domain_grouped)[T.physics]          0.4554      1.302      0.350      0.726      -2.096       3.006
+human_difficulty                     -0.9918      0.676     -1.467      0.142      -2.317       0.333
+q_length                             -0.0376      0.657     -0.057      0.954      -1.325       1.250
+avg_word_length                      -0.4235      0.774     -0.547      0.584      -1.941       1.094
+percent_non_alphabetic_whitespace    -0.0379      0.058     -0.650      0.516      -0.152       0.076
+=====================================================================================================
+
+--- Analyzing claude-3-haiku-20240307 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-3-haiku-20240307_GPSA_redacted_temp0.0_1754609028_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    236
+0    173
+Name: count, dtype: int64
+
+Answer change%: 0.5770 [0.5291384334239082, 0.6248957964049426] (n=409)
+P-value vs 25%: 7.224e-41; P-value vs 0%: 2.356e-123
+Phase 2 self-accuracy: 0.0085 [0.0, 0.02016965132064365] (n=236)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  409
+Model:                          Logit   Df Residuals:                      407
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0008202
+Time:                        11:35:09   Log-Likelihood:                -278.40
+converged:                       True   LL-Null:                       -278.63
+Covariance Type:            nonrobust   LLR p-value:                    0.4990
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.5930      0.430      1.378      0.168      -0.250       1.436
+human_difficulty    -0.1196      0.177     -0.676      0.499      -0.466       0.227
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  409
+Model:                          Logit   Df Residuals:                      402
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03681
+Time:                        11:35:09   Log-Likelihood:                -268.37
+converged:                       True   LL-Null:                       -278.63
+Covariance Type:            nonrobust   LLR p-value:                  0.002243
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.6263      1.494     -0.419      0.675      -3.555       2.302
+C(domain_grouped)[T.chemistry]        0.8261      0.316      2.618      0.009       0.208       1.445
+C(domain_grouped)[T.physics]          0.4744      0.320      1.481      0.139      -0.153       1.102
+human_difficulty                      0.0590      0.186      0.317      0.751      -0.306       0.424
+q_length                              0.1378      0.166      0.832      0.405      -0.187       0.462
+avg_word_length                      -0.1693      0.165     -1.025      0.305      -0.493       0.154
+percent_non_alphabetic_whitespace     0.0286      0.020      1.405      0.160      -0.011       0.069
+=====================================================================================================
+
+--- Analyzing claude-sonnet-4-20250514 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-sonnet-4-20250514_GPSA_redacted_cor_temp0.0_1754667047_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    80
+1    34
+Name: count, dtype: int64
+
+Answer change%: 0.2982 [0.21426573088324147, 0.38222549718693394] (n=114)
+P-value vs 25%: 0.2602; P-value vs 0%: 3.388e-12
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=34)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  114
+Model:                          Logit   Df Residuals:                      112
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02297
+Time:                        11:35:09   Log-Likelihood:                -67.872
+converged:                       True   LL-Null:                       -69.468
+Covariance Type:            nonrobust   LLR p-value:                   0.07401
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -2.3361      0.875     -2.669      0.008      -4.052      -0.621
+human_difficulty     0.6464      0.366      1.768      0.077      -0.070       1.363
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  114
+Model:                          Logit   Df Residuals:                      107
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05796
+Time:                        11:35:09   Log-Likelihood:                -65.442
+converged:                       True   LL-Null:                       -69.468
+Covariance Type:            nonrobust   LLR p-value:                    0.2342
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.6786      3.510     -0.763      0.445      -9.558       4.201
+C(domain_grouped)[T.chemistry]        0.2490      0.714      0.349      0.727      -1.150       1.648
+C(domain_grouped)[T.physics]         -0.5202      0.692     -0.752      0.452      -1.876       0.835
+human_difficulty                      0.5926      0.386      1.537      0.124      -0.163       1.349
+q_length                             -0.2135      0.385     -0.554      0.580      -0.969       0.542
+avg_word_length                       0.3904      0.476      0.820      0.412      -0.542       1.323
+percent_non_alphabetic_whitespace     0.0235      0.040      0.590      0.556      -0.055       0.102
+=====================================================================================================
+
+--- Analyzing claude-sonnet-4-20250514 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/claude-sonnet-4-20250514_GPSA_redacted_temp0.0_1754665669_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    172
+0    161
+Name: count, dtype: int64
+
+Answer change%: 0.5165 [0.4628431418254144, 0.5701898912076186] (n=333)
+P-value vs 25%: 2.197e-22; P-value vs 0%: 2.37e-79
+Phase 2 self-accuracy: 0.0116 [0.0, 0.027649100972064942] (n=172)
+P-value vs 25%: 5.986e-187; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  333
+Model:                          Logit   Df Residuals:                      331
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.008767
+Time:                        11:35:09   Log-Likelihood:                -228.61
+converged:                       True   LL-Null:                       -230.64
+Covariance Type:            nonrobust   LLR p-value:                   0.04433
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.0067      0.484      2.078      0.038       0.057       1.956
+human_difficulty    -0.3898      0.195     -1.995      0.046      -0.773      -0.007
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  333
+Model:                          Logit   Df Residuals:                      326
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06281
+Time:                        11:35:09   Log-Likelihood:                -216.15
+converged:                       True   LL-Null:                       -230.64
+Covariance Type:            nonrobust   LLR p-value:                 6.161e-05
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.9437      1.627     -2.424      0.015      -7.132      -0.755
+C(domain_grouped)[T.chemistry]        1.0101      0.351      2.877      0.004       0.322       1.698
+C(domain_grouped)[T.physics]          0.4472      0.362      1.237      0.216      -0.262       1.156
+human_difficulty                     -0.2723      0.209     -1.302      0.193      -0.682       0.138
+q_length                              0.5475      0.187      2.935      0.003       0.182       0.913
+avg_word_length                       0.0981      0.172      0.570      0.568      -0.239       0.435
+percent_non_alphabetic_whitespace     0.0447      0.022      2.025      0.043       0.001       0.088
+=====================================================================================================
+
+--- Analyzing deepseek-chat (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/deepseek-chat_GPSA_redacted_cor_temp0.0_1754620397_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    68
+1    27
+Name: count, dtype: int64
+
+Answer change%: 0.2842 [0.19351225251179555, 0.3749088001197834] (n=95)
+P-value vs 25%: 0.4597; P-value vs 0%: 8.164e-10
+Phase 2 self-accuracy: 0.0370 [0.0, 0.10827133011552613] (n=27)
+P-value vs 25%: 4.642e-09; P-value vs 33%: 3.849e-16
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   95
+Model:                          Logit   Df Residuals:                       93
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0003142
+Time:                        11:35:09   Log-Likelihood:                -56.686
+converged:                       True   LL-Null:                       -56.704
+Covariance Type:            nonrobust   LLR p-value:                    0.8503
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.6931      1.225     -0.566      0.571      -3.094       1.707
+p_i_capability    -0.2384      1.246     -0.191      0.848      -2.681       2.205
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   92
+Model:                          Logit   Df Residuals:                       90
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:              -8.415e-11
+Time:                        11:35:09   Log-Likelihood:                -54.777
+converged:                      False   LL-Null:                       -54.777
+Covariance Type:            nonrobust   LLR p-value:                     1.000
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.9316      0.233     -4.001      0.000      -1.388      -0.475
+capabilities_entropy     4.2651   5.63e+08   7.58e-09      1.000    -1.1e+09     1.1e+09
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   95
+Model:                          Logit   Df Residuals:                       93
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.005820
+Time:                        11:35:09   Log-Likelihood:                -56.374
+converged:                       True   LL-Null:                       -56.704
+Covariance Type:            nonrobust   LLR p-value:                    0.4166
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.9545      0.232     -4.118      0.000      -1.409      -0.500
+game_entropy     1.1732      1.436      0.817      0.414      -1.641       3.988
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=1.00, p=0.141
+Paired t-test (game_entropy vs capabilities_entropy): statistic=1.53, p=0.13
+Mean capabilities_entropy-game_entropy = -0.0235  [-0.0536, 0.0066] (n=92)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   92
+Model:                          Logit   Df Residuals:                       89
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006116
+Time:                        11:35:09   Log-Likelihood:                -54.442
+converged:                      False   LL-Null:                       -54.777
+Covariance Type:            nonrobust   LLR p-value:                    0.7153
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.9637      0.237     -4.059      0.000      -1.429      -0.498
+capabilities_entropy     4.1673   5.67e+08   7.35e-09      1.000   -1.11e+09    1.11e+09
+game_entropy             1.1830      1.437      0.823      0.410      -1.633       3.999
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   95
+Model:                          Logit   Df Residuals:                       93
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02469
+Time:                        11:35:09   Log-Likelihood:                -55.304
+converged:                       True   LL-Null:                       -56.704
+Covariance Type:            nonrobust   LLR p-value:                   0.09424
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.5770      0.935      0.617      0.537      -1.257       2.411
+human_difficulty    -0.6847      0.423     -1.618      0.106      -1.514       0.145
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   95
+Model:                          Logit   Df Residuals:                       88
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.08740
+Time:                        11:35:09   Log-Likelihood:                -51.748
+converged:                       True   LL-Null:                       -56.704
+Covariance Type:            nonrobust   LLR p-value:                    0.1284
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.3061      3.961     -0.077      0.938      -8.069       7.457
+C(domain_grouped)[T.chemistry]        2.4251      1.163      2.085      0.037       0.145       4.705
+C(domain_grouped)[T.physics]          1.5514      1.125      1.379      0.168      -0.653       3.756
+human_difficulty                     -0.5584      0.438     -1.274      0.203      -1.417       0.301
+q_length                             -0.1301      0.482     -0.270      0.787      -1.074       0.814
+avg_word_length                      -0.0115      0.556     -0.021      0.984      -1.101       1.078
+percent_non_alphabetic_whitespace    -0.0269      0.056     -0.476      0.634      -0.137       0.084
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.0000
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   92
+Model:                          Logit   Df Residuals:                       84
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.07715
+Time:                        11:35:09   Log-Likelihood:                -50.551
+converged:                      False   LL-Null:                       -54.777
+Covariance Type:            nonrobust   LLR p-value:                    0.2944
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.7467      4.127     -0.181      0.856      -8.836       7.342
+C(domain_grouped)[T.chemistry]        2.3017      1.172      1.964      0.050       0.005       4.599
+C(domain_grouped)[T.physics]          1.6024      1.126      1.423      0.155      -0.605       3.810
+human_difficulty                     -0.4928      0.437     -1.127      0.260      -1.350       0.364
+q_length                             -0.1711      0.490     -0.349      0.727      -1.131       0.788
+avg_word_length                       0.0898      0.566      0.159      0.874      -1.019       1.199
+percent_non_alphabetic_whitespace    -0.0142      0.058     -0.244      0.808      -0.128       0.100
+capabilities_entropy                  6.9948   5.27e+08   1.33e-08      1.000   -1.03e+09    1.03e+09
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   95
+Model:                          Logit   Df Residuals:                       87
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.09801
+Time:                        11:35:09   Log-Likelihood:                -51.147
+converged:                       True   LL-Null:                       -56.704
+Covariance Type:            nonrobust   LLR p-value:                    0.1337
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.4545      4.034     -0.113      0.910      -8.360       7.451
+C(domain_grouped)[T.chemistry]        2.5919      1.232      2.104      0.035       0.177       5.007
+C(domain_grouped)[T.physics]          1.7906      1.208      1.483      0.138      -0.577       4.158
+human_difficulty                     -0.5702      0.442     -1.291      0.197      -1.436       0.296
+q_length                             -0.1589      0.485     -0.327      0.743      -1.110       0.792
+avg_word_length                       0.0119      0.563      0.021      0.983      -1.092       1.116
+percent_non_alphabetic_whitespace    -0.0271      0.057     -0.476      0.634      -0.139       0.084
+game_entropy                          2.0446      1.935      1.057      0.291      -1.747       5.836
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   92
+Model:                          Logit   Df Residuals:                       83
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.08879
+Time:                        11:35:09   Log-Likelihood:                -49.913
+converged:                      False   LL-Null:                       -54.777
+Covariance Type:            nonrobust   LLR p-value:                    0.2847
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.9445      4.216     -0.224      0.823      -9.208       7.319
+C(domain_grouped)[T.chemistry]        2.4752      1.244      1.990      0.047       0.038       4.913
+C(domain_grouped)[T.physics]          1.8576      1.215      1.529      0.126      -0.523       4.238
+human_difficulty                     -0.5030      0.441     -1.141      0.254      -1.367       0.361
+q_length                             -0.2007      0.494     -0.406      0.685      -1.169       0.768
+avg_word_length                       0.1203      0.575      0.209      0.834      -1.007       1.247
+percent_non_alphabetic_whitespace    -0.0140      0.059     -0.237      0.812      -0.129       0.101
+capabilities_entropy                  6.7436   5.29e+08   1.27e-08      1.000   -1.04e+09    1.04e+09
+game_entropy                          2.0603      1.889      1.091      0.275      -1.642       5.762
+=====================================================================================================
+
+--- Analyzing deepseek-chat (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/deepseek-chat_GPSA_redacted_temp0.0_1754615785_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    209
+0    143
+Name: count, dtype: int64
+
+Answer change%: 0.5938 [0.5424431611331462, 0.6450568388668538] (n=352)
+P-value vs 25%: 2.172e-39; P-value vs 0%: 6.785e-114
+Phase 2 self-accuracy: 0.0048 [0.0, 0.014140045231028409] (n=209)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      350
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.002014
+Time:                        11:35:09   Log-Likelihood:                -237.28
+converged:                       True   LL-Null:                       -237.76
+Covariance Type:            nonrobust   LLR p-value:                    0.3277
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.1542      0.556     -0.277      0.782      -1.245       0.936
+p_i_capability     0.5547      0.567      0.978      0.328      -0.557       1.667
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  340
+Model:                          Logit   Df Residuals:                      338
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.002236
+Time:                        11:35:09   Log-Likelihood:                -228.31
+converged:                       True   LL-Null:                       -228.82
+Covariance Type:            nonrobust   LLR p-value:                    0.3118
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.4004      0.111      3.613      0.000       0.183       0.618
+capabilities_entropy    10.1635    190.997      0.053      0.958    -364.183     384.510
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      350
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               5.580e-07
+Time:                        11:35:09   Log-Likelihood:                -237.76
+converged:                       True   LL-Null:                       -237.76
+Covariance Type:            nonrobust   LLR p-value:                    0.9870
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept        0.3799      0.111      3.427      0.001       0.163       0.597
+game_entropy    -0.0092      0.567     -0.016      0.987      -1.121       1.103
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=13.00, p=0.000426
+Paired t-test (game_entropy vs capabilities_entropy): statistic=3.47, p=0.000585
+Mean capabilities_entropy-game_entropy = -0.0382  [-0.0597, -0.0166] (n=340)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  340
+Model:                          Logit   Df Residuals:                      337
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.002243
+Time:                        11:35:09   Log-Likelihood:                -228.31
+converged:                       True   LL-Null:                       -228.82
+Covariance Type:            nonrobust   LLR p-value:                    0.5986
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.4018      0.113      3.546      0.000       0.180       0.624
+capabilities_entropy    10.1216    187.383      0.054      0.957    -357.142     377.385
+game_entropy            -0.0321      0.568     -0.056      0.955      -1.145       1.081
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      350
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               4.861e-05
+Time:                        11:35:09   Log-Likelihood:                -237.75
+converged:                       True   LL-Null:                       -237.76
+Covariance Type:            nonrobust   LLR p-value:                    0.8792
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.3093      0.474      0.652      0.514      -0.620       1.239
+human_difficulty     0.0292      0.192      0.152      0.879      -0.347       0.406
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      345
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03769
+Time:                        11:35:09   Log-Likelihood:                -228.80
+converged:                       True   LL-Null:                       -237.76
+Covariance Type:            nonrobust   LLR p-value:                  0.006428
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.1495      1.579     -0.095      0.925      -3.245       2.946
+C(domain_grouped)[T.chemistry]        1.3116      0.341      3.848      0.000       0.643       1.980
+C(domain_grouped)[T.physics]          0.9791      0.353      2.772      0.006       0.287       1.671
+human_difficulty                      0.2187      0.205      1.067      0.286      -0.183       0.621
+q_length                             -0.1448      0.175     -0.825      0.409      -0.489       0.199
+avg_word_length                       0.0008      0.172      0.005      0.996      -0.336       0.338
+percent_non_alphabetic_whitespace    -0.0106      0.019     -0.548      0.583      -0.049       0.027
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.0030
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  340
+Model:                          Logit   Df Residuals:                      332
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.04142
+Time:                        11:35:09   Log-Likelihood:                -219.35
+converged:                       True   LL-Null:                       -228.82
+Covariance Type:            nonrobust   LLR p-value:                  0.008327
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.1849      1.615      0.114      0.909      -2.980       3.350
+C(domain_grouped)[T.chemistry]        1.3052      0.345      3.780      0.000       0.628       1.982
+C(domain_grouped)[T.physics]          1.0060      0.361      2.787      0.005       0.299       1.713
+human_difficulty                      0.2250      0.214      1.051      0.293      -0.195       0.645
+q_length                             -0.1910      0.178     -1.073      0.283      -0.540       0.158
+avg_word_length                      -0.0045      0.175     -0.026      0.979      -0.348       0.339
+percent_non_alphabetic_whitespace    -0.0144      0.020     -0.731      0.465      -0.053       0.024
+capabilities_entropy                  7.4307     57.609      0.129      0.897    -105.481     120.342
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  352
+Model:                          Logit   Df Residuals:                      344
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03779
+Time:                        11:35:09   Log-Likelihood:                -228.78
+converged:                       True   LL-Null:                       -237.76
+Covariance Type:            nonrobust   LLR p-value:                   0.01210
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.1622      1.581     -0.103      0.918      -3.261       2.936
+C(domain_grouped)[T.chemistry]        1.3170      0.342      3.852      0.000       0.647       1.987
+C(domain_grouped)[T.physics]          0.9847      0.354      2.780      0.005       0.291       1.679
+human_difficulty                      0.2157      0.205      1.050      0.294      -0.187       0.618
+q_length                             -0.1422      0.176     -0.809      0.419      -0.487       0.202
+avg_word_length                      -0.0002      0.172     -0.001      0.999      -0.338       0.337
+percent_non_alphabetic_whitespace    -0.0107      0.019     -0.548      0.583      -0.049       0.027
+game_entropy                          0.1311      0.595      0.220      0.826      -1.036       1.298
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  340
+Model:                          Logit   Df Residuals:                      331
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.04147
+Time:                        11:35:09   Log-Likelihood:                -219.33
+converged:                       True   LL-Null:                       -228.82
+Covariance Type:            nonrobust   LLR p-value:                   0.01497
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.1760      1.616      0.109      0.913      -2.992       3.344
+C(domain_grouped)[T.chemistry]        1.3089      0.346      3.781      0.000       0.630       1.987
+C(domain_grouped)[T.physics]          1.0098      0.362      2.791      0.005       0.301       1.719
+human_difficulty                      0.2227      0.215      1.038      0.299      -0.198       0.643
+q_length                             -0.1891      0.178     -1.060      0.289      -0.539       0.161
+avg_word_length                      -0.0052      0.176     -0.030      0.976      -0.349       0.339
+percent_non_alphabetic_whitespace    -0.0144      0.020     -0.731      0.465      -0.053       0.024
+capabilities_entropy                  7.4425     57.793      0.129      0.898    -105.830     120.715
+game_entropy                          0.0905      0.595      0.152      0.879      -1.076       1.257
+=====================================================================================================
+
+--- Analyzing gemini-1.5-pro (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gemini-1.5-pro_GPSA_redacted_cor_temp0.0_1754619932_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    59
+1    10
+Name: count, dtype: int64
+
+Answer change%: 0.1449 [0.06186590407252379, 0.22798916839124433] (n=69)
+P-value vs 25%: 0.01316; P-value vs 0%: 0.0006267
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=10)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       67
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03135
+Time:                        11:35:09   Log-Likelihood:                -27.658
+converged:                       True   LL-Null:                       -28.553
+Covariance Type:            nonrobust   LLR p-value:                    0.1809
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.1091      1.469      0.074      0.941      -2.770       2.988
+human_difficulty    -0.8611      0.680     -1.266      0.206      -2.195       0.473
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       62
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06958
+Time:                        11:35:09   Log-Likelihood:                -26.566
+converged:                       True   LL-Null:                       -28.553
+Covariance Type:            nonrobust   LLR p-value:                    0.6802
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             3.8188      4.901      0.779      0.436      -5.788      13.425
+C(domain_grouped)[T.chemistry]       -0.6960      1.232     -0.565      0.572      -3.111       1.719
+C(domain_grouped)[T.physics]         -0.0741      1.092     -0.068      0.946      -2.214       2.066
+human_difficulty                     -0.9370      0.701     -1.337      0.181      -2.310       0.436
+q_length                             -0.3995      0.659     -0.607      0.544      -1.690       0.891
+avg_word_length                      -0.1182      0.748     -0.158      0.874      -1.584       1.347
+percent_non_alphabetic_whitespace    -0.0615      0.077     -0.797      0.425      -0.213       0.090
+=====================================================================================================
+
+--- Analyzing gemini-1.5-pro (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gemini-1.5-pro_GPSA_redacted_temp0.0_1754613855_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    207
+0    171
+Name: count, dtype: int64
+
+Answer change%: 0.5476 [0.4974433269205779, 0.5977947683175174] (n=378)
+P-value vs 25%: 3.055e-31; P-value vs 0%: 1.617e-101
+Phase 2 self-accuracy: 0.0097 [0.0, 0.022987366050642135] (n=207)
+P-value vs 25%: 1.012e-273; P-value vs 33%: 0
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  378
+Model:                          Logit   Df Residuals:                      376
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.002494
+Time:                        11:35:09   Log-Likelihood:                -259.64
+converged:                       True   LL-Null:                       -260.29
+Covariance Type:            nonrobust   LLR p-value:                    0.2545
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.6852      0.447      1.532      0.125      -0.191       1.561
+human_difficulty    -0.2068      0.182     -1.137      0.255      -0.563       0.150
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  378
+Model:                          Logit   Df Residuals:                      371
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01446
+Time:                        11:35:09   Log-Likelihood:                -256.53
+converged:                       True   LL-Null:                       -260.29
+Covariance Type:            nonrobust   LLR p-value:                    0.2747
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             1.1035      1.539      0.717      0.473      -1.913       4.120
+C(domain_grouped)[T.chemistry]       -0.3579      0.319     -1.123      0.262      -0.983       0.267
+C(domain_grouped)[T.physics]         -0.1210      0.329     -0.368      0.713      -0.766       0.524
+human_difficulty                     -0.1702      0.190     -0.894      0.371      -0.543       0.203
+q_length                              0.0073      0.169      0.043      0.965      -0.324       0.339
+avg_word_length                      -0.1241      0.166     -0.749      0.454      -0.449       0.201
+percent_non_alphabetic_whitespace     0.0271      0.020      1.341      0.180      -0.012       0.067
+=====================================================================================================
+
+--- Analyzing gemini-2.0-flash-001 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gemini-2.0-flash-001_GPSA_redacted_cor_temp0.0_1754606535_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    56
+1    15
+Name: count, dtype: int64
+
+Answer change%: 0.2113 [0.1163164595880317, 0.3062187516795739] (n=71)
+P-value vs 25%: 0.424; P-value vs 0%: 1.295e-05
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=16)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   71
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02151
+Time:                        11:35:09   Log-Likelihood:                -35.822
+converged:                       True   LL-Null:                       -36.610
+Covariance Type:            nonrobust   LLR p-value:                    0.2095
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.8684      0.445     -1.951      0.051      -1.741       0.004
+p_i_capability    -1.1030      0.901     -1.224      0.221      -2.869       0.663
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       67
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006791
+Time:                        11:35:09   Log-Likelihood:                -33.163
+converged:                       True   LL-Null:                       -33.389
+Covariance Type:            nonrobust   LLR p-value:                    0.5007
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.8117      0.628     -2.884      0.004      -3.043      -0.581
+capabilities_entropy     0.6215      0.932      0.667      0.505      -1.204       2.447
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   71
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.008892
+Time:                        11:35:09   Log-Likelihood:                -36.284
+converged:                       True   LL-Null:                       -36.610
+Covariance Type:            nonrobust   LLR p-value:                    0.4197
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -1.6612      0.534     -3.108      0.002      -2.709      -0.614
+game_entropy     0.6997      0.871      0.804      0.422      -1.007       2.406
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=781.00, p=0.0108
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-2.29, p=0.0249
+Mean capabilities_entropy-game_entropy = 0.0778  [0.0113, 0.1443] (n=69)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       66
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.008199
+Time:                        11:35:09   Log-Likelihood:                -33.116
+converged:                       True   LL-Null:                       -33.389
+Covariance Type:            nonrobust   LLR p-value:                    0.7605
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.8517      0.642     -2.885      0.004      -3.110      -0.594
+capabilities_entropy     0.3731      1.234      0.302      0.762      -2.045       2.791
+game_entropy             0.3704      1.211      0.306      0.760      -2.003       2.743
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   71
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05233
+Time:                        11:35:09   Log-Likelihood:                -34.694
+converged:                       True   LL-Null:                       -36.610
+Covariance Type:            nonrobust   LLR p-value:                   0.05031
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.0755      1.294      0.831      0.406      -1.461       3.612
+human_difficulty    -1.0910      0.599     -1.822      0.068      -2.264       0.082
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   71
+Model:                          Logit   Df Residuals:                       64
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1495
+Time:                        11:35:09   Log-Likelihood:                -31.136
+converged:                       True   LL-Null:                       -36.610
+Covariance Type:            nonrobust   LLR p-value:                   0.08999
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -9.7527      6.045     -1.613      0.107     -21.600       2.095
+C(domain_grouped)[T.chemistry]        1.1720      1.363      0.860      0.390      -1.499       3.843
+C(domain_grouped)[T.physics]          1.4525      1.220      1.191      0.234      -0.938       3.843
+human_difficulty                     -0.8657      0.640     -1.353      0.176      -2.120       0.388
+q_length                              1.1251      0.642      1.752      0.080      -0.134       2.384
+avg_word_length                       0.3263      0.735      0.444      0.657      -1.113       1.766
+percent_non_alphabetic_whitespace     0.0922      0.072      1.276      0.202      -0.049       0.234
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.5433
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       61
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1811
+Time:                        11:35:09   Log-Likelihood:                -27.341
+converged:                       True   LL-Null:                       -33.389
+Covariance Type:            nonrobust   LLR p-value:                   0.09743
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                           -13.8566      6.878     -2.015      0.044     -27.337      -0.376
+C(domain_grouped)[T.chemistry]        1.7326      1.415      1.225      0.221      -1.041       4.506
+C(domain_grouped)[T.physics]          1.6983      1.254      1.354      0.176      -0.760       4.157
+human_difficulty                     -0.9231      0.690     -1.339      0.181      -2.275       0.428
+q_length                              1.2522      0.688      1.820      0.069      -0.096       2.600
+avg_word_length                       0.6649      0.800      0.831      0.406      -0.903       2.233
+percent_non_alphabetic_whitespace     0.1363      0.079      1.717      0.086      -0.019       0.292
+capabilities_entropy                  1.9844      1.164      1.705      0.088      -0.297       4.266
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   71
+Model:                          Logit   Df Residuals:                       63
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.2026
+Time:                        11:35:09   Log-Likelihood:                -29.194
+converged:                       True   LL-Null:                       -36.610
+Covariance Type:            nonrobust   LLR p-value:                   0.03823
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                           -12.7892      6.650     -1.923      0.054     -25.822       0.244
+C(domain_grouped)[T.chemistry]        1.3443      1.383      0.972      0.331      -1.366       4.055
+C(domain_grouped)[T.physics]          1.8573      1.256      1.478      0.139      -0.605       4.320
+human_difficulty                     -0.9319      0.685     -1.361      0.173      -2.274       0.410
+q_length                              1.2432      0.678      1.832      0.067      -0.086       2.573
+avg_word_length                       0.4815      0.777      0.620      0.535      -1.040       2.003
+percent_non_alphabetic_whitespace     0.1386      0.079      1.760      0.078      -0.016       0.293
+game_entropy                          2.1207      1.132      1.873      0.061      -0.098       4.340
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   69
+Model:                          Logit   Df Residuals:                       60
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1890
+Time:                        11:35:09   Log-Likelihood:                -27.079
+converged:                       True   LL-Null:                       -33.389
+Covariance Type:            nonrobust   LLR p-value:                    0.1256
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                           -14.0170      6.923     -2.025      0.043     -27.585      -0.449
+C(domain_grouped)[T.chemistry]        1.5462      1.442      1.073      0.283      -1.279       4.372
+C(domain_grouped)[T.physics]          1.7573      1.265      1.389      0.165      -0.722       4.237
+human_difficulty                     -0.8964      0.705     -1.271      0.204      -2.279       0.486
+q_length                              1.1994      0.695      1.725      0.084      -0.163       2.562
+avg_word_length                       0.7134      0.809      0.881      0.378      -0.873       2.300
+percent_non_alphabetic_whitespace     0.1501      0.082      1.832      0.067      -0.010       0.311
+capabilities_entropy                  1.1447      1.646      0.695      0.487      -2.082       4.371
+game_entropy                          1.1462      1.609      0.712      0.476      -2.008       4.301
+=====================================================================================================
+
+--- Analyzing gemini-2.0-flash-001 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gemini-2.0-flash-001_GPSA_redacted_temp0.0_1754606324_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    214
+0    137
+Name: count, dtype: int64
+
+Answer change%: 0.6097 [0.5586531999026457, 0.6607200194705737] (n=351)
+P-value vs 25%: 2.1e-43; P-value vs 0%: 2.984e-121
+Phase 2 self-accuracy: 0.0346 [0.011052917155989658, 0.0582111521080796] (n=231)
+P-value vs 25%: 1.138e-71; P-value vs 33%: 8.701e-136
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  351
+Model:                          Logit   Df Residuals:                      349
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03828
+Time:                        11:35:09   Log-Likelihood:                -225.79
+converged:                       True   LL-Null:                       -234.78
+Covariance Type:            nonrobust   LLR p-value:                 2.241e-05
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.9355      0.165      5.684      0.000       0.613       1.258
+p_i_capability    -1.4874      0.357     -4.164      0.000      -2.187      -0.787
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  339
+Model:                          Logit   Df Residuals:                      337
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03289
+Time:                        11:35:09   Log-Likelihood:                -220.80
+converged:                       True   LL-Null:                       -228.31
+Covariance Type:            nonrobust   LLR p-value:                 0.0001066
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.5118      0.263     -1.950      0.051      -1.026       0.003
+capabilities_entropy     1.3790      0.361      3.815      0.000       0.671       2.087
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  351
+Model:                          Logit   Df Residuals:                      349
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05374
+Time:                        11:35:09   Log-Likelihood:                -222.16
+converged:                       True   LL-Null:                       -234.78
+Covariance Type:            nonrobust   LLR p-value:                 5.076e-07
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.6148      0.241     -2.547      0.011      -1.088      -0.142
+game_entropy     1.7853      0.366      4.879      0.000       1.068       2.503
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=19797.00, p=5.92e-07
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-4.91, p=1.39e-06
+Mean capabilities_entropy-game_entropy = 0.0642  [0.0386, 0.0898] (n=339)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  339
+Model:                          Logit   Df Residuals:                      336
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05134
+Time:                        11:35:09   Log-Likelihood:                -216.59
+converged:                       True   LL-Null:                       -228.31
+Covariance Type:            nonrobust   LLR p-value:                 8.108e-06
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.7196      0.276     -2.609      0.009      -1.260      -0.179
+capabilities_entropy     0.3732      0.503      0.741      0.459      -0.613       1.360
+game_entropy             1.4698      0.512      2.873      0.004       0.467       2.473
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  351
+Model:                          Logit   Df Residuals:                      349
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006676
+Time:                        11:35:09   Log-Likelihood:                -233.21
+converged:                       True   LL-Null:                       -234.78
+Covariance Type:            nonrobust   LLR p-value:                   0.07665
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.2606      0.477      2.642      0.008       0.325       2.196
+human_difficulty    -0.3402      0.193     -1.763      0.078      -0.719       0.038
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  351
+Model:                          Logit   Df Residuals:                      344
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02175
+Time:                        11:35:09   Log-Likelihood:                -229.67
+converged:                       True   LL-Null:                       -234.78
+Covariance Type:            nonrobust   LLR p-value:                    0.1160
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.4550      1.594     -0.285      0.775      -3.580       2.670
+C(domain_grouped)[T.chemistry]       -0.0267      0.349     -0.076      0.939      -0.710       0.657
+C(domain_grouped)[T.physics]         -0.1030      0.360     -0.286      0.775      -0.809       0.603
+human_difficulty                     -0.3090      0.201     -1.539      0.124      -0.703       0.085
+q_length                              0.1689      0.177      0.956      0.339      -0.177       0.515
+avg_word_length                       0.0640      0.175      0.365      0.715      -0.280       0.408
+percent_non_alphabetic_whitespace     0.0481      0.022      2.182      0.029       0.005       0.091
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.6716
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  339
+Model:                          Logit   Df Residuals:                      331
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06335
+Time:                        11:35:09   Log-Likelihood:                -213.85
+converged:                       True   LL-Null:                       -228.31
+Covariance Type:            nonrobust   LLR p-value:                 0.0001492
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -1.9078      1.737     -1.098      0.272      -5.313       1.497
+C(domain_grouped)[T.chemistry]        0.0961      0.365      0.263      0.792      -0.619       0.811
+C(domain_grouped)[T.physics]          0.0508      0.375      0.136      0.892      -0.684       0.786
+human_difficulty                     -0.4060      0.213     -1.907      0.056      -0.823       0.011
+q_length                              0.1304      0.185      0.706      0.480      -0.232       0.493
+avg_word_length                       0.1927      0.191      1.011      0.312      -0.181       0.566
+percent_non_alphabetic_whitespace     0.0601      0.023      2.577      0.010       0.014       0.106
+capabilities_entropy                  1.5870      0.381      4.168      0.000       0.841       2.333
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  351
+Model:                          Logit   Df Residuals:                      343
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.08192
+Time:                        11:35:09   Log-Likelihood:                -215.55
+converged:                       True   LL-Null:                       -234.78
+Covariance Type:            nonrobust   LLR p-value:                 2.470e-06
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.1513      1.735     -1.240      0.215      -5.551       1.249
+C(domain_grouped)[T.chemistry]        0.3450      0.370      0.933      0.351      -0.379       1.069
+C(domain_grouped)[T.physics]          0.1510      0.376      0.402      0.688      -0.586       0.888
+human_difficulty                     -0.3214      0.209     -1.539      0.124      -0.731       0.088
+q_length                              0.1642      0.185      0.886      0.375      -0.199       0.527
+avg_word_length                       0.1248      0.190      0.658      0.510      -0.247       0.496
+percent_non_alphabetic_whitespace     0.0517      0.022      2.316      0.021       0.008       0.095
+game_entropy                          1.9813      0.387      5.114      0.000       1.222       2.741
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  339
+Model:                          Logit   Df Residuals:                      330
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.08214
+Time:                        11:35:09   Log-Likelihood:                -209.56
+converged:                       True   LL-Null:                       -228.31
+Covariance Type:            nonrobust   LLR p-value:                 9.279e-06
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.3310      1.776     -1.313      0.189      -5.811       1.149
+C(domain_grouped)[T.chemistry]        0.2620      0.374      0.700      0.484      -0.471       0.995
+C(domain_grouped)[T.physics]          0.1562      0.380      0.411      0.681      -0.589       0.901
+human_difficulty                     -0.3903      0.215     -1.816      0.069      -0.812       0.031
+q_length                              0.1455      0.187      0.777      0.437      -0.221       0.512
+avg_word_length                       0.1883      0.195      0.967      0.333      -0.193       0.570
+percent_non_alphabetic_whitespace     0.0570      0.023      2.468      0.014       0.012       0.102
+capabilities_entropy                  0.5490      0.523      1.050      0.294      -0.475       1.574
+game_entropy                          1.5412      0.532      2.895      0.004       0.498       2.585
+=====================================================================================================
+
+--- Analyzing gpt-4.1-2025-04-14 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gpt-4.1-2025-04-14_GPSA_redacted_cor_temp0.0_1754589427_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    69
+1    43
+Name: count, dtype: int64
+
+Answer change%: 0.3839 [0.29385864040161214, 0.47399850245553077] (n=112)
+P-value vs 25%: 0.003564; P-value vs 0%: 6.573e-17
+Phase 2 self-accuracy: 0.0233 [0.0, 0.06830324745457915] (n=43)
+P-value vs 25%: 5.881e-23; P-value vs 33%: 2.147e-41
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  112
+Model:                          Logit   Df Residuals:                      110
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0002715
+Time:                        11:35:09   Log-Likelihood:                -74.567
+converged:                       True   LL-Null:                       -74.587
+Covariance Type:            nonrobust   LLR p-value:                    0.8405
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.4852      0.204     -2.380      0.017      -0.885      -0.086
+p_i_capability     0.2072      1.026      0.202      0.840      -1.803       2.218
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   52
+Model:                          Logit   Df Residuals:                       50
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01995
+Time:                        11:35:09   Log-Likelihood:                -29.685
+converged:                       True   LL-Null:                       -30.290
+Covariance Type:            nonrobust   LLR p-value:                    0.2717
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept                0.0665      0.991      0.067      0.947      -1.876       2.009
+capabilities_entropy    -1.2420      1.112     -1.117      0.264      -3.421       0.937
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  112
+Model:                          Logit   Df Residuals:                      110
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01278
+Time:                        11:35:09   Log-Likelihood:                -73.634
+converged:                       True   LL-Null:                       -74.587
+Covariance Type:            nonrobust   LLR p-value:                    0.1673
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.0512      0.359     -0.143      0.887      -0.755       0.653
+game_entropy    -0.6776      0.492     -1.378      0.168      -1.641       0.286
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=3.00, p=4.17e-10
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-7.64, p=5.35e-10
+Mean capabilities_entropy-game_entropy = 0.3701  [0.2751, 0.4650] (n=52)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   52
+Model:                          Logit   Df Residuals:                       49
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02256
+Time:                        11:35:09   Log-Likelihood:                -29.606
+converged:                       True   LL-Null:                       -30.290
+Covariance Type:            nonrobust   LLR p-value:                    0.5049
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -0.0106      1.010     -0.010      0.992      -1.990       1.968
+capabilities_entropy    -0.9453      1.332     -0.710      0.478      -3.556       1.666
+game_entropy            -0.3716      0.933     -0.398      0.690      -2.200       1.457
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  112
+Model:                          Logit   Df Residuals:                      110
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.003581
+Time:                        11:35:09   Log-Likelihood:                -74.320
+converged:                       True   LL-Null:                       -74.587
+Covariance Type:            nonrobust   LLR p-value:                    0.4648
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.0927      0.798      0.116      0.908      -1.472       1.657
+human_difficulty    -0.2541      0.349     -0.727      0.467      -0.939       0.431
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  112
+Model:                          Logit   Df Residuals:                      105
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06356
+Time:                        11:35:09   Log-Likelihood:                -69.846
+converged:                       True   LL-Null:                       -74.587
+Covariance Type:            nonrobust   LLR p-value:                    0.1482
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -4.4714      3.250     -1.376      0.169     -10.842       1.899
+C(domain_grouped)[T.chemistry]        2.1813      1.136      1.920      0.055      -0.046       4.408
+C(domain_grouped)[T.physics]          2.4323      1.107      2.198      0.028       0.263       4.601
+human_difficulty                     -0.1401      0.371     -0.377      0.706      -0.868       0.588
+q_length                             -0.0238      0.383     -0.062      0.951      -0.775       0.727
+avg_word_length                       0.4552      0.420      1.083      0.279      -0.369       1.279
+percent_non_alphabetic_whitespace     0.0308      0.035      0.886      0.376      -0.037       0.099
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.8739
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   52
+Model:                          Logit   Df Residuals:                       44
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1287
+Time:                        11:35:09   Log-Likelihood:                -26.391
+converged:                       True   LL-Null:                       -30.290
+Covariance Type:            nonrobust   LLR p-value:                    0.3508
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.7695      5.764     -0.654      0.513     -15.067       7.528
+C(domain_grouped)[T.chemistry]        1.2840      1.333      0.963      0.336      -1.329       3.897
+C(domain_grouped)[T.physics]          1.5517      1.311      1.184      0.237      -1.018       4.121
+human_difficulty                     -0.1822      0.595     -0.306      0.760      -1.349       0.984
+q_length                             -0.8254      0.735     -1.123      0.261      -2.266       0.615
+avg_word_length                       1.3776      0.843      1.633      0.102      -0.276       3.031
+percent_non_alphabetic_whitespace     0.0826      0.076      1.091      0.275      -0.066       0.231
+capabilities_entropy                 -0.4652      1.280     -0.363      0.716      -2.974       2.043
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  112
+Model:                          Logit   Df Residuals:                      104
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.07322
+Time:                        11:35:09   Log-Likelihood:                -69.126
+converged:                       True   LL-Null:                       -74.587
+Covariance Type:            nonrobust   LLR p-value:                    0.1420
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.0301      3.483     -0.870      0.384      -9.857       3.797
+C(domain_grouped)[T.chemistry]        2.0804      1.144      1.819      0.069      -0.162       4.323
+C(domain_grouped)[T.physics]          2.4309      1.117      2.176      0.030       0.242       4.620
+human_difficulty                     -0.2002      0.378     -0.530      0.596      -0.940       0.540
+q_length                             -0.0201      0.386     -0.052      0.959      -0.776       0.736
+avg_word_length                       0.2790      0.447      0.624      0.532      -0.597       1.155
+percent_non_alphabetic_whitespace     0.0192      0.036      0.534      0.594      -0.051       0.090
+game_entropy                         -0.6834      0.572     -1.196      0.232      -1.804       0.437
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   52
+Model:                          Logit   Df Residuals:                       43
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1297
+Time:                        11:35:09   Log-Likelihood:                -26.361
+converged:                       True   LL-Null:                       -30.290
+Covariance Type:            nonrobust   LLR p-value:                    0.4475
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -4.1971      6.055     -0.693      0.488     -16.065       7.670
+C(domain_grouped)[T.chemistry]        1.3019      1.340      0.972      0.331      -1.324       3.928
+C(domain_grouped)[T.physics]          1.6108      1.340      1.202      0.229      -1.015       4.237
+human_difficulty                     -0.1912      0.599     -0.319      0.750      -1.366       0.983
+q_length                             -0.8107      0.737     -1.100      0.271      -2.255       0.634
+avg_word_length                       1.4463      0.899      1.609      0.108      -0.315       3.208
+percent_non_alphabetic_whitespace     0.0879      0.079      1.111      0.266      -0.067       0.243
+capabilities_entropy                 -0.6579      1.505     -0.437      0.662      -3.608       2.293
+game_entropy                          0.2679      1.091      0.246      0.806      -1.870       2.406
+=====================================================================================================
+
+--- Analyzing gpt-4.1-2025-04-14 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gpt-4.1-2025-04-14_GPSA_redacted_temp0.0_1754588833_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    193
+0    135
+Name: count, dtype: int64
+
+Answer change%: 0.5884 [0.5351568780743835, 0.6416723902182994] (n=328)
+P-value vs 25%: 1.327e-35; P-value vs 0%: 5.509e-104
+Phase 2 self-accuracy: 0.0203 [0.0006095042767444506, 0.03999963277909311] (n=197)
+P-value vs 25%: 1.21e-115; P-value vs 33%: 1.373e-212
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  328
+Model:                          Logit   Df Residuals:                      326
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02807
+Time:                        11:35:09   Log-Likelihood:                -215.96
+converged:                       True   LL-Null:                       -222.20
+Covariance Type:            nonrobust   LLR p-value:                 0.0004129
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.4990      0.121      4.136      0.000       0.263       0.736
+p_i_capability    -2.5895      0.822     -3.150      0.002      -4.201      -0.978
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  160
+Model:                          Logit   Df Residuals:                      158
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02421
+Time:                        11:35:09   Log-Likelihood:                -108.11
+converged:                       True   LL-Null:                       -110.79
+Covariance Type:            nonrobust   LLR p-value:                   0.02055
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.6659      0.765     -2.178      0.029      -3.165      -0.167
+capabilities_entropy     1.7853      0.828      2.155      0.031       0.162       3.409
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  328
+Model:                          Logit   Df Residuals:                      326
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006026
+Time:                        11:35:09   Log-Likelihood:                -220.86
+converged:                       True   LL-Null:                       -222.20
+Covariance Type:            nonrobust   LLR p-value:                    0.1017
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept        0.0092      0.240      0.039      0.969      -0.460       0.479
+game_entropy     0.5179      0.317      1.636      0.102      -0.103       1.138
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=483.00, p=3.36e-24
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-12.31, p=7.09e-25
+Mean capabilities_entropy-game_entropy = 0.3091  [0.2599, 0.3584] (n=160)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  160
+Model:                          Logit   Df Residuals:                      157
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02434
+Time:                        11:35:09   Log-Likelihood:                -108.09
+converged:                       True   LL-Null:                       -110.79
+Covariance Type:            nonrobust   LLR p-value:                   0.06744
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.6435      0.773     -2.125      0.034      -3.159      -0.128
+capabilities_entropy     1.7047      0.953      1.789      0.074      -0.163       3.573
+game_entropy             0.0856      0.507      0.169      0.866      -0.907       1.079
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  328
+Model:                          Logit   Df Residuals:                      326
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.007150
+Time:                        11:35:09   Log-Likelihood:                -220.61
+converged:                       True   LL-Null:                       -222.20
+Covariance Type:            nonrobust   LLR p-value:                   0.07466
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.2069      0.494      2.445      0.014       0.240       2.174
+human_difficulty    -0.3510      0.198     -1.774      0.076      -0.739       0.037
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  328
+Model:                          Logit   Df Residuals:                      321
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02086
+Time:                        11:35:09   Log-Likelihood:                -217.56
+converged:                       True   LL-Null:                       -222.20
+Covariance Type:            nonrobust   LLR p-value:                    0.1590
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.1792      1.603     -0.112      0.911      -3.322       2.963
+C(domain_grouped)[T.chemistry]        0.3697      0.337      1.096      0.273      -0.292       1.031
+C(domain_grouped)[T.physics]          0.8046      0.356      2.259      0.024       0.107       1.503
+human_difficulty                     -0.3516      0.210     -1.676      0.094      -0.763       0.059
+q_length                              0.1036      0.181      0.571      0.568      -0.252       0.459
+avg_word_length                       0.0686      0.171      0.401      0.689      -0.267       0.404
+percent_non_alphabetic_whitespace     0.0011      0.022      0.052      0.959      -0.041       0.043
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.8838
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  160
+Model:                          Logit   Df Residuals:                      152
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05662
+Time:                        11:35:09   Log-Likelihood:                -104.52
+converged:                       True   LL-Null:                       -110.79
+Covariance Type:            nonrobust   LLR p-value:                   0.08399
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.2769      2.358     -0.117      0.907      -4.899       4.345
+C(domain_grouped)[T.chemistry]       -0.0190      0.453     -0.042      0.967      -0.907       0.870
+C(domain_grouped)[T.physics]          0.4388      0.479      0.916      0.360      -0.500       1.378
+human_difficulty                     -0.3929      0.311     -1.262      0.207      -1.003       0.217
+q_length                             -0.3787      0.261     -1.449      0.147      -0.891       0.134
+avg_word_length                       0.3384      0.238      1.423      0.155      -0.128       0.804
+percent_non_alphabetic_whitespace    -0.0196      0.032     -0.613      0.540      -0.082       0.043
+capabilities_entropy                  1.9040      0.861      2.211      0.027       0.216       3.592
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  328
+Model:                          Logit   Df Residuals:                      320
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02707
+Time:                        11:35:09   Log-Likelihood:                -216.18
+converged:                       True   LL-Null:                       -222.20
+Covariance Type:            nonrobust   LLR p-value:                   0.09953
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.6388      1.636     -0.390      0.696      -3.845       2.568
+C(domain_grouped)[T.chemistry]        0.4264      0.341      1.250      0.211      -0.242       1.095
+C(domain_grouped)[T.physics]          0.8277      0.358      2.314      0.021       0.127       1.529
+human_difficulty                     -0.3531      0.211     -1.676      0.094      -0.766       0.060
+q_length                              0.1012      0.182      0.556      0.578      -0.256       0.458
+avg_word_length                       0.0840      0.172      0.487      0.626      -0.254       0.422
+percent_non_alphabetic_whitespace     0.0023      0.022      0.104      0.917      -0.040       0.045
+game_entropy                          0.5370      0.323      1.660      0.097      -0.097       1.171
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  160
+Model:                          Logit   Df Residuals:                      151
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05697
+Time:                        11:35:09   Log-Likelihood:                -104.48
+converged:                       True   LL-Null:                       -110.79
+Covariance Type:            nonrobust   LLR p-value:                    0.1255
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.2306      2.364     -0.098      0.922      -4.864       4.402
+C(domain_grouped)[T.chemistry]       -0.0060      0.456     -0.013      0.990      -0.900       0.888
+C(domain_grouped)[T.physics]          0.4486      0.480      0.934      0.350      -0.493       1.390
+human_difficulty                     -0.3965      0.312     -1.272      0.203      -1.008       0.215
+q_length                             -0.3815      0.261     -1.460      0.144      -0.894       0.131
+avg_word_length                       0.3384      0.238      1.422      0.155      -0.128       0.805
+percent_non_alphabetic_whitespace    -0.0196      0.032     -0.613      0.540      -0.082       0.043
+capabilities_entropy                  1.7753      0.973      1.825      0.068      -0.131       3.682
+game_entropy                          0.1464      0.524      0.280      0.780      -0.880       1.173
+=====================================================================================================
+
+--- Analyzing gpt-4o-2024-08-06 (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gpt-4o-2024-08-06_GPSA_redacted_cor_temp0.0_1754598914_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    43
+1    33
+Name: count, dtype: int64
+
+Answer change%: 0.4342 [0.3227762234844308, 0.5456448291471482] (n=76)
+P-value vs 25%: 0.001195; P-value vs 0%: 2.221e-14
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=33)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   76
+Model:                          Logit   Df Residuals:                       74
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02670
+Time:                        11:35:09   Log-Likelihood:                -50.631
+converged:                       True   LL-Null:                       -52.019
+Covariance Type:            nonrobust   LLR p-value:                   0.09558
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.1351      0.244     -0.554      0.580      -0.613       0.343
+p_i_capability    -2.4985      1.771     -1.411      0.158      -5.970       0.973
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   35
+Model:                          Logit   Df Residuals:                       33
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06445
+Time:                        11:35:09   Log-Likelihood:                -22.361
+converged:                       True   LL-Null:                       -23.902
+Covariance Type:            nonrobust   LLR p-value:                   0.07921
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.7951      1.783     -1.567      0.117      -6.291       0.700
+capabilities_entropy     2.8291      1.904      1.486      0.137      -0.904       6.562
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   76
+Model:                          Logit   Df Residuals:                       74
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.006844
+Time:                        11:35:09   Log-Likelihood:                -51.663
+converged:                       True   LL-Null:                       -52.019
+Covariance Type:            nonrobust   LLR p-value:                    0.3988
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.7631      0.647     -1.180      0.238      -2.031       0.505
+game_entropy     0.6436      0.773      0.832      0.405      -0.872       2.159
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=51.00, p=2.04e-06
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-4.10, p=0.000241
+Mean capabilities_entropy-game_entropy = 0.2053  [0.1072, 0.3034] (n=35)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   35
+Model:                          Logit   Df Residuals:                       32
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06505
+Time:                        11:35:09   Log-Likelihood:                -22.347
+converged:                       True   LL-Null:                       -23.902
+Covariance Type:            nonrobust   LLR p-value:                    0.2112
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.8040      1.793     -1.564      0.118      -6.318       0.710
+capabilities_entropy     2.6820      2.099      1.278      0.201      -1.432       6.796
+game_entropy             0.2049      1.213      0.169      0.866      -2.173       2.582
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   76
+Model:                          Logit   Df Residuals:                       74
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01724
+Time:                        11:35:09   Log-Likelihood:                -51.122
+converged:                       True   LL-Null:                       -52.019
+Covariance Type:            nonrobust   LLR p-value:                    0.1804
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            1.1467      1.101      1.042      0.297      -1.010       3.304
+human_difficulty    -0.6415      0.492     -1.304      0.192      -1.605       0.322
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   76
+Model:                          Logit   Df Residuals:                       69
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03802
+Time:                        11:35:09   Log-Likelihood:                -50.042
+converged:                       True   LL-Null:                       -52.019
+Covariance Type:            nonrobust   LLR p-value:                    0.6828
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             3.8295      3.733      1.026      0.305      -3.487      11.146
+C(domain_grouped)[T.chemistry]        0.3926      0.911      0.431      0.667      -1.394       2.179
+C(domain_grouped)[T.physics]         -0.0552      0.845     -0.065      0.948      -1.711       1.600
+human_difficulty                     -0.5834      0.513     -1.138      0.255      -1.588       0.421
+q_length                             -0.4406      0.463     -0.952      0.341      -1.347       0.466
+avg_word_length                       0.0060      0.481      0.013      0.990      -0.936       0.948
+percent_non_alphabetic_whitespace    -0.0306      0.044     -0.694      0.488      -0.117       0.056
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.8603
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   35
+Model:                          Logit   Df Residuals:                       27
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.3478
+Time:                        11:35:09   Log-Likelihood:                -15.590
+converged:                       True   LL-Null:                       -23.902
+Covariance Type:            nonrobust   LLR p-value:                   0.01999
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.6439      6.921     -0.093      0.926     -14.209      12.922
+C(domain_grouped)[T.chemistry]        2.9130      1.856      1.570      0.116      -0.724       6.550
+C(domain_grouped)[T.physics]          0.8888      1.472      0.604      0.546      -1.997       3.774
+human_difficulty                     -0.8411      0.947     -0.888      0.375      -2.698       1.016
+q_length                             -1.2818      1.009     -1.270      0.204      -3.260       0.696
+avg_word_length                       1.0584      0.831      1.274      0.203      -0.570       2.686
+percent_non_alphabetic_whitespace    -0.1323      0.101     -1.307      0.191      -0.331       0.066
+capabilities_entropy                  4.9516      2.935      1.687      0.092      -0.801      10.704
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   76
+Model:                          Logit   Df Residuals:                       68
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05579
+Time:                        11:35:09   Log-Likelihood:                -49.117
+converged:                       True   LL-Null:                       -52.019
+Covariance Type:            nonrobust   LLR p-value:                    0.5628
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             3.2342      3.770      0.858      0.391      -4.154      10.623
+C(domain_grouped)[T.chemistry]        0.4616      0.925      0.499      0.618      -1.352       2.275
+C(domain_grouped)[T.physics]         -0.2887      0.877     -0.329      0.742      -2.008       1.431
+human_difficulty                     -0.7213      0.558     -1.292      0.196      -1.816       0.373
+q_length                             -0.4192      0.468     -0.896      0.370      -1.336       0.498
+avg_word_length                       0.0101      0.479      0.021      0.983      -0.930       0.950
+percent_non_alphabetic_whitespace    -0.0342      0.045     -0.760      0.447      -0.122       0.054
+game_entropy                          1.1841      0.903      1.311      0.190      -0.586       2.954
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   35
+Model:                          Logit   Df Residuals:                       26
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.3513
+Time:                        11:35:09   Log-Likelihood:                -15.504
+converged:                       True   LL-Null:                       -23.902
+Covariance Type:            nonrobust   LLR p-value:                   0.03231
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.2141      7.092     -0.030      0.976     -14.114      13.685
+C(domain_grouped)[T.chemistry]        2.8805      1.867      1.543      0.123      -0.779       6.540
+C(domain_grouped)[T.physics]          0.5740      1.674      0.343      0.732      -2.707       3.855
+human_difficulty                     -1.0142      1.086     -0.934      0.350      -3.143       1.115
+q_length                             -1.1095      1.109     -1.000      0.317      -3.284       1.065
+avg_word_length                       0.8979      0.920      0.976      0.329      -0.904       2.700
+percent_non_alphabetic_whitespace    -0.1314      0.098     -1.334      0.182      -0.324       0.062
+capabilities_entropy                  4.2080      3.369      1.249      0.212      -2.395      10.811
+game_entropy                          0.8027      1.980      0.405      0.685      -3.078       4.683
+=====================================================================================================
+
+--- Analyzing gpt-4o-2024-08-06 (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/gpt-4o-2024-08-06_GPSA_redacted_temp0.0_1754598302_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    184
+0    173
+Name: count, dtype: int64
+
+Answer change%: 0.5154 [0.4635646420708259, 0.567247682859146] (n=357)
+P-value vs 25%: 1.079e-23; P-value vs 0%: 1.447e-84
+Phase 2 self-accuracy: 0.0265 [0.003575380571959351, 0.049334672338093556] (n=189)
+P-value vs 25%: 9.72e-82; P-value vs 33%: 5.51e-152
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  357
+Model:                          Logit   Df Residuals:                      355
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01302
+Time:                        11:35:09   Log-Likelihood:                -244.06
+converged:                       True   LL-Null:                       -247.28
+Covariance Type:            nonrobust   LLR p-value:                   0.01116
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.1416      0.111      1.278      0.201      -0.076       0.359
+p_i_capability    -1.7980      0.775     -2.321      0.020      -3.316      -0.280
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  154
+Model:                          Logit   Df Residuals:                      152
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.004580
+Time:                        11:35:09   Log-Likelihood:                -101.02
+converged:                       True   LL-Null:                       -101.49
+Covariance Type:            nonrobust   LLR p-value:                    0.3349
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.1794      0.718     -1.643      0.100      -2.586       0.227
+capabilities_entropy     0.7237      0.774      0.935      0.350      -0.793       2.241
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  357
+Model:                          Logit   Df Residuals:                      355
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0004230
+Time:                        11:35:09   Log-Likelihood:                -247.18
+converged:                       True   LL-Null:                       -247.28
+Covariance Type:            nonrobust   LLR p-value:                    0.6474
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.0817      0.331     -0.247      0.805      -0.730       0.567
+game_entropy     0.1755      0.384      0.457      0.647      -0.577       0.928
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=1130.00, p=2.64e-18
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-8.16, p=1.16e-13
+Mean capabilities_entropy-game_entropy = 0.1742  [0.1324, 0.2161] (n=154)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  154
+Model:                          Logit   Df Residuals:                      151
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01241
+Time:                        11:35:09   Log-Likelihood:                -100.23
+converged:                       True   LL-Null:                       -101.49
+Covariance Type:            nonrobust   LLR p-value:                    0.2839
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.2275      0.725     -1.692      0.091      -2.649       0.194
+capabilities_entropy     1.4105      0.954      1.478      0.139      -0.459       3.280
+game_entropy            -0.7934      0.629     -1.261      0.207      -2.027       0.440
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  357
+Model:                          Logit   Df Residuals:                      355
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.005096
+Time:                        11:35:09   Log-Likelihood:                -246.02
+converged:                       True   LL-Null:                       -247.28
+Covariance Type:            nonrobust   LLR p-value:                    0.1124
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.7528      0.450      1.672      0.094      -0.130       1.635
+human_difficulty    -0.2879      0.182     -1.580      0.114      -0.645       0.069
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  357
+Model:                          Logit   Df Residuals:                      350
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03006
+Time:                        11:35:09   Log-Likelihood:                -239.85
+converged:                       True   LL-Null:                       -247.28
+Covariance Type:            nonrobust   LLR p-value:                   0.02130
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -2.7584      1.578     -1.748      0.080      -5.851       0.335
+C(domain_grouped)[T.chemistry]        0.3035      0.334      0.909      0.363      -0.351       0.958
+C(domain_grouped)[T.physics]          0.2174      0.340      0.639      0.523      -0.450       0.885
+human_difficulty                     -0.2237      0.192     -1.168      0.243      -0.599       0.152
+q_length                              0.2655      0.178      1.491      0.136      -0.083       0.614
+avg_word_length                       0.2283      0.173      1.319      0.187      -0.111       0.568
+percent_non_alphabetic_whitespace     0.0623      0.022      2.804      0.005       0.019       0.106
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.8890
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  154
+Model:                          Logit   Df Residuals:                      146
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05259
+Time:                        11:35:09   Log-Likelihood:                -96.153
+converged:                       True   LL-Null:                       -101.49
+Covariance Type:            nonrobust   LLR p-value:                    0.1535
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.9291      2.849     -1.379      0.168      -9.513       1.655
+C(domain_grouped)[T.chemistry]        0.0874      0.482      0.181      0.856      -0.858       1.032
+C(domain_grouped)[T.physics]         -0.1156      0.505     -0.229      0.819      -1.105       0.873
+human_difficulty                      0.0379      0.313      0.121      0.904      -0.576       0.652
+q_length                             -0.1410      0.274     -0.515      0.607      -0.677       0.395
+avg_word_length                       0.5164      0.293      1.762      0.078      -0.058       1.091
+percent_non_alphabetic_whitespace     0.0752      0.032      2.360      0.018       0.013       0.138
+capabilities_entropy                  1.1556      0.847      1.364      0.173      -0.505       2.816
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  357
+Model:                          Logit   Df Residuals:                      349
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03181
+Time:                        11:35:09   Log-Likelihood:                -239.42
+converged:                       True   LL-Null:                       -247.28
+Covariance Type:            nonrobust   LLR p-value:                   0.02768
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -3.1721      1.653     -1.919      0.055      -6.412       0.068
+C(domain_grouped)[T.chemistry]        0.3305      0.336      0.985      0.325      -0.327       0.988
+C(domain_grouped)[T.physics]          0.2333      0.341      0.683      0.494      -0.436       0.903
+human_difficulty                     -0.2205      0.192     -1.151      0.250      -0.596       0.155
+q_length                              0.2664      0.179      1.489      0.136      -0.084       0.617
+avg_word_length                       0.2418      0.175      1.381      0.167      -0.101       0.585
+percent_non_alphabetic_whitespace     0.0643      0.022      2.877      0.004       0.020       0.108
+game_entropy                          0.3711      0.400      0.927      0.354      -0.413       1.155
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  154
+Model:                          Logit   Df Residuals:                      145
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05979
+Time:                        11:35:09   Log-Likelihood:                -95.421
+converged:                       True   LL-Null:                       -101.49
+Covariance Type:            nonrobust   LLR p-value:                    0.1452
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -4.2048      2.853     -1.474      0.141      -9.797       1.388
+C(domain_grouped)[T.chemistry]       -0.0137      0.492     -0.028      0.978      -0.977       0.950
+C(domain_grouped)[T.physics]         -0.1810      0.510     -0.355      0.723      -1.180       0.818
+human_difficulty                      0.0165      0.316      0.052      0.958      -0.602       0.635
+q_length                             -0.1220      0.273     -0.447      0.655      -0.658       0.414
+avg_word_length                       0.5624      0.295      1.905      0.057      -0.016       1.141
+percent_non_alphabetic_whitespace     0.0760      0.032      2.374      0.018       0.013       0.139
+capabilities_entropy                  1.8604      1.034      1.799      0.072      -0.167       3.888
+game_entropy                         -0.8107      0.670     -1.211      0.226      -2.123       0.502
+=====================================================================================================
+
+--- Analyzing grok-3-latest (Redacted, Correct, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/grok-3-latest_GPSA_redacted_cor_temp0.0_1754603504_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+0    60
+1    12
+Name: count, dtype: int64
+
+Answer change%: 0.1667 [0.08058402329103309, 0.2527493100423002] (n=72)
+P-value vs 25%: 0.05778; P-value vs 0%: 0.0001478
+Phase 2 self-accuracy: 0.0000 [0.0, 0.0] (n=12)
+P-value vs 25%: 0; P-value vs 33%: 0
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   72
+Model:                          Logit   Df Residuals:                       70
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01611
+Time:                        11:35:09   Log-Likelihood:                -31.918
+converged:                       True   LL-Null:                       -32.440
+Covariance Type:            nonrobust   LLR p-value:                    0.3066
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -1.4694      0.338     -4.344      0.000      -2.132      -0.806
+p_i_capability    -1.8963      2.232     -0.850      0.396      -6.271       2.478
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   68
+Model:                          Logit   Df Residuals:                       66
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.008512
+Time:                        11:35:09   Log-Likelihood:                -26.351
+converged:                       True   LL-Null:                       -26.577
+Covariance Type:            nonrobust   LLR p-value:                    0.5012
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -3.0279      1.998     -1.516      0.130      -6.943       0.887
+capabilities_entropy     1.2552      2.106      0.596      0.551      -2.872       5.382
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   72
+Model:                          Logit   Df Residuals:                       70
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0002483
+Time:                        11:35:09   Log-Likelihood:                -32.432
+converged:                       True   LL-Null:                       -32.440
+Covariance Type:            nonrobust   LLR p-value:                    0.8990
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -1.5531      0.541     -2.869      0.004      -2.614      -0.492
+game_entropy    -0.1008      0.793     -0.127      0.899      -1.656       1.454
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=250.00, p=1.7e-08
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-6.81, p=3.3e-09
+Mean capabilities_entropy-game_entropy = 0.3310  [0.2357, 0.4262] (n=68)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   68
+Model:                          Logit   Df Residuals:                       65
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01244
+Time:                        11:35:09   Log-Likelihood:                -26.246
+converged:                       True   LL-Null:                       -26.577
+Covariance Type:            nonrobust   LLR p-value:                    0.7185
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -2.9855      1.989     -1.501      0.133      -6.883       0.912
+capabilities_entropy     1.4564      2.134      0.682      0.495      -2.727       5.640
+game_entropy            -0.4110      0.895     -0.459      0.646      -2.166       1.344
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   72
+Model:                          Logit   Df Residuals:                       70
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:               0.0002921
+Time:                        11:35:09   Log-Likelihood:                -32.431
+converged:                       True   LL-Null:                       -32.440
+Covariance Type:            nonrobust   LLR p-value:                    0.8905
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept           -1.4537      1.173     -1.239      0.215      -3.753       0.846
+human_difficulty    -0.0684      0.498     -0.137      0.891      -1.045       0.908
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   72
+Model:                          Logit   Df Residuals:                       65
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.06397
+Time:                        11:35:09   Log-Likelihood:                -30.365
+converged:                       True   LL-Null:                       -32.440
+Covariance Type:            nonrobust   LLR p-value:                    0.6563
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             4.3466      5.710      0.761      0.447      -6.845      15.538
+C(domain_grouped)[T.chemistry]        1.3799      1.279      1.079      0.281      -1.127       3.887
+C(domain_grouped)[T.physics]          0.9591      1.222      0.785      0.432      -1.436       3.354
+human_difficulty                     -0.0935      0.507     -0.184      0.854      -1.087       0.900
+q_length                             -0.0066      0.679     -0.010      0.992      -1.337       1.324
+avg_word_length                      -1.2874      0.813     -1.584      0.113      -2.881       0.306
+percent_non_alphabetic_whitespace    -0.1122      0.077     -1.461      0.144      -0.263       0.038
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.8918
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   68
+Model:                          Logit   Df Residuals:                       60
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1176
+Time:                        11:35:09   Log-Likelihood:                -23.452
+converged:                       True   LL-Null:                       -26.577
+Covariance Type:            nonrobust   LLR p-value:                    0.5109
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             6.8953      7.233      0.953      0.340      -7.282      21.072
+C(domain_grouped)[T.chemistry]        1.0359      1.336      0.775      0.438      -1.583       3.654
+C(domain_grouped)[T.physics]         -0.1533      1.382     -0.111      0.912      -2.861       2.555
+human_difficulty                     -1.3355      0.781     -1.710      0.087      -2.866       0.195
+q_length                             -0.7773      0.924     -0.841      0.400      -2.589       1.034
+avg_word_length                      -0.6250      0.796     -0.785      0.433      -2.186       0.936
+percent_non_alphabetic_whitespace    -0.0475      0.076     -0.627      0.531      -0.196       0.101
+capabilities_entropy                  1.7770      2.408      0.738      0.461      -2.944       6.498
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   72
+Model:                          Logit   Df Residuals:                       64
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.07023
+Time:                        11:35:09   Log-Likelihood:                -30.162
+converged:                       True   LL-Null:                       -32.440
+Covariance Type:            nonrobust   LLR p-value:                    0.7139
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             5.8852      6.215      0.947      0.344      -6.296      18.066
+C(domain_grouped)[T.chemistry]        1.3347      1.295      1.031      0.303      -1.204       3.873
+C(domain_grouped)[T.physics]          0.9337      1.222      0.764      0.445      -1.462       3.330
+human_difficulty                     -0.1159      0.502     -0.231      0.818      -1.100       0.869
+q_length                             -0.0549      0.696     -0.079      0.937      -1.419       1.309
+avg_word_length                      -1.4580      0.864     -1.687      0.092      -3.152       0.236
+percent_non_alphabetic_whitespace    -0.1235      0.081     -1.531      0.126      -0.282       0.035
+game_entropy                         -0.5655      0.888     -0.637      0.524      -2.306       1.175
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                   68
+Model:                          Logit   Df Residuals:                       59
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                  0.1240
+Time:                        11:35:09   Log-Likelihood:                -23.281
+converged:                       True   LL-Null:                       -26.577
+Covariance Type:            nonrobust   LLR p-value:                    0.5813
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             7.7757      7.382      1.053      0.292      -6.692      22.243
+C(domain_grouped)[T.chemistry]        1.0345      1.347      0.768      0.442      -1.605       3.674
+C(domain_grouped)[T.physics]         -0.1261      1.370     -0.092      0.927      -2.811       2.559
+human_difficulty                     -1.3237      0.772     -1.715      0.086      -2.837       0.189
+q_length                             -0.7973      0.938     -0.850      0.395      -2.635       1.041
+avg_word_length                      -0.7405      0.823     -0.899      0.368      -2.354       0.873
+percent_non_alphabetic_whitespace    -0.0550      0.079     -0.696      0.487      -0.210       0.100
+capabilities_entropy                  1.8982      2.332      0.814      0.416      -2.673       6.469
+game_entropy                         -0.5755      0.983     -0.585      0.558      -2.502       1.351
+=====================================================================================================
+
+--- Analyzing grok-3-latest (Redacted, Incorrect, 1 game files) ---
+              Game files for analysis: ['./sc_logs_new/grok-3-latest_GPSA_redacted_temp0.0_1754602327_game_data_evaluated.json']
+
+                  Delegation to teammate occurred: Not found
+                  Phase 1 self-accuracy (from completed results, total - phase2): Not found
+                  Phase 2 self-accuracy: Not found
+                  Statistical test (P2 self vs P1): Not found
+df_model['answer_changed'].value_counts()= answer_changed
+1    196
+0    174
+Name: count, dtype: int64
+
+Answer change%: 0.5297 [0.4788730310676397, 0.5805864283918198] (n=370)
+P-value vs 25%: 4.256e-27; P-value vs 0%: 1.225e-92
+Phase 2 self-accuracy: 0.0202 [0.0006054004276746551, 0.03979863997636575] (n=198)
+P-value vs 25%: 6.842e-117; P-value vs 33%: 7.555e-215
+
+  Model 1.4: Answer Changed ~ capabilities_prob
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  370
+Model:                          Logit   Df Residuals:                      368
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02738
+Time:                        11:35:10   Log-Likelihood:                -248.81
+converged:                       True   LL-Null:                       -255.81
+Covariance Type:            nonrobust   LLR p-value:                 0.0001821
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept          0.2786      0.113      2.455      0.014       0.056       0.501
+p_i_capability    -2.2362      0.669     -3.342      0.001      -3.548      -0.925
+==================================================================================
+
+  Model 1.5: Answer Changed ~ capabilities_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  319
+Model:                          Logit   Df Residuals:                      317
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02456
+Time:                        11:35:10   Log-Likelihood:                -215.68
+converged:                       True   LL-Null:                       -221.11
+Covariance Type:            nonrobust   LLR p-value:                 0.0009813
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.8269      0.627     -2.912      0.004      -3.057      -0.597
+capabilities_entropy     1.9839      0.664      2.988      0.003       0.683       3.285
+========================================================================================
+
+  Model 1.6: Answer Changed ~ Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  370
+Model:                          Logit   Df Residuals:                      368
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.01045
+Time:                        11:35:10   Log-Likelihood:                -253.14
+converged:                       True   LL-Null:                       -255.81
+Covariance Type:            nonrobust   LLR p-value:                   0.02078
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept       -0.3314      0.222     -1.492      0.136      -0.767       0.104
+game_entropy     0.6960      0.303      2.299      0.022       0.103       1.289
+================================================================================
+
+  Idea 5: Game entropy is different than capabilities entropy
+Wilcoxon (game_entropy vs capabilities_entropy): statistic=5337.00, p=1.84e-34
+Paired t-test (game_entropy vs capabilities_entropy): statistic=-14.24, p=6.17e-36
+Mean capabilities_entropy-game_entropy = 0.2662  [0.2295, 0.3028] (n=319)
+
+  Model 1.7: Answer Changed ~ capabilities_entropy + Game Entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  319
+Model:                          Logit   Df Residuals:                      316
+Method:                           MLE   Df Model:                            2
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02659
+Time:                        11:35:10   Log-Likelihood:                -215.23
+converged:                       True   LL-Null:                       -221.11
+Covariance Type:            nonrobust   LLR p-value:                  0.002800
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               -1.8590      0.630     -2.952      0.003      -3.093      -0.625
+capabilities_entropy     1.7858      0.697      2.563      0.010       0.420       3.151
+game_entropy             0.3296      0.349      0.945      0.345      -0.354       1.013
+========================================================================================
+
+  Model 2: Answer Changed ~ human_difficulty
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  370
+Model:                          Logit   Df Residuals:                      368
+Method:                           MLE   Df Model:                            1
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                0.007367
+Time:                        11:35:10   Log-Likelihood:                -253.93
+converged:                       True   LL-Null:                       -255.81
+Covariance Type:            nonrobust   LLR p-value:                   0.05221
+====================================================================================
+                       coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------------
+Intercept            0.9906      0.464      2.134      0.033       0.081       1.901
+human_difficulty    -0.3658      0.190     -1.929      0.054      -0.737       0.006
+====================================================================================
+                  Grouped rare domain into 'Misc'/'Other': None
+
+                  Model 4 (No Interactions): answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  370
+Model:                          Logit   Df Residuals:                      363
+Method:                           MLE   Df Model:                            6
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.02010
+Time:                        11:35:10   Log-Likelihood:                -250.67
+converged:                       True   LL-Null:                       -255.81
+Covariance Type:            nonrobust   LLR p-value:                    0.1132
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             1.2314      1.553      0.793      0.428      -1.813       4.276
+C(domain_grouped)[T.chemistry]        0.0824      0.328      0.251      0.802      -0.561       0.726
+C(domain_grouped)[T.physics]          0.4960      0.336      1.478      0.139      -0.162       1.154
+human_difficulty                     -0.3196      0.199     -1.608      0.108      -0.709       0.070
+q_length                             -0.0089      0.168     -0.053      0.958      -0.339       0.321
+avg_word_length                      -0.1225      0.177     -0.693      0.488      -0.469       0.224
+percent_non_alphabetic_whitespace     0.0044      0.020      0.220      0.826      -0.035       0.044
+=====================================================================================================
+
+                  Model 4.6: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy
+Mean capabilities_entropy = 0.9107
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  319
+Model:                          Logit   Df Residuals:                      311
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.04676
+Time:                        11:35:10   Log-Likelihood:                -210.77
+converged:                       True   LL-Null:                       -221.11
+Covariance Type:            nonrobust   LLR p-value:                  0.004277
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.5120      1.766     -0.290      0.772      -3.973       2.949
+C(domain_grouped)[T.chemistry]       -0.0774      0.348     -0.223      0.824      -0.759       0.604
+C(domain_grouped)[T.physics]          0.4301      0.353      1.219      0.223      -0.261       1.122
+human_difficulty                     -0.4772      0.221     -2.156      0.031      -0.911      -0.043
+q_length                             -0.0824      0.180     -0.457      0.648      -0.436       0.271
+avg_word_length                       0.0334      0.185      0.181      0.856      -0.328       0.395
+percent_non_alphabetic_whitespace     0.0115      0.021      0.548      0.584      -0.030       0.053
+capabilities_entropy                  1.9124      0.671      2.848      0.004       0.596       3.228
+=====================================================================================================
+
+                  Model 4.8: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  370
+Model:                          Logit   Df Residuals:                      362
+Method:                           MLE   Df Model:                            7
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.03379
+Time:                        11:35:10   Log-Likelihood:                -247.17
+converged:                       True   LL-Null:                       -255.81
+Covariance Type:            nonrobust   LLR p-value:                   0.01563
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                             0.7669      1.576      0.487      0.626      -2.321       3.855
+C(domain_grouped)[T.chemistry]        0.1624      0.333      0.488      0.626      -0.490       0.815
+C(domain_grouped)[T.physics]          0.5951      0.341      1.747      0.081      -0.073       1.263
+human_difficulty                     -0.3434      0.201     -1.712      0.087      -0.737       0.050
+q_length                             -0.0326      0.170     -0.192      0.848      -0.366       0.301
+avg_word_length                      -0.1122      0.178     -0.632      0.527      -0.460       0.236
+percent_non_alphabetic_whitespace     0.0054      0.020      0.271      0.786      -0.034       0.045
+game_entropy                          0.8197      0.313      2.623      0.009       0.207       1.432
+=====================================================================================================
+
+                  Model 4.95: answer_changed ~ human_difficulty + q_length + C(domain_grouped) + avg_word_length + percent_non_alphabetic_whitespace + capabilities_entropy + game_entropy
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:         answer_changed   No. Observations:                  319
+Model:                          Logit   Df Residuals:                      310
+Method:                           MLE   Df Model:                            8
+Date:                Sat, 23 Aug 2025   Pseudo R-squ.:                 0.05051
+Time:                        11:35:10   Log-Likelihood:                -209.94
+converged:                       True   LL-Null:                       -221.11
+Covariance Type:            nonrobust   LLR p-value:                  0.004329
+=====================================================================================================
+                                        coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------
+Intercept                            -0.4999      1.774     -0.282      0.778      -3.978       2.978
+C(domain_grouped)[T.chemistry]       -0.0297      0.351     -0.085      0.932      -0.717       0.658
+C(domain_grouped)[T.physics]          0.4873      0.356      1.368      0.171      -0.211       1.186
+human_difficulty                     -0.4863      0.222     -2.192      0.028      -0.921      -0.051
+q_length                             -0.0959      0.181     -0.530      0.596      -0.451       0.259
+avg_word_length                       0.0330      0.185      0.178      0.858      -0.330       0.396
+percent_non_alphabetic_whitespace     0.0115      0.021      0.547      0.584      -0.030       0.053
+capabilities_entropy                  1.6378      0.706      2.319      0.020       0.254       3.022
+game_entropy                          0.4632      0.361      1.285      0.199      -0.243       1.170
+=====================================================================================================

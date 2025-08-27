@@ -117,7 +117,7 @@ def extract_file_key(filename):
 def build_neutral_file_lookup(neutral_logs_dir, dataset_name):
     """Build a lookup dictionary for neutral files based on their key components."""
     lookup = {}
-    suffix = "_game_data.json" if dataset_name == "SimpleMC" else "_game_data_evaluated.json"
+    suffix = "_game_data.json" if dataset_name == "GPQA" else "_game_data_evaluated.json"
     
     for filename in os.listdir(neutral_logs_dir):
         if filename.endswith(suffix):
@@ -527,7 +527,7 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "GPSA"#"GPQA" #
+    dataset = "GPQA" #"GPSA"#
     game_type = "sc"
     sc_version = "_new"  # "_new" or ""
     suffix = "_all"  # "_all" or ""

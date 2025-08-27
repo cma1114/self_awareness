@@ -105,13 +105,14 @@ def plot_accuracy_chart(df: pd.DataFrame, model_order: list, dataset):
     )
 
     # Add the horizontal line at 25% for chance
-    ax.axhline(
-        y=0.25,
-        color='red',
-        linestyle='--',
-        linewidth=2,
-        label='Chance Accuracy (25%)'
-    )
+    if dataset == "GPQA" or dataset == "SimpleMC":
+        ax.axhline(
+            y=0.25,
+            color='red',
+            linestyle='--',
+            linewidth=2,
+            label='Chance Accuracy (25%)'
+        )
 
     # --- 3. Styling and Formatting ---
     # Set titles and labels
@@ -137,7 +138,7 @@ def plot_accuracy_chart(df: pd.DataFrame, model_order: list, dataset):
 
 model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
 
-dataset = "GPQA"
+dataset = "SimpleQA"
 
 file_path = f'analysis_log_multi_logres_sc_{dataset.lower()}_new.txt'
 with open(file_path, 'r') as f:

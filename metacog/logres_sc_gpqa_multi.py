@@ -301,7 +301,7 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "GPSA"#"GPQA" #
+    dataset = "GPQA" #"GPSA"#
     game_type = "sc"
     sc_version = "_new"  # "_new" or "" or "_neut"
     suffix = "_all"  # "_all" or ""

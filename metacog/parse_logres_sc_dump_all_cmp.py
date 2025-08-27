@@ -374,7 +374,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_Game_vs_Neut
 
 if __name__ == "__main__":
     
-    dataset = "GPSA" #"SimpleQA" #"SimpleMC" #"GPQA"#
+    dataset = "SimpleMC" #"GPQA"#"GPSA" #"SimpleQA" #
     suffix = "_vs_neutral"
     corstr  = "" # "_cor", "_incor", ""
     sc_version = "_new"  # "_new" or "" or "_neut"
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     input_log_filename = f"analysis_log_multi_logres_sc_{dataset.lower()}{sc_version}{corsuffix}{suffix}.txt"
     output_filename = f"{input_log_filename.split('.')[0]}_parsed.txt"
     
-    model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
+    model_list = ['gemini-2.5-flash-lite', 'qwen3-235b-a22b-2507', 'grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
 
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:
