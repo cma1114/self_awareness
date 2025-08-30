@@ -116,7 +116,8 @@ class AnswerOrPassGame(BaseGameClass):
     def _determine_question_type(self):
         """Determine if the dataset is multiple choice or short answer."""
         # Get the first result
-        first_result = next(iter(self.completed_data["results"].values()))
+        result = next(iter(self.completed_data["results"].values()))
+        first_result = result['question'] if isinstance(result['question'], dict) else result
         
         # If it has options, it's multiple choice
         self.is_short_answer = not ("options" in first_result and isinstance(first_result["options"], dict) and len(first_result["options"]) > 0)
@@ -177,10 +178,11 @@ class AnswerOrPassGame(BaseGameClass):
             else:
                 # Handle MCQ format (e.g., from completed_results_gpqa)
                 # 'question' is expected to be a string (the question text itself)
-                question_data_for_list["question"] = result_item.get("question", "N/A")
-                question_data_for_list["options"] = result_item.get("options", {})
+                result = result_item['question'] if isinstance(result_item['question'], dict) else result_item
+                question_data_for_list["question"] = result.get("question", "N/A")
+                question_data_for_list["options"] = result.get("options", {})
                 # For MCQ, 'correct_answer' field stores the option label (e.g., 'A', 'B')
-                question_data_for_list["correct_answer"] = result_item.get("correct_answer_label", "N/A")
+                question_data_for_list["correct_answer"] = result.get("correct_answer_label", "N/A") if "correct_answer_label" in result else result.get("correct_answer", "N/A")                
             
             # Add to the appropriate list
             if question_data_for_list["is_correct"]:
@@ -716,8 +718,8 @@ def real_main(SUBJECT_NAME, DATASET):
 def main():
     """Main function to run the delegate game from completed results"""
     
-    DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    models = ["claude-3-sonnet-20240229"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    models = ["gemini-2.5-flash-lite"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"gemini-2.5-flash-lite"#
 
     for model in models:
         for DATASET in DATASETS:

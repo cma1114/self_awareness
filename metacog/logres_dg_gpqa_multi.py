@@ -355,7 +355,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "GPQA"#"GPSA"# 
-    game_type = "aop"#"dg"#
+    game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -747,9 +747,10 @@ if __name__ == "__main__":
 
 
 
+                    implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
                     results = compare_predictors_of_answer(
                         np.array(df_model['sp_prob']),
-                        np.array(df_model['capabilities_entropy']),
+                        np.array(df_model[implicit_prob_str]),
                         np.array(df_model['delegate_choice'])
                     )
                     log_output("\n  Predicting delegate_choice")
@@ -767,7 +768,7 @@ if __name__ == "__main__":
 
                     results = compare_predictors_of_answer(
                         np.array(df_model['sp_prob']),
-                        np.array(df_model['capabilities_entropy']),
+                        np.array(df_model[implicit_prob_str]),
                         np.array(df_model['s_i_capability'])
                     )
                     log_output("\nPredicting baseline correctness (s_i_capability):")
@@ -802,14 +803,14 @@ if __name__ == "__main__":
                         log_output(f"better_in_combined: {better_in_combined}")
 
                     if game_type == "aop":
-                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < 0.5).astype(int), df_model['delegate_choice'],df_model['capabilities_entropy'])
+                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < 0.5).astype(int), df_model['delegate_choice'],df_model[implicit_prob_str])
                     else:
-                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < df_model['teammate_skill']).astype(int), df_model['delegate_choice'],df_model['capabilities_entropy'])
+                        results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < df_model['teammate_skill']).astype(int), df_model['delegate_choice'],df_model[implicit_prob_str])
                     log_output(f"\nActual pass correlation: {results['corr_actual']:.3f} (p={results['p_actual']:.4f})")
                     log_output(f"Stated pass correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
                     log_output(f"Actual-Stated Difference: p={results['p_diff']:.4f}")
                     #now leave as continuous
-                    results = compare_predictors_of_implicit_conf(np.array([1-p for p in df_model['sp_prob']]), df_model['delegate_choice'],df_model['capabilities_entropy'])
+                    results = compare_predictors_of_implicit_conf(np.array([1-p for p in df_model['sp_prob']]), df_model['delegate_choice'],df_model[implicit_prob_str])
                     log_output(f"Stated pass continuous correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
                     log_output(f"Actual-Continuous Stated Difference: p={results['p_diff']:.4f}")
 

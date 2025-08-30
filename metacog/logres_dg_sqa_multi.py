@@ -328,7 +328,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA" #"SimpleMC" #
+    dataset = "SimpleMC" #"SimpleQA" #
     game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -724,7 +724,7 @@ if __name__ == "__main__":
                         log_output(f"                    Could not fit Model 1.31: {e_full}")
 
 
-                    implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
+                    implicit_prob_str = 'capabilities_entropy' #'p_i_capability' # 
                     results = compare_predictors_of_answer(
                         np.array(df_model['sp_prob']),
                         np.array(df_model[implicit_prob_str]),

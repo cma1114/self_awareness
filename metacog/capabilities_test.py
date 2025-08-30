@@ -69,7 +69,7 @@ class CapabilitiesTest(BaseGameClass):
             
         self._log(f"Data saved to: {filename}")
 
-    def run_capabilities_measurement_par(self):
+    def run_capabilities_measurement(self):
         """
         Measures a subject's performance on multiple choice questions.
         Uses parallel execution for resampling if configured.
@@ -124,14 +124,14 @@ class CapabilitiesTest(BaseGameClass):
                 task = {
                     "question_obj": question,
                     "prompt": setup_prompt + "\n\n" + llm_prompt,
-                    "options": list(question["options"].keys()),
+                    "options": options,
                     "message_history": [], # no history
                     "epsilon": 0.05,
                 }
                 estimation_tasks.append(task)
             
             # --- Phase 2: Execute all tasks in parallel ---
-            parallel_results = self.run_estimations_in_parallel(estimation_tasks, max_workers=10)
+            parallel_results = self.run_estimations_in_parallel(estimation_tasks, max_workers=4)
 
             # --- Phase 3: Process the results ---
             self._log("Processing results from parallel execution...")
@@ -149,9 +149,9 @@ class CapabilitiesTest(BaseGameClass):
                     subject_decision = subject_answer
                 else:
                     arr = subject_answer.upper().rstrip(".").split()
-                    if arr[0] in list(question["options"].keys()):
+                    if arr[0] in options:
                         subject_decision = arr[0]
-                    elif arr[-1] in list(question["options"].keys()):
+                    elif arr[-1] in options:
                         subject_decision = arr[-1]
                     else:
                         subject_decision = subject_answer
@@ -217,7 +217,7 @@ class CapabilitiesTest(BaseGameClass):
 
                     # Note: self.resample_for_probs is False in this branch
                     subject_answer, _, probs = self._get_llm_answer(
-                        list(question["options"].keys()),
+                        options,
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
                         keep_appending=False,
@@ -230,9 +230,9 @@ class CapabilitiesTest(BaseGameClass):
                     subject_decision = subject_answer
                 else:
                     arr = subject_answer.upper().rstrip(".").split()
-                    if arr[0] in list(question["options"].keys()):
+                    if arr[0] in options:
                         subject_decision = arr[0]
-                    elif arr[-1] in list(question["options"].keys()):
+                    elif arr[-1] in options:
                         subject_decision = arr[-1]
                     else:
                         subject_decision = subject_answer
@@ -276,7 +276,7 @@ class CapabilitiesTest(BaseGameClass):
         self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
         return True, capabilities_file_path
         
-    def run_capabilities_measurement(self):
+    def run_capabilities_measurement_orig(self):
         """
         This measures a subject's performance on multiple choice questions and saves the results to a file.
         
@@ -475,11 +475,11 @@ class CapabilitiesTest(BaseGameClass):
 
 def main():
     IS_HUMAN = False
-    DATASET_NAME = "SimpleMC"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "gemini-2.5-flash-lite"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-haiku-20240307"#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+    subject_name = "claude-3-haiku-20240307"#"gemini-2.5-flash-lite"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/qwen3-235b-a22b-2507_GPQA_447_1756209710_test_data.json" #
-    RESAMPLE = False
-    NESTED = None #values: None, "Self", "Other"
+    RESAMPLE = True
+    NESTED = "Other" #values: None, "Self", "Other"
     temp = 0.0
     seed = 42
     

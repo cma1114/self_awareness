@@ -749,14 +749,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "dg"#"aop" #
-    dataset = "GPQA"
+    game_type = "aop" #"dg"#
+    dataset = "SimpleMC" #"GPQA"
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
+    model_list = ["gemini-2.5-flash-lite", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
     #model_list = ['claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'grok-3-latest', 'gemini-2.0-flash-001', 'deepseek-chat', 'claude-3-5-sonnet-20241022', 'gpt-4o-2024-08-06', 'gemini-1.5-pro', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
     #model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
