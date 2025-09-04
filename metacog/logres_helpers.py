@@ -9,7 +9,327 @@ from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.proportion import proportion_confint
 
 from sklearn.model_selection import cross_val_score
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from scipy import stats
+import warnings
+warnings.filterwarnings('ignore')
+import pandas as pd
+
+def compare_predictors_of_choice(X1, X2, X3, y):
+    ret_str = ""
+    try:
+        df = pd.DataFrame({'X1': X1, 'X2': X2, 'X3': X3, 'y': y})
+        df = df[['X1', 'X2', 'X3', 'y']].dropna()
+        scaler = StandardScaler()
+        X_normalized = scaler.fit_transform(df[['X1', 'X2', 'X3']])
+
+        df_norm = pd.DataFrame(X_normalized, columns=['X1', 'X2', 'X3'])
+        df_norm['y'] = df['y'].values
+
+        ret_str += "="*60
+        ret_str += "\nCORRELATION MATRIX (normalized predictors)\n"
+        ret_str += "="*60 + "\n"
+        ret_str += df_norm[['X1', 'X2', 'X3']].corr().round(3).to_string()
+        ret_str += "\n"
+
+        # Step 3: Univariate analysis - fit separate logistic regression for each predictor
+        results = {}
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+        for var in ['X1', 'X2', 'X3']:
+            # Fit model
+            X = df_norm[[var]].values
+            y = df_norm['y'].values
+            
+            model = LogisticRegression(solver='liblinear')
+            model.fit(X, y)
+            
+            # Get coefficient and p-value
+            coef = model.coef_[0, 0]
+            z_score = coef / (np.sqrt(np.diag(np.linalg.inv(X.T @ X))) * 0.5)  # Approximate SE
+            p_value = 2 * (1 - stats.norm.cdf(np.abs(z_score)))
+            
+            # Calculate AUC with cross-validation
+            auc_scores = cross_val_score(model, X, y, cv=cv, scoring='roc_auc')
+            mean_auc = auc_scores.mean()
+            std_auc = auc_scores.std()
+            
+            # Calculate log-likelihood and AIC
+            probs = model.predict_proba(X)[:, 1]
+            log_likelihood = np.sum(y * np.log(probs + 1e-10) + (1 - y) * np.log(1 - probs + 1e-10))
+            aic = -2 * log_likelihood + 2 * 2  # 2 parameters (intercept + coefficient)
+            
+            results[var] = {
+                'coefficient': coef,
+                'odds_ratio': np.exp(coef),
+                'p_value': p_value,
+                'mean_auc': mean_auc,
+                'std_auc': std_auc,
+                'aic': aic,
+                'log_likelihood': log_likelihood
+            }
+
+        # Step 4: Multivariate analysis - all predictors together
+        X_all = df_norm[['X1', 'X2', 'X3']].values
+        y = df_norm['y'].values
+
+        model_full = LogisticRegression(solver='liblinear')
+        model_full.fit(X_all, y)
+
+        # Calculate VIF (Variance Inflation Factors) to check multicollinearity
+        from numpy.linalg import inv
+        corr_matrix = df_norm[['X1', 'X2', 'X3']].corr().values
+        vif = np.diag(inv(corr_matrix))
+
+        # Get multivariate results
+        multi_results = {}
+        for i, var in enumerate(['X1', 'X2', 'X3']):
+            multi_results[var] = {
+                'multi_coefficient': model_full.coef_[0, i],
+                'multi_odds_ratio': np.exp(model_full.coef_[0, i]),
+                'vif': vif[i]
+            }
+
+        ret_str += "="*60
+        ret_str += "\nUNIVARIATE RESULTS (each predictor alone)\n"
+        ret_str += "="*60 + "\n"
+        results_df = pd.DataFrame(results).T
+        results_df = results_df.round(4)
+        ret_str += results_df[['coefficient', 'odds_ratio', 'p_value', 'mean_auc', 'aic']].to_string()
+        ret_str += "\n"
+
+        ret_str += "="*60
+        ret_str += "\nMULTIVARIATE RESULTS (all predictors together)\n"
+        ret_str += "="*60 + "\n"
+        multi_df = pd.DataFrame(multi_results).T
+        multi_df = multi_df.round(4)
+        ret_str += multi_df.to_string()
+        ret_str += "\n"
+
+        ret_str += "="*60
+        ret_str += "\nBEST PREDICTOR DETERMINATION\n"
+        ret_str += "="*60 + "\n"
+
+        # Find best by AUC
+        best_auc = max(results.keys(), key=lambda x: results[x]['mean_auc'])
+        ret_str += f"Highest AUC (univariate): {best_auc} with AUC = {results[best_auc]['mean_auc']:.4f}\n"
+
+        # Find best by AIC (lowest is better)
+        best_aic = min(results.keys(), key=lambda x: results[x]['aic'])
+        ret_str += f"Lowest AIC (univariate): {best_aic} with AIC = {results[best_aic]['aic']:.2f}\n"
+
+        # Find best by absolute coefficient in multivariate model
+        best_multi = max(['X1', 'X2', 'X3'], key=lambda x: abs(multi_results[x]['multi_coefficient']))
+        ret_str += f"Largest coefficient (multivariate): {best_multi} with coef = {multi_results[best_multi]['multi_coefficient']:.4f}\n"
+
+        ret_str += "\n"
+        ret_str += "="*60
+        ret_str += "\nFINAL ANSWER\n"
+        ret_str += "="*60 + "\n"
+
+        # Determine overall best predictor based on multiple criteria
+        scores = {var: 0 for var in ['X1', 'X2', 'X3']}
+        scores[best_auc] += 1
+        scores[best_aic] += 1
+        scores[best_multi] += 1
+
+        best_overall = max(scores.keys(), key=lambda x: scores[x])
+
+        if max(scores.values()) >= 2:
+            ret_str += f"BEST PREDICTOR: {best_overall}\n"
+            ret_str += f"Reason: Best in {scores[best_overall]} out of 3 criteria\n"
+        else:
+            ret_str += f"BEST PREDICTOR BY AUC: {best_auc}\n"
+            ret_str += "Note: No clear winner across all criteria, but AUC is most reliable for prediction\n"
+
+        # Step 7: Additional validation - compare nested models
+        ret_str += "\n"
+        ret_str += "="*60 + "\n"
+        ret_str += "LIKELIHOOD RATIO TESTS (does adding other variables help?)\n"
+        ret_str += "="*60 + "\n"
+
+        # For the best predictor, test if adding others improves significantly
+        X_best = df_norm[[best_auc]].values
+        model_best = LogisticRegression(solver='liblinear').fit(X_best, y)
+        ll_best = np.sum(y * np.log(model_best.predict_proba(X_best)[:, 1] + 1e-10) + 
+                        (1 - y) * np.log(1 - model_best.predict_proba(X_best)[:, 1] + 1e-10))
+
+        # Test adding each other variable
+        for var in ['X1', 'X2', 'X3']:
+            if var != best_auc:
+                X_combined = df_norm[[best_auc, var]].values
+                model_combined = LogisticRegression(solver='liblinear').fit(X_combined, y)
+                ll_combined = np.sum(y * np.log(model_combined.predict_proba(X_combined)[:, 1] + 1e-10) + 
+                                (1 - y) * np.log(1 - model_combined.predict_proba(X_combined)[:, 1] + 1e-10))
+                
+                lr_stat = 2 * (ll_combined - ll_best)
+                p_value = 1 - stats.chi2.cdf(lr_stat, df=1)
+                
+                ret_str += f"Adding {var} to {best_auc}: LR stat = {lr_stat:.3f}, p = {p_value:.4f}\n"
+                if p_value < 0.05:
+                    ret_str += f"  -> {var} adds significant predictive value\n"
+                else:
+                    ret_str += f"  -> {var} does NOT add significant predictive value\n"
+
+        from itertools import combinations
+        variables = ['X1', 'X2', 'X3']
+        y = df['y'].values
+
+        for base_size in [1, 2]:
+            for base_vars in combinations(variables, base_size):
+                base_vars = list(base_vars)
+                X_base = df[base_vars].values
+                model_base = LogisticRegression(solver='liblinear').fit(X_base, y)
+                
+                # Calculate log-likelihood for base model
+                probs_base = model_base.predict_proba(X_base)[:, 1]
+                probs_base = np.clip(probs_base, 1e-10, 1-1e-10)  # Avoid log(0)
+                ll_base = np.sum(y * np.log(probs_base) + (1 - y) * np.log(1 - probs_base))
+                
+                for add_var in variables:
+                    if add_var not in base_vars:
+                        X_full = df[base_vars + [add_var]].values
+                        model_full = LogisticRegression(solver='liblinear').fit(X_full, y)
+                        
+                        # Calculate log-likelihood for full model
+                        probs_full = model_full.predict_proba(X_full)[:, 1]
+                        probs_full = np.clip(probs_full, 1e-10, 1-1e-10)
+                        ll_full = np.sum(y * np.log(probs_full) + (1 - y) * np.log(1 - probs_full))
+                        
+                        lr_stat = 2 * (ll_full - ll_base)
+                        p_val = 1 - stats.chi2.cdf(lr_stat, df=1)
+                        
+                        ret_str += f"{add_var} adds to {'+'.join(base_vars)}: LR={lr_stat:.3f}, p={p_val:.4f}\n"
+
+
+        from sklearn.metrics import r2_score
+        from scipy.stats import spearmanr
+
+        # Compare R² (variance explained)
+        # For X3→X1 (continuous)
+        model_X3_X1 = LinearRegression().fit(df[['X3']], df['X1'])
+        r2_X3_X1 = model_X3_X1.score(df[['X3']], df['X1'])
+
+        # For X3→Y (pseudo-R² for binary)
+        model_X3_Y = LogisticRegression().fit(df[['X3']], df['y'])
+        # McFadden's pseudo-R²
+        null_model = LogisticRegression().fit(np.ones((len(df), 1)), df['y'])
+        ll_null = np.sum(df['y'] * np.log(null_model.predict_proba(np.ones((len(df), 1)))[:, 1] + 1e-10) + 
+                        (1 - df['y']) * np.log(1 - null_model.predict_proba(np.ones((len(df), 1)))[:, 1] + 1e-10))
+        ll_model = np.sum(df['y'] * np.log(model_X3_Y.predict_proba(df[['X3']])[:, 1] + 1e-10) + 
+                        (1 - df['y']) * np.log(1 - model_X3_Y.predict_proba(df[['X3']])[:, 1] + 1e-10))
+        pseudo_r2_X3_Y = 1 - (ll_model / ll_null)
+
+        # Also compare Spearman correlations (rank-based, works for both)
+        rho_X3_X1 = spearmanr(df['X3'], df['X1'])[0]
+        rho_X3_Y = spearmanr(df['X3'], df['y'])[0]
+
+        ret_str += f"X3 explains {r2_X3_X1:.1%} of variance in X1\n"
+        ret_str += f"X3 explains {pseudo_r2_X3_Y:.1%} of variance in Y (pseudo-R²)\n"
+        ret_str += f"Spearman ρ(X3,X1) = {rho_X3_X1:.3f}\n"
+        ret_str += f"Spearman ρ(X3,Y) = {rho_X3_Y:.3f}\n"
+
+        # X3 predicting X1, controlling for X2
+        model_X3_to_X1 = LinearRegression().fit(df[['X3', 'X2']], df['X1'])
+        r2_X3_to_X1 = model_X3_to_X1.score(df[['X3', 'X2']], df['X1'])
+
+        # X1 predicting X3, controlling for X2  
+        model_X1_to_X3 = LinearRegression().fit(df[['X1', 'X2']], df['X3'])
+        r2_X1_to_X3 = model_X1_to_X3.score(df[['X1', 'X2']], df['X3'])
+
+        ret_str += f"X3+X2→X1: R²={r2_X3_to_X1:.3f}\n"
+        ret_str += f"X1+X2→X3: R²={r2_X1_to_X3:.3f}\n"
+
+
+        # X3 predicting X1, controlling for X2
+        model = LinearRegression().fit(df[['X2', 'X3']], df['X1'])
+        X3_coef = model.coef_[1]
+
+        # Force float64 to prevent object dtype issues
+        X = df[['X2', 'X3']].values
+        X = X.astype(np.float64)  # THIS IS THE FIX
+
+        y_pred = model.predict(df[['X2', 'X3']])  # Use original df here
+        residuals = df['X1'].values - y_pred
+        n = len(df)
+        p = X.shape[1]
+        mse = np.sum(residuals**2) / (n - p)
+        var_coef = mse * np.linalg.inv(X.T @ X)[1, 1]
+        se = np.sqrt(var_coef)
+        t_stat = X3_coef / se
+        p_value_X1 = 2 * (1 - stats.t.cdf(abs(t_stat), n - p))
+
+        ret_str += f"Controlling for X2:\n"
+        ret_str += f"  X3→X1: β = {X3_coef:.4f}, p = {p_value_X1:.4f}\n"
+
+        # X3 predicting Y, controlling for X2  
+        model_y = LogisticRegression(solver='liblinear').fit(df[['X2', 'X3']], df['y'])
+        X3_coef_y = model_y.coef_[0, 1]  # X3 is second predictor
+
+        # For logistic regression p-value (approximate)
+        z_stat = X3_coef_y / (np.sqrt(np.diag(np.linalg.inv(X.T @ X))[1]) * 0.5)
+        p_value_Y = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+
+        ret_str += f"  X3→Y: β = {X3_coef_y:.4f}, p = {p_value_Y:.4f}\n"
+
+        # X3→X1 relationship
+        model_simple = LinearRegression().fit(df[['X3']], df['X1'])
+        r2_simple = model_simple.score(df[['X3']], df['X1'])
+
+        model_controlled = LinearRegression().fit(df[['X3', 'X2']], df['X1'])
+        r2_controlled = model_controlled.score(df[['X3', 'X2']], df['X1'])  
+
+        model_X2_only = LinearRegression().fit(df[['X2']], df['X1'])
+        r2_X2_only = model_X2_only.score(df[['X2']], df['X1'])
+
+        partial_r2 = r2_controlled - r2_X2_only  
+
+        attenuation_X1 = (r2_simple - partial_r2) / r2_simple
+
+        # X3→Y relationship
+        # Simple model: just X3
+        model_Y_simple = LogisticRegression(solver='liblinear').fit(df[['X3']], df['y'])
+        prob_simple = np.clip(model_Y_simple.predict_proba(df[['X3']])[:, 1], 1e-10, 1-1e-10)
+        ll_simple = np.sum(df['y'] * np.log(prob_simple) + (1 - df['y']) * np.log(1 - prob_simple))
+
+        # Null model (intercept only) for pseudo-R² calculation
+        model_null = LogisticRegression(solver='liblinear').fit(np.ones((len(df), 1)), df['y'])
+        prob_null = np.clip(model_null.predict_proba(np.ones((len(df), 1)))[:, 1], 1e-10, 1-1e-10)
+        ll_null = np.sum(df['y'] * np.log(prob_null) + (1 - df['y']) * np.log(1 - prob_null))
+
+        # Controlled model: X3 and X2
+        model_Y_controlled = LogisticRegression(solver='liblinear').fit(df[['X3', 'X2']], df['y'])
+        prob_controlled = np.clip(model_Y_controlled.predict_proba(df[['X3', 'X2']])[:, 1], 1e-10, 1-1e-10)
+        ll_controlled = np.sum(df['y'] * np.log(prob_controlled) + (1 - df['y']) * np.log(1 - prob_controlled))
+
+        # Model with just X2
+        model_Y_X2_only = LogisticRegression(solver='liblinear').fit(df[['X2']], df['y'])
+        prob_X2_only = np.clip(model_Y_X2_only.predict_proba(df[['X2']])[:, 1], 1e-10, 1-1e-10)
+        ll_X2_only = np.sum(df['y'] * np.log(prob_X2_only) + (1 - df['y']) * np.log(1 - prob_X2_only))
+
+        # Calculate partial contribution of X3 (beyond X2)
+        # This is the improvement in log-likelihood from adding X3 to X2
+        ll_improvement_from_X3 = ll_controlled - ll_X2_only
+        ll_improvement_simple = ll_simple - ll_null
+
+        # Attenuation: how much does X3's effect weaken when controlling for X2?
+        attenuation_Y = 1 - (ll_improvement_from_X3 / ll_improvement_simple)
+
+        ret_str += f"X3→X1 attenuates {attenuation_X1:.1%} when controlling for X2\n"
+        ret_str += f"X3→Y attenuates {attenuation_Y:.1%} when controlling for X2\n"
+        if attenuation_Y < attenuation_X1:
+            ret_str += "X3→Y is MORE robust to controlling for difficulty (X2)\n"
+            ret_str += "This suggests delegation uses internal signals beyond external difficulty cues\n"
+        else:
+            ret_str += "X3→X1 is MORE robust to controlling for difficulty (X2)\n"
+
+    except Exception as e:
+        ret_str += f"Error during analysis: {e}"
+    return ret_str
+
 
 def contingency(delegate: np.ndarray, correct: np.ndarray):
     """
@@ -213,7 +533,7 @@ def compare_predictors_of_answer(stated_confs, implicit_confs, pass_decisions):
     auc_both = cross_val_score(LogisticRegression(), X_both, y,
                                 cv=5, scoring='roc_auc').mean()
     
-    # Get log-likelihoods (fixing the calculation)
+    # Get log-likelihoods 
     from sklearn.metrics import log_loss
     ll_stated = -log_loss(y, lr_stated.predict_proba(X_stated)[:,1], normalize=False)
     ll_implicit = -log_loss(y, lr_implicit.predict_proba(X_implicit)[:,1], normalize=False)

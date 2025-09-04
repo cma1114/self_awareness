@@ -329,7 +329,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleMC" #"SimpleQA" #
-    game_type = "dg" #"aop"#
+    game_type = "aop"#"dg" #
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -1059,6 +1059,12 @@ if __name__ == "__main__":
                                 log_output(logit_m2.summary())
                             except Exception as e_full:
                                 log_output(f"                    Could not fit Model 4.63: {e_full}")
+
+                            if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs Implicit Model")
+                                res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])
+                                log_output(res)
+
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: normalized_prob_entropy in full model
