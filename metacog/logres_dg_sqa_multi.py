@@ -896,10 +896,8 @@ if __name__ == "__main__":
                         log_output(f"                  Grouped rare {col} into 'Misc'/'Other': {rare_items if rare_items else 'None'}")
 
                     if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
-                        log_output("\n                  Correlation between Other's Prob and Self Prob:")
-                        log_output(df_model['o_prob'].corr(df_model['sp_prob']))
-                        log_output("\n                  Correlation between Cap_p1 and Self Prob:")
-                        log_output(df_model['p_i_capability'].corr(df_model['sp_prob']))
+                        log_output(f"\nCorrelation between Other's Prob and Self Prob: {df_model['o_prob'].corr(df_model['sp_prob'])}")
+                        log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}")
                         df_model['sp_binary'] = (df_model['sp_prob'] >= 0.5).astype(int)
 
                     topic_column_for_formula = 'topic_grouped' if 'topic_grouped' in df_model else 'topic'
@@ -1048,8 +1046,8 @@ if __name__ == "__main__":
                             log_output(f"                    Could not fit Model 4.62b: {e_full}")
 
                         if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
-                            # Model 4.63: o_prob in full model with capabilities_entropy
-                            final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
+                            # Model 4.63: o_prob in full model w/o s_i_capability with capabilities_entropy
+                            final_model_terms_m45 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t) and t != 's_i_capability']
                             final_model_terms_m45.append('o_prob')
                             final_model_terms_m45.append('capabilities_entropy')
                             model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
@@ -1061,10 +1059,24 @@ if __name__ == "__main__":
                                 log_output(f"                    Could not fit Model 4.63: {e_full}")
 
                             if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
-                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs Implicit Model")
+                                final_model_terms_m45.append('sp_prob')
+                                model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                                log_output(f"\n                  Model 4.63b: {model_def_str_4_5}")
+                                try:
+                                    logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['capabilities_entropy', 'o_prob', 'sp_prob', 'delegate_choice'])).fit(disp=0)
+                                    log_output(logit_m2.summary())
+                                except Exception as e_full:
+                                    log_output(f"                    Could not fit Model 4.63b: {e_full}")
+
+                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs CapEnt Model")
                                 res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])
                                 log_output(res)
 
+                                log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
+                                continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
+                                categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
+                                res = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                log_output(res)
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: normalized_prob_entropy in full model
@@ -1088,6 +1100,35 @@ if __name__ == "__main__":
                             log_output(logit_m2.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.8: {e_full}")
+
+                        if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                            final_model_terms_m45.append('o_prob')
+                            model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                            log_output(f"\n                  Model 4.81: {model_def_str_4_5}")
+                            try:
+                                logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['normalized_prob_entropy', 'o_prob', 'delegate_choice'])).fit(disp=0)
+                                log_output(logit_m2.summary())
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit Model 4.81: {e_full}")
+                            if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                                final_model_terms_m45.append('sp_prob')
+                                model_def_str_4_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m45)
+                                log_output(f"\n                  Model 4.81b: {model_def_str_4_5}")
+                                try:
+                                    logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['normalized_prob_entropy', 'o_prob', 'sp_prob', 'delegate_choice'])).fit(disp=0)
+                                    log_output(logit_m2.summary())
+                                except Exception as e_full:
+                                    log_output(f"                    Could not fit Model 4.81b: {e_full}")
+
+                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs GameEnt Model")
+                                res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'])
+                                log_output(res)
+
+                                log_output(f"\n====================Simplified Complete GameEnt Analysis====================")
+                                continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'normalized_prob_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
+                                categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
+                                res = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                log_output(res)
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: both entropies in full model

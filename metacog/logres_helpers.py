@@ -18,6 +18,250 @@ import warnings
 warnings.filterwarnings('ignore')
 import pandas as pd
 
+from sklearn.metrics import r2_score
+from scipy.stats import spearmanr
+import statsmodels.formula.api as smf
+
+def compare_predictors_of_choice_simple(X1, X2, X3, y, continuous_controls=None, categorical_controls=None):
+    ret_str = ""
+    try:
+        original_names = {
+            'X1': X1.name or 'X1', 
+            'X2': X2.name or 'X2', 
+            'X3': X3.name or 'X3', 
+            'y': y.name or 'y'
+        }
+        
+        # Build base DataFrame
+        df = pd.DataFrame({
+            'X1': X1.values, 
+            'X2': X2.values, 
+            'X3': X3.values, 
+            'y': y.values
+        })
+        
+        # Add control variables if provided
+        cont_control_names = []
+        if continuous_controls:
+            for ctrl in continuous_controls:
+                ctrl_name = ctrl.name or f'cont_control_{len(cont_control_names)}'
+                cont_control_names.append(ctrl_name)
+                df[ctrl_name] = ctrl.values
+        
+        cat_control_names = []
+        if categorical_controls:
+            for ctrl in categorical_controls:
+                ctrl_name = ctrl.name or f'cat_control_{len(cat_control_names)}'
+                cat_control_names.append(ctrl_name)
+                df[ctrl_name] = ctrl.values
+        
+        # Drop NAs from base variables only
+        df = df.dropna(subset=['X1', 'X2', 'X3', 'y'])
+        
+        # Normalize X1, X2, X3 and any continuous controls
+        scaler = StandardScaler()
+        vars_to_standardize = ['X1', 'X2', 'X3'] + cont_control_names
+        df_norm = df.copy()
+        df_norm[vars_to_standardize] = scaler.fit_transform(df[vars_to_standardize])
+        
+        # CORRELATIONS (fixed the typos)
+        r_X1_X2, p_X1_X2 = pearsonr(df_norm['X1'], df_norm['X2'])
+        r_X1_X3, p_X1_X3 = pearsonr(df_norm['X1'], df_norm['X3'])
+        r_X2_X3, p_X2_X3 = pearsonr(df_norm['X2'], df_norm['X3'])
+        
+        ret_str += f"Pairwise Correlations:\n"
+        ret_str += f"  {original_names['X1']}-{original_names['X2']}: r={r_X1_X2:.3f}, p={p_X1_X2:.4f}\n"
+        ret_str += f"  {original_names['X1']}-{original_names['X3']}: r={r_X1_X3:.3f}, p={p_X1_X3:.4f}\n"
+        ret_str += f"  {original_names['X2']}-{original_names['X3']}: r={r_X2_X3:.3f}, p={p_X2_X3:.4f}\n"
+        ret_str += "\n"
+
+        # SPEARMAN CORRELATIONS for X3 relationships (more robust)
+        rho_X3_X1, p_rho_X3_X1 = spearmanr(df['X3'], df['X1'])
+        rho_X3_Y, p_rho_X3_Y = spearmanr(df['X3'], df['y'])
+        
+        ret_str += f"Spearman ρ({original_names['X3']},{original_names['X1']}) = {rho_X3_X1:.3f} (p={p_rho_X3_X1:.4f})\n"
+        ret_str += f"Spearman ρ({original_names['X3']},{original_names['y']}) = {rho_X3_Y:.3f} (p={p_rho_X3_Y:.4f})\n"
+        ret_str += "\n"
+        
+        # PATH ANALYSIS - asymmetry test
+        model_X3_to_X1 = LinearRegression().fit(df_norm[['X3', 'X2']], df_norm['X1'])
+        r2_X3_to_X1 = model_X3_to_X1.score(df_norm[['X3', 'X2']], df_norm['X1'])
+        
+        model_X1_to_X3 = LinearRegression().fit(df_norm[['X1', 'X2']], df_norm['X3'])
+        r2_X1_to_X3 = model_X1_to_X3.score(df_norm[['X1', 'X2']], df_norm['X3'])
+        
+        ret_str += f"{original_names['X3']}+{original_names['X2']}→{original_names['X1']}: R²={r2_X3_to_X1:.3f}\n"
+        ret_str += f"{original_names['X1']}+{original_names['X2']}→{original_names['X3']}: R²={r2_X1_to_X3:.3f}\n"
+        ret_str += "\n"
+
+        # BASELINE: X3 effects WITHOUT controls
+        # X3→X1 no controls
+        model_base_X1 = LinearRegression().fit(df_norm[['X3']], df_norm['X1'])
+        X3_coef_base_X1 = model_base_X1.coef_[0]
+        
+        X_base = df_norm[['X3']].values.astype(np.float64)
+        y_pred = model_base_X1.predict(df_norm[['X3']])
+        residuals = df_norm['X1'].values - y_pred
+        n = len(df_norm)
+        mse = np.sum(residuals**2) / (n - 1)
+        var_coef = mse / np.sum((X_base - X_base.mean())**2)
+        se = np.sqrt(var_coef)
+        t_stat = X3_coef_base_X1 / se
+        p_value_base_X1 = 2 * (1 - stats.t.cdf(abs(t_stat), n - 1))
+        
+        # X3→Y no controls
+        model_base_Y = LogisticRegression(solver='liblinear').fit(df_norm[['X3']], df_norm['y'])
+        X3_coef_base_Y = model_base_Y.coef_[0, 0]
+        
+        # Approximate SE for logistic regression
+        pred_probs = model_base_Y.predict_proba(df_norm[['X3']])[:, 1]
+        pred_probs = np.clip(pred_probs, 1e-10, 1-1e-10)
+        V = np.sum((X_base.flatten() ** 2) * (pred_probs * (1 - pred_probs)))
+        se_Y = np.sqrt(1 / V) if V > 0 else np.nan
+        z_stat = X3_coef_base_Y / se_Y if not np.isnan(se_Y) else np.nan
+        p_value_base_Y = 2 * (1 - stats.norm.cdf(abs(z_stat))) if not np.isnan(z_stat) else np.nan
+        
+        ret_str += f"No controls (baseline):\n"
+        ret_str += f"  {original_names['X3']}→{original_names['X1']}: β = {X3_coef_base_X1:.4f}, p = {p_value_base_X1:.4f}\n"
+        ret_str += f"  {original_names['X3']}→{original_names['y']}: β = {X3_coef_base_Y:.4f}, p = {p_value_base_Y:.4f}\n"
+        ret_str += "\n"
+
+        # KEY COMPARISON: X3 effects on X1 and Y controlling for X2
+        # X3→X1 controlling for X2
+        model = LinearRegression().fit(df_norm[['X2', 'X3']], df_norm['X1'])
+        X3_coef_to_X1 = model.coef_[1]
+        
+        X = df_norm[['X2', 'X3']].values.astype(np.float64)
+        y_pred = model.predict(df_norm[['X2', 'X3']])
+        residuals = df_norm['X1'].values - y_pred
+        n = len(df_norm)
+        p = X.shape[1]
+        mse = np.sum(residuals**2) / (n - p)
+        var_coef = mse * np.linalg.inv(X.T @ X)[1, 1]
+        se = np.sqrt(var_coef)
+        t_stat = X3_coef_to_X1 / se
+        p_value_X1 = 2 * (1 - stats.t.cdf(abs(t_stat), n - p))
+        
+        # X3→Y controlling for X2
+        model_y = LogisticRegression(solver='liblinear').fit(df_norm[['X2', 'X3']], df_norm['y'])
+        X3_coef_to_Y = model_y.coef_[0, 1]
+        
+        z_stat = X3_coef_to_Y / (np.sqrt(np.diag(np.linalg.inv(X.T @ X))[1]) * 0.5)
+        p_value_Y = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+        
+        ret_str += f"Controlling for {original_names['X2']}:\n"
+        ret_str += f"  {original_names['X3']}→{original_names['X1']}: β = {X3_coef_to_X1:.4f}, p = {p_value_X1:.4f}\n"
+        ret_str += f"  {original_names['X3']}→{original_names['y']}: β = {X3_coef_to_Y:.4f}, p = {p_value_Y:.4f}\n"
+        ret_str += "\n"
+        
+        # ROBUSTNESS CHECK 1: X3→X1 controlling for both X2 and Y
+        model_X1_full = LinearRegression().fit(df_norm[['X2', 'y', 'X3']], df_norm['X1'])
+        X3_coef_X1_full = model_X1_full.coef_[2]
+        
+        X_full = df_norm[['X2', 'y', 'X3']].values.astype(np.float64)
+        y_pred = model_X1_full.predict(df_norm[['X2', 'y', 'X3']])
+        residuals = df_norm['X1'].values - y_pred
+        n = len(df_norm)
+        p = X_full.shape[1]
+        mse = np.sum(residuals**2) / (n - p)
+        var_coef = mse * np.linalg.inv(X_full.T @ X_full)[2, 2]
+        se = np.sqrt(var_coef)
+        t_stat = X3_coef_X1_full / se
+        p_value_X1_full = 2 * (1 - stats.t.cdf(abs(t_stat), n - p))
+        
+        ret_str += f"Controlling for BOTH {original_names['X2']} and {original_names['y']}:\n"
+        ret_str += f"  {original_names['X3']}→{original_names['X1']}: β = {X3_coef_X1_full:.4f}, p = {p_value_X1_full:.4f}\n"
+        
+        # ROBUSTNESS CHECK 2: X3→Y controlling for both X1 and X2
+        model_full = LogisticRegression(solver='liblinear').fit(df_norm[['X1', 'X2', 'X3']], df_norm['y'])
+        X3_coef_full = model_full.coef_[0, 2]
+        
+        X_full = df_norm[['X1', 'X2', 'X3']].values.astype(np.float64)
+        z_stat = X3_coef_full / (np.sqrt(np.diag(np.linalg.inv(X_full.T @ X_full))[2]) * 0.5)
+        p_value_full = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+        
+        ret_str += f"Controlling for BOTH {original_names['X1']} and {original_names['X2']}:\n"
+        ret_str += f"  {original_names['X3']}→{original_names['y']}: β = {X3_coef_full:.4f}, p = {p_value_full:.4f}\n"
+        ret_str += "\n"
+        
+        # LIKELIHOOD RATIO TESTS - which variables add value?
+        ret_str += "="*60 + "\n"
+        ret_str += "LIKELIHOOD RATIO TESTS (using normalized data)\n"
+        ret_str += "="*60 + "\n"
+        
+        variables = ['X1', 'X2', 'X3']
+        y_vals = df_norm['y'].values
+        
+        # Just show the most important combinations
+        important_tests = [
+            (['X1'], 'X2'),
+            (['X1'], 'X3'),
+            (['X2'], 'X3'),
+            (['X1', 'X2'], 'X3'),
+            (['X1', 'X3'], 'X2'),
+        ]
+        
+        for base_vars, add_var in important_tests:
+            X_base = df_norm[base_vars].values
+            model_base = LogisticRegression(solver='liblinear').fit(X_base, y_vals)
+            
+            probs_base = np.clip(model_base.predict_proba(X_base)[:, 1], 1e-10, 1-1e-10)
+            ll_base = np.sum(y_vals * np.log(probs_base) + (1 - y_vals) * np.log(1 - probs_base))
+            
+            X_full = df_norm[base_vars + [add_var]].values
+            model_full = LogisticRegression(solver='liblinear').fit(X_full, y_vals)
+            
+            probs_full = np.clip(model_full.predict_proba(X_full)[:, 1], 1e-10, 1-1e-10)
+            ll_full = np.sum(y_vals * np.log(probs_full) + (1 - y_vals) * np.log(1 - probs_full))
+            
+            lr_stat = 2 * (ll_full - ll_base)
+            p_val = 1 - stats.chi2.cdf(lr_stat, df=1)
+            
+            base_names = [original_names[v] for v in base_vars]
+            ret_str += f"{original_names[add_var]} adds to {'+'.join(base_names)}: LR={lr_stat:.3f}, p={p_val:.4f}\n"
+        
+        # REGRESSION WITH CONTROLS 
+        if cont_control_names or cat_control_names:
+            ret_str += "\n"
+            ret_str += "="*60 + "\n"
+            ret_str += "FULL MODEL WITH CONTROLS\n"
+            ret_str += "="*60 + "\n"
+            
+            # Build formula string
+            formula_parts = [original_names['y'], '~', original_names['X1'], '+', original_names['X2'], '+', original_names['X3']]
+            
+            # Add continuous controls
+            for ctrl in cont_control_names:
+                formula_parts.extend(['+', ctrl])
+            
+            # Add categorical controls with C() notation
+            for ctrl in cat_control_names:
+                formula_parts.extend(['+', f'C({ctrl})'])
+            
+            formula = ' '.join(formula_parts)
+            
+            # Use original df with actual column names for statsmodels
+            df_for_model = pd.DataFrame()
+            df_for_model[original_names['X1']] = df_norm['X1']
+            df_for_model[original_names['X2']] = df_norm['X2']
+            df_for_model[original_names['X3']] = df_norm['X3']
+            df_for_model[original_names['y']] = df_norm['y']
+            
+            # Add controls (standardized continuous, original categorical)
+            for ctrl in cont_control_names:
+                df_for_model[ctrl] = df_norm[ctrl]
+            for ctrl in cat_control_names:
+                df_for_model[ctrl] = df[ctrl]
+            
+            model = smf.logit(formula, data=df_for_model)
+            result = model.fit(disp=0)
+            ret_str += result.summary().as_text()
+        
+    except Exception as e:
+        ret_str += f"Error in simplified entropy analysis: {str(e)}\n"
+        
+    return ret_str
+
 def compare_predictors_of_choice(X1, X2, X3, y):
     ret_str = ""
     try:
@@ -30,9 +274,14 @@ def compare_predictors_of_choice(X1, X2, X3, y):
         df_norm['y'] = df['y'].values
 
         ret_str += "="*60
-        ret_str += "\nCORRELATION MATRIX (normalized predictors)\n"
-        ret_str += "="*60 + "\n"
-        ret_str += df_norm[['X1', 'X2', 'X3']].corr().round(3).to_string()
+        r_X1_X2, p_X1_X2 = pearsonr(df_norm['X1'], df_norm['X2'])
+        r_X1_X3, p_X1_X3 = pearsonr(df_norm['X1'], df_norm['X3'])
+        r_X2_X3, p_X2_X3 = pearsonr(df_norm['X2'], df_norm['X3'])
+
+        ret_str += f"Correlations:\n"
+        ret_str += f"Pearson X1-X2: r={r_X1_X2:.3f}, p={p_X1_X2:.4f}\n"
+        ret_str += f"Pearson X1-X3: r={r_X1_X3:.3f}, p={p_X1_X3:.4f}\n"
+        ret_str += f"Pearson X2-X3: r={r_X2_X3:.3f}, p={p_X2_X3:.4f}\n"
         ret_str += "\n"
 
         # Step 3: Univariate analysis - fit separate logistic regression for each predictor
@@ -205,8 +454,6 @@ def compare_predictors_of_choice(X1, X2, X3, y):
                         ret_str += f"{add_var} adds to {'+'.join(base_vars)}: LR={lr_stat:.3f}, p={p_val:.4f}\n"
 
 
-        from sklearn.metrics import r2_score
-        from scipy.stats import spearmanr
 
         # Compare R² (variance explained)
         # For X3→X1 (continuous)
@@ -224,13 +471,13 @@ def compare_predictors_of_choice(X1, X2, X3, y):
         pseudo_r2_X3_Y = 1 - (ll_model / ll_null)
 
         # Also compare Spearman correlations (rank-based, works for both)
-        rho_X3_X1 = spearmanr(df['X3'], df['X1'])[0]
-        rho_X3_Y = spearmanr(df['X3'], df['y'])[0]
+        rho_X3_X1, p_rho_X3_X1 = spearmanr(df['X3'], df['X1'])
+        rho_X3_Y, p_rho_X3_Y = spearmanr(df['X3'], df['y'])
 
         ret_str += f"X3 explains {r2_X3_X1:.1%} of variance in X1\n"
         ret_str += f"X3 explains {pseudo_r2_X3_Y:.1%} of variance in Y (pseudo-R²)\n"
-        ret_str += f"Spearman ρ(X3,X1) = {rho_X3_X1:.3f}\n"
-        ret_str += f"Spearman ρ(X3,Y) = {rho_X3_Y:.3f}\n"
+        ret_str += f"Spearman ρ(X3,X1) = {rho_X3_X1:.3f} (p={p_rho_X3_X1:.4f})\n"
+        ret_str += f"Spearman ρ(X3,Y) = {rho_X3_Y:.3f} (p={p_rho_X3_Y:.4f})\n"
 
         # X3 predicting X1, controlling for X2
         model_X3_to_X1 = LinearRegression().fit(df[['X3', 'X2']], df['X1'])
@@ -274,6 +521,39 @@ def compare_predictors_of_choice(X1, X2, X3, y):
         p_value_Y = 2 * (1 - stats.norm.cdf(abs(z_stat)))
 
         ret_str += f"  X3→Y: β = {X3_coef_y:.4f}, p = {p_value_Y:.4f}\n"
+
+        # X3 predicting X1, controlling for BOTH X2 and Y
+        model_X1_full = LinearRegression().fit(df[['X2', 'y', 'X3']], df['X1'])
+        X3_coef_X1_full = model_X1_full.coef_[2]  # X3 is third predictor
+
+        # Calculate standard error for significance test
+        X_full = df[['X2', 'y', 'X3']].values.astype(np.float64)
+        y_pred = model_X1_full.predict(df[['X2', 'y', 'X3']])
+        residuals = df['X1'].values - y_pred
+        n = len(df)
+        p = X_full.shape[1]
+        mse = np.sum(residuals**2) / (n - p)
+        var_coef = mse * np.linalg.inv(X_full.T @ X_full)[2, 2]
+        se = np.sqrt(var_coef)
+        t_stat = X3_coef_X1_full / se
+        p_value_X1_full = 2 * (1 - stats.t.cdf(abs(t_stat), n - p))
+
+        ret_str += f"Controlling for BOTH X2 and Y:\n"
+        ret_str += f"  X3→X1: β = {X3_coef_X1_full:.4f}, p = {p_value_X1_full:.4f}\n"
+
+        # X3 predicting Y, controlling for BOTH X1 and X2
+        model_full = LogisticRegression(solver='liblinear').fit(df[['X1', 'X2', 'X3']], df['y'])
+        X3_coef_full = model_full.coef_[0, 2]  # X3 is third predictor
+
+        # For significance test
+        X_full = df[['X1', 'X2', 'X3']].values.astype(np.float64)
+        # Approximate z-test for logistic coefficient
+        z_stat = X3_coef_full / (np.sqrt(np.diag(np.linalg.inv(X_full.T @ X_full))[2]) * 0.5)
+        p_value_full = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+
+        ret_str += f"Controlling for BOTH X1 and X2:\n"
+        ret_str += f"  X3→Y: β = {X3_coef_full:.4f}, p = {p_value_full:.4f}\n"
+
 
         # X3→X1 relationship
         model_simple = LinearRegression().fit(df[['X3']], df['X1'])
