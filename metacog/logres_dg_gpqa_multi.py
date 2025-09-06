@@ -453,12 +453,12 @@ if __name__ == "__main__":
                             if len(probs_dict.keys()) > 1:
                                 p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)
                             else:
-                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)**(len(subject_answer)//2) #approx token count
+                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)#-math.log(float(prob_for_subject_answer))/max((len(subject_answer)//2),1)###float(prob_for_subject_answer)**(len(subject_answer)//2) #approx token count
                     # Calculate and populate entropy_map_for_this_model
                     if isinstance(probs_dict, dict) and probs_dict:
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
                         if prob_values:
-                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else p_i_map_for_this_model[q_id]
+                            entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else -math.log2(p_i_map_for_this_model[q_id])
                             entropy_map_for_this_model[q_id] = entropy
 
 
@@ -1143,9 +1143,11 @@ if __name__ == "__main__":
                                 log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
+
+                                plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
 
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():

@@ -22,7 +22,703 @@ from sklearn.metrics import r2_score
 from scipy.stats import spearmanr
 import statsmodels.formula.api as smf
 
-def compare_predictors_of_choice_simple(X1, X2, X3, y, continuous_controls=None, categorical_controls=None, normvars=True):
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.nonparametric.smoothers_lowess import lowess
+import statsmodels.api as sm
+
+def plot_x3_relationships(X1, X2, X3, y, filename='x3_relationships.png',
+                          n_bins=20, loess_frac=0.3, dpi=160):
+    """
+    Create simple diagnostic plots:
+      - X1 vs X3: scatter with LOESS smoother
+      - X2 vs X3: scatter with LOESS smoother
+      - y vs X3: binned means (with 95% CI) and a logistic-spline fit (fallback to LOESS if GLM fails)
+    Saves the figure to `filename`.
+
+    Parameters
+    - X1, X2, X3, y: array-like or pandas Series (y should be binary 0/1)
+    - filename: output file path for the saved figure
+    - n_bins: number of quantile bins for the binned-means plot
+    - loess_frac: smoothing parameter for LOESS (0<frac<=1)
+    - dpi: figure DPI for saving
+
+    Returns
+    - filename (string)
+    """
+    # Assemble a clean DataFrame and drop missing values
+    df = pd.DataFrame({
+        'X1': pd.Series(X1, dtype='float'),
+        'X2': pd.Series(X2, dtype='float'),
+        'X3': pd.Series(X3, dtype='float'),
+        'y':  pd.Series(y).astype(int)
+    }).dropna(subset=['X1','X2','X3','y'])
+
+    if df.empty:
+        raise ValueError("No data left after dropping missing values.")
+
+    # Basic style
+    sns.set_theme(context='notebook', style='whitegrid')
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), constrained_layout=True)
+
+    # Panel 1: X1 vs X3 (scatter + LOESS)
+    ax = axes[0]
+    ax.scatter(df['X3'], df['X1'], s=15, alpha=0.35, color='#1f77b4', edgecolor='none')
+    # LOESS
+    try:
+        lo = lowess(df['X1'], df['X3'], frac=loess_frac, it=0, return_sorted=True)
+        ax.plot(lo[:, 0], lo[:, 1], color='crimson', lw=2, label='LOESS')
+    except Exception:
+        pass
+    ax.set_xlabel('X3 (entropy)')
+    ax.set_ylabel('X1 (self-reported confidence)')
+    ax.set_title('X1 vs X3')
+    ax.legend(loc='best', frameon=True)
+
+    # Panel 2: X2 vs X3 (scatter + LOESS)
+    ax = axes[1]
+    ax.scatter(df['X3'], df['X2'], s=15, alpha=0.35, color='#1f77b4', edgecolor='none')
+    try:
+        lo = lowess(df['X2'], df['X3'], frac=loess_frac, it=0, return_sorted=True)
+        ax.plot(lo[:, 0], lo[:, 1], color='crimson', lw=2, label='LOESS')
+    except Exception:
+        pass
+    ax.set_xlabel('X3 (entropy)')
+    ax.set_ylabel('X2 (confidence in others)')
+    ax.set_title('X2 vs X3')
+    ax.legend(loc='best', frameon=True)
+
+    # Panel 3: y vs X3 (binned means + logistic-spline or LOESS)
+    ax = axes[2]
+
+    # Binned means (quantile bins; fall back to equal-width if many ties)
+    x = df['X3'].values
+    yb = df['y'].values
+
+    try:
+        q_edges = np.quantile(x, np.linspace(0, 1, n_bins + 1))
+        edges = np.unique(q_edges)
+        if len(edges) < 4:
+            raise ValueError("Not enough unique quantile edges.")
+    except Exception:
+        edges = np.linspace(np.nanmin(x), np.nanmax(x), n_bins + 1)
+
+    # Assign bins and compute summaries
+    bins = pd.cut(df['X3'], edges, include_lowest=True)
+    grp = df.groupby(bins, observed=False)
+    b_mean_x = grp['X3'].mean()
+    b_mean_y = grp['y'].mean()
+    b_n = grp['y'].size()
+    # Binomial 95% CI via normal approx: p +/- 1.96*sqrt(p*(1-p)/n)
+    with np.errstate(invalid='ignore'):
+        se = np.sqrt(np.maximum(b_mean_y * (1 - b_mean_y) / b_n, 0))
+    yerr = 1.96 * se
+
+    ax.errorbar(b_mean_x.values, b_mean_y.values, yerr=yerr.values,
+                fmt='o', color='#1f77b4', ecolor='#1f77b4', elinewidth=1,
+                capsize=2, alpha=0.9, label='Binned means (95% CI)')
+
+    # Logistic spline fit (fallback to LOESS if GLM fails)
+    grid = np.linspace(np.nanmin(x), np.nanmax(x), 300)
+
+    added_logit = False
+    try:
+        # Natural cubic spline via patsy (statsmodels dependency)
+        from patsy import dmatrix
+        X_spline = dmatrix("bs(x, df=4, degree=3, include_intercept=False)",
+                           {"x": df['X3']}, return_type='dataframe')
+        model = sm.GLM(df['y'], X_spline, family=sm.families.Binomial())
+        res = model.fit()
+        Xg = dmatrix("bs(x, df=4, degree=3, include_intercept=False)",
+                     {"x": grid}, return_type='dataframe')
+        pred = res.predict(Xg)
+        ax.plot(grid, pred, color='crimson', lw=2.2, label='Logit spline')
+        added_logit = True
+    except Exception:
+        # Fallback: LOESS on y vs X3
+        try:
+            lo = lowess(df['y'], df['X3'], frac=loess_frac, it=0, return_sorted=True)
+            ax.plot(lo[:, 0], lo[:, 1], color='crimson', lw=2.2, label='LOESS')
+        except Exception:
+            pass
+
+    ax.set_xlabel('X3 (entropy)')
+    ax.set_ylabel('y (game success probability)')
+    ax.set_title('y vs X3' + (' (logit spline)' if added_logit else ''))
+    ax.set_ylim(-0.05, 1.05)
+    ax.legend(loc='best', frameon=True)
+
+    # Overall title and save
+    fig.suptitle('Relationships with X3 (entropy): scatter/LOESS and y-binned means', y=1.02, fontsize=13)
+    fig.savefig(filename, dpi=dpi, bbox_inches='tight')
+    plt.close(fig)
+    return filename
+
+
+def tjur_R2_from_probs(p, y):
+    y = np.asarray(y).astype(int)
+    if (y == 1).sum() == 0 or (y == 0).sum() == 0:
+        return np.nan
+    return float(p[y==1].mean() - p[y==0].mean())
+
+def fit_logit_probs(X, y):
+    """
+    Try statsmodels Logit; if it fails (e.g., perfect separation), fallback to sklearn.
+    Returns predicted probabilities on X.
+    """
+    try:
+        mod = sm.Logit(y, sm.add_constant(X, has_constant='add'))
+        res = mod.fit(disp=0)
+        p = res.predict(sm.add_constant(X, has_constant='add'))
+        return np.asarray(p), 'sm'
+    except Exception:
+        # sklearn fallback, near-unpenalized
+        clf = LogisticRegression(C=1e6, solver='lbfgs', max_iter=2000)
+        clf.fit(X, y)
+        p = clf.predict_proba(X)[:, 1]
+        return p, 'sk'
+
+def compute_effects_once(df, X1_col='X1', X2_col='X2', X3_col='X3', y_col='y', controls=None):
+    """
+    Compute the two effect sizes on the provided dataframe.
+    controls: list of additional control column names (optional).
+    """
+    # Build design matrices
+    base_cols = [X2_col] + (controls if controls else [])
+    full_cols = base_cols + [X3_col]
+    
+    # OLS: partial R^2 of X3 for X1 controlling for base_cols
+    Xb = sm.add_constant(df[base_cols], has_constant='add')
+    Xf = sm.add_constant(df[full_cols], has_constant='add')
+    y_X1 = df[X1_col].values
+    
+    ols_b = sm.OLS(y_X1, Xb).fit()
+    ols_f = sm.OLS(y_X1, Xf).fit()
+    ssr_b = float(ols_b.ssr)
+    ssr_f = float(ols_f.ssr)
+    partial_R2 = np.nan
+    if ssr_b > 1e-12:
+        partial_R2 = 1.0 - (ssr_f / ssr_b)
+    
+    # Logit: delta Tjur's R^2 of adding X3 for y controlling for base_cols
+    y_bin = df[y_col].astype(int).values
+    # Base
+    p_b, _ = fit_logit_probs(df[base_cols].values, y_bin)
+    tjur_b = tjur_R2_from_probs(p_b, y_bin)
+    # Full
+    p_f, _ = fit_logit_probs(df[full_cols].values, y_bin)
+    tjur_f = tjur_R2_from_probs(p_f, y_bin)
+    delta_tjur = tjur_f - tjur_b if (not np.isnan(tjur_b) and not np.isnan(tjur_f)) else np.nan
+    
+    return partial_R2, delta_tjur
+
+def bootstrap_effect_sizes(
+    df,
+    X1_col='X1', X2_col='X2', X3_col='X3', y_col='y',
+    controls=None,
+    n_boot=2000,
+    stratify=True,
+    random_state=42,
+    ci=(2.5, 97.5),
+):
+    """
+    df: dataframe with columns X1, X2, X3, y (and optional controls).
+    controls: list of additional control column names to include in base and full models.
+    Returns point estimates and percentile CIs for both effect sizes and their gap.
+    """
+    rng = np.random.default_rng(random_state)
+    df = df.dropna(subset=[X1_col, X2_col, X3_col, y_col] + (controls if controls else []))
+    
+    # Point estimates on the full sample
+    est_partial_R2, est_delta_tjur = compute_effects_once(
+        df, X1_col=X1_col, X2_col=X2_col, X3_col=X3_col, y_col=y_col, controls=controls
+    )
+    
+    # Prepare bootstrap sampling
+    n = len(df)
+    idx = np.arange(n)
+    if stratify:
+        y = df[y_col].astype(int).values
+        idx_pos = idx[y == 1]
+        idx_neg = idx[y == 0]
+        n_pos, n_neg = len(idx_pos), len(idx_neg)
+        if n_pos == 0 or n_neg == 0:
+            raise ValueError("Cannot stratify bootstrap: one class has zero instances.")
+    
+    boot_partial = np.empty(n_boot, dtype=float)
+    boot_delta_tjur = np.empty(n_boot, dtype=float)
+    boot_partial.fill(np.nan)
+    boot_delta_tjur.fill(np.nan)
+    
+    for b in range(n_boot):
+        # Sample indices
+        if stratify:
+            samp_pos = rng.choice(idx_pos, size=n_pos, replace=True)
+            samp_neg = rng.choice(idx_neg, size=n_neg, replace=True)
+            samp_idx = np.concatenate([samp_pos, samp_neg])
+        else:
+            samp_idx = rng.choice(idx, size=n, replace=True)
+        
+        df_b = df.iloc[samp_idx].reset_index(drop=True)
+        
+        try:
+            pR2_b, dTjur_b = compute_effects_once(
+                df_b, X1_col=X1_col, X2_col=X2_col, X3_col=X3_col, y_col=y_col, controls=controls
+            )
+            boot_partial[b] = pR2_b
+            boot_delta_tjur[b] = dTjur_b
+        except Exception:
+            # Leave NaN for this replicate
+            continue
+    
+    # Drop NaNs (e.g., rare failures)
+    bp = boot_partial[~np.isnan(boot_partial)]
+    bt = boot_delta_tjur[~np.isnan(boot_delta_tjur)]
+    gap = bt - bp[:len(bt)] if len(bt) == len(bp) else None  # align lengths if equal; otherwise skip
+    
+    def pct_ci(arr, lo, hi):
+        if len(arr) == 0:
+            return (np.nan, np.nan)
+        return (float(np.percentile(arr, lo)), float(np.percentile(arr, hi)))
+    
+    lo, hi = ci
+    ci_partial = pct_ci(bp, lo, hi)
+    ci_delta_tjur = pct_ci(bt, lo, hi)
+    ci_gap = pct_ci(gap, lo, hi) if gap is not None else (np.nan, np.nan)
+    
+    return {
+        'point_estimates': {
+            'partial_R2_X3_on_X1_ctrl': float(est_partial_R2),
+            'delta_TjurR2_X3_on_y_ctrl': float(est_delta_tjur),
+            'gap_deltaTjur_minus_partialR2': float(est_delta_tjur - est_partial_R2) if (not np.isnan(est_delta_tjur) and not np.isnan(est_partial_R2)) else np.nan,
+        },
+        'bootstrap_CI_percentile': {
+            'partial_R2_X3_on_X1_ctrl': {'lo': ci_partial[0], 'hi': ci_partial[1]},
+            'delta_TjurR2_X3_on_y_ctrl': {'lo': ci_delta_tjur[0], 'hi': ci_delta_tjur[1]},
+            'gap_deltaTjur_minus_partialR2': {'lo': ci_gap[0], 'hi': ci_gap[1]},
+        },
+        'n_boot_effective': int(min(len(bp), len(bt))),
+    }
+
+def compare_predictors_of_choice_simple(
+    X1, X2, X3, y,
+    continuous_controls=None,
+    categorical_controls=None,
+    normvars=True,
+    n_boot=2000,
+    random_state=123
+):
+    """
+    Minimal, comparable metrics:
+      - Unadjusted influence (no controls): r(X3, X1), r(X3, X2), r(X3, y) with 95% CI and p-value.
+      - Adjusted influence (with controls):
+          * X1: partial r(X3, X1 | surface controls + X2)
+          * X2: partial r(X3, X2 | surface controls only)
+          * y : partial r(X3, y  | surface controls + X2), computed via residualization (LPM-style)
+        Each with 95% CI (Fisher z with k-adjustment) and p-value (t-test for partial r).
+      - Bootstrap CIs for differences:
+          * Unadjusted: r(X3,y) - r(X3,X1); r(X3,y) - r(X3,X2); r(X3,X1) - r(X3,X2)
+          * Adjusted: same, but using the partial correlations defined above.
+
+    Returns:
+      ret_str (plain text summary) and results_dict (JSON-friendly metrics).
+    """
+    import numpy as np
+    import pandas as pd
+    from scipy import stats
+    from sklearn.preprocessing import StandardScaler
+    import statsmodels.api as sm
+
+    ret_str = ""
+    results_dict = {}
+
+    try:
+        # -----------------------------
+        # Setup
+        # -----------------------------
+        original_names = {
+            'X1': X1.name or 'X1',
+            'X2': X2.name or 'X2',
+            'X3': X3.name or 'X3',
+            'y': y.name or 'y'
+        }
+
+        # Base frame
+        df = pd.DataFrame({
+            'X1': np.asarray(X1).astype(float),
+            'X2': np.asarray(X2).astype(float),
+            'X3': np.asarray(X3).astype(float),
+            'y': np.asarray(y).astype(int)
+        })
+
+        # Add controls if provided
+        cont_control_names = []
+        if continuous_controls:
+            for i, ctrl in enumerate(continuous_controls):
+                cname = ctrl.name or f'cont_control_{i}'
+                df[cname] = np.asarray(ctrl).astype(float)
+                cont_control_names.append(cname)
+
+        cat_control_names = []
+        if categorical_controls:
+            for i, ctrl in enumerate(categorical_controls):
+                cname = ctrl.name or f'cat_control_{i}'
+                df[cname] = np.asarray(ctrl)
+                cat_control_names.append(cname)
+
+        # Drop rows with NaNs in core vars first
+        df = df.dropna(subset=['X1', 'X2', 'X3', 'y'])
+
+        # One-hot encode categorical controls once on the full sample
+        dummy_cols = []
+        if cat_control_names:
+            dummies = pd.get_dummies(df[cat_control_names], drop_first=True, dtype=float)
+            dummy_cols = list(dummies.columns)
+            df = pd.concat([df.drop(columns=cat_control_names), dummies], axis=1)
+
+        # Standardize X1, X2, X3 and continuous controls (not dummies, not y)
+        df_norm = df.copy()
+        if normvars:
+            to_scale = ['X1', 'X2', 'X3'] + cont_control_names
+            if to_scale:
+                scaler = StandardScaler().fit(df_norm[to_scale])
+                df_norm[to_scale] = scaler.transform(df_norm[to_scale])
+
+        surface_controls = cont_control_names + dummy_cols  # exogenous controls
+
+        # For consistency across comparisons, define analysis frames:
+        # - Unadjusted: require only core vars
+        df_unadj = df_norm.dropna(subset=['X1', 'X2', 'X3', 'y']).copy()
+        # - Adjusted (common sample): require core vars + all surface controls + X2 (since 2 and 6 include X2)
+        df_adj_common = df_norm.dropna(subset=['X1', 'X2', 'X3', 'y'] + surface_controls).copy()
+
+        # -----------------------------
+        # Helper functions
+        # -----------------------------
+        def fisher_ci(r, n, k_controls=0, alpha=0.05):
+            """
+            Fisher z CI for (partial) correlation.
+            For partial correlation with k controls, SE_z = 1 / sqrt(n - k - 3).
+            """
+            r = float(r)
+            if np.isnan(r) or n is None:
+                return (np.nan, np.nan)
+            # Clamp to avoid infs
+            r_clamped = np.clip(r, -0.999999, 0.999999)
+            z = np.arctanh(r_clamped)
+            se = 1.0 / np.sqrt(max(n - k_controls - 3, 1e-8))
+            z_lo = z + stats.norm.ppf(alpha / 2.0) * se
+            z_hi = z + stats.norm.ppf(1 - alpha / 2.0) * se
+            return (float(np.tanh(z_lo)), float(np.tanh(z_hi)))
+
+        def corr_with_p(x, y):
+            x = np.asarray(x, dtype=float)
+            y = np.asarray(y, dtype=float)
+            n = len(x)
+            if n != len(y) or n < 3:
+                return np.nan, np.nan, np.nan, np.nan
+            # Handle zero-variance cases
+            sx = np.nanstd(x)
+            sy = np.nanstd(y)
+            if sx == 0 or sy == 0:
+                return np.nan, np.nan, np.nan, n
+            r = float(np.corrcoef(x, y)[0, 1])
+            # t-test for Pearson r
+            df_t = n - 2
+            if abs(r) >= 1.0:
+                p = 0.0
+            else:
+                t = r * np.sqrt(df_t / max(1 - r**2, 1e-12))
+                p = 2 * stats.t.sf(abs(t), df=df_t)
+            return r, p, n, df_t
+
+        def partial_corr(df_in, var_y, var_x, controls):
+            """
+            Residualize var_y and var_x on controls (w/ intercept) and correlate residuals.
+            Returns: r_partial, p_value, n, k_controls
+            """
+            cols_needed = [var_y, var_x] + (controls if controls else [])
+            d = df_in.dropna(subset=cols_needed)
+            n = len(d)
+            k = len(controls) if controls else 0
+            if n < (k + 4):  # need at least k+4 to have df>=2
+                return np.nan, np.nan, n, k
+
+            # Design matrices with intercept
+            Xc = sm.add_constant(d[controls], has_constant='add') if k > 0 else np.ones((n, 1))
+            # OLS residuals
+            if k > 0:
+                res_y = sm.OLS(d[var_y].values, Xc).fit().resid
+                res_x = sm.OLS(d[var_x].values, Xc).fit().resid
+            else:
+                # No controls: just center
+                res_y = d[var_y].values - d[var_y].values.mean()
+                res_x = d[var_x].values - d[var_x].values.mean()
+
+            r = float(np.corrcoef(res_x, res_y)[0, 1])
+            # p-value for partial correlation via t-test with df = n - k - 2
+            df_t = n - k - 2
+            if np.isnan(r) or df_t <= 0:
+                return np.nan, np.nan, n, k
+            if abs(r) >= 1.0:
+                p = 0.0
+            else:
+                t = r * np.sqrt(df_t / max(1 - r**2, 1e-12))
+                p = 2 * stats.t.sf(abs(t), df=df_t)
+            return r, p, n, k
+
+        def bootstrap_diff_corrs_unadjusted(df_in, n_boot, rng):
+            """
+            Bootstrap percentile CIs for differences of unadjusted correlations:
+              dy-dx1, dy-dx2, dx1-dx2
+            Stratified by y to stabilize.
+            """
+            d = df_in.dropna(subset=['X1', 'X2', 'X3', 'y'])
+            if len(d) < 10:
+                return None  # too small
+
+            idx = np.arange(len(d))
+            yv = d['y'].astype(int).values
+            idx_pos = idx[yv == 1]
+            idx_neg = idx[yv == 0]
+            n_pos, n_neg = len(idx_pos), len(idx_neg)
+            if n_pos == 0 or n_neg == 0:
+                # Fallback: non-stratified
+                idx_pos, idx_neg = None, None
+
+            diffs = {'dy_minus_dx1': [], 'dy_minus_dx2': [], 'dx1_minus_dx2': []}
+
+            for _ in range(n_boot):
+                if idx_pos is not None:
+                    samp_pos = rng.choice(idx_pos, size=n_pos, replace=True)
+                    samp_neg = rng.choice(idx_neg, size=n_neg, replace=True)
+                    samp_idx = np.concatenate([samp_pos, samp_neg])
+                else:
+                    samp_idx = rng.choice(idx, size=len(idx), replace=True)
+                bs = d.iloc[samp_idx]
+
+                r_x3_y, _, _, _ = corr_with_p(bs['X3'], bs['y'])
+                r_x3_x1, _, _, _ = corr_with_p(bs['X3'], bs['X1'])
+                r_x3_x2, _, _, _ = corr_with_p(bs['X3'], bs['X2'])
+
+                if not np.isnan(r_x3_y) and not np.isnan(r_x3_x1):
+                    diffs['dy_minus_dx1'].append(r_x3_y - r_x3_x1)
+                if not np.isnan(r_x3_y) and not np.isnan(r_x3_x2):
+                    diffs['dy_minus_dx2'].append(r_x3_y - r_x3_x2)
+                if not np.isnan(r_x3_x1) and not np.isnan(r_x3_x2):
+                    diffs['dx1_minus_dx2'].append(r_x3_x1 - r_x3_x2)
+
+            out = {}
+            for k, arr in diffs.items():
+                arr = np.array(arr, dtype=float)
+                if len(arr) == 0:
+                    out[k] = {'lo': np.nan, 'hi': np.nan, 'point': np.nan, 'p_boot': np.nan, 'n_boot': 0}
+                else:
+                    lo, hi = np.percentile(arr, [2.5, 97.5])
+                    # Simple two-sided sign test p from bootstrap
+                    p_boot = 2 * min(np.mean(arr <= 0), np.mean(arr >= 0))
+                    out[k] = {'lo': float(lo), 'hi': float(hi), 'point': float(np.mean(arr)),
+                              'p_boot': float(p_boot), 'n_boot': int(len(arr))}
+            return out
+
+        def bootstrap_diff_corrs_adjusted(df_in, n_boot, rng, surface_controls):
+            """
+            Bootstrap percentile CIs for differences of partial correlations (adjusted):
+              dy-dx1, dy-dx2, dx1-dx2
+            Uses common sample df_in and control sets:
+              - For X1: controls = surface_controls + ['X2']
+              - For X2: controls = surface_controls
+              - For y : controls = surface_controls + ['X2']
+            """
+            needed_cols = ['X1', 'X2', 'X3', 'y'] + surface_controls
+            d = df_in.dropna(subset=needed_cols)
+            if len(d) < 10:
+                return None
+
+            idx = np.arange(len(d))
+            yv = d['y'].astype(int).values
+            idx_pos = idx[yv == 1]
+            idx_neg = idx[yv == 0]
+            n_pos, n_neg = len(idx_pos), len(idx_neg)
+            if n_pos == 0 or n_neg == 0:
+                idx_pos, idx_neg = None, None
+
+            diffs = {'dy_minus_dx1': [], 'dy_minus_dx2': [], 'dx1_minus_dx2': []}
+
+            for _ in range(n_boot):
+                if idx_pos is not None:
+                    samp_pos = rng.choice(idx_pos, size=n_pos, replace=True)
+                    samp_neg = rng.choice(idx_neg, size=n_neg, replace=True)
+                    samp_idx = np.concatenate([samp_pos, samp_neg])
+                else:
+                    samp_idx = rng.choice(idx, size=len(idx), replace=True)
+                bs = d.iloc[samp_idx]
+
+                r_x3_x1, _, _, _ = partial_corr(bs, 'X1', 'X3', surface_controls + ['X2'])
+                r_x3_x2, _, _, _ = partial_corr(bs, 'X2', 'X3', surface_controls)
+                r_x3_y,  _, _, _ = partial_corr(bs, 'y',  'X3', surface_controls + ['X2'])
+
+                if not np.isnan(r_x3_y) and not np.isnan(r_x3_x1):
+                    diffs['dy_minus_dx1'].append(r_x3_y - r_x3_x1)
+                if not np.isnan(r_x3_y) and not np.isnan(r_x3_x2):
+                    diffs['dy_minus_dx2'].append(r_x3_y - r_x3_x2)
+                if not np.isnan(r_x3_x1) and not np.isnan(r_x3_x2):
+                    diffs['dx1_minus_dx2'].append(r_x3_x1 - r_x3_x2)
+
+            out = {}
+            for k, arr in diffs.items():
+                arr = np.array(arr, dtype=float)
+                if len(arr) == 0:
+                    out[k] = {'lo': np.nan, 'hi': np.nan, 'point': np.nan, 'p_boot': np.nan, 'n_boot': 0}
+                else:
+                    lo, hi = np.percentile(arr, [2.5, 97.5])
+                    p_boot = 2 * min(np.mean(arr <= 0), np.mean(arr >= 0))
+                    out[k] = {'lo': float(lo), 'hi': float(hi), 'point': float(np.mean(arr)),
+                              'p_boot': float(p_boot), 'n_boot': int(len(arr))}
+            return out
+
+        # -----------------------------
+        # Unadjusted correlations
+        # -----------------------------
+        r_x3_x1, p_x3_x1, n_u, _ = corr_with_p(df_unadj['X3'], df_unadj['X1'])
+        r_x3_x2, p_x3_x2, _, _ = corr_with_p(df_unadj['X3'], df_unadj['X2'])
+        r_x3_y,  p_x3_y,  _, _ = corr_with_p(df_unadj['X3'], df_unadj['y'])
+        ci_x3_x1 = fisher_ci(r_x3_x1, n_u)
+        ci_x3_x2 = fisher_ci(r_x3_x2, n_u)
+        ci_x3_y  = fisher_ci(r_x3_y,  n_u)
+
+        results_dict['unadjusted_influence'] = {
+            f"{original_names['X3']}_vs_{original_names['X1']}": {
+                'r': float(r_x3_x1), 'p': float(p_x3_x1), 'n': int(n_u),
+                'ci_lo': float(ci_x3_x1[0]), 'ci_hi': float(ci_x3_x1[1])
+            },
+            f"{original_names['X3']}_vs_{original_names['X2']}": {
+                'r': float(r_x3_x2), 'p': float(p_x3_x2), 'n': int(n_u),
+                'ci_lo': float(ci_x3_x2[0]), 'ci_hi': float(ci_x3_x2[1])
+            },
+            f"{original_names['X3']}_vs_{original_names['y']}": {
+                'r': float(r_x3_y), 'p': float(p_x3_y), 'n': int(n_u),
+                'ci_lo': float(ci_x3_y[0]), 'ci_hi': float(ci_x3_y[1])
+            }
+        }
+
+        ret_str += "Unadjusted influence (Pearson r; 95% CI; p-value):\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['X1']}: r={r_x3_x1:.4f}, CI[{ci_x3_x1[0]:.4f},{ci_x3_x1[1]:.4f}], p={p_x3_x1:.4g}, n={n_u}\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['X2']}: r={r_x3_x2:.4f}, CI[{ci_x3_x2[0]:.4f},{ci_x3_x2[1]:.4f}], p={p_x3_x2:.4g}, n={n_u}\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['y']}: r={r_x3_y:.4f}, CI[{ci_x3_y[0]:.4f},{ci_x3_y[1]:.4f}], p={p_x3_y:.4g}, n={n_u}\n\n"
+
+        # -----------------------------
+        # Adjusted partial correlations
+        # -----------------------------
+        # Control sets:
+        controls_x1 = surface_controls + ['X2']  # for 2)
+        controls_x2 = surface_controls           # for 4)
+        controls_y  = surface_controls + ['X2']  # for 6)
+
+        rpa_x3_x1, ppa_x3_x1, n_a, k1 = partial_corr(df_adj_common, 'X1', 'X3', controls_x1)
+        rpa_x3_x2, ppa_x3_x2, _,   k2 = partial_corr(df_adj_common, 'X2', 'X3', controls_x2)
+        rpa_x3_y,  ppa_x3_y,  _,   k3 = partial_corr(df_adj_common, 'y',  'X3', controls_y)
+
+        ci_pa_x3_x1 = fisher_ci(rpa_x3_x1, n_a, k_controls=k1)
+        ci_pa_x3_x2 = fisher_ci(rpa_x3_x2, n_a, k_controls=k2)
+        ci_pa_x3_y  = fisher_ci(rpa_x3_y,  n_a, k_controls=k3)
+
+        results_dict['adjusted_influence'] = {
+            f"{original_names['X3']}_vs_{original_names['X1']}_ctrl_surface+{original_names['X2']}": {
+                'partial_r': float(rpa_x3_x1), 'p': float(ppa_x3_x1), 'n': int(n_a), 'k_controls': int(k1),
+                'ci_lo': float(ci_pa_x3_x1[0]), 'ci_hi': float(ci_pa_x3_x1[1]),
+                'controls': controls_x1
+            },
+            f"{original_names['X3']}_vs_{original_names['X2']}_ctrl_surface": {
+                'partial_r': float(rpa_x3_x2), 'p': float(ppa_x3_x2), 'n': int(n_a), 'k_controls': int(k2),
+                'ci_lo': float(ci_pa_x3_x2[0]), 'ci_hi': float(ci_pa_x3_x2[1]),
+                'controls': controls_x2
+            },
+            f"{original_names['X3']}_vs_{original_names['y']}_ctrl_surface+{original_names['X2']}": {
+                'partial_r': float(rpa_x3_y), 'p': float(ppa_x3_y), 'n': int(n_a), 'k_controls': int(k3),
+                'ci_lo': float(ci_pa_x3_y[0]), 'ci_hi': float(ci_pa_x3_y[1]),
+                'controls': controls_y
+            }
+        }
+
+        ret_str += "Adjusted influence (partial r; 95% CI; p-value). Common sample with surface controls available:\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['X1']} | surface + {original_names['X2']}: "
+        ret_str += f"partial r={rpa_x3_x1:.4f}, CI[{ci_pa_x3_x1[0]:.4f},{ci_pa_x3_x1[1]:.4f}], p={ppa_x3_x1:.4g}, n={n_a}\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['X2']} | surface only: "
+        ret_str += f"partial r={rpa_x3_x2:.4f}, CI[{ci_pa_x3_x2[0]:.4f},{ci_pa_x3_x2[1]:.4f}], p={ppa_x3_x2:.4g}, n={n_a}\n"
+        ret_str += f"  {original_names['X3']} vs {original_names['y']} | surface + {original_names['X2']}: "
+        ret_str += f"partial r={rpa_x3_y:.4f}, CI[{ci_pa_x3_y[0]:.4f},{ci_pa_x3_y[1]:.4f}], p={ppa_x3_y:.4g}, n={n_a}\n\n"
+
+        # -----------------------------
+        # Bootstrap differences
+        # -----------------------------
+        rng = np.random.default_rng(random_state)
+
+        # Unadjusted differences
+        diffs_unadj = bootstrap_diff_corrs_unadjusted(df_unadj, n_boot, rng)
+        results_dict['differences_unadjusted'] = diffs_unadj if diffs_unadj is not None else {}
+
+        if diffs_unadj is not None:
+            ret_str += "Differences between unadjusted influences (bootstrap 95% CI; p_boot):\n"
+            ret_str += f"  r({original_names['X3']},{original_names['y']}) - r({original_names['X3']},{original_names['X1']}): "
+            d = diffs_unadj['dy_minus_dx1']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+            ret_str += f"  r({original_names['X3']},{original_names['y']}) - r({original_names['X3']},{original_names['X2']}): "
+            d = diffs_unadj['dy_minus_dx2']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+            ret_str += f"  r({original_names['X3']},{original_names['X1']}) - r({original_names['X3']},{original_names['X2']}): "
+            d = diffs_unadj['dx1_minus_dx2']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n\n"
+
+        # Adjusted differences
+        diffs_adj = bootstrap_diff_corrs_adjusted(df_adj_common, n_boot, rng, surface_controls)
+        results_dict['differences_adjusted'] = diffs_adj if diffs_adj is not None else {}
+
+        if diffs_adj is not None:
+            ret_str += "Differences between adjusted influences (partial r; bootstrap 95% CI; p_boot):\n"
+            ret_str += f"  partial r({original_names['X3']},{original_names['y']}|surf+{original_names['X2']}) - "
+            ret_str += f"partial r({original_names['X3']},{original_names['X1']}|surf+{original_names['X2']}): "
+            d = diffs_adj['dy_minus_dx1']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+
+            ret_str += f"  partial r({original_names['X3']},{original_names['y']}|surf+{original_names['X2']}) - "
+            ret_str += f"partial r({original_names['X3']},{original_names['X2']}|surf): "
+            d = diffs_adj['dy_minus_dx2']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+
+            ret_str += f"  partial r({original_names['X3']},{original_names['X1']}|surf+{original_names['X2']}) - "
+            ret_str += f"partial r({original_names['X3']},{original_names['X2']}|surf): "
+            d = diffs_adj['dx1_minus_dx2']
+            ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+
+        # -----------------------------
+        # Notes on control sets
+        # -----------------------------
+        ret_str += "\nNotes:\n"
+        ret_str += "- Unadjusted correlations use the common sample with all four core variables present.\n"
+        ret_str += "- Adjusted partial correlations use a common sample where all surface controls are present; control sets are:\n"
+        ret_str += f"    * For {original_names['X1']}: surface controls + {original_names['X2']}\n"
+        ret_str += f"    * For {original_names['X2']}: surface controls only (no {original_names['X2']} control by design)\n"
+        ret_str += f"    * For {original_names['y']}: surface controls + {original_names['X2']}\n"
+        if surface_controls:
+            ret_str += f"- Surface controls included: {surface_controls}\n"
+        else:
+            ret_str += "- No surface controls were provided.\n"
+
+    except Exception as e:
+        ret_str += f"Error in correlation-based influence analysis: {str(e)}\n"
+
+    return ret_str, results_dict
+
+def compare_predictors_of_choice_simple_old(X1, X2, X3, y, continuous_controls=None, categorical_controls=None, normvars=True):
     ret_str = ""
     results_dict = {}
     try:
@@ -196,6 +892,12 @@ def compare_predictors_of_choice_simple(X1, X2, X3, y, continuous_controls=None,
             'delta_TjurR2_X3_on_y_ctrl_X2': float(delta_tjur_y),
         })
         ret_str += f"Effect sizes (controls: {original_names['X2']}): partial R² (X1)={partial_R2_X3_on_X1:.4f}, ΔTjur R² (y)={delta_tjur_y:.4f}\n"
+        res = bootstrap_effect_sizes(dfm, X1_col='X1', X2_col='X2', X3_col='X3', y_col='y',
+                                    controls=None, n_boot=2000, stratify=True, random_state=123)
+
+        ret_str += f"({res['bootstrap_CI_percentile']['gap_deltaTjur_minus_partialR2']['lo']}-{res['bootstrap_CI_percentile']['gap_deltaTjur_minus_partialR2']['hi']})\n"
+        results_dict['comparative_entropy_impacts']['low'] = res['bootstrap_CI_percentile']['gap_deltaTjur_minus_partialR2']['lo']
+        results_dict['comparative_entropy_impacts']['high'] = res['bootstrap_CI_percentile']['gap_deltaTjur_minus_partialR2']['hi']
         ##################################
 
         #### Analysis of Stated Self/Other Confidences and Entropy as Predictors of Choice ####

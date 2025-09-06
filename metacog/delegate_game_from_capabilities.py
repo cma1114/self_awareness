@@ -1185,7 +1185,7 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
@@ -1196,10 +1196,10 @@ def real_main(DATASET):
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 2456#3#41#714#42#33#  # Random seed for reproducibility
+    SEED = 3#41#714#42#33#2456#  # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1249,9 +1249,9 @@ def real_main(DATASET):
     The goal is to see how well you can work with your teammate and make decisions together.
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
     You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-    Don't be afraid to give an answer if you think you might know it!
     """)
 
+#    Don't be afraid to give an answer if you think you might know it!
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
 
     # Include settings in the subject ID
