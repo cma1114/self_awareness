@@ -1190,14 +1190,14 @@ def main():
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "gemini-2.5-flash-lite"#"claude-3-sonnet-20240229"#'gemini-2.0-flash-001'#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = 'gemini-2.0-flash-001'#"gemini-2.5-flash-lite"#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.0  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.0  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.4  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.4  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 2456#3#41#714#42#33#  # Random seed for reproducibility
     FILTERED = False

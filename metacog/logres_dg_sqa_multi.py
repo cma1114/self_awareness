@@ -11,6 +11,8 @@ from collections import defaultdict
 from logres_helpers import *
 from pathlib import Path
 
+res_dicts = defaultdict(dict)
+
 FIRST_PASS = True
 def log_output(message_string, print_to_console=False):
     global FIRST_PASS
@@ -328,8 +330,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC" #"SimpleQA" #
-    game_type = "aop"#"dg" #
+    dataset = "SimpleQA" #"SimpleMC" #
+    game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -552,6 +554,7 @@ if __name__ == "__main__":
                 log_output(f"Mean capabilities entropy by baseline correctness:\n{cap_entropy_mean}\n")
                 cap_entropy_dif = cap_entropy_mean[0] - cap_entropy_mean[1] 
                 log_output(f"Capabilities entropy difference: {cap_entropy_dif:.3f}\n")
+                res_dicts[model_name_part]['cap_entropy_diff'] = cap_entropy_dif
 
             if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any(): 
                 cap_entropy_mean = df_model[df_model['delegate_choice']==0].groupby('s_i_capability')['capabilities_entropy'].mean()
@@ -635,6 +638,7 @@ if __name__ == "__main__":
                     Precision = TN / (TN + FN)
                     raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
+                    res_dicts[model_name_part]['introspection_score'] = {'mcc': raw_stats['mcc'], 'p': raw_stats['p_mcc']}
                     log_output(f"FP = {FP}")
                     log_output(f"FN = {FN}")
                     delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
@@ -664,7 +668,7 @@ if __name__ == "__main__":
                 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
                     log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}")
-
+                    res_dicts[model_name_part]['self_acc_lift'] = {'lift': raw_stats['lift'], 'p': raw_stats['p_lift']}
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
                     log_output(f"Adjusted self-acc lift = {adj_stats['lift']:.3f} [{adj_stats['lift_ci'][0]:.3f}, {adj_stats['lift_ci'][1]:.3f}], p={adj_stats['p_lift']:.4g}")
 
@@ -954,6 +958,7 @@ if __name__ == "__main__":
                     log_output(f"\n                  Model 4 ({interaction_str}): {model_def_str_4}")
                     try:
                         logit_model4 = smf.logit(model_def_str_4, data=df_model).fit(**fit_kwargs)
+                        res_dicts[model_name_part]['s_i_capability'] = {'coef': float(logit_model4.params['s_i_capability']),'p': float(logit_model4.pvalues['s_i_capability'])}
                         log_output(logit_model4.summary())
                         if 's_i_capability' in logit_model4.params:
                             coef_s_i = logit_model4.params['s_i_capability']
@@ -997,6 +1002,7 @@ if __name__ == "__main__":
                         log_output(f"\n                  Model 4.6: {model_def_str_4_5}")
                         try:
                             logit_m2 = smf.logit(model_def_str_4_5, data=df_model.dropna(subset=['capabilities_entropy', 'delegate_choice'])).fit(disp=0)
+                            res_dicts[model_name_part]['capabilities_entropy'] = {'coef': float(logit_m2.params['capabilities_entropy']),'p': float(logit_m2.pvalues['capabilities_entropy'])}
                             log_output(logit_m2.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 4.6: {e_full}")
@@ -1075,8 +1081,9 @@ if __name__ == "__main__":
                                 log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-                                res = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
                                 log_output(res)
+                                res_dicts[model_name_part]['capent'] = res_dict
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: normalized_prob_entropy in full model
@@ -1127,8 +1134,9 @@ if __name__ == "__main__":
                                 log_output(f"\n====================Simplified Complete GameEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'normalized_prob_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-                                res = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
                                 log_output(res)
+                                res_dicts[model_name_part]['gameent'] = res_dict
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: both entropies in full model
@@ -1340,3 +1348,8 @@ if __name__ == "__main__":
 
     log_output("\nEntropy gap summary (kept items; positive = higher entropy on wrongs)")
     log_output(entropy_tbl.to_markdown(index=False, floatfmt=".3f"))
+
+    qtype = "factual" if dataset in ['SimpleQA', 'SimpleMC'] else "reasoning"
+    rtype = "mc" if dataset in ['SimpleMC', 'GPQA'] else "sa"
+    with open(f"res_dicts_{qtype}_{rtype}_{game_type}.json", 'w') as f:
+        json.dump(res_dicts, f, indent=2)
