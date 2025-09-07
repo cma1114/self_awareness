@@ -1185,12 +1185,12 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = 'gemini-2.0-flash-001'#"gemini-2.5-flash-lite"#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "gemini-2.5-flash-lite"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
@@ -1248,10 +1248,10 @@ def real_main(DATASET):
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
     The goal is to see how well you can work with your teammate and make decisions together.
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
-    You want to maximize your total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
+    You want to maximize your team's total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
+    Don't be afraid to give an answer if you think you might know it!
     """)
 
-#    Don't be afraid to give an answer if you think you might know it!
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
 
     # Include settings in the subject ID

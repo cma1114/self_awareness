@@ -647,6 +647,7 @@ if __name__ == "__main__":
                             excess = p_team - p_const
                         ci_excess = (lo - p_const, hi - p_const)
                         log_output(f"Team-acc lift = {excess:.3f} [{ci_excess[0]:.3f}, {ci_excess[1]:.3f}]")
+                        res_dicts[model_name_part]['team_acc_lift'] = {'lift': excess, 'ci_lo': ci_excess[0], 'ci_hi': ci_excess[1]}
                     except Exception as e:
                         log_output(f"Error calculating team-acc lift: {e}")
 
@@ -1143,11 +1144,12 @@ if __name__ == "__main__":
                                 log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
+#                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
+                                res, res_dict = compare_predictors_of_choice_simple_old(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
 
-                                plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
+                                #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
 
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():

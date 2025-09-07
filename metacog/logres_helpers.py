@@ -622,14 +622,18 @@ def compare_predictors_of_choice_simple(
         controls_x1 = surface_controls + ['X2']  # for 2)
         controls_x2 = surface_controls           # for 4)
         controls_y  = surface_controls + ['X2']  # for 6)
+        controls_y_b  = surface_controls + ['X2'] + ['X1']  # for 6)
 
         rpa_x3_x1, ppa_x3_x1, n_a, k1 = partial_corr(df_adj_common, 'X1', 'X3', controls_x1)
         rpa_x3_x2, ppa_x3_x2, _,   k2 = partial_corr(df_adj_common, 'X2', 'X3', controls_x2)
         rpa_x3_y,  ppa_x3_y,  _,   k3 = partial_corr(df_adj_common, 'y',  'X3', controls_y)
+        # Also compute with X1 added to controls for y (sanity check; should be similar)
+        rpa_x3_y_b, ppa_x3_y_b, _, k3b = partial_corr(df_adj_common, 'y', 'X3', controls_y_b)
 
         ci_pa_x3_x1 = fisher_ci(rpa_x3_x1, n_a, k_controls=k1)
         ci_pa_x3_x2 = fisher_ci(rpa_x3_x2, n_a, k_controls=k2)
         ci_pa_x3_y  = fisher_ci(rpa_x3_y,  n_a, k_controls=k3)
+        ci_pa_x3_y_b = fisher_ci(rpa_x3_y_b, n_a, k_controls=k3b)
 
         results_dict['adjusted_influence'] = {
             f"{original_names['X3']}_vs_{original_names['X1']}_ctrl_surface+{original_names['X2']}": {
@@ -646,6 +650,11 @@ def compare_predictors_of_choice_simple(
                 'partial_r': float(rpa_x3_y), 'p': float(ppa_x3_y), 'n': int(n_a), 'k_controls': int(k3),
                 'ci_lo': float(ci_pa_x3_y[0]), 'ci_hi': float(ci_pa_x3_y[1]),
                 'controls': controls_y
+            },
+            f"{original_names['X3']}_vs_{original_names['y']}_ctrl_surface+{original_names['X2']}+{original_names['X1']}": {
+                'partial_r': float(rpa_x3_y_b), 'p': float(ppa_x3_y_b), 'n': int(n_a), 'k_controls': int(k3b),
+                'ci_lo': float(ci_pa_x3_y_b[0]), 'ci_hi': float(ci_pa_x3_y_b[1]),
+                'controls': controls_y_b
             }
         }
 
@@ -656,6 +665,8 @@ def compare_predictors_of_choice_simple(
         ret_str += f"partial r={rpa_x3_x2:.4f}, CI[{ci_pa_x3_x2[0]:.4f},{ci_pa_x3_x2[1]:.4f}], p={ppa_x3_x2:.4g}, n={n_a}\n"
         ret_str += f"  {original_names['X3']} vs {original_names['y']} | surface + {original_names['X2']}: "
         ret_str += f"partial r={rpa_x3_y:.4f}, CI[{ci_pa_x3_y[0]:.4f},{ci_pa_x3_y[1]:.4f}], p={ppa_x3_y:.4g}, n={n_a}\n\n"
+        ret_str += f"{original_names['X3']} vs {original_names['y']} | surface + {original_names['X2']} + {original_names['X1']}: "
+        ret_str += f"partial r={rpa_x3_y_b:.4f}, CI[{ci_pa_x3_y_b[0]:.4f},{ci_pa_x3_y_b[1]:.4f}], p={ppa_x3_y_b:.4g}, n={n_a}\n\n"
 
         # -----------------------------
         # Bootstrap differences
