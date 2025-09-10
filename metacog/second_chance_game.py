@@ -13,6 +13,7 @@ import time
 import json
 from base_game_class import BaseGameClass
 from scipy.stats import binomtest
+import string
 
 class SecondChanceGame(BaseGameClass):
     """
@@ -341,13 +342,23 @@ class SecondChanceGame(BaseGameClass):
 
                     if i - skipped == 0: self._log(f"Setup text: {setup_text}, content: {content}")
                     
-                    new_answer, _, probs = self._get_llm_answer(
+                    subject_answer, _, probs = self._get_llm_answer(
                         list(question["options"].keys()) if not self.is_short_answer else None,
                         content, message_history=message_history, keep_appending=False,
-                        setup_text=setup_text, MAX_TOKENS=None if self.is_short_answer else 1,
+                        setup_text=setup_text, MAX_TOKENS=None,# if self.is_short_answer else 1,
                         temp = self.temperature
                     )
-                
+
+                if len(subject_answer) == 0 or self.is_short_answer:
+                    new_answer = subject_answer
+                else:
+                    arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
+                    if arr[0] in question["options"]:
+                        new_answer = arr[0]
+                    elif arr[-1] in question["options"]:
+                        new_answer = arr[-1]
+                    else:
+                        new_answer = subject_answer
                 answer_changed = (new_answer != original_answer) and new_answer in question["options"]
                 is_correct = (new_answer == correct_answer)
                 

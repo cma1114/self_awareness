@@ -3,6 +3,7 @@ import json
 from load_and_format_datasets import load_and_format_dataset
 from base_game_class import *
 import random
+import string
 
 class CapabilitiesTest(BaseGameClass):
     """
@@ -148,7 +149,7 @@ class CapabilitiesTest(BaseGameClass):
                 if len(subject_answer) == 0:
                     subject_decision = subject_answer
                 else:
-                    arr = subject_answer.upper().rstrip(".").split()
+                    arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
                     if arr[0] in options:
                         subject_decision = arr[0]
                     elif arr[-1] in options:
@@ -156,7 +157,15 @@ class CapabilitiesTest(BaseGameClass):
                     else:
                         subject_decision = subject_answer
 
-                is_correct = (subject_decision == question["correct_answer"])
+                if self.nested:
+                    is_correct = sum(
+                        RANGE_MIDPOINTS[key.strip()] * mass
+                        for key, mass in probs.items()
+                        if key.strip() in RANGE_MIDPOINTS
+                    )
+                else:
+                    is_correct = (subject_decision == question["correct_answer"])
+
                 if is_correct:
                     self.correct_count += 1
                 
@@ -221,7 +230,7 @@ class CapabilitiesTest(BaseGameClass):
                         setup_prompt + "\n\n" + llm_prompt,
                         [], # no history
                         keep_appending=False,
-                        MAX_TOKENS=1,
+                        MAX_TOKENS=None if ('opus-4' in self.subject_name or 'sonnet-4' in self.subject_name) else 1,
                         temp=self.temperature
                     )
                 
@@ -229,7 +238,7 @@ class CapabilitiesTest(BaseGameClass):
                 if len(subject_answer) == 0:
                     subject_decision = subject_answer
                 else:
-                    arr = subject_answer.upper().rstrip(".").split()
+                    arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
                     if arr[0] in options:
                         subject_decision = arr[0]
                     elif arr[-1] in options:
@@ -356,7 +365,7 @@ class CapabilitiesTest(BaseGameClass):
             if len(subject_answer) == 0:
                 subject_decision = subject_answer
             else:
-                arr=subject_answer.upper().rstrip(".").split()
+                arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
                 if arr[0] in options:
                     subject_decision = arr[0]
                 elif arr[-1] in options:
@@ -476,10 +485,10 @@ class CapabilitiesTest(BaseGameClass):
 def main():
     IS_HUMAN = False
     DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "gemini-2.5-flash-lite"#"claude-3-haiku-20240307"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+    subject_name = "gpt-4o-mini"#"gemini-2.5-flash"#"grok-4-0709"#"claude-opus-4-1-20250805"#"gemini-2.5-flash-lite"#"claude-3-haiku-20240307"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
     resume_from = None#"./capabilities_test_logs/qwen3-235b-a22b-2507_GPQA_447_1756209710_test_data.json" #
     RESAMPLE = False
-    NESTED = "Self" #values: None, "Self", "Other"
+    NESTED = None #values: None, "Self", "Other"
     temp = 0.0
     seed = 42
     

@@ -16,24 +16,216 @@ from sklearn.model_selection import cross_val_score, StratifiedKFold
 from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
-import pandas as pd
+from numpy.linalg import LinAlgError
 
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, roc_auc_score
 from scipy.stats import spearmanr
 import statsmodels.formula.api as smf
 
-import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from sklearn.linear_model import LogisticRegression
 
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.nonparametric.smoothers_lowess import lowess
-import statsmodels.api as sm
+from scipy.stats import norm
 
+import scipy.linalg as la
+from patsy import dmatrices
+
+def analyze_wrong_way(
+    df,
+    continuous_controls,     # list of names or Series 
+    categorical_controls=None,  # list of names or Series
+    normvars=True,
+    robust=False,
+    alpha=0.05
+):
+    """
+    Build controls, fit two GLM logits, and either return results
+    or raise a single, explanatory error if something is off.
+    """
+    # Predeclare for diagnostics
+    controls = None
+    Xb = None
+    Xg = None
+    yb = None
+    yg = None
+
+    try:
+        # 1) Sanity: required columns and binary outcomes
+        if 's_i_capability' not in df or 'delegate_choice' not in df:
+            missing = [c for c in ['s_i_capability','delegate_choice'] if c not in df]
+            raise ValueError(f"Missing required columns: {missing}")
+        for col in ['s_i_capability', 'delegate_choice']:
+            vals = pd.Series(df[col]).dropna().unique()
+            if not set(vals).issubset({0,1}):
+                raise ValueError(f"Outcome {col} must be binary 0/1; found values: {vals[:10]}")
+
+        # 2) Build control matrix on FULL df (same pattern as your entropy code)
+        controls = pd.DataFrame(index=df.index)
+
+        # Continuous controls
+        cont_names = []
+        if continuous_controls:
+            for i, ctrl in enumerate(continuous_controls):
+                if isinstance(ctrl, str):
+                    s = df[ctrl]
+                    cname = ctrl
+                else:
+                    s = pd.Series(ctrl, index=df.index)
+                    cname = s.name or f'cont_{i}'
+                controls[cname] = pd.to_numeric(s, errors='coerce')
+                cont_names.append(cname)
+
+        # Categorical controls
+        cat_names = []
+        if categorical_controls:
+            for i, ctrl in enumerate(categorical_controls):
+                if isinstance(ctrl, str):
+                    s = df[ctrl]
+                    cname = ctrl
+                else:
+                    s = pd.Series(ctrl, index=df.index)
+                    cname = s.name or f'cat_{i}'
+                controls[cname] = s.astype('object')
+                cat_names.append(cname)
+
+        # One-hot on full df
+        if cat_names:
+            dummies = pd.get_dummies(controls[cat_names], drop_first=True, dtype=float)
+            controls = pd.concat([controls.drop(columns=cat_names), dummies], axis=1)
+
+        # 3) Build designs per outcome (subset, drop NA rows, scale continuous)
+        def _design(ycol):
+            idx = df[ycol].notna()
+            y = df.loc[idx, ycol].astype(int)
+            X = controls.loc[idx].copy()
+
+            # Report and drop rows with any NA in predictors
+            na_by_col = X.isna().sum()
+            if na_by_col.any():
+                X = X.dropna(axis=0)
+                y = y.loc[X.index]
+
+            # Standardize continuous controls on this subset (like your entropy code)
+            if normvars and cont_names:
+                present_cont = [c for c in cont_names if c in X.columns]
+                if present_cont:
+                    scaler = StandardScaler().fit(X[present_cont])
+                    X[present_cont] = scaler.transform(X[present_cont])
+
+            # Final dtype enforcement
+            non_numeric = [c for c, dt in X.dtypes.items() if dt.kind not in 'fc']
+            if non_numeric:
+                raise TypeError(f"Non-numeric columns after setup: {non_numeric}")
+
+            # Add intercept
+            X = sm.add_constant(X.astype(float), has_constant='add')
+            return X, y, na_by_col
+
+        Xb, yb, na_b = _design('s_i_capability')
+        Xg, yg, na_g = _design('delegate_choice')
+
+        # 4) Check column alignment; align if needed but report differences
+        xb_cols = list(Xb.columns)
+        xg_cols = list(Xg.columns)
+        if xb_cols != xg_cols:
+            missing_in_game = sorted(list(set(xb_cols) - set(xg_cols)))
+            missing_in_base = sorted(list(set(xg_cols) - set(xb_cols)))
+            raise ValueError(
+                "Predictor columns differ between baseline and game after setup. "
+                f"Missing in game: {missing_in_game}; missing in baseline: {missing_in_base}. "
+                "This means some dummy or control column is present only in one subset after row drops."
+            )
+
+        # 5) Constant columns (no variance) in each subset
+        const_b = [c for c in Xb.columns if c != 'const' and Xb[c].nunique(dropna=False) <= 1]
+        const_g = [c for c in Xg.columns if c != 'const' and Xg[c].nunique(dropna=False) <= 1]
+        # We keep them (statsmodels can handle with warnings), but we’ll surface them if fit fails.
+
+        # 6) Fit GLMs (logit)
+        fam = sm.families.Binomial()
+        base_res = sm.GLM(yb, Xb, family=fam).fit(cov_type='HC1' if robust else 'nonrobust')
+        game_res = sm.GLM(yg, Xg, family=fam).fit(cov_type='HC1' if robust else 'nonrobust')
+
+        # 7) Summaries for misuse rule
+        bp = base_res.params.drop('const', errors='ignore')
+        gp = game_res.params.drop('const', errors='ignore')
+        bz = bp / base_res.bse.drop('const', errors='ignore')
+        gz = gp / game_res.bse.drop('const', errors='ignore')
+        p_one = pd.Series(1 - norm.cdf(gz.values), index=gz.index, name='p_one')
+
+        candidates = set(bp[bp > 0].index.tolist())
+
+        rows = []
+        for j in bp.index.union(gp.index):
+            misuse = (j in candidates) and (gp.get(j, np.nan) > 0) and (p_one.get(j, np.nan) < alpha)
+            rows.append({
+                'predictor': j,
+                'beta_correct': bp.get(j, np.nan),
+                'z_correct': bz.get(j, np.nan),
+                'beta_delegate': gp.get(j, np.nan),
+                'z_delegate': gz.get(j, np.nan),
+                'p_one_sided_delegate_gt0': p_one.get(j, np.nan),
+                'baseline_positive': (j in candidates),
+                'misuse': misuse
+            })
+        return pd.DataFrame(rows).sort_values(['misuse','p_one_sided_delegate_gt0'], ascending=[False, True]), {
+            'baseline': base_res, 'game': game_res
+        }
+
+    except Exception as e:
+        # Build a precise, actionable message about what and where
+        lines = []
+        lines.append("Failed to fit models with entropy-style setup.")
+        lines.append(f"Error: {type(e).__name__}: {e}")
+
+        # Controls-level diagnostics
+        if controls is None:
+            lines.append("Controls: not constructed (error occurred earlier).")
+        else:
+            obj_cols = [c for c, dt in controls.dtypes.items() if dt == 'object']
+            if obj_cols:
+                # Show a peek of unique values to catch unencoded categoricals
+                peek = {c: controls[c].dropna().unique()[:5].tolist() for c in obj_cols}
+                lines.append(f"Controls contain object dtype columns (should be dummies or numeric): {obj_cols}. Samples: {peek}")
+
+            na_totals = controls.isna().sum()
+            na_cols = na_totals[na_totals > 0].sort_values(ascending=False)
+            if len(na_cols) > 0:
+                lines.append(f"Controls have NaNs before subsetting: {na_cols.to_dict()}")
+
+        # Subset-level diagnostics
+        def _subset_diags(name, X, y):
+            if X is None:
+                lines.append(f"{name}: design not built.")
+                return
+            lines.append(f"{name}: X shape {X.shape}, y length {len(y) if y is not None else 'n/a'}")
+            nn = [c for c, dt in X.dtypes.items() if dt.kind not in 'fc']
+            if nn:
+                lines.append(f"{name}: non-numeric columns: {nn}")
+            na_by_col = X.isna().sum()
+            na_cols = na_by_col[na_by_col > 0]
+            if len(na_cols) > 0:
+                lines.append(f"{name}: NaNs in predictors by column: {na_cols.to_dict()}")
+            consts = [c for c in X.columns if c != 'const' and X[c].nunique(dropna=False) <= 1]
+            if consts:
+                lines.append(f"{name}: constant columns (no variance): {consts}")
+
+        _subset_diags("Baseline", Xb, yb)
+        _subset_diags("Game", Xg, yg)
+
+        # Column alignment
+        if (Xb is not None) and (Xg is not None):
+            if list(Xb.columns) != list(Xg.columns):
+                missing_in_game = sorted(list(set(Xb.columns) - set(Xg.columns)))
+                missing_in_base = sorted(list(set(Xg.columns) - set(Xb.columns)))
+                lines.append(f"Column mismatch: missing in game {missing_in_game}; missing in baseline {missing_in_base}")
+
+        raise RuntimeError("\n".join(lines)) from e
+    
 def plot_x3_relationships(X1, X2, X3, y, filename='x3_relationships.png',
                           n_bins=20, loess_frac=0.3, dpi=160):
     """
@@ -331,11 +523,6 @@ def compare_predictors_of_choice_simple(
     Returns:
       ret_str (plain text summary) and results_dict (JSON-friendly metrics).
     """
-    import numpy as np
-    import pandas as pd
-    from scipy import stats
-    from sklearn.preprocessing import StandardScaler
-    import statsmodels.api as sm
 
     ret_str = ""
     results_dict = {}
@@ -709,6 +896,25 @@ def compare_predictors_of_choice_simple(
             ret_str += f"partial r({original_names['X3']},{original_names['X2']}|surf): "
             d = diffs_adj['dx1_minus_dx2']
             ret_str += f"Δ={d['point']:.4f}, CI[{d['lo']:.4f},{d['hi']:.4f}], p_boot={d['p_boot']:.4f}, n_boot={d['n_boot']}\n"
+
+        # Univariate analysis - fit separate logistic regression for each predictor
+        ret_str += "Q2: Which factors drive game performance?\n"
+
+        univar = {}
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+        for var in ['X1','X2','X3']:
+            Xi = sm.add_constant(df_norm[[var]])
+            fit = sm.Logit(df_norm['y'], Xi).fit(disp=0)
+            coef = float(fit.params[var])
+            pval = float(fit.pvalues[var])
+            # AUC with sklearn (unpenalized if available)
+            clf = LogisticRegression(C=1e6, solver='lbfgs', max_iter=1000)
+            auc = cross_val_score(clf, df_norm[[var]].values, df_norm['y'].values, cv=cv, scoring='roc_auc')
+            univar[var] = {'coefficient': coef, 'odds_ratio': np.exp(coef), 'p_value': pval,
+                        'mean_auc': float(auc.mean()), 'std_auc': float(auc.std()), 'aic': float(fit.aic)}
+
+        results_dict['univariate_choice_predictors'] = { original_names[k]: v for k,v in univar.items() }
 
         # -----------------------------
         # Notes on control sets
@@ -1382,51 +1588,118 @@ def contingency(delegate: np.ndarray, correct: np.ndarray):
     TN = np.sum(~delegate &  correct)   # keep     & right
     return TP, FN, FP, TN
 
-def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0):
+def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0, 
+                   baseline_correct=None, delegated=None, baseline_probs=None):
     rng = np.random.default_rng(seed)
+    N = tp + fn + fp + tn
 
     # ---------- point estimates --------------------------------------------
-    k         = len(kept_correct)                    # ★ kept items
-    kept_acc  = kept_correct.mean() if k else np.nan # ★ acc from real data
-    lift      = kept_acc - p0
+    k = len(kept_correct)
+    kept_acc = kept_correct.mean() if k else np.nan
+    lift = kept_acc - p0
+    normed_lift = (kept_acc - p0) / (1 - p0) if p0 < 1.0 else np.nan
 
     denom = math.sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn))
-    mcc   = (tp*tn - fp*fn) / denom if denom else np.nan
+    mcc = (tp*tn - fp*fn) / denom if denom else np.nan
+
+    sensitivity = tn / (tn + fp) if (tn + fp) > 0 else 0
+    specificity = tp / (tp + fn) if (tp + fn) > 0 else 0
+    single_point_auc = (sensitivity + specificity) / 2
+    j = (sensitivity + specificity - 1.0)
+    p = (tn + fp) / N 
+    c = (tn + fn) / N
+    if (p > 0) and (p < 1) and (c > 0) and (c < 1):
+        j_max = min(c / p, (1 - c) / (1 - p))
+    else:
+        j_max = 0.0
+    ba_norm = (j / j_max) if (j_max > 0) and np.isfinite(j) else np.nan
+
+    # Compute full AUC if we have probabilities
+    full_auc = None
+    if baseline_probs is not None and delegated is not None:
+        # Assuming delegated needs inversion (1=pass → 1=answer)
+        delegated_binary = 1 - delegated.values if hasattr(delegated, 'values') else 1 - delegated
+        try:
+            full_auc = roc_auc_score(delegated_binary, baseline_probs)
+        except:
+            full_auc = None
 
     # ---------- p-values ----------------------------------------------------
-    p_lift = binomtest(kept_correct.sum(), k, p0,  # ★ successes = real kept
-                       alternative='two-sided').pvalue
-    p_mcc  = mcnemar([[tn, fp],
-                      [fn, tp]], exact=True).pvalue
+    p_lift = binomtest(kept_correct.sum(), k, p0, alternative='two-sided').pvalue
+    p_mcc = mcnemar([[tn, fp], [fn, tp]], exact=True).pvalue
 
     # ---------- bootstrap CIs ----------------------------------------------
-    N        = tp + fn + fp + tn
-    counts   = np.array([tp, fn, fp, tn], int)
-    probs    = counts / N
+    counts = np.array([tp, fn, fp, tn], int)
+    probs = counts / N
 
-    lifts, mccs = [], []
-    kept_idx = np.arange(k)                         # ★ indices for kept vector
+    lifts, normed_lifts, mccs, aucs, full_aucs = [], [], [], [], []
+    kept_idx = np.arange(k)
 
     for _ in range(n_boot):
-        # ----- lift: resample ONLY kept correctness ----------------★
+        # ----- lift: resample ONLY kept correctness
         b_k_acc = kept_correct[rng.choice(kept_idx, k, replace=True)].mean()
         lifts.append(b_k_acc - p0)
+        if p0 < 1.0:
+            normed_lifts.append((b_k_acc - p0) / (1 - p0))
+        else:
+            normed_lifts.append(np.nan)
 
-        # ----- MCC: multinomial resample of 4-cell table (unchanged)
+        # ----- MCC: multinomial resample of 4-cell table
         sample = rng.choice(4, size=N, replace=True, p=probs)
         btp, bfn, bfp, btn = np.bincount(sample, minlength=4)
         bden = math.sqrt((btp+bfp)*(btp+bfn)*(btn+bfp)*(btn+bfn))
         bmcc = (btp*btn - bfp*bfn) / bden if bden else 0.0
         mccs.append(bmcc)
 
-    ci_lift = tuple(np.percentile(lifts, [2.5, 97.5]))  # ★ tuple()
-    ci_mcc  = tuple(np.percentile(mccs,  [2.5, 97.5]))
+        # ----- Single point AUC (if we have the data)
+        if baseline_correct is not None and delegated is not None and j_max > 0:
+            idx = rng.choice(N, N, replace=True)
+            boot_bc = baseline_correct.iloc[idx].values if hasattr(baseline_correct, 'iloc') else baseline_correct[idx]
+            boot_del = delegated.iloc[idx].values if hasattr(delegated, 'iloc') else delegated[idx]
+            boot_del_binary = 1 - boot_del  # Invert: 1=answer, 0=pass
+            
+            ac = ((boot_del_binary == 1) & (boot_bc == 1)).sum()
+            ai = ((boot_del_binary == 1) & (boot_bc == 0)).sum()
+            pc = ((boot_del_binary == 0) & (boot_bc == 1)).sum()
+            pi = ((boot_del_binary == 0) & (boot_bc == 0)).sum()
+
+            sens = ac / (ac + pc) if (ac + pc) > 0 else 0
+            spec = pi / (pi + ai) if (pi + ai) > 0 else 0
+            j = (sens + spec - 1.0)
+            #p = (ac + pc) / N 
+            #c = (ac + ai) / N
+            #j_max = min(c / p, (1 - c) / (1 - p))
+            b_ba_norm = (j / j_max) 
+            aucs.append(b_ba_norm)###(sens + spec) / 2)
+            
+            # ----- Full ROC-AUC (if we have probabilities)
+            if baseline_probs is not None:
+                boot_probs = baseline_probs.iloc[idx].values if hasattr(baseline_probs, 'iloc') else baseline_probs[idx]
+                try:
+                    boot_auc = roc_auc_score(boot_del_binary, boot_probs)
+                    full_aucs.append(boot_auc)
+                except:
+                    pass  # Skip if all same class
+
+    # Compute CIs
+    ci_lift = tuple(np.percentile(lifts, [2.5, 97.5]))
+    ci_normed_lift = tuple(np.percentile(normed_lifts, [2.5, 97.5]))
+    ci_mcc = tuple(np.percentile(mccs, [2.5, 97.5]))
+    ci_single_auc = tuple(np.percentile(aucs, [2.5, 97.5])) if aucs else (np.nan, np.nan)
+    ci_full_auc = tuple(np.percentile(full_aucs, [2.5, 97.5])) if full_aucs else (np.nan, np.nan)
 
     boot_arr = np.array(mccs)
     p_mcc = 2 * min((boot_arr <= 0).mean(), (boot_arr >= 0).mean())
     
-    return dict(lift=lift,   lift_ci=ci_lift,  p_lift=p_lift,
-                mcc=mcc,     mcc_ci =ci_mcc,  p_mcc =p_mcc)
+    return dict(
+        lift=lift, lift_ci=ci_lift, p_lift=p_lift,
+        normed_lift=normed_lift, normed_lift_ci=ci_normed_lift,
+        mcc=mcc, mcc_ci=ci_mcc, p_mcc=p_mcc,
+        single_point_auc=ba_norm if baseline_correct is not None else None,
+        single_point_auc_ci=ci_single_auc if baseline_correct is not None else (None, None),
+        full_auc=full_auc,
+        full_auc_ci=ci_full_auc if full_auc is not None else (None, None)
+    )
 
 def self_acc_stats(cap_corr, team_corr, kept_mask):
     k           = kept_mask.sum()                
@@ -1626,3 +1899,39 @@ def compare_predictors_of_implicit_conf(stated, behavior, implicit_confs):
         'p_stated': p_stated,
         'p_diff': p_diff
     }
+
+def remove_collinear_terms(model_terms, df, target_col='delegate_choice', fit_kwargs={}, protected_terms=['s_i_capability']):
+    """
+    Iteratively remove terms causing singular matrix issues
+    """
+    working_terms = model_terms.copy()
+    removed_terms = []
+    
+    while True:
+        model_def_str = f'{target_col} ~ ' + ' + '.join(working_terms)
+        
+        try:
+            logit_model = smf.logit(model_def_str, data=df).fit(**fit_kwargs)
+            return logit_model, working_terms, removed_terms
+            
+        except (LinAlgError, np.linalg.LinAlgError):
+            # Try removing each term EXCEPT protected ones
+            for term in working_terms:
+                if term in protected_terms:
+                    continue  # Skip protected terms
+                    
+                test_terms = [t for t in working_terms if t != term]
+                model_def_str = f'{target_col} ~ ' + ' + '.join(test_terms)
+                
+                try:
+                    smf.logit(model_def_str, data=df).fit(**fit_kwargs)
+                    # This worked, so remove this term
+                    working_terms.remove(term)
+                    removed_terms.append(term)
+                    print(f"Removed: {term}")
+                    break
+                except:
+                    continue
+            else:
+                print("Can't remove any more terms")
+                return None, working_terms, removed_terms

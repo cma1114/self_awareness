@@ -19,7 +19,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     filtered_introspection_regex = re.compile(r"Filtered Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
     
     adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-    raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+#    raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    raw_self_acc_lift_regex = re.compile(r"Single-point AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     filtered_self_acc_lift_regex = re.compile(r"Filtered Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
 
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
@@ -749,14 +750,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "aop" #"dg"#
-    dataset = "SimpleMC" #"GPQA"
+    game_type = "dg"#"aop" #
+    dataset = "SimpleMC" #"SimpleQA" #"GPSA"#"GPQA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ["gemini-2.5-flash-lite", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
+    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", "gemini-2.5-flash", "gemini-2.5-flash-lite", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
     #model_list = ['claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'grok-3-latest', 'gemini-2.0-flash-001', 'deepseek-chat', 'claude-3-5-sonnet-20241022', 'gpt-4o-2024-08-06', 'gemini-1.5-pro', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
     #model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"

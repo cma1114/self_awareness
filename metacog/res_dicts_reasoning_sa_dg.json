@@ -31,6 +31,10 @@
     "self_acc_lift": {
       "lift": 0.09617586443782918,
       "p": 0.11385495871651105
+    },
+    "s_i_capability": {
+      "coef": -1.400821971230391,
+      "p": 0.027874645336185156
     }
   },
   "claude-3-sonnet-20240229": {
@@ -50,6 +54,25 @@
     "s_i_capability": {
       "coef": -0.5618959068101997,
       "p": 0.3431904421711137
+    }
+  },
+  "claude-opus-4-1-20250805": {
+    "team_acc_lift": {
+      "lift": -0.021621621621621623,
+      "ci_lo": -0.06483492779898958,
+      "ci_hi": 0.02614629086356768
+    },
+    "introspection_score": {
+      "mcc": 0.23309871798126583,
+      "p": 0.0
+    },
+    "self_acc_lift": {
+      "lift": 0.11935483870967745,
+      "p": 0.0015611939465095593
+    },
+    "s_i_capability": {
+      "coef": -0.932584484392275,
+      "p": 0.00045814418781389764
     }
   },
   "claude-sonnet-4-20250514": {
@@ -138,71 +161,144 @@
       "p": 0.5919969079724104
     },
     "capent": {
-      "pearson_correlations": {
-        "sp_prob-o_prob": {
-          "r": 0.6531929125276599,
-          "p": 8.47032236658093e-45
+      "unadjusted_influence": {
+        "capabilities_entropy_vs_sp_prob": {
+          "r": -0.12426805502440033,
+          "p": 0.018831356386820063,
+          "n": 357,
+          "ci_lo": -0.22515956835233705,
+          "ci_hi": -0.02073983503087263
         },
-        "sp_prob-capabilities_entropy": {
-          "r": -0.1242680550244003,
-          "p": 0.018831356386820087
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.046307412915920616,
+          "p": 0.3830161815115617,
+          "n": 357,
+          "ci_lo": -0.14938512417377767,
+          "ci_hi": 0.05776597254298094
         },
-        "o_prob-capabilities_entropy": {
-          "r": -0.0463074129159206,
-          "p": 0.38301618151156214
-        },
-        "sp_prob-delegate_choice": {
-          "r": -0.2059012510843824,
-          "p": 8.898497531440392e-05
-        },
-        "o_prob-delegate_choice": {
-          "r": -0.2123435034139333,
-          "p": 5.2489632671997574e-05
-        },
-        "capabilities_entropy-delegate_choice": {
-          "r": -0.024591508267949373,
-          "p": 0.6433046037548341
+        "capabilities_entropy_vs_delegate_choice": {
+          "r": -0.024591508267949386,
+          "p": 0.6433046037548327,
+          "n": 357,
+          "ci_lo": -0.12806036762435194,
+          "ci_hi": 0.07940690999031833
         }
       },
-      "spearman_correlations": {
-        "capabilities_entropy-sp_prob": {
-          "rho": -0.1411842246157141,
-          "p": 0.007548230578484491
+      "adjusted_influence": {
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": -0.13704029325581696,
+          "p": 0.01026601185022652,
+          "n": 357,
+          "k_controls": 7,
+          "ci_lo": -0.2384446445818407,
+          "ci_hi": -0.032679944761143186,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
         },
-        "capabilities_entropy-o_prob": {
-          "rho": -0.11670127846506125,
-          "p": 0.027467332248896956
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.06211801031738696,
+          "p": 0.2457433842904381,
+          "n": 357,
+          "k_controls": 6,
+          "ci_lo": -0.16572061176381223,
+          "ci_hi": 0.04284076691526368,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics"
+          ]
         },
-        "capabilities_entropy-delegate_choice": {
-          "rho": 0.09306342020928939,
-          "p": 0.0790837131617803
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": -0.04280187786589672,
+          "p": 0.4247247530197975,
+          "n": 357,
+          "k_controls": 7,
+          "ci_lo": -0.1469722517425164,
+          "ci_hi": 0.06230751620457819,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
+        },
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": -0.05275904230313551,
+          "p": 0.3257212085008325,
+          "n": 357,
+          "k_controls": 8,
+          "ci_lo": -0.15687028351248802,
+          "ci_hi": 0.05251189329961899,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2",
+            "X1"
+          ]
         }
       },
-      "asymmetry_test": {
-        "capabilities_entropy_o_prob_to_sp_prob_R2": 0.4355198097045422,
-        "sp_prob_o_prob_to_capabilities_entropy_R2": 0.017562535330331475
+      "differences_unadjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.08680009878601341,
+          "hi": 0.29090281867361933,
+          "point": 0.10128523525036885,
+          "p_boot": 0.321,
+          "n_boot": 2000
+        },
+        "dy_minus_dx2": {
+          "lo": -0.1939056377710272,
+          "hi": 0.2301097765605967,
+          "point": 0.023287509056800187,
+          "p_boot": 0.824,
+          "n_boot": 2000
+        },
+        "dx1_minus_dx2": {
+          "lo": -0.1621424644157692,
+          "hi": 0.002653335269523056,
+          "point": -0.07799772619356866,
+          "p_boot": 0.06,
+          "n_boot": 2000
+        }
       },
-      "comparative_entropy_impacts": {
-        "X3_to_X1_controlling_X2": {
-          "beta": -0.09422242947291265,
-          "p": 0.026832059306478022
+      "differences_adjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.046145349550841756,
+          "hi": 0.243153674342161,
+          "point": 0.09553312989353709,
+          "p_boot": 0.212,
+          "n_boot": 2000
         },
-        "X3_to_Y_controlling_X2": {
-          "beta": -0.11513224273675458,
-          "p": 0.48868433254170063
+        "dy_minus_dx2": {
+          "lo": -0.17555731716633163,
+          "hi": 0.21015859006878787,
+          "point": 0.017081883432320127,
+          "p_boot": 0.874,
+          "n_boot": 2000
         },
-        "X3_to_X1_controlling_X2_Y": {
-          "beta": -0.09677055109614163,
-          "p": 0.027668615837330084
-        },
-        "X3_to_Y_controlling_X1_X2": {
-          "beta": -0.14912594521310682,
-          "p": 0.37086194420533825
-        },
-        "partial_R2_X3_on_X1_ctrl_X2": 0.015451292227173119,
-        "delta_TjurR2_X3_on_y_ctrl_X2": 0.00379151294711233,
-        "low": -0.04094875910832177,
-        "high": 0.02979906246693863
+        "dx1_minus_dx2": {
+          "lo": -0.21297884337053885,
+          "hi": 0.05777874130785699,
+          "point": -0.07845124646121696,
+          "p_boot": 0.249,
+          "n_boot": 2000
+        }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
@@ -229,51 +325,15 @@
           "std_auc": 0.0949857535445574,
           "aic": 237.22133180187274
         }
-      },
-      "likelihood_ratio_tests": {
-        "o_prob_adds_to_sp_prob": {
-          "LR": 5.5336968654305,
-          "p": 0.018653652073679486
-        },
-        "capabilities_entropy_adds_to_sp_prob": {
-          "LR": 0.8267842047704903,
-          "p": 0.36320406101301117
-        },
-        "capabilities_entropy_adds_to_o_prob": {
-          "LR": 0.4474353758569123,
-          "p": 0.5035553762691458
-        },
-        "capabilities_entropy_adds_to_sp_prob+o_prob": {
-          "LR": 0.7359593762943177,
-          "p": 0.39095831636275946
-        },
-        "o_prob_adds_to_sp_prob+capabilities_entropy": {
-          "LR": 5.442872036954327,
-          "p": 0.019648336122824475
-        }
-      },
-      "full_model_choice_predictors": {
-        "sp_prob": {
-          "coef": -0.3109576296407184,
-          "p": 0.2145482235050964
-        },
-        "o_prob": {
-          "coef": -0.7970638363011323,
-          "p": 0.006612720424533356
-        },
-        "capabilities_entropy": {
-          "coef": -0.1883970498426583,
-          "p": 0.2694893575265884
-        }
       }
     }
   },
   "gemini-2.5-flash-lite": {
     "cap_entropy_diff": 1.7589878594646873,
     "team_acc_lift": {
-      "lift": -0.02206185567010309,
-      "ci_lo": -0.04781276672272555,
-      "ci_hi": 0.011572366487867886
+      "lift": -0.01175257731958762,
+      "ci_lo": -0.03891346215513247,
+      "ci_hi": 0.02308948243911732
     },
     "introspection_score": {
       "mcc": 0.06652662026669744,
@@ -292,71 +352,144 @@
       "p": 0.0008800979051466044
     },
     "capent": {
-      "pearson_correlations": {
-        "sp_prob-o_prob": {
-          "r": 0.35569713496610267,
-          "p": 1.3509133600165739e-12
+      "unadjusted_influence": {
+        "capabilities_entropy_vs_sp_prob": {
+          "r": -0.07251932452652055,
+          "p": 0.16163139580865374,
+          "n": 374,
+          "ci_lo": -0.17265612560567964,
+          "ci_hi": 0.029101185910567675
         },
-        "sp_prob-capabilities_entropy": {
-          "r": -0.07251932452652056,
-          "p": 0.16163139580865382
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.04932075702853108,
+          "p": 0.341500707613429,
+          "n": 374,
+          "ci_lo": -0.14997715678072213,
+          "ci_hi": 0.0523475587540534
         },
-        "o_prob-capabilities_entropy": {
-          "r": -0.04932075702853107,
-          "p": 0.34150070761343015
-        },
-        "sp_prob-delegate_choice": {
-          "r": -0.1157449919918465,
-          "p": 0.02519257041433068
-        },
-        "o_prob-delegate_choice": {
-          "r": -0.09342188126402258,
-          "p": 0.07113825385933951
-        },
-        "capabilities_entropy-delegate_choice": {
+        "capabilities_entropy_vs_delegate_choice": {
           "r": 0.1745264819901723,
-          "p": 0.000699088478330065
+          "p": 0.0006990884783300725,
+          "n": 374,
+          "ci_lo": 0.07443738138352182,
+          "ci_hi": 0.2711344148745378
         }
       },
-      "spearman_correlations": {
-        "capabilities_entropy-sp_prob": {
-          "rho": -0.06341999397858095,
-          "p": 0.22109905596830068
+      "adjusted_influence": {
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": -0.06552463408511794,
+          "p": 0.21044765455942518,
+          "n": 374,
+          "k_controls": 7,
+          "ci_lo": -0.1667760984848225,
+          "ci_hi": 0.03709434580452425,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
         },
-        "capabilities_entropy-o_prob": {
-          "rho": -0.08432406703846539,
-          "p": 0.10348416238706544
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.05154666911885392,
+          "p": 0.3240702129101657,
+          "n": 374,
+          "k_controls": 6,
+          "ci_lo": -0.15297137316381798,
+          "ci_hi": 0.05095264471338235,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics"
+          ]
         },
-        "capabilities_entropy-delegate_choice": {
-          "rho": 0.24014149376388091,
-          "p": 2.6338527882230498e-06
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": 0.18316933073129074,
+          "p": 0.00042040191241097483,
+          "n": 374,
+          "k_controls": 7,
+          "ci_lo": 0.08234319438046278,
+          "ci_hi": 0.28028386695623125,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
+        },
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": 0.17678094079607304,
+          "p": 0.0006806820013666768,
+          "n": 374,
+          "k_controls": 8,
+          "ci_lo": 0.0756416254952776,
+          "ci_hi": 0.27431984353118827,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2",
+            "X1"
+          ]
         }
       },
-      "asymmetry_test": {
-        "capabilities_entropy_o_prob_to_sp_prob_R2": 0.12955019032813642,
-        "sp_prob_o_prob_to_capabilities_entropy_R2": 0.005892685122110719
+      "differences_unadjusted": {
+        "dy_minus_dx1": {
+          "lo": 0.10129685330617509,
+          "hi": 0.39469983714195883,
+          "point": 0.24862152492865372,
+          "p_boot": 0.002,
+          "n_boot": 2000
+        },
+        "dy_minus_dx2": {
+          "lo": 0.04939100989654968,
+          "hi": 0.3968741708028899,
+          "point": 0.22686266072712222,
+          "p_boot": 0.018,
+          "n_boot": 2000
+        },
+        "dx1_minus_dx2": {
+          "lo": -0.15899418232105134,
+          "hi": 0.10659913421336407,
+          "point": -0.021758864201531527,
+          "p_boot": 0.748,
+          "n_boot": 2000
+        }
       },
-      "comparative_entropy_impacts": {
-        "X3_to_X1_controlling_X2": {
-          "beta": -0.0551101299914627,
-          "p": 0.3140306442955173
+      "differences_adjusted": {
+        "dy_minus_dx1": {
+          "lo": 0.11482077496484298,
+          "hi": 0.38804017914701494,
+          "point": 0.25030860681898526,
+          "p_boot": 0.002,
+          "n_boot": 2000
         },
-        "X3_to_Y_controlling_X2": {
-          "beta": 0.46006554257198534,
-          "p": 0.0012127289947158806
+        "dy_minus_dx2": {
+          "lo": 0.08808170703114893,
+          "hi": 0.38031053524098424,
+          "point": 0.2358598193168634,
+          "p_boot": 0.001,
+          "n_boot": 2000
         },
-        "X3_to_X1_controlling_X2_Y": {
-          "beta": -0.04216236484395765,
-          "p": 0.4567430952527278
-        },
-        "X3_to_Y_controlling_X1_X2": {
-          "beta": 0.45151816411896234,
-          "p": 0.0015604398939337517
-        },
-        "partial_R2_X3_on_X1_ctrl_X2": 0.0034685855110930808,
-        "delta_TjurR2_X3_on_y_ctrl_X2": 0.031574417452214676,
-        "low": -0.009770673217684408,
-        "high": 0.07700257302157627
+        "dx1_minus_dx2": {
+          "lo": -0.16292003410414055,
+          "hi": 0.12940681790992292,
+          "point": -0.014448787502121902,
+          "p_boot": 0.844,
+          "n_boot": 2000
+        }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
@@ -382,42 +515,6 @@
           "mean_auc": 0.6460380392156864,
           "std_auc": 0.07231271150665049,
           "aic": 464.7378763200957
-        }
-      },
-      "likelihood_ratio_tests": {
-        "o_prob_adds_to_sp_prob": {
-          "LR": 1.1419024237544022,
-          "p": 0.2852506944486708
-        },
-        "capabilities_entropy_adds_to_sp_prob": {
-          "LR": 12.129412541819477,
-          "p": 0.0004963275249968442
-        },
-        "capabilities_entropy_adds_to_o_prob": {
-          "LR": 12.623846340502496,
-          "p": 0.00038085685703009094
-        },
-        "capabilities_entropy_adds_to_sp_prob+o_prob": {
-          "LR": 12.0139756519402,
-          "p": 0.0005280310108489601
-        },
-        "o_prob_adds_to_sp_prob+capabilities_entropy": {
-          "LR": 1.0264655338750686,
-          "p": 0.31099026021689663
-        }
-      },
-      "full_model_choice_predictors": {
-        "sp_prob": {
-          "coef": -0.31960916082101287,
-          "p": 0.026676503581089417
-        },
-        "o_prob": {
-          "coef": 0.010425695887666115,
-          "p": 0.938601622370929
-        },
-        "capabilities_entropy": {
-          "coef": 0.4721418667078719,
-          "p": 0.0015405362854599058
         }
       }
     },
@@ -466,71 +563,144 @@
       "p": 0.8056267404305112
     },
     "capent": {
-      "pearson_correlations": {
-        "sp_prob-o_prob": {
-          "r": 0.25225484614211846,
-          "p": 0.0004960131898332092
+      "unadjusted_influence": {
+        "capabilities_entropy_vs_sp_prob": {
+          "r": 0.028215280236026923,
+          "p": 0.7014770318454562,
+          "n": 187,
+          "ci_lo": -0.11574659917823431,
+          "ci_hi": 0.1710161426416356
         },
-        "sp_prob-capabilities_entropy": {
-          "r": 0.02821528023602691,
-          "p": 0.7014770318454556
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.11848839836263549,
+          "p": 0.10628147192326283,
+          "n": 187,
+          "ci_lo": -0.2576018341646682,
+          "ci_hi": 0.025437350626752137
         },
-        "o_prob-capabilities_entropy": {
-          "r": -0.1184883983626355,
-          "p": 0.10628147192326295
-        },
-        "sp_prob-delegate_choice": {
-          "r": -0.20170911037558875,
-          "p": 0.005634114042522288
-        },
-        "o_prob-delegate_choice": {
-          "r": 0.09305675465623357,
-          "p": 0.20524468662894652
-        },
-        "capabilities_entropy-delegate_choice": {
-          "r": -0.06479671688131172,
-          "p": 0.37828165208412246
+        "capabilities_entropy_vs_delegate_choice": {
+          "r": -0.06479671688131174,
+          "p": 0.3782816520841229,
+          "n": 187,
+          "ci_lo": -0.2063711560633239,
+          "ci_hi": 0.0794351181355292
         }
       },
-      "spearman_correlations": {
-        "capabilities_entropy-sp_prob": {
-          "rho": 0.08684976455173073,
-          "p": 0.23723586735864333
+      "adjusted_influence": {
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": 0.014120667302808802,
+          "p": 0.8507683378278503,
+          "n": 187,
+          "k_controls": 7,
+          "ci_lo": -0.1324161334244028,
+          "ci_hi": 0.16005342023795527,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
         },
-        "capabilities_entropy-o_prob": {
-          "rho": -0.1298195324801163,
-          "p": 0.07658506214211348
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.17191356673545366,
+          "p": 0.020662659546436906,
+          "n": 187,
+          "k_controls": 6,
+          "ci_lo": -0.3099981409011674,
+          "ci_hi": -0.02672596343326828,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics"
+          ]
         },
-        "capabilities_entropy-delegate_choice": {
-          "rho": -0.034925925903914606,
-          "p": 0.6351096986233276
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": -0.02097414368534676,
+          "p": 0.7798856990587706,
+          "n": 187,
+          "k_controls": 7,
+          "ci_lo": -0.1667259873679336,
+          "ci_hi": 0.12567471160583168,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
+        },
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": -0.018150697413568468,
+          "p": 0.8094323771447267,
+          "n": 187,
+          "k_controls": 8,
+          "ci_lo": -0.16438535091168296,
+          "ci_hi": 0.12886464745862922,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2",
+            "X1"
+          ]
         }
       },
-      "asymmetry_test": {
-        "capabilities_entropy_o_prob_to_sp_prob_R2": 0.06705672071864388,
-        "sp_prob_o_prob_to_capabilities_entropy_R2": 0.01764507111410407
+      "differences_unadjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.29088987404936245,
+          "hi": 0.11614787040115233,
+          "point": -0.09138433273615831,
+          "p_boot": 0.376,
+          "n_boot": 2000
+        },
+        "dy_minus_dx2": {
+          "lo": -0.14066472238678548,
+          "hi": 0.24384783415010514,
+          "point": 0.05177307510169632,
+          "p_boot": 0.597,
+          "n_boot": 2000
+        },
+        "dx1_minus_dx2": {
+          "lo": -0.031090903597436235,
+          "hi": 0.30929794426443136,
+          "point": 0.14315740783785463,
+          "p_boot": 0.113,
+          "n_boot": 2000
+        }
       },
-      "comparative_entropy_impacts": {
-        "X3_to_X1_controlling_X2": {
-          "beta": 0.058931927766709157,
-          "p": 0.3798108900126518
+      "differences_adjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.24046202115814366,
+          "hi": 0.1822888496619327,
+          "point": -0.0332067618869591,
+          "p_boot": 0.758,
+          "n_boot": 2000
         },
-        "X3_to_Y_controlling_X2": {
-          "beta": -0.1312320307799018,
-          "p": 0.4520497759801513
+        "dy_minus_dx2": {
+          "lo": -0.03955689222261267,
+          "hi": 0.33027960385219235,
+          "point": 0.14832317754390578,
+          "p_boot": 0.131,
+          "n_boot": 2000
         },
-        "X3_to_X1_controlling_X2_Y": {
-          "beta": 0.04668210293374712,
-          "p": 0.47869947957308223
-        },
-        "X3_to_Y_controlling_X1_X2": {
-          "beta": -0.10685562756624774,
-          "p": 0.5488438467779551
-        },
-        "partial_R2_X3_on_X1_ctrl_X2": 0.003656911782530803,
-        "delta_TjurR2_X3_on_y_ctrl_X2": 0.003074298701767897,
-        "low": -0.025445855966303742,
-        "high": 0.027623510758193148
+        "dx1_minus_dx2": {
+          "lo": -0.0065278688258580825,
+          "hi": 0.3568959087038742,
+          "point": 0.18152993943086487,
+          "p_boot": 0.062,
+          "n_boot": 2000
+        }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
@@ -556,42 +726,6 @@
           "mean_auc": 0.5307142857142857,
           "std_auc": 0.07863457459344178,
           "aic": 216.21537504835567
-        }
-      },
-      "likelihood_ratio_tests": {
-        "o_prob_adds_to_sp_prob": {
-          "LR": 4.088899614000468,
-          "p": 0.04316573588499642
-        },
-        "capabilities_entropy_adds_to_sp_prob": {
-          "LR": 0.6807363993345916,
-          "p": 0.409333262972407
-        },
-        "capabilities_entropy_adds_to_o_prob": {
-          "LR": 0.5762259397460525,
-          "p": 0.44779544597552823
-        },
-        "capabilities_entropy_adds_to_sp_prob+o_prob": {
-          "LR": 0.3643384358137496,
-          "p": 0.5461065963922372
-        },
-        "o_prob_adds_to_sp_prob+capabilities_entropy": {
-          "LR": 3.772501650479626,
-          "p": 0.05210165389385373
-        }
-      },
-      "full_model_choice_predictors": {
-        "sp_prob": {
-          "coef": -0.5567431947353211,
-          "p": 0.0044019308481931885
-        },
-        "o_prob": {
-          "coef": 0.054577924800707826,
-          "p": 0.8138242578833371
-        },
-        "capabilities_entropy": {
-          "coef": -0.060777961351794925,
-          "p": 0.7611485606884583
         }
       }
     },
@@ -621,71 +755,144 @@
       "p": 0.4273616158901501
     },
     "capent": {
-      "pearson_correlations": {
-        "sp_prob-o_prob": {
-          "r": 0.5365889975526789,
-          "p": 5.494246705733861e-14
+      "unadjusted_influence": {
+        "capabilities_entropy_vs_sp_prob": {
+          "r": -0.03504937926334641,
+          "p": 0.6509813376721736,
+          "n": 169,
+          "ci_lo": -0.185030402058164,
+          "ci_hi": 0.11652720148979125
         },
-        "sp_prob-capabilities_entropy": {
-          "r": -0.03504937926334642,
-          "p": 0.6509813376721751
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.031083642521760352,
+          "p": 0.6882837094562728,
+          "n": 169,
+          "ci_lo": -0.18119344155371458,
+          "ci_hi": 0.12044154477159318
         },
-        "o_prob-capabilities_entropy": {
-          "r": -0.03108364252176036,
-          "p": 0.6882837094562713
-        },
-        "sp_prob-delegate_choice": {
-          "r": -0.4004296935948015,
-          "p": 6.875721043869416e-08
-        },
-        "o_prob-delegate_choice": {
-          "r": -0.16551739943523514,
-          "p": 0.0315067577262028
-        },
-        "capabilities_entropy-delegate_choice": {
-          "r": 0.0273073835597191,
-          "p": 0.7245180295279944
+        "capabilities_entropy_vs_delegate_choice": {
+          "r": 0.02730738355971908,
+          "p": 0.7245180295279943,
+          "n": 169,
+          "ci_lo": -0.12416449151586732,
+          "ci_hi": 0.17753555347674477
         }
       },
-      "spearman_correlations": {
-        "capabilities_entropy-sp_prob": {
-          "rho": -0.03704440356024067,
-          "p": 0.6325311457098766
+      "adjusted_influence": {
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": -0.04610067280433445,
+          "p": 0.5602084290073253,
+          "n": 169,
+          "k_controls": 7,
+          "ci_lo": -0.1988823712538148,
+          "ci_hi": 0.10886867838044562,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
         },
-        "capabilities_entropy-o_prob": {
-          "rho": 0.0026154840634478645,
-          "p": 0.9730773042203039
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.12288926044838745,
+          "p": 0.11809962419266228,
+          "n": 169,
+          "k_controls": 6,
+          "ci_lo": -0.27148130790538033,
+          "ci_hi": 0.031424865620857216,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics"
+          ]
         },
-        "capabilities_entropy-delegate_choice": {
-          "rho": 0.0530634995985756,
-          "p": 0.4932248318227477
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": 0.04289019875351357,
+          "p": 0.587869942030826,
+          "n": 169,
+          "k_controls": 7,
+          "ci_lo": -0.1120462729634153,
+          "ci_hi": 0.1957907980721201,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
+        },
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": 0.030181647187283778,
+          "p": 0.70389731708443,
+          "n": 169,
+          "k_controls": 8,
+          "ci_lo": -0.1250771069608827,
+          "ci_hi": 0.18399753526519422,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2",
+            "X1"
+          ]
         }
       },
-      "asymmetry_test": {
-        "capabilities_entropy_o_prob_to_sp_prob_R2": 0.2882655443360831,
-        "sp_prob_o_prob_to_capabilities_entropy_R2": 0.0014401133795735044
+      "differences_unadjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.175101226660961,
+          "hi": 0.30462420683364216,
+          "point": 0.06699953067393463,
+          "p_boot": 0.588,
+          "n_boot": 2000
+        },
+        "dy_minus_dx2": {
+          "lo": -0.15794258542070266,
+          "hi": 0.2686063500986127,
+          "point": 0.06147770767986441,
+          "p_boot": 0.562,
+          "n_boot": 2000
+        },
+        "dx1_minus_dx2": {
+          "lo": -0.14424424387044146,
+          "hi": 0.13028371316818527,
+          "point": -0.005521822994070208,
+          "p_boot": 0.926,
+          "n_boot": 2000
+        }
       },
-      "comparative_entropy_impacts": {
-        "X3_to_X1_controlling_X2": {
-          "beta": -0.01838800504098237,
-          "p": 0.7811874424833228
+      "differences_adjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.1485134678510456,
+          "hi": 0.3229267714504521,
+          "point": 0.09105017295632054,
+          "p_boot": 0.449,
+          "n_boot": 2000
         },
-        "X3_to_Y_controlling_X2": {
-          "beta": 0.04717723277626949,
-          "p": 0.7790146567858934
+        "dy_minus_dx2": {
+          "lo": -0.042176882291907754,
+          "hi": 0.3645254467988385,
+          "point": 0.16916680986312108,
+          "p_boot": 0.113,
+          "n_boot": 2000
         },
-        "X3_to_X1_controlling_X2_Y": {
-          "beta": -0.011286147493306392,
-          "p": 0.8609594765978102
-        },
-        "X3_to_Y_controlling_X1_X2": {
-          "beta": 0.027654138306511856,
-          "p": 0.8784186341403013
-        },
-        "partial_R2_X3_on_X1_ctrl_X2": 0.00047437888863510747,
-        "delta_TjurR2_X3_on_y_ctrl_X2": 0.00043906392823944707,
-        "low": -0.024947677123599247,
-        "high": 0.0280898989474687
+        "dx1_minus_dx2": {
+          "lo": -0.11921594247477246,
+          "hi": 0.296657669916161,
+          "point": 0.07811663690680054,
+          "p_boot": 0.468,
+          "n_boot": 2000
+        }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
@@ -711,42 +918,6 @@
           "mean_auc": 0.42079051383399213,
           "std_auc": 0.09158422617371514,
           "aic": 215.6348908630095
-        }
-      },
-      "likelihood_ratio_tests": {
-        "o_prob_adds_to_sp_prob": {
-          "LR": 0.5956804059018452,
-          "p": 0.44023090930318287
-        },
-        "capabilities_entropy_adds_to_sp_prob": {
-          "LR": 0.01905301268493531,
-          "p": 0.890214612927686
-        },
-        "capabilities_entropy_adds_to_o_prob": {
-          "LR": 0.07885809218808504,
-          "p": 0.778850894120871
-        },
-        "capabilities_entropy_adds_to_sp_prob+o_prob": {
-          "LR": 0.0234143268912419,
-          "p": 0.8783845480265222
-        },
-        "o_prob_adds_to_sp_prob+capabilities_entropy": {
-          "LR": 0.6000417201081518,
-          "p": 0.43856210841298404
-        }
-      },
-      "full_model_choice_predictors": {
-        "sp_prob": {
-          "coef": -0.8844741038065093,
-          "p": 0.00019153838550593517
-        },
-        "o_prob": {
-          "coef": 0.182793974901207,
-          "p": 0.4669513423979682
-        },
-        "capabilities_entropy": {
-          "coef": 0.07158321316329677,
-          "p": 0.7050606056849607
         }
       }
     },
@@ -776,71 +947,144 @@
       "p": 0.04526982813265957
     },
     "capent": {
-      "pearson_correlations": {
-        "sp_prob-o_prob": {
-          "r": 0.4042520466589945,
-          "p": 8.472001236687944e-15
+      "unadjusted_influence": {
+        "capabilities_entropy_vs_sp_prob": {
+          "r": -0.04462966735461325,
+          "p": 0.41204020182746903,
+          "n": 340,
+          "ci_lo": -0.15027851647127485,
+          "ci_hi": 0.0620269768203444
         },
-        "sp_prob-capabilities_entropy": {
-          "r": -0.04462966735461327,
-          "p": 0.4120402018274671
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.14290720771798512,
+          "p": 0.008316757425495615,
+          "n": 340,
+          "ci_lo": -0.2455372671025274,
+          "ci_hi": -0.0371090549089962
         },
-        "o_prob-capabilities_entropy": {
-          "r": -0.1429072077179852,
-          "p": 0.008316757425495591
-        },
-        "sp_prob-delegate_choice": {
-          "r": -0.29243798659176423,
-          "p": 3.952237880956721e-08
-        },
-        "o_prob-delegate_choice": {
-          "r": -0.14230782610713316,
-          "p": 0.0085951691882732
-        },
-        "capabilities_entropy-delegate_choice": {
-          "r": 0.09118929555338526,
-          "p": 0.09319989339503632
+        "capabilities_entropy_vs_delegate_choice": {
+          "r": 0.09118929555338522,
+          "p": 0.09319989339503652,
+          "n": 340,
+          "ci_lo": -0.01532151699391747,
+          "ci_hi": 0.19565383813216203
         }
       },
-      "spearman_correlations": {
-        "capabilities_entropy-sp_prob": {
-          "rho": -0.04235147566409846,
-          "p": 0.4363355801523836
+      "adjusted_influence": {
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": -0.059667646929742274,
+          "p": 0.27760922597006443,
+          "n": 340,
+          "k_controls": 7,
+          "ci_lo": -0.16607837097560574,
+          "ci_hi": 0.04811667254063491,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
         },
-        "capabilities_entropy-o_prob": {
-          "rho": -0.10145528431703309,
-          "p": 0.06166763020562497
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.06833941937713256,
+          "p": 0.21286610555542138,
+          "n": 340,
+          "k_controls": 6,
+          "ci_lo": -0.17437511886513118,
+          "ci_hi": 0.039263062571157775,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics"
+          ]
         },
-        "capabilities_entropy-delegate_choice": {
-          "rho": 0.09596741700943716,
-          "p": 0.0772088610836967
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": 0.10213127780602813,
+          "p": 0.06266183614589475,
+          "n": 340,
+          "k_controls": 7,
+          "ci_lo": -0.005403793316160521,
+          "ci_hi": 0.2073312339150587,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2"
+          ]
+        },
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": 0.08992649147161756,
+          "p": 0.10190778270713036,
+          "n": 340,
+          "k_controls": 8,
+          "ci_lo": -0.017884325633327338,
+          "ci_hi": 0.1956702114368888,
+          "controls": [
+            "human_difficulty",
+            "q_length",
+            "avg_word_length",
+            "percent_non_alphabetic_whitespace",
+            "domain_grouped_chemistry",
+            "domain_grouped_physics",
+            "X2",
+            "X1"
+          ]
         }
       },
-      "asymmetry_test": {
-        "capabilities_entropy_o_prob_to_sp_prob_R2": 0.16359599965319327,
-        "sp_prob_o_prob_to_capabilities_entropy_R2": 0.02062888452000544
+      "differences_unadjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.026888494663599664,
+          "hi": 0.3039452974421071,
+          "point": 0.13852148863269428,
+          "p_boot": 0.112,
+          "n_boot": 2000
+        },
+        "dy_minus_dx2": {
+          "lo": 0.09475737416640358,
+          "hi": 0.38473228728482206,
+          "point": 0.23914850045599728,
+          "p_boot": 0.001,
+          "n_boot": 2000
+        },
+        "dx1_minus_dx2": {
+          "lo": -0.012983154906614695,
+          "hi": 0.2128017448444107,
+          "point": 0.100627011823303,
+          "p_boot": 0.079,
+          "n_boot": 2000
+        }
       },
-      "comparative_entropy_impacts": {
-        "X3_to_X1_controlling_X2": {
-          "beta": 0.013414827765539275,
-          "p": 0.8050667262116549
+      "differences_adjusted": {
+        "dy_minus_dx1": {
+          "lo": -0.010546461683582616,
+          "hi": 0.3128924234675218,
+          "point": 0.15459713151392462,
+          "p_boot": 0.078,
+          "n_boot": 2000
         },
-        "X3_to_Y_controlling_X2": {
-          "beta": 0.2025510002710116,
-          "p": 0.16949455817767567
+        "dy_minus_dx2": {
+          "lo": 0.015757400482350938,
+          "hi": 0.3269692321069844,
+          "point": 0.17337395931645624,
+          "p_boot": 0.029,
+          "n_boot": 2000
         },
-        "X3_to_X1_controlling_X2_Y": {
-          "beta": 0.030918693753864197,
-          "p": 0.5621928348417503
-        },
-        "X3_to_Y_controlling_X1_X2": {
-          "beta": 0.22318816611756156,
-          "p": 0.14315731296671658
-        },
-        "partial_R2_X3_on_X1_ctrl_X2": 0.00021071788187909668,
-        "delta_TjurR2_X3_on_y_ctrl_X2": 0.005307407257739483,
-        "low": -0.013339991338857467,
-        "high": 0.02985198228493664
+        "dx1_minus_dx2": {
+          "lo": -0.15447036155222468,
+          "hi": 0.19776901727060395,
+          "point": 0.018776827802531593,
+          "p_boot": 0.854,
+          "n_boot": 2000
+        }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
@@ -867,44 +1111,27 @@
           "std_auc": 0.10146070301747678,
           "aic": 341.33598447001975
         }
-      },
-      "likelihood_ratio_tests": {
-        "o_prob_adds_to_sp_prob": {
-          "LR": 0.2959379536616211,
-          "p": 0.5864402371908273
-        },
-        "capabilities_entropy_adds_to_sp_prob": {
-          "LR": 2.4409695424863003,
-          "p": 0.11820314639666488
-        },
-        "capabilities_entropy_adds_to_o_prob": {
-          "LR": 1.9603554259846305,
-          "p": 0.16147531140224233
-        },
-        "capabilities_entropy_adds_to_sp_prob+o_prob": {
-          "LR": 2.225826850076146,
-          "p": 0.13571998150786427
-        },
-        "o_prob_adds_to_sp_prob+capabilities_entropy": {
-          "LR": 0.08079526125141001,
-          "p": 0.7762225764295653
-        }
-      },
-      "full_model_choice_predictors": {
-        "sp_prob": {
-          "coef": -0.6925356944794865,
-          "p": 1.0969158214262859e-05
-        },
-        "o_prob": {
-          "coef": -0.2120584687086596,
-          "p": 0.17801381918993608
-        },
-        "capabilities_entropy": {
-          "coef": 0.25194555507063493,
-          "p": 0.12268975468078923
-        }
       }
     },
     "gameent": {}
+  },
+  "openai-gpt-5-chat": {
+    "team_acc_lift": {
+      "lift": -0.3076142131979696,
+      "ci_lo": -0.3566668952923142,
+      "ci_hi": -0.25841448918125365
+    },
+    "introspection_score": {
+      "mcc": 0.3023660718818192,
+      "p": 0.0
+    },
+    "self_acc_lift": {
+      "lift": 0.012156024579214553,
+      "p": 0.6957022165248348
+    },
+    "s_i_capability": {
+      "coef": -1.4891820057767653,
+      "p": 1.6633072831134328e-06
+    }
   }
 }

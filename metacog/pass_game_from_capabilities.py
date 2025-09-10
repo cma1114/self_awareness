@@ -17,6 +17,7 @@ import re
 from base_game_class import BaseGameClass
 from scipy.stats import fisher_exact, binomtest
 from load_and_format_datasets import load_and_format_dataset
+import string
 
 ANSWER_TYPES = None#["Date", "Person"]
 
@@ -385,8 +386,7 @@ class AnswerOrPassGame(BaseGameClass):
             if len(resp) == 0:
                 subject_decision = resp
             else:
-                resp = resp.rstrip(".")
-                arr=resp.split()
+                arr = resp.upper().rstrip(string.whitespace + string.punctuation)
                 if arr[0] in options:
                     subject_decision = arr[0]
                 elif arr[-1] in options:

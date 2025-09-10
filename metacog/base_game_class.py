@@ -178,7 +178,7 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-5" if self.subject_name == "gpt-5"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5" if self.subject_name == "gpt-5"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -199,7 +199,7 @@ class BaseGameClass:
                     )   
                     print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
-                    if 'o3' in self.subject_name: return resp, None
+                    if 'o3' in self.subject_name or 'gpt-5' in self.subject_name: return resp, None
                     if len(options) == 1: #short answer, just average
                         token_logprobs = completion.choices[0].logprobs.content    
                         top_probs = []

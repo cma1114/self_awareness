@@ -330,7 +330,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleQA" #"SimpleMC" #
+    dataset = "SimpleMC" #"SimpleQA" #
     game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -578,7 +578,10 @@ if __name__ == "__main__":
                     cap_corr = np.array(df_clean['s_i_capability'], bool)   # Baseline correctness from capabilities file
                     team_corr = np.where(df_clean['delegate_choice'] == 0, df_clean['subject_correct'].fillna(0).astype(bool), False) #Real in-game self correctness (only defined when kept)
                     TP, FN, FP, TN = contingency(delegated, cap_corr)
-                    filt_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    try:
+                        filt_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    except Exception as e:
+                        log_output(f"Error calculating filtered lift/mcc stats: {e}")
                     log_output(f"Filtered Introspection score = {filt_stats['mcc']:.3f} [{filt_stats['mcc_ci'][0]:.3f}, {filt_stats['mcc_ci'][1]:.3f}], p={filt_stats['p_mcc']:.4g}")
                     delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
                     log_output(f"Filtered Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
@@ -637,7 +640,7 @@ if __name__ == "__main__":
                     TP, FN, FP, TN = contingency(delegated, cap_corr) #(TP=delegated, wrong in baseline, FP=delegated, correct in baseline, FN=answered, wrong in baseline, TN=answered, correct in baseline)
                     Recall = TN / (TN + FP)
                     Precision = TN / (TN + FN)
-                    raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean(), baseline_correct=df_model['s_i_capability'], delegated=df_model['delegate_choice'], baseline_probs = df_model['p_i_capability'] if 'p_i_capability' in df_model.columns else None)
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
                     res_dicts[model_name_part]['introspection_score'] = {'mcc': raw_stats['mcc'], 'p': raw_stats['p_mcc']}
                     log_output(f"FP = {FP}")
@@ -669,7 +672,15 @@ if __name__ == "__main__":
                 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
                     log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}")
+                    log_output(f"Normed Self-acc lift = {raw_stats['normed_lift']:.3f} [{raw_stats['normed_lift_ci'][0]:.3f}, {raw_stats['normed_lift_ci'][1]:.3f}]")
                     res_dicts[model_name_part]['self_acc_lift'] = {'lift': raw_stats['lift'], 'p': raw_stats['p_lift']}
+                    res_dicts[model_name_part]['normed_self_acc_lift'] = {'lift': raw_stats['normed_lift'], 'ci_lo': raw_stats['normed_lift_ci'][0], 'ci_hi': raw_stats['normed_lift_ci'][1]}
+                    log_output(f"Single-point AUC = {raw_stats['single_point_auc']:.3f} [{raw_stats['single_point_auc_ci'][0]:.3f}, {raw_stats['single_point_auc_ci'][1]:.3f}]")
+                    res_dicts[model_name_part]['single_point_auc'] = {'auc': raw_stats['single_point_auc'], 'ci_lo': raw_stats['single_point_auc_ci'][0], 'ci_hi': raw_stats['single_point_auc_ci'][1]}
+                    if raw_stats['full_auc'] is not None:
+                        log_output(f"Full AUC = {raw_stats['full_auc']:.3f} [{raw_stats['full_auc_ci'][0]:.3f}, {raw_stats['full_auc_ci'][1]:.3f}]")
+                        res_dicts[model_name_part]['full_auc'] = {'auc': raw_stats['full_auc'], 'ci_lo': raw_stats['full_auc_ci'][0], 'ci_hi': raw_stats['full_auc_ci'][1]}
+                    #print(f"TP={
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
                     log_output(f"Adjusted self-acc lift = {adj_stats['lift']:.3f} [{adj_stats['lift_ci'][0]:.3f}, {adj_stats['lift_ci'][1]:.3f}], p={adj_stats['p_lift']:.4g}")
 
@@ -972,6 +983,9 @@ if __name__ == "__main__":
                             log_output(f"                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): {odds_ratio_delegate_Si0_vs_Si1:.4f} [{ci_lower_or:.4f}, {ci_upper_or:.4f}]")
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 4: {e_full}")
+                        logit_model4, final_terms, removed = remove_collinear_terms(final_model_terms, df_model, 'delegate_choice', fit_kwargs, protected_terms=['s_i_capability'])
+                        res_dicts[model_name_part]['s_i_capability'] = {'coef': float(logit_model4.params['s_i_capability']),'p': float(logit_model4.pvalues['s_i_capability'])}
+                        log_output(logit_model4.summary())
 
                     # Model 5 (No interaction)
                     final_model_terms_m5 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
@@ -1083,7 +1097,7 @@ if __name__ == "__main__":
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
 #                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])###, continuous_controls, categorical_controls, normvars=True)
-                                res, res_dict = compare_predictors_of_choice_simple_old(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
@@ -1271,6 +1285,21 @@ if __name__ == "__main__":
                             log_output(logit_model7_5.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 7.5: {e_full}")
+
+
+                    # Model XXX misused predictors
+                    log_output(f"\n                  Model XXX: Analyzing misuse of predictors per model")
+                    if 'teammate_skill_ratio' in final_model_terms_m7: final_model_terms_m7 = final_model_terms_m75
+                    continuous_controls = [df_model[t] for t in final_model_terms_m7 if not (isinstance(t, str) and t.startswith('C('))]
+                    categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m7 if (isinstance(t, str) and t.startswith('C('))]
+                    try: 
+                        res, models = analyze_wrong_way(df_model, continuous_controls, categorical_controls, alpha=0.05)
+                        log_output(res.to_string(index=False))
+                        misused_predictors = [row['predictor'] for _, row in res.iterrows() if row['misuse'] == True]
+                        if misused_predictors:
+                            log_output(f"Misused predictors: {misused_predictors}")
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model XXX: {e_full}")
 
                     # Model 8 (judge_delegate only)
                     if 'judge_delegate' in df_model.columns:

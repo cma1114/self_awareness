@@ -1014,6 +1014,10 @@ if __name__ == "__main__":
                             log_output(f"                  P-value for s_i_capability: {pval_s_i:.4g}")
                             log_output(f"                  Odds Ratio (Delegating when S_i=0 vs. S_i=1): {odds_ratio_delegate_Si0_vs_Si1:.4f} [{ci_lower_or:.4f}, {ci_upper_or:.4f}]")
                     except Exception as e_full:
+                        logit_model4, final_terms, removed = remove_collinear_terms(final_model_terms, df_model, 'delegate_choice', fit_kwargs, protected_terms=['s_i_capability'])
+                        res_dicts[model_name_part]['s_i_capability'] = {'coef': float(logit_model4.params['s_i_capability']),'p': float(logit_model4.pvalues['s_i_capability'])}
+                        log_output(logit_model4.summary())
+                        """
                         if '3-haiku' in model_name_part:
                             tmp = final_model_terms.copy()
                             tmp.remove(f'C({domain_column_for_formula})')
@@ -1034,7 +1038,7 @@ if __name__ == "__main__":
                                 log_output(f"                    Could not fit Model 4: {e_full}")         
                         else:                           
                             log_output(f"                    Could not fit Model 4: {e_full}")
-
+                        """
                     # Model 5 (No interaction)
                     final_model_terms_m5 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
                     model_def_str_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m5)
@@ -1045,6 +1049,7 @@ if __name__ == "__main__":
                             log_output(logit_model5.summary())
                         except Exception as e_full:
                             log_output(f"                    Could not fit Model 5: {e_full}")
+
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                         # Model 4.5: capabilities_entropy in full model
@@ -1145,7 +1150,7 @@ if __name__ == "__main__":
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
 #                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
-                                res, res_dict = compare_predictors_of_choice_simple_old(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
 
@@ -1280,6 +1285,21 @@ if __name__ == "__main__":
                         log_output(logit_model7.summary())
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model 7: {e_full}")
+
+
+                    # Model XXX misused predictors
+                    log_output(f"\n                  Model XXX: Analyzing misuse of predictors per model")
+                    continuous_controls = [df_model[t] for t in final_model_terms_m7 if not (isinstance(t, str) and t.startswith('C('))]
+                    categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m7 if (isinstance(t, str) and t.startswith('C('))]
+                    try: 
+                        res, models = analyze_wrong_way(df_model, continuous_controls, categorical_controls, alpha=0.05)
+                        log_output(res.to_string(index=False))
+                        misused_predictors = [row['predictor'] for _, row in res.iterrows() if row['misuse'] == True]
+                        if misused_predictors:
+                            log_output(f"Misused predictors: {misused_predictors}")
+
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Model XXX: {e_full}")
 
                     # Model 8 (judge_delegate only)
                     if 'judge_delegate' in df_model.columns:

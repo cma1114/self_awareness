@@ -19,6 +19,7 @@ from base_game_class import BaseGameClass
 import scipy.stats
 import glob
 from load_and_format_datasets import load_and_format_dataset
+import string
 
 PHASE1_TYPES = None#["Number", "Other", "Place"]
 PHASE2_TYPES = None#["Date", "Person"]
@@ -741,17 +742,18 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 )
             
             # Process decision
-            if len(resp) == 0:
+            if len(resp) == 0 or self.is_short_answer:
                 subject_decision = resp
             else:
-                resp = resp.rstrip(".")
-                arr=resp.split()
+                arr = resp.rstrip(string.whitespace + string.punctuation)
+
                 if arr[0] in valid_inputs:
                     subject_decision = arr[0]
                 elif arr[-1] in valid_inputs:
                     subject_decision = arr[-1]
                 else:
                     subject_decision = resp
+                print(f"arr[-1]: '{arr[-1]}'")
             if subject_decision == 'T':
                 feedback_text = "--> Delegating to teammate..."
                 
@@ -1185,19 +1187,19 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "gemini-2.5-flash-lite"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "gpt-4o-mini"#"gemini-2.5-flash"#"claude-opus-4-1-20250805"#"gemini-2.5-flash-lite"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.1  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.1  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
     SEED = 3#41#714#42#33#2456#  # Random seed for reproducibility
     FILTERED = False
@@ -1247,12 +1249,12 @@ def real_main(DATASET):
     1. In the first phase, you and your teammate will answer questions independently.
     2. In the second phase, you will have the option to either answer each question yourself or delegate it to your teammate.
     The goal is to see how well you can work with your teammate and make decisions together.
-    In {phasestr}, you will receive feedback on {fbstr}your teammate's performance.
+    In {phasestr}, you will receive feedback on {fbstr}your teammate's performance. Use this feedback to inform your decisions about whether to delegate in phase 2.
     You want to maximize your team's total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
-    Don't be afraid to give an answer if you think you might know it!
     """)
 
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
+#    Don't be afraid to give an answer if you think you might know it!
 
     # Include settings in the subject ID
     settings_suffix = ""
