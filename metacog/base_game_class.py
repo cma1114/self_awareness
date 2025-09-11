@@ -178,7 +178,7 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5" if self.subject_name == "gpt-5"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -190,11 +190,11 @@ class BaseGameClass:
                     #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
                         model=model_name,
-                        **({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o") else {"max_tokens": MAX_TOKENS}),
-                        **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o") else {}),
+                        max_tokens=None,#**({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o3") else {"max_tokens": (None if 'gpt-5' in self.subject_name else MAX_TOKENS)}),
+                        **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o3") else {}),
                         messages=formatted_messages,
-                        **({"logprobs": True} if not self.subject_name.startswith("o") else {}),
-                        **({"top_logprobs": len(options)} if not self.subject_name.startswith("o") else {}),
+                        **({"logprobs": True} if not self.subject_name.startswith("o3") else {}),
+                        **({"top_logprobs": len(options)} if not self.subject_name.startswith("o3") else {}),
                         **({"reasoning_effort": "low"} if 'gpt-5' in self.subject_name else {})
                     )   
                     print(f"completion={completion}") 

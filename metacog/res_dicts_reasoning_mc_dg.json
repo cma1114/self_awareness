@@ -14,6 +14,26 @@
       "lift": 0.23944541324893975,
       "p": 2.888172459667637e-07
     },
+    "normed_self_acc_lift": {
+      "lift": 0.424374236874237,
+      "ci_lo": 0.2728937728937729,
+      "ci_hi": 0.5607066544566545
+    },
+    "single_point_auc": {
+      "auc": 0.5417887615720777,
+      "ci_lo": 0.34340949345993205,
+      "ci_hi": 0.7401680296842232
+    },
+    "full_auc": {
+      "auc": 0.8257020757020758,
+      "ci_lo": 0.782047558922559,
+      "ci_hi": 0.8699249421965866
+    },
+    "calibration_auc": {
+      "auc": 0.7197047894302229,
+      "ci_lo": 0.6687563675548589,
+      "ci_hi": 0.7721305714720468
+    },
     "s_i_capability": {
       "coef": -1.161287779257149,
       "p": 2.5075158460622207e-06
@@ -32,11 +52,31 @@
     },
     "introspection_score": {
       "mcc": 0.08759946746202013,
-      "p": 0.062
+      "p": 0.07
     },
     "self_acc_lift": {
       "lift": 0.05085871307533779,
       "p": 0.11746825737555744
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.07706453851492023,
+      "ci_lo": -0.026249132546842417,
+      "ci_hi": 0.17349063150589866
+    },
+    "single_point_auc": {
+      "auc": 0.18587957122576593,
+      "ci_lo": -0.02176750217329504,
+      "ci_hi": 0.3935266446248269
+    },
+    "full_auc": {
+      "auc": 0.5786209553158705,
+      "ci_lo": 0.5302118373917529,
+      "ci_hi": 0.625902503936226
+    },
+    "calibration_auc": {
+      "auc": 0.47940344925077755,
+      "ci_lo": 0.42691290169474133,
+      "ci_hi": 0.5286214425817797
     },
     "s_i_capability": {
       "coef": -0.32495653819919823,
@@ -72,73 +112,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.06491661890230593,
-          "p": 0.20139634180485502,
+          "partial_r": -0.0400969681531693,
+          "p": 0.4261963755001571,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.16329253980488287,
-          "ci_hi": 0.03473751751748316,
+          "k_controls": 1,
+          "ci_lo": -0.13809751587666463,
+          "ci_hi": 0.05868113168699697,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.04820705676280853,
-          "p": 0.34236159577018366,
+          "partial_r": -0.04736781529850751,
+          "p": 0.3465257572708086,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.14680650360021072,
-          "ci_hi": 0.05134093528561541,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.1451131922222913,
+          "ci_hi": 0.05129321425013693,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.10015785727028591,
-          "p": 0.048378233593025094,
+          "partial_r": 0.10965128348079303,
+          "p": 0.029130374458012333,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.0007352617516507165,
-          "ci_hi": 0.19761974177649572,
+          "k_controls": 1,
+          "ci_lo": 0.0112263655186307,
+          "ci_hi": 0.20597183636218408,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.08814255975870393,
-          "p": 0.08292135161957849,
+          "partial_r": 0.1030742124524856,
+          "p": 0.040606693263124945,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": -0.011516611959307867,
-          "ci_hi": 0.1860678670832879,
+          "k_controls": 2,
+          "ci_lo": 0.004448427738010609,
+          "ci_hi": 0.1997140600781085,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -169,24 +180,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": 0.0001386525119055555,
-          "hi": 0.32210816120667785,
-          "point": 0.16346960890836124,
-          "p_boot": 0.05,
+          "lo": -0.012083139427591037,
+          "hi": 0.30063807061610576,
+          "point": 0.14919494031915814,
+          "p_boot": 0.068,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.004576734147394351,
-          "hi": 0.28291731878701953,
-          "point": 0.14656375147039263,
-          "p_boot": 0.041,
+          "lo": 0.017510042668564714,
+          "hi": 0.2923640603399837,
+          "point": 0.1567791652632411,
+          "p_boot": 0.028,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.15795775962448816,
-          "hi": 0.12278866845171407,
-          "point": -0.016905857437968564,
-          "p_boot": 0.822,
+          "lo": -0.13865496586573908,
+          "hi": 0.15140908962945657,
+          "point": 0.007584224944082948,
+          "p_boot": 0.908,
           "n_boot": 2000
         }
       },
@@ -226,11 +237,21 @@
     },
     "introspection_score": {
       "mcc": 0.15517797886168677,
-      "p": 0.001
+      "p": 0.002
     },
     "self_acc_lift": {
       "lift": 0.08595190183358431,
       "p": 0.01669798853623669
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.12780114242671525,
+      "ci_lo": 0.028121272989768437,
+      "ci_hi": 0.2357876676500743
+    },
+    "single_point_auc": {
+      "auc": 0.3308676480500483,
+      "ci_lo": 0.12125569835266861,
+      "ci_hi": 0.540479597747428
     },
     "s_i_capability": {
       "coef": -0.5086046986784333,
@@ -245,11 +266,21 @@
     },
     "introspection_score": {
       "mcc": 0.0995894097409324,
-      "p": 0.052
+      "p": 0.044
     },
     "self_acc_lift": {
       "lift": 0.06512519821514184,
       "p": 0.053399526432254485
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.1717731738157768,
+      "ci_lo": 0.0061278085789319954,
+      "ci_hi": 0.3374185390526213
+    },
+    "single_point_auc": {
+      "auc": 0.20541915920562737,
+      "ci_lo": 0.0016416174724425692,
+      "ci_hi": 0.40919670093881216
     },
     "s_i_capability": {
       "coef": -0.30299540087446186,
@@ -270,13 +301,22 @@
       "lift": 0.15594902948584977,
       "p": 3.313624844370786e-05
     },
+    "normed_self_acc_lift": {
+      "lift": 0.3707291299753435,
+      "ci_lo": 0.20292356463543487,
+      "ci_hi": 0.5245508982035929
+    },
+    "single_point_auc": {
+      "auc": 0.5220218884101102,
+      "ci_lo": 0.32276139984830504,
+      "ci_hi": 0.7212823769719154
+    },
     "s_i_capability": {
       "coef": -0.9724512710978583,
       "p": 1.867440230599562e-05
     }
   },
   "deepseek-chat": {
-    "cap_entropy_diff": 0.1023945073699618,
     "team_acc_lift": {
       "lift": 0.023929471032745564,
       "ci_lo": -0.025191948055261093,
@@ -290,13 +330,19 @@
       "lift": 0.06345001302875009,
       "p": 0.03404800541429627
     },
+    "normed_self_acc_lift": {
+      "lift": 0.11995073891625611,
+      "ci_lo": 0.009129720853858833,
+      "ci_hi": 0.23729064039408865
+    },
+    "single_point_auc": {
+      "auc": 0.33259887032264035,
+      "ci_lo": 0.13553232930312667,
+      "ci_hi": 0.5296654113421541
+    },
     "s_i_capability": {
       "coef": -0.792291810766634,
       "p": 0.0015323697305355617
-    },
-    "capabilities_entropy": {
-      "coef": 0.5320882104516067,
-      "p": 0.23143902948208295
     }
   },
   "gemini-1.5-pro": {
@@ -307,11 +353,21 @@
     },
     "introspection_score": {
       "mcc": -0.07170969667965917,
-      "p": 0.16
+      "p": 0.168
     },
     "self_acc_lift": {
       "lift": -0.02830943361298982,
       "p": 0.27978589628508344
+    },
+    "normed_self_acc_lift": {
+      "lift": -0.051554335524573204,
+      "ci_lo": -0.14237039177442268,
+      "ci_hi": 0.0440415131594789
+    },
+    "single_point_auc": {
+      "auc": -0.14389347584604417,
+      "ci_lo": -0.3415852423409832,
+      "ci_hi": 0.05379829064889485
     },
     "s_i_capability": {
       "coef": 0.7273061259424988,
@@ -332,6 +388,26 @@
     "self_acc_lift": {
       "lift": 0.12834971967173153,
       "p": 0.0015535221356189001
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.23161290322580644,
+      "ci_lo": 0.09190615835777119,
+      "ci_hi": 0.3599684750733121
+    },
+    "single_point_auc": {
+      "auc": 0.41716659363788966,
+      "ci_lo": 0.21926678657188106,
+      "ci_hi": 0.6150664007038983
+    },
+    "full_auc": {
+      "auc": 0.6581444948013863,
+      "ci_lo": 0.6028180474595964,
+      "ci_hi": 0.7107720978430304
+    },
+    "calibration_auc": {
+      "auc": 0.6919876733436054,
+      "ci_lo": 0.6390736013576364,
+      "ci_hi": 0.7461212937994753
     },
     "s_i_capability": {
       "coef": -0.7970807388933142,
@@ -367,73 +443,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.04028134725968509,
-          "p": 0.428222365945515,
+          "partial_r": -0.047044301252197544,
+          "p": 0.35044449737991945,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.13915392973014656,
-          "ci_hi": 0.05938642328399603,
+          "k_controls": 1,
+          "ci_lo": -0.144918679618064,
+          "ci_hi": 0.051741802658679725,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.11559851208992257,
-          "p": 0.022417459896291375,
+          "partial_r": -0.1658241602984715,
+          "p": 0.0009112164202372714,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.21246184200164767,
-          "ci_hi": -0.01648553312375036,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.26000262697426285,
+          "ci_hi": -0.06852056685685372,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.08807614483058017,
-          "p": 0.0827557252734232,
+          "partial_r": 0.09828514253095869,
+          "p": 0.05065379849694698,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.011454080942475856,
-          "ci_hi": 0.18587825167675673,
+          "k_controls": 1,
+          "ci_lo": -0.0002636378956892411,
+          "ci_hi": 0.19494322155145283,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.07969729343738477,
-          "p": 0.11704844935037408,
+          "partial_r": 0.08806523124639594,
+          "p": 0.08044450530067258,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": -0.020019662731259914,
-          "ci_hi": 0.17784429567346932,
+          "k_controls": 2,
+          "ci_lo": -0.010698762685852632,
+          "ci_hi": 0.18512759462669695,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -464,24 +511,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": -0.027939847196719585,
-          "hi": 0.2974529307910843,
-          "point": 0.13098558287039208,
-          "p_boot": 0.121,
+          "lo": -0.014098795299225145,
+          "hi": 0.3111332264225548,
+          "point": 0.14678771103364116,
+          "p_boot": 0.074,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.08056443951559558,
-          "hi": 0.32785507511167994,
-          "point": 0.2060148101656772,
-          "p_boot": 0.001,
+          "lo": 0.14532706528256342,
+          "hi": 0.3857269342757577,
+          "point": 0.2668316028669856,
+          "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.07084043643301614,
-          "hi": 0.21129097349120454,
-          "point": 0.0750292272952851,
-          "p_boot": 0.297,
+          "lo": -0.02232685971430883,
+          "hi": 0.25478049627022153,
+          "point": 0.12004389183334445,
+          "p_boot": 0.104,
           "n_boot": 2000
         }
       },
@@ -511,177 +558,6 @@
           "aic": 525.1795609645822
         }
       }
-    },
-    "gameent": {
-      "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": -0.26416158623217395,
-          "p": 9.194215602114419e-08,
-          "n": 397,
-          "ci_lo": -0.35339545609101386,
-          "ci_hi": -0.17016382498110602
-        },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.2409301165608203,
-          "p": 1.1912101325856335e-06,
-          "n": 397,
-          "ci_lo": -0.3314914258370547,
-          "ci_hi": -0.1459695645659322
-        },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.45268975560835606,
-          "p": 1.8779944622482743e-21,
-          "n": 397,
-          "ci_lo": 0.37078816976192946,
-          "ci_hi": 0.5276044567991388
-        }
-      },
-      "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.15523588889639583,
-          "p": 0.002136925031472906,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.2507947664474669,
-          "ci_hi": -0.05668084517677341,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.26224390680311255,
-          "p": 1.484100285781492e-07,
-          "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.35236991958832736,
-          "ci_hi": -0.16729837143373316,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.4121324077348611,
-          "p": 2.207761749979632e-17,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.32606403710418946,
-          "ci_hi": 0.4914245856210899,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.38785015000455586,
-          "p": 2.2348892796121503e-15,
-          "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.29987115320549507,
-          "ci_hi": 0.4692873719776087,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2",
-            "X1"
-          ]
-        }
-      },
-      "differences_unadjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.573653740875827,
-          "hi": 0.8513047097586542,
-          "point": 0.7174460564148948,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.5613997804886097,
-          "hi": 0.8136381401070015,
-          "point": 0.6943652256166909,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.10336570913118331,
-          "hi": 0.061276536068235764,
-          "point": -0.023080830798204034,
-          "p_boot": 0.594,
-          "n_boot": 2000
-        }
-      },
-      "differences_adjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.4158159634770047,
-          "hi": 0.7129714714793561,
-          "point": 0.5677257672630526,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.5593533150741895,
-          "hi": 0.7820554186137919,
-          "point": 0.6745805568962069,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.03565920763293696,
-          "hi": 0.2519551370112586,
-          "point": 0.10685478963315424,
-          "p_boot": 0.134,
-          "n_boot": 2000
-        }
-      },
-      "univariate_choice_predictors": {
-        "sp_prob": {
-          "coefficient": -1.1740924283162633,
-          "odds_ratio": 0.3090993822728612,
-          "p_value": 3.632992453088017e-18,
-          "mean_auc": 0.7813748079877112,
-          "std_auc": 0.025313526424299102,
-          "aic": 436.2835040502392
-        },
-        "o_prob": {
-          "coefficient": -0.8425387661209692,
-          "odds_ratio": 0.43061590146065,
-          "p_value": 2.400891116815929e-13,
-          "mean_auc": 0.7334238534123326,
-          "std_auc": 0.05302477007451844,
-          "aic": 474.148090430318
-        },
-        "normalized_prob_entropy": {
-          "coefficient": 1.263422169512125,
-          "odds_ratio": 3.5375067444014747,
-          "p_value": 3.999153180811384e-16,
-          "mean_auc": 0.8020847048496818,
-          "std_auc": 0.01316794153260445,
-          "aic": 439.6178488263807
-        }
-      }
     }
   },
   "gemini-2.5-flash-lite": {
@@ -698,6 +574,26 @@
     "self_acc_lift": {
       "lift": 0.03406420638006524,
       "p": 0.2363163974162945
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.05634787472035792,
+      "ci_lo": -0.03801733780760624,
+      "ci_hi": 0.15071308724832216
+    },
+    "single_point_auc": {
+      "auc": 0.10181151319368054,
+      "ci_lo": -0.09936991983936169,
+      "ci_hi": 0.3029929462267228
+    },
+    "full_auc": {
+      "auc": 0.619076672767948,
+      "ci_lo": 0.5544586066210303,
+      "ci_hi": 0.6844555429270852
+    },
+    "calibration_auc": {
+      "auc": 0.6394904458598726,
+      "ci_lo": 0.580654738496781,
+      "ci_hi": 0.6970480603840635
     },
     "s_i_capability": {
       "coef": -0.1710588730592109,
@@ -733,73 +629,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": 0.05773382951874031,
-          "p": 0.2559681205672397,
+          "partial_r": 0.0742149672550538,
+          "p": 0.14042121774304298,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.041936825326288854,
-          "ci_hi": 0.15626670297132977,
+          "k_controls": 1,
+          "ci_lo": -0.024510519933744434,
+          "ci_hi": 0.17150686074752525,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.026682526815415813,
-          "p": 0.5993469745174823,
+          "partial_r": -0.05175132448176783,
+          "p": 0.30367903948037184,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.12565181499103797,
-          "ci_hi": 0.07281261950041952,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.14941219791327176,
+          "ci_hi": 0.04690950641102206,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.18092470970787408,
-          "p": 0.000335079989217487,
+          "partial_r": 0.18644929131552715,
+          "p": 0.00019046726584699393,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.0829876847110212,
-          "ci_hi": 0.2754003597876328,
+          "k_controls": 1,
+          "ci_lo": 0.08954841571058968,
+          "ci_hi": 0.27985352479182957,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.18575935790614623,
-          "p": 0.00023387340702292172,
+          "partial_r": 0.19224989061134523,
+          "p": 0.00012069736501450612,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.0878254792799338,
-          "ci_hi": 0.2801366622510825,
+          "k_controls": 2,
+          "ci_lo": 0.09538833184231002,
+          "ci_hi": 0.28550503174783587,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -830,24 +697,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": -0.019739712126169782,
-          "hi": 0.27681700047760405,
-          "point": 0.1276258694369103,
-          "p_boot": 0.088,
+          "lo": -0.03600064247967659,
+          "hi": 0.25514923231084763,
+          "point": 0.11143841568231054,
+          "p_boot": 0.131,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.07560345058850484,
-          "hi": 0.3512592490883869,
-          "point": 0.20961510702797104,
-          "p_boot": 0.002,
+          "lo": 0.10850501518874706,
+          "hi": 0.37787435100435723,
+          "point": 0.2388108817491115,
+          "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.05929300601333276,
-          "hi": 0.21677690058948001,
-          "point": 0.08198923759106078,
-          "p_boot": 0.264,
+          "lo": -0.005691999950034292,
+          "hi": 0.25955906062178646,
+          "point": 0.12737246606680094,
+          "p_boot": 0.06,
           "n_boot": 2000
         }
       },
@@ -877,177 +744,6 @@
           "aic": 435.4326259030321
         }
       }
-    },
-    "gameent": {
-      "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": 0.046576638321594505,
-          "p": 0.3546491588162817,
-          "n": 397,
-          "ci_lo": -0.05208402225993137,
-          "ci_hi": 0.14433687385347738
-        },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.11795803406059255,
-          "p": 0.018718013528989413,
-          "n": 397,
-          "ci_lo": -0.2138966668548655,
-          "ci_hi": -0.01976560688418348
-        },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.4588408405405547,
-          "p": 4.580866304079725e-22,
-          "n": 397,
-          "ci_lo": 0.37746526806525105,
-          "ci_hi": 0.5331841503359293
-        }
-      },
-      "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": 0.08185155033051034,
-          "p": 0.10698907446922809,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.017722602706765234,
-          "ci_hi": 0.17981802040557965,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.07250033260269922,
-          "p": 0.15298921886372424,
-          "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.1705745104900805,
-          "ci_hi": 0.02699624486260664,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.4403295909658375,
-          "p": 7.027243646723877e-20,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.3565082962654052,
-          "ci_hi": 0.517119036666927,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.44870748245620584,
-          "p": 1.2825961518255916e-20,
-          "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.3654760918725185,
-          "ci_hi": 0.5248205621534591,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2",
-            "X1"
-          ]
-        }
-      },
-      "differences_unadjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.2950543451546571,
-          "hi": 0.5340010397431866,
-          "point": 0.4146700195875944,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.4527886324145899,
-          "hi": 0.6933808169333369,
-          "point": 0.5775259554312738,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": 0.036060924089070336,
-          "hi": 0.2858619267337057,
-          "point": 0.16285593584367936,
-          "p_boot": 0.007,
-          "n_boot": 2000
-        }
-      },
-      "differences_adjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.23761799121405947,
-          "hi": 0.4790871775985641,
-          "point": 0.36076939904571814,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.38684754632253837,
-          "hi": 0.6303900611826847,
-          "point": 0.513048669712969,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": 0.006004877702159445,
-          "hi": 0.29527195699909553,
-          "point": 0.15227927066725092,
-          "p_boot": 0.039,
-          "n_boot": 2000
-        }
-      },
-      "univariate_choice_predictors": {
-        "sp_prob": {
-          "coefficient": -0.2199676801281563,
-          "odds_ratio": 0.8025447356863304,
-          "p_value": 0.0479292187169988,
-          "mean_auc": 0.5645405887600357,
-          "std_auc": 0.07571823901250846,
-          "aic": 446.1160626080266
-        },
-        "o_prob": {
-          "coefficient": -0.3187463984746388,
-          "odds_ratio": 0.7270599094304063,
-          "p_value": 0.010929900368908148,
-          "mean_auc": 0.572360541183467,
-          "std_auc": 0.07075777060859305,
-          "aic": 443.0675040860531
-        },
-        "normalized_prob_entropy": {
-          "coefficient": 1.5348622107970122,
-          "odds_ratio": 4.640686049466147,
-          "p_value": 3.334840365370955e-15,
-          "mean_auc": 0.8094289325007434,
-          "std_auc": 0.04553814126132208,
-          "aic": 349.65895168637473
-        }
-      }
     }
   },
   "gemini-2.5-flash-preview-04-17": {
@@ -1058,11 +754,21 @@
     },
     "introspection_score": {
       "mcc": -0.023746620151097502,
-      "p": 0.574
+      "p": 0.593
     },
     "self_acc_lift": {
       "lift": -0.009578620625341427,
       "p": 0.6757242032551936
+    },
+    "normed_self_acc_lift": {
+      "lift": -0.039625241113254536,
+      "ci_lo": -0.2131668503720032,
+      "ci_hi": 0.13364563240562138
+    },
+    "single_point_auc": {
+      "auc": -0.058125916830839675,
+      "ci_lo": -0.28905276683016473,
+      "ci_hi": 0.17280093316848538
     },
     "s_i_capability": {
       "coef": 0.374530098463743,
@@ -1083,6 +789,26 @@
     "self_acc_lift": {
       "lift": 0.017536367043483603,
       "p": 0.5406462473563471
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.07032260319457564,
+      "ci_lo": -0.1378141274335045,
+      "ci_hi": 0.2645835517807836
+    },
+    "single_point_auc": {
+      "auc": 0.4387248052381345,
+      "ci_lo": 0.21136294440353684,
+      "ci_hi": 0.6660866660727321
+    },
+    "full_auc": {
+      "auc": 0.7101358673001584,
+      "ci_lo": 0.6502400100587361,
+      "ci_hi": 0.7672202190025648
+    },
+    "calibration_auc": {
+      "auc": 0.6002686858817783,
+      "ci_lo": 0.5295940903099207,
+      "ci_hi": 0.6648111884116421
     },
     "s_i_capability": {
       "coef": -0.7584593890897985,
@@ -1118,73 +844,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": 0.07800546173201559,
-          "p": 0.12456335860816367,
+          "partial_r": 0.11559067778390252,
+          "p": 0.021410246206884174,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.02159192465114857,
-          "ci_hi": 0.17606976887046602,
+          "k_controls": 1,
+          "ci_lo": 0.017240841718209318,
+          "ci_hi": 0.21172513833293205,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.08931876718180885,
-          "p": 0.07810898320246233,
+          "partial_r": -0.11588334316126062,
+          "p": 0.020917829013585864,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.18696271123880953,
-          "ci_hi": 0.010072793495877067,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.21188855601456993,
+          "ci_hi": -0.01766289758229391,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.22877144468260838,
-          "p": 5.16069662269217e-06,
+          "partial_r": 0.2844394630499817,
+          "p": 8.321011118164872e-09,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.1323521039570217,
-          "ci_hi": 0.32090189498732313,
+          "k_controls": 1,
+          "ci_lo": 0.19125417398164657,
+          "ci_hi": 0.372543143289669,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.22842397102954762,
-          "p": 5.489790741424377e-06,
+          "partial_r": 0.28057831633900027,
+          "p": 1.4026500573985153e-08,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.13186465575103778,
-          "ci_hi": 0.32068914203002075,
+          "k_controls": 2,
+          "ci_lo": 0.18708677736774643,
+          "ci_hi": 0.3690326916476858,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -1215,24 +912,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": -0.008527500404622874,
-          "hi": 0.3177766689739749,
-          "point": 0.15433644616882664,
-          "p_boot": 0.062,
+          "lo": 0.017288685085961025,
+          "hi": 0.3173055508522317,
+          "point": 0.1725626167623692,
+          "p_boot": 0.027,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.18832530239445175,
-          "hi": 0.443806258574905,
-          "point": 0.31909864310704555,
+          "lo": 0.2849190734523889,
+          "hi": 0.5195111945661173,
+          "point": 0.4044189686528548,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": 0.028411108654829705,
-          "hi": 0.30182767805428573,
-          "point": 0.16476219693821895,
-          "p_boot": 0.02,
+          "lo": 0.1124215596179392,
+          "hi": 0.3474643108281692,
+          "point": 0.23185635189048556,
+          "p_boot": 0.0,
           "n_boot": 2000
         }
       },
@@ -1262,177 +959,6 @@
           "aic": 438.1665810176622
         }
       }
-    },
-    "gameent": {
-      "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": 0.14670517605611344,
-          "p": 0.0033925655466913807,
-          "n": 397,
-          "ci_lo": 0.04899065316854611,
-          "ci_hi": 0.2416380626087287
-        },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.0154410957961148,
-          "p": 0.7590642495095992,
-          "n": 397,
-          "ci_lo": -0.11369021503245838,
-          "ci_hi": 0.08310710458669819
-        },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.6712931300883566,
-          "p": 2.498958823605109e-53,
-          "n": 397,
-          "ci_lo": 0.6133984314881445,
-          "ci_hi": 0.7220117525742404
-        }
-      },
-      "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": 0.12010730089969726,
-          "p": 0.01779541500361667,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.020927302405602706,
-          "ci_hi": 0.21694638868650226,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": 0.0001238942295854378,
-          "p": 0.9980540720938283,
-          "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.09917954548733181,
-          "ci_hi": 0.09942489052169079,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.6469316760248185,
-          "p": 1.7092378627571317e-47,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.5851405517202719,
-          "ci_hi": 0.7012538841453798,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.6500582530340177,
-          "p": 5.78679040536153e-48,
-          "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.5885930438185392,
-          "ci_hi": 0.704051176867363,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2",
-            "X1"
-          ]
-        }
-      },
-      "differences_unadjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.3845657442308858,
-          "hi": 0.6774644527741307,
-          "point": 0.5283730723391702,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.5718676329242671,
-          "hi": 0.8119628452036376,
-          "point": 0.6920916524308186,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": 0.01743250638464441,
-          "hi": 0.31011643736998606,
-          "point": 0.16371858009164839,
-          "p_boot": 0.031,
-          "n_boot": 2000
-        }
-      },
-      "differences_adjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.3720489031523526,
-          "hi": 0.6775857108344521,
-          "point": 0.5261662054156839,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.5392046949296362,
-          "hi": 0.7661045682340495,
-          "point": 0.648830305577372,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.0167715213326494,
-          "hi": 0.2723573844248361,
-          "point": 0.12266410016168788,
-          "p_boot": 0.099,
-          "n_boot": 2000
-        }
-      },
-      "univariate_choice_predictors": {
-        "sp_prob": {
-          "coefficient": 0.11775436605815484,
-          "odds_ratio": 1.124967747164333,
-          "p_value": 0.2769126761874321,
-          "mean_auc": 0.522488038277512,
-          "std_auc": 0.062297117796747216,
-          "aic": 467.5566386158899
-        },
-        "o_prob": {
-          "coefficient": -0.11637353487894123,
-          "odds_ratio": 0.8901426618582533,
-          "p_value": 0.3871599698043551,
-          "mean_auc": 0.6260368790314345,
-          "std_auc": 0.0346886333238931,
-          "aic": 467.85787039440874
-        },
-        "normalized_prob_entropy": {
-          "coefficient": 1.7764602424095293,
-          "odds_ratio": 5.908903270733494,
-          "p_value": 5.611511411101116e-25,
-          "mean_auc": 0.9358360635130145,
-          "std_auc": 0.025336284211628757,
-          "aic": 289.1341084689294
-        }
-      }
     }
   },
   "gpt-4.1-2025-04-14": {
@@ -1444,11 +970,31 @@
     },
     "introspection_score": {
       "mcc": 0.015303538831986756,
-      "p": 0.753
+      "p": 0.765
     },
     "self_acc_lift": {
       "lift": 0.030180663066997238,
       "p": 0.23936416799142737
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.05678541818766779,
+      "ci_lo": -0.03655352480417753,
+      "ci_hi": 0.1501243611795131
+    },
+    "single_point_auc": {
+      "auc": 0.03076731545274969,
+      "ci_lo": -0.16635947214139662,
+      "ci_hi": 0.227894103046896
+    },
+    "full_auc": {
+      "auc": 0.7613763521074226,
+      "ci_lo": 0.6358727694576349,
+      "ci_hi": 0.873419601947308
+    },
+    "calibration_auc": {
+      "auc": 0.7055368699994904,
+      "ci_lo": 0.6549911650408322,
+      "ci_hi": 0.75390847042128
     },
     "s_i_capability": {
       "coef": 0.0425780373580463,
@@ -1484,73 +1030,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.22101192111630527,
-          "p": 1.084848239376582e-05,
+          "partial_r": -0.2129142129521309,
+          "p": 1.9317687934841086e-05,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.3135514832194518,
-          "ci_hi": -0.12431382414862913,
+          "k_controls": 1,
+          "ci_lo": -0.30505970988780734,
+          "ci_hi": -0.11681907120043385,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.08204561216658851,
-          "p": 0.10570599532795857,
+          "partial_r": -0.16263287393406287,
+          "p": 0.0011463839998584614,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.1798822747742974,
-          "ci_hi": 0.017398357180776973,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.25694199588438676,
+          "ci_hi": -0.06525549589537993,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.19110400526102073,
-          "p": 0.0001494171243615142,
+          "partial_r": 0.19196580213120465,
+          "p": 0.00012114220311659284,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.0934497691325265,
-          "ci_hi": 0.28511629835844565,
+          "k_controls": 1,
+          "ci_lo": 0.0952209174328273,
+          "ci_hi": 0.28511830201252136,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.16263427816677464,
-          "p": 0.001306194282733994,
+          "partial_r": 0.1605332837641904,
+          "p": 0.001368514211917107,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.06411427852391935,
-          "ci_hi": 0.2580147268070294,
+          "k_controls": 2,
+          "ci_lo": 0.06285792511778772,
+          "ci_hi": 0.2551625403807851,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -1581,24 +1098,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": 0.22867808312828425,
-          "hi": 0.5892380277612141,
-          "point": 0.41026349581055765,
+          "lo": 0.22023270787326973,
+          "hi": 0.5808304928586083,
+          "point": 0.4018228650864072,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.13210477579994973,
-          "hi": 0.40955701503206693,
-          "point": 0.2738693941509812,
+          "lo": 0.2105915253512043,
+          "hi": 0.4875491002912203,
+          "point": 0.35378622144057187,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.27225291322585,
-          "hi": 0.006954051789286927,
-          "point": -0.13639410165957638,
-          "p_boot": 0.064,
+          "lo": -0.1748650924776986,
+          "hi": 0.08738908491360012,
+          "point": -0.04803664364583531,
+          "p_boot": 0.478,
           "n_boot": 2000
         }
       },
@@ -1628,177 +1145,6 @@
           "aic": 113.057188318622
         }
       }
-    },
-    "gameent": {
-      "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": -0.21859204495158835,
-          "p": 1.1080091566635566e-05,
-          "n": 397,
-          "ci_lo": -0.31033727212977125,
-          "ci_hi": -0.12281236104719508
-        },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.16547105428036768,
-          "p": 0.0009348499008444255,
-          "n": 397,
-          "ci_lo": -0.25966407064240965,
-          "ci_hi": -0.06815919421249453
-        },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.16831701897863055,
-          "p": 0.0007594338278656755,
-          "n": 397,
-          "ci_lo": 0.07107251293175612,
-          "ci_hi": 0.26239210916503247
-        }
-      },
-      "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.1724720549104642,
-          "p": 0.0006346207928113568,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.267317771684972,
-          "ci_hi": -0.07431658348820847,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.06258873640142251,
-          "p": 0.21747487816194183,
-          "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.1608909861868333,
-          "ci_hi": 0.03694309183298581,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.160389769540471,
-          "p": 0.001504720997750687,
-          "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.061947766360568195,
-          "ci_hi": 0.2557412431878199,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.13722982344624854,
-          "p": 0.006785098116611848,
-          "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.03819352654577163,
-          "ci_hi": 0.2335964586899671,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2",
-            "X1"
-          ]
-        }
-      },
-      "differences_unadjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.22644179717354626,
-          "hi": 0.5477713177377352,
-          "point": 0.38702366757549445,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.19238729877804453,
-          "hi": 0.4724579128903527,
-          "point": 0.33292559134719985,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.15328956271188973,
-          "hi": 0.048805223558624676,
-          "point": -0.054098076228294614,
-          "p_boot": 0.311,
-          "n_boot": 2000
-        }
-      },
-      "differences_adjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.16623086701486642,
-          "hi": 0.5025073035096447,
-          "point": 0.33397642254050425,
-          "p_boot": 0.001,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.07872206763390098,
-          "hi": 0.37596976582857256,
-          "point": 0.22716052719741323,
-          "p_boot": 0.003,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.23004176422741657,
-          "hi": 0.01735832094738237,
-          "point": -0.10681589534309102,
-          "p_boot": 0.082,
-          "n_boot": 2000
-        }
-      },
-      "univariate_choice_predictors": {
-        "sp_prob": {
-          "coefficient": -0.6033798882729152,
-          "odds_ratio": 0.5469598452670525,
-          "p_value": 0.0009053407592847129,
-          "mean_auc": 0.7302802460697198,
-          "std_auc": 0.09162527515525293,
-          "aic": 116.0465558793133
-        },
-        "o_prob": {
-          "coefficient": -0.3842605421565941,
-          "odds_ratio": 0.6809539868449332,
-          "p_value": 0.38438846944812155,
-          "mean_auc": 0.6696741854636591,
-          "std_auc": 0.15083103253761454,
-          "aic": 124.09864691361929
-        },
-        "normalized_prob_entropy": {
-          "coefficient": 0.6894826896790972,
-          "odds_ratio": 1.9926844303438718,
-          "p_value": 0.001966915531250565,
-          "mean_auc": 0.7636135794030531,
-          "std_auc": 0.11046382230767293,
-          "aic": 116.10007076441624
-        }
-      }
     }
   },
   "gpt-4o-2024-08-06": {
@@ -1810,11 +1156,31 @@
     },
     "introspection_score": {
       "mcc": 0.17665803620724474,
-      "p": 0.001
+      "p": 0.0
     },
     "self_acc_lift": {
       "lift": 0.07605167095461957,
       "p": 0.037333855507506855
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.12902783491018788,
+      "ci_lo": 0.011083687554275834,
+      "ci_hi": 0.2560446089857855
+    },
+    "single_point_auc": {
+      "auc": 0.3605767056012916,
+      "ci_lo": 0.16061740295316437,
+      "ci_hi": 0.5605360082494188
+    },
+    "full_auc": {
+      "auc": 0.6281767252355487,
+      "ci_lo": 0.5757889489992888,
+      "ci_hi": 0.6813586986195604
+    },
+    "calibration_auc": {
+      "auc": 0.633317602642756,
+      "ci_lo": 0.5774236972006723,
+      "ci_hi": 0.6908801955963338
     },
     "s_i_capability": {
       "coef": -0.4364433747096865,
@@ -1850,73 +1216,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.3272022840125269,
-          "p": 3.699236219327564e-11,
+          "partial_r": -0.3333868117513125,
+          "p": 9.820208044966858e-12,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.41318961632656254,
-          "ci_hi": -0.23543183401321796,
+          "k_controls": 1,
+          "ci_lo": -0.4181936977452371,
+          "ci_hi": -0.24281813483801307,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.16300904799915253,
-          "p": 0.001235864382987252,
+          "partial_r": -0.2344359649051198,
+          "p": 2.331399238251911e-06,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.2581328300231062,
-          "ci_hi": -0.06475502850999922,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.32535083814094073,
+          "ci_hi": -0.13922652766179297,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.32445289264460897,
-          "p": 5.496201026410784e-11,
+          "partial_r": 0.31600894353735015,
+          "p": 1.2409715443257101e-10,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.23252428371511838,
-          "ci_hi": 0.41063557357796854,
+          "k_controls": 1,
+          "ci_lo": 0.2244525017373637,
+          "ci_hi": 0.4020351958123824,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.19306685551410274,
-          "p": 0.0001298357793302272,
+          "partial_r": 0.1690868156322265,
+          "p": 0.0007402766892916653,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.09534133682560933,
-          "ci_hi": 0.28710638698596264,
+          "k_controls": 2,
+          "ci_lo": 0.07161053648402564,
+          "ci_hi": 0.26336388766409563,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -1947,24 +1284,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": 0.4971940060817148,
-          "hi": 0.8050660946539504,
-          "point": 0.6542111797415594,
+          "lo": 0.49018386379145135,
+          "hi": 0.8106620583639444,
+          "point": 0.6491406180175389,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.3426552876856968,
-          "hi": 0.6128071555920076,
-          "point": 0.48367681506342736,
+          "lo": 0.42414743886316675,
+          "hi": 0.6731869616805911,
+          "point": 0.5494368761031138,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.2966962128686253,
-          "hi": -0.05022238147756659,
-          "point": -0.17053436467813202,
-          "p_boot": 0.003,
+          "lo": -0.21353592673865315,
+          "hi": 0.009847220358326282,
+          "point": -0.09970374191442502,
+          "p_boot": 0.071,
           "n_boot": 2000
         }
       },
@@ -1994,100 +1331,115 @@
           "aic": 498.06765625209164
         }
       }
+    }
+  },
+  "gpt-4o-mini": {
+    "cap_entropy_diff": 0.21358002249933783,
+    "team_acc_lift": {
+      "lift": -0.12468513853904284,
+      "ci_lo": -0.17090657768918277,
+      "ci_hi": -0.07607386263569155
     },
-    "gameent": {
+    "introspection_score": {
+      "mcc": 0.0004408127616487174,
+      "p": 0.997
+    },
+    "self_acc_lift": {
+      "lift": 0.03776147190888185,
+      "p": 0.13613894631424536
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.05614720729522882,
+      "ci_lo": -0.01711990446724197,
+      "ci_hi": 0.13803397926504912
+    },
+    "single_point_auc": {
+      "auc": 0.0009394949294070365,
+      "ci_lo": -0.20867245476797266,
+      "ci_hi": 0.21055144462678674
+    },
+    "full_auc": {
+      "auc": 0.7245261984392418,
+      "ci_lo": 0.652916598908978,
+      "ci_hi": 0.7942693684436802
+    },
+    "calibration_auc": {
+      "auc": 0.6129789685969461,
+      "ci_lo": 0.5526538179344549,
+      "ci_hi": 0.6717523372681066
+    },
+    "s_i_capability": {
+      "coef": 0.23642591393987664,
+      "p": 0.4856723220518194
+    },
+    "capabilities_entropy": {
+      "coef": 1.542908208051047,
+      "p": 2.908933767602996e-06
+    },
+    "capent": {
       "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": -0.5158880361953321,
-          "p": 2.22024518146091e-28,
+        "capabilities_entropy_vs_sp_prob": {
+          "r": -0.32959076510042956,
+          "p": 1.634128344734466e-11,
           "n": 397,
-          "ci_lo": -0.5846257497387839,
-          "ci_hi": -0.43979667257400484
+          "ci_lo": -0.4145646234496606,
+          "ci_hi": -0.2389191522689183
         },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.2785054665321737,
-          "p": 1.6640321506075788e-08,
+        "capabilities_entropy_vs_o_prob": {
+          "r": -0.16462599475290812,
+          "p": 0.0009937254197784305,
           "n": 397,
-          "ci_lo": -0.3668710496776703,
-          "ci_hi": -0.18515896677604238
+          "ci_lo": -0.25885373765520014,
+          "ci_hi": -0.06729445451679499
         },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.5617643782610416,
-          "p": 2.1271648003142255e-34,
+        "capabilities_entropy_vs_delegate_choice": {
+          "r": 0.2733746403902756,
+          "p": 3.1021631587429065e-08,
           "n": 397,
-          "ci_lo": 0.4904599702375846,
-          "ci_hi": 0.6255970674097612
+          "ci_lo": 0.17979018530301588,
+          "ci_hi": 0.36205506722292724
         }
       },
       "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.41674520625578065,
-          "p": 8.939483695786553e-18,
+        "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
+          "partial_r": -0.29196667700262263,
+          "p": 3.195989194661128e-09,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": -0.4956374249897209,
-          "ci_hi": -0.3310322526092974,
+          "k_controls": 1,
+          "ci_lo": -0.37959122385045946,
+          "ci_hi": -0.19915044950759486,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.19417961254681193,
-          "p": 0.00011374667648359374,
+        "capabilities_entropy_vs_o_prob_ctrl_surface": {
+          "partial_r": -0.16462599475290812,
+          "p": 0.0009937254197784305,
           "n": 397,
-          "k_controls": 7,
-          "ci_lo": -0.287929834666314,
-          "ci_hi": -0.09674283347974078,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.25885373765520014,
+          "ci_hi": -0.06729445451679499,
+          "controls": []
         },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.5059297061682874,
-          "p": 1.1320300656001666e-26,
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
+          "partial_r": 0.260592956251752,
+          "p": 1.43659954435264e-07,
           "n": 397,
-          "k_controls": 8,
-          "ci_lo": 0.4280317316593963,
-          "ci_hi": 0.5763658021484714,
+          "k_controls": 1,
+          "ci_lo": 0.16631784690869447,
+          "ci_hi": 0.3501472434889822,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.37440318133330136,
-          "p": 2.3403818892668822e-14,
+        "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
+          "partial_r": 0.1973901045651737,
+          "p": 7.830018888159357e-05,
           "n": 397,
-          "k_controls": 9,
-          "ci_lo": 0.2854865461922711,
-          "ci_hi": 0.456929309241156,
+          "k_controls": 2,
+          "ci_lo": 0.10067998977369028,
+          "ci_hi": 0.29040500511544964,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -2095,74 +1447,74 @@
       },
       "differences_unadjusted": {
         "dy_minus_dx1": {
-          "lo": 0.9567584947033972,
-          "hi": 1.198798150639674,
-          "point": 1.0774309233563257,
+          "lo": 0.463630957847136,
+          "hi": 0.7407747102799213,
+          "point": 0.6061163788436641,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.7164282578787361,
-          "hi": 0.953746677528021,
-          "point": 0.8387164482017624,
+          "lo": 0.3095954897205235,
+          "hi": 0.5683264494684896,
+          "point": 0.4391718344638587,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.32197109679696795,
-          "hi": -0.15065919669596725,
-          "point": -0.23871447515456354,
-          "p_boot": 0.0,
+          "lo": -0.2594750306052618,
+          "hi": -0.07670931239880906,
+          "point": -0.16694454437980524,
+          "p_boot": 0.001,
           "n_boot": 2000
         }
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": 0.7768488280479868,
-          "hi": 1.0592102696950656,
-          "point": 0.9241666803476608,
+          "lo": 0.41519945794481133,
+          "hi": 0.6926708601846742,
+          "point": 0.5548314037632913,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.5715108623248548,
-          "hi": 0.8198504689220268,
-          "point": 0.6957145074611567,
+          "lo": 0.30065654911339146,
+          "hi": 0.5519620757390489,
+          "point": 0.4267545099489076,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.38409844237571994,
-          "hi": -0.08059243813458539,
-          "point": -0.22845217288650416,
-          "p_boot": 0.004,
+          "lo": -0.25070125604438065,
+          "hi": -0.007264449156261528,
+          "point": -0.1280768938143836,
+          "p_boot": 0.035,
           "n_boot": 2000
         }
       },
       "univariate_choice_predictors": {
         "sp_prob": {
-          "coefficient": -1.6231359725892103,
-          "odds_ratio": 0.19727906627141106,
-          "p_value": 1.7054908160874017e-24,
-          "mean_auc": 0.8477883898936529,
-          "std_auc": 0.038077473489640565,
-          "aic": 387.6405730644759
+          "coefficient": -0.8324130705862728,
+          "odds_ratio": 0.4349983371318017,
+          "p_value": 7.85456582285889e-08,
+          "mean_auc": 0.7496179183135705,
+          "std_auc": 0.06452262177767784,
+          "aic": 280.4405825758537
         },
         "o_prob": {
-          "coefficient": -0.8939569909180122,
-          "odds_ratio": 0.4090340024100461,
-          "p_value": 1.1885477889443609e-09,
-          "mean_auc": 0.6953464742938427,
-          "std_auc": 0.07360135466656101,
-          "aic": 505.69880990294064
+          "coefficient": -0.5743362751019863,
+          "odds_ratio": 0.5630784740104389,
+          "p_value": 0.02925227225957714,
+          "mean_auc": 0.5829776021080368,
+          "std_auc": 0.04790781969244348,
+          "aic": 305.49520468402204
         },
-        "normalized_prob_entropy": {
-          "coefficient": 1.5090837770956005,
-          "odds_ratio": 4.522585199313004,
-          "p_value": 2.1870999206303867e-21,
-          "mean_auc": 0.8232744022217707,
-          "std_auc": 0.015751067425967515,
-          "aic": 410.344021933511
+        "capabilities_entropy": {
+          "coefficient": 0.8425471831095577,
+          "odds_ratio": 2.3222747084628805,
+          "p_value": 3.3181521430894443e-07,
+          "mean_auc": 0.7257971014492753,
+          "std_auc": 0.03724574064805304,
+          "aic": 282.4824287499306
         }
       }
     }
@@ -2176,11 +1528,31 @@
     },
     "introspection_score": {
       "mcc": 0.1559134239975594,
-      "p": 0.001
+      "p": 0.002
     },
     "self_acc_lift": {
       "lift": 0.18040231312307098,
       "p": 0.002684057633626389
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.3300447848380607,
+      "ci_lo": 0.12390471863438694,
+      "ci_hi": 0.5361848510417343
+    },
+    "single_point_auc": {
+      "auc": 0.31332856164750744,
+      "ci_lo": 0.11573298198207782,
+      "ci_hi": 0.5109241413129371
+    },
+    "full_auc": {
+      "auc": 0.7192387453555691,
+      "ci_lo": 0.6364600490586756,
+      "ci_hi": 0.7941876586865411
+    },
+    "calibration_auc": {
+      "auc": 0.7050435227854582,
+      "ci_lo": 0.6511489546321192,
+      "ci_hi": 0.7581759939052642
     },
     "s_i_capability": {
       "coef": -0.8796293745770492,
@@ -2216,73 +1588,44 @@
       },
       "adjusted_influence": {
         "capabilities_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.160579410034206,
-          "p": 0.0018116249162330414,
+          "partial_r": -0.20926948327869316,
+          "p": 3.7483913513318606e-05,
           "n": 383,
-          "k_controls": 8,
-          "ci_lo": -0.2576603721089982,
-          "ci_hi": -0.06028878230004843,
+          "k_controls": 1,
+          "ci_lo": -0.3032399743398559,
+          "ci_hi": -0.11126803397587726,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.017555213353089117,
-          "p": 0.7343830232079266,
+          "partial_r": -0.07717074293144617,
+          "p": 0.1316636768941146,
           "n": 383,
-          "k_controls": 7,
-          "ci_lo": -0.11848098662394982,
-          "ci_hi": 0.08372957797687462,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
+          "k_controls": 0,
+          "ci_lo": -0.1760161987195954,
+          "ci_hi": 0.023215374026944506,
+          "controls": []
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.21726521956816974,
-          "p": 2.194916655147338e-05,
+          "partial_r": 0.2218065838027557,
+          "p": 1.211069089657604e-05,
           "n": 383,
-          "k_controls": 8,
-          "ci_lo": 0.11860377336719066,
-          "ci_hi": 0.3116785049711628,
+          "k_controls": 1,
+          "ci_lo": 0.12423366125908937,
+          "ci_hi": 0.3151309743696041,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2"
           ]
         },
         "capabilities_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.20427856324640933,
-          "p": 6.909633503995101e-05,
+          "partial_r": 0.20490408768114127,
+          "p": 5.595305748864913e-05,
           "n": 383,
-          "k_controls": 9,
-          "ci_lo": 0.10504815172828658,
-          "ci_hi": 0.29948125899972144,
+          "k_controls": 2,
+          "ci_lo": 0.10662967632022656,
+          "ci_hi": 0.29921384148239094,
           "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
             "X2",
             "X1"
           ]
@@ -2313,24 +1656,24 @@
       },
       "differences_adjusted": {
         "dy_minus_dx1": {
-          "lo": 0.2675170759080291,
-          "hi": 0.48531383766836905,
-          "point": 0.3782242845288648,
+          "lo": 0.33116386418194915,
+          "hi": 0.5309514052775101,
+          "point": 0.4334716722898476,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dy_minus_dx2": {
-          "lo": 0.128929178972079,
-          "hi": 0.33933688976582144,
-          "point": 0.23523947962823313,
+          "lo": 0.19582429437806925,
+          "hi": 0.39848871147286796,
+          "point": 0.3001140347581643,
           "p_boot": 0.0,
           "n_boot": 2000
         },
         "dx1_minus_dx2": {
-          "lo": -0.25070781478590914,
-          "hi": -0.030463369354667407,
-          "point": -0.14298480490063165,
-          "p_boot": 0.017,
+          "lo": -0.24649401229497273,
+          "hi": -0.013073203949760229,
+          "point": -0.1333576375316833,
+          "p_boot": 0.026,
           "n_boot": 2000
         }
       },
@@ -2360,177 +1703,6 @@
           "aic": 333.6563034713151
         }
       }
-    },
-    "gameent": {
-      "unadjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob": {
-          "r": -0.23042192334142642,
-          "p": 3.5981640510320575e-06,
-          "n": 396,
-          "ci_lo": -0.32166405661707004,
-          "ci_hi": -0.13493980301298758
-        },
-        "normalized_prob_entropy_vs_o_prob": {
-          "r": -0.07746383038595386,
-          "p": 0.1238162553079299,
-          "n": 396,
-          "ci_lo": -0.17467661651171174,
-          "ci_hi": 0.021244572685147223
-        },
-        "normalized_prob_entropy_vs_delegate_choice": {
-          "r": 0.33963436523678864,
-          "p": 3.790544542071308e-12,
-          "n": 396,
-          "ci_lo": 0.249436706355524,
-          "ci_hi": 0.4239897874384524
-        }
-      },
-      "adjusted_influence": {
-        "normalized_prob_entropy_vs_sp_prob_ctrl_surface+o_prob": {
-          "partial_r": -0.19059997118762165,
-          "p": 0.0001587596054979769,
-          "n": 396,
-          "k_controls": 8,
-          "ci_lo": -0.28475464169628706,
-          "ci_hi": -0.09280286740580512,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_o_prob_ctrl_surface": {
-          "partial_r": -0.010150808533358287,
-          "p": 0.8418199474010101,
-          "n": 396,
-          "k_controls": 7,
-          "ci_lo": -0.10947023863267297,
-          "ci_hi": 0.08936930913995429,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob": {
-          "partial_r": 0.3278138414879814,
-          "p": 3.588018587872879e-11,
-          "n": 396,
-          "k_controls": 8,
-          "ci_lo": 0.23595653321179821,
-          "ci_hi": 0.41386484058266776,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2"
-          ]
-        },
-        "normalized_prob_entropy_vs_delegate_choice_ctrl_surface+o_prob+sp_prob": {
-          "partial_r": 0.31422489378003404,
-          "p": 2.575609213420465e-10,
-          "n": 396,
-          "k_controls": 9,
-          "ci_lo": 0.22147561307363742,
-          "ci_hi": 0.40134008643422814,
-          "controls": [
-            "human_difficulty",
-            "q_length",
-            "avg_word_length",
-            "percent_non_alphabetic_whitespace",
-            "overlap_ratio",
-            "domain_grouped_chemistry",
-            "domain_grouped_physics",
-            "X2",
-            "X1"
-          ]
-        }
-      },
-      "differences_unadjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.47580155178887634,
-          "hi": 0.6673984227581348,
-          "point": 0.5710077151341033,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.3112596529301913,
-          "hi": 0.5225206938340311,
-          "point": 0.41708761391065796,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.24955382102768758,
-          "hi": -0.05911626156206878,
-          "point": -0.15392010122344543,
-          "p_boot": 0.001,
-          "n_boot": 2000
-        }
-      },
-      "differences_adjusted": {
-        "dy_minus_dx1": {
-          "lo": 0.4156197877944814,
-          "hi": 0.6194542224156211,
-          "point": 0.5174416856017479,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dy_minus_dx2": {
-          "lo": 0.240715625894952,
-          "hi": 0.4279148156626554,
-          "point": 0.3386106636498586,
-          "p_boot": 0.0,
-          "n_boot": 2000
-        },
-        "dx1_minus_dx2": {
-          "lo": -0.30603422195399743,
-          "hi": -0.051664397331059195,
-          "point": -0.1788310219518894,
-          "p_boot": 0.007,
-          "n_boot": 2000
-        }
-      },
-      "univariate_choice_predictors": {
-        "sp_prob": {
-          "coefficient": -0.44896654353209864,
-          "odds_ratio": 0.6382874531802332,
-          "p_value": 0.0002305896683439953,
-          "mean_auc": 0.6253479853479853,
-          "std_auc": 0.06832671339267866,
-          "aic": 363.2406035296283
-        },
-        "o_prob": {
-          "coefficient": -0.4549236654866499,
-          "odds_ratio": 0.6344964000736053,
-          "p_value": 5.4863587945132345e-05,
-          "mean_auc": 0.6898168498168499,
-          "std_auc": 0.07776010671343465,
-          "aic": 360.5585557857484
-        },
-        "normalized_prob_entropy": {
-          "coefficient": 2.583779224227818,
-          "odds_ratio": 13.247107467063774,
-          "p_value": 5.398724937249905e-06,
-          "mean_auc": 0.8806300366300366,
-          "std_auc": 0.041451313378526214,
-          "aic": 302.4721649938427
-        }
-      }
     }
   },
   "meta-llama-Meta-Llama-3.1-405B-Instruct": {
@@ -2542,11 +1714,31 @@
     },
     "introspection_score": {
       "mcc": 0.07795692104677408,
-      "p": 0.036
+      "p": 0.038
     },
     "self_acc_lift": {
       "lift": -0.1913144122383253,
       "p": 3.032954214412304e-23
+    },
+    "normed_self_acc_lift": {
+      "lift": -0.33637698855090165,
+      "ci_lo": -0.39300313213356697,
+      "ci_hi": -0.2740882306099698
+    },
+    "single_point_auc": {
+      "auc": 0.16748333371824486,
+      "ci_lo": 0.011048723228442442,
+      "ci_hi": 0.3239179442080473
+    },
+    "full_auc": {
+      "auc": 0.815874776081208,
+      "ci_lo": 0.7388554433723336,
+      "ci_hi": 0.8906195472071873
+    },
+    "calibration_auc": {
+      "auc": 0.6532645078033632,
+      "ci_lo": 0.6073325967397433,
+      "ci_hi": 0.6956635017466591
     },
     "s_i_capability": {
       "coef": -1.0172150838457825,
@@ -2570,6 +1762,16 @@
     "self_acc_lift": {
       "lift": 0.04070745065200804,
       "p": 0.11955454614738184
+    },
+    "normed_self_acc_lift": {
+      "lift": 0.07623046183418485,
+      "ci_lo": -0.019158783954676444,
+      "ci_hi": 0.17161970762304626
+    },
+    "single_point_auc": {
+      "auc": 0.3849706010410614,
+      "ci_lo": 0.18777848392964802,
+      "ci_hi": 0.5821627181524748
     },
     "s_i_capability": {
       "coef": -1.5991670799188407,

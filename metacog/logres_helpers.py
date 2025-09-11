@@ -1615,14 +1615,27 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
     ba_norm = (j / j_max) if (j_max > 0) and np.isfinite(j) else np.nan
 
     # Compute full AUC if we have probabilities
-    full_auc = None
+    full_auc, calibration_auc = None, None
     if baseline_probs is not None and delegated is not None:
+        # Convert once to numpy for positional masking
+        bp0 = baseline_probs.values if hasattr(baseline_probs, 'values') else baseline_probs
+        dg0 = delegated.values if hasattr(delegated, 'values') else delegated
+        bc0 = baseline_correct.values if hasattr(baseline_correct, 'values') else baseline_correct
+
+        bp0 = np.asarray(bp0, dtype=float)
+        dg0 = np.asarray(dg0, dtype=float)
+        bc0 = np.asarray(bc0, dtype=float)
+
+        # Single joint mask so lengths stay identical for downstream bootstrap
+        mask = ~np.isnan(bp0) & ~np.isnan(dg0) & ~np.isnan(bc0)
+        baseline_probs = bp0[mask]
+        delegated = dg0[mask]
+        baseline_correct = bc0[mask]
+
         # Assuming delegated needs inversion (1=pass → 1=answer)
-        delegated_binary = 1 - delegated.values if hasattr(delegated, 'values') else 1 - delegated
-        try:
-            full_auc = roc_auc_score(delegated_binary, baseline_probs)
-        except:
-            full_auc = None
+        delegated_binary = 1 - delegated
+        full_auc = roc_auc_score(delegated_binary, baseline_probs)
+        calibration_auc = roc_auc_score(baseline_correct, baseline_probs)
 
     # ---------- p-values ----------------------------------------------------
     p_lift = binomtest(kept_correct.sum(), k, p0, alternative='two-sided').pvalue
@@ -1632,7 +1645,7 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
     counts = np.array([tp, fn, fp, tn], int)
     probs = counts / N
 
-    lifts, normed_lifts, mccs, aucs, full_aucs = [], [], [], [], []
+    lifts, normed_lifts, mccs, aucs, full_aucs, calibration_aucs = [], [], [], [], [], []
     kept_idx = np.arange(k)
 
     for _ in range(n_boot):
@@ -1653,6 +1666,7 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
 
         # ----- Single point AUC (if we have the data)
         if baseline_correct is not None and delegated is not None and j_max > 0:
+            N = len(baseline_correct)
             idx = rng.choice(N, N, replace=True)
             boot_bc = baseline_correct.iloc[idx].values if hasattr(baseline_correct, 'iloc') else baseline_correct[idx]
             boot_del = delegated.iloc[idx].values if hasattr(delegated, 'iloc') else delegated[idx]
@@ -1666,9 +1680,9 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
             sens = ac / (ac + pc) if (ac + pc) > 0 else 0
             spec = pi / (pi + ai) if (pi + ai) > 0 else 0
             j = (sens + spec - 1.0)
-            #p = (ac + pc) / N 
-            #c = (ac + ai) / N
-            #j_max = min(c / p, (1 - c) / (1 - p))
+            p = (ac + pc) / N 
+            c = (ac + ai) / N
+            j_max = min(c / p, (1 - c) / (1 - p))
             b_ba_norm = (j / j_max) 
             aucs.append(b_ba_norm)###(sens + spec) / 2)
             
@@ -1676,8 +1690,8 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
             if baseline_probs is not None:
                 boot_probs = baseline_probs.iloc[idx].values if hasattr(baseline_probs, 'iloc') else baseline_probs[idx]
                 try:
-                    boot_auc = roc_auc_score(boot_del_binary, boot_probs)
-                    full_aucs.append(boot_auc)
+                    full_aucs.append(roc_auc_score(boot_del_binary, boot_probs))
+                    calibration_aucs.append(roc_auc_score(boot_bc, boot_probs))
                 except:
                     pass  # Skip if all same class
 
@@ -1687,18 +1701,98 @@ def lift_mcc_stats(tp, fn, fp, tn, kept_correct, p0, n_boot=2000, seed=0,
     ci_mcc = tuple(np.percentile(mccs, [2.5, 97.5]))
     ci_single_auc = tuple(np.percentile(aucs, [2.5, 97.5])) if aucs else (np.nan, np.nan)
     ci_full_auc = tuple(np.percentile(full_aucs, [2.5, 97.5])) if full_aucs else (np.nan, np.nan)
+    ci_calibration_auc = tuple(np.percentile(calibration_aucs, [2.5, 97.5])) if calibration_aucs else (np.nan, np.nan)
 
     boot_arr = np.array(mccs)
     p_mcc = 2 * min((boot_arr <= 0).mean(), (boot_arr >= 0).mean())
+
+
+    def ba_uplift_and_ci(tp, fn, fp, tn, ci=0.95):
+        """
+        Returns:
+        - ba_uplift: (TPR - FPR)/2  where
+            TPR = P(answer | correct)   = TN / (TN + FP)
+            FPR = P(answer | incorrect) = FN / (TP + FN)
+        - ci_low, ci_high: Newcombe (Wilson) CI for (TPR - FPR)/2
+        - cohens_h, h_ci_low, h_ci_high: arcsine effect size and CI
+        """
+        import math
+        from scipy.stats import norm
+
+        tp = float(tp); fn = float(fn); fp = float(fp); tn = float(tn)
+        n_correct   = tn + fp
+        n_incorrect = tp + fn
+        if n_correct <= 0 or n_incorrect <= 0:
+            return {k: float('nan') for k in [
+                'ba_uplift','ci_low','ci_high','cohens_h','h_ci_low','h_ci_high'
+            ]}
+
+        tpr = tn / n_correct
+        fpr = fn / n_incorrect
+        J = tpr - fpr
+        ba_uplift = J / 2.0
+
+        # Wilson interval
+        def wilson(p, n, alpha):
+            z = norm.ppf(1 - alpha/2)
+            z2 = z*z
+            denom = 1 + z2/n
+            center = (p + z2/(2*n)) / denom
+            half = (z / denom) * math.sqrt((p*(1-p) + z2/(4*n)) / n)
+            return center - half, center + half
+
+        alpha = 1 - ci
+        L1, U1 = wilson(tpr, n_correct, alpha)
+        L2, U2 = wilson(fpr, n_incorrect, alpha)
+
+        # Newcombe MOVER for difference: d = p1 - p2
+        d = tpr - fpr
+        low_d  = d - math.sqrt((tpr - L1)**2 + (U2 - fpr)**2)
+        high_d = d + math.sqrt((U1 - tpr)**2 + (fpr - L2)**2)
+
+        ci_low  = low_d / 2.0
+        ci_high = high_d / 2.0
+
+        # Cohen's h and CI
+        def asin_sqrt(p):
+            # Clamp to open interval to avoid nan at 0/1
+            eps = 1e-12
+            p = min(max(p, eps), 1 - eps)
+            return math.asin(math.sqrt(p))
+
+        h = 2*asin_sqrt(tpr) - 2*asin_sqrt(fpr)
+        se_h = math.sqrt(1.0/n_correct + 1.0/n_incorrect)
+        z = norm.ppf(0.5 + ci/2.0)
+        h_lo = h - z*se_h
+        h_hi = h + z*se_h
+
+        return {
+            'ba_uplift': float(ba_uplift),
+            'ci_low': float(ci_low),
+            'ci_high': float(ci_high),
+            'cohens_h': float(h),
+            'h_ci_low': float(h_lo),
+            'h_ci_high': float(h_hi),
+            'tpr': float(tpr),
+            'fpr': float(fpr),
+            'n_correct': int(n_correct),
+            'n_incorrect': int(n_incorrect),
+        }    
+    ba_stats = ba_uplift_and_ci(tp, fn, fp, tn, ci=0.95)
+    ba_h = ba_stats['cohens_h']
+    ba_h_ci = (ba_stats['h_ci_low'], ba_stats['h_ci_high'])
+
     
     return dict(
         lift=lift, lift_ci=ci_lift, p_lift=p_lift,
         normed_lift=normed_lift, normed_lift_ci=ci_normed_lift,
         mcc=mcc, mcc_ci=ci_mcc, p_mcc=p_mcc,
-        single_point_auc=ba_norm if baseline_correct is not None else None,
-        single_point_auc_ci=ci_single_auc if baseline_correct is not None else (None, None),
+        single_point_auc=ba_h,
+        single_point_auc_ci=ba_h_ci,
         full_auc=full_auc,
-        full_auc_ci=ci_full_auc if full_auc is not None else (None, None)
+        full_auc_ci=ci_full_auc if full_auc is not None else (None, None),
+        calibration_auc=calibration_auc,
+        calibration_auc_ci=ci_calibration_auc if calibration_auc is not None else (None, None)
     )
 
 def self_acc_stats(cap_corr, team_corr, kept_mask):
@@ -1935,3 +2029,281 @@ def remove_collinear_terms(model_terms, df, target_col='delegate_choice', fit_kw
             else:
                 print("Can't remove any more terms")
                 return None, working_terms, removed_terms
+
+def introspection_metrics(D, U, X=None, n_boot=2000, seed=0, C=1.0):
+    """
+    Odds ratio per 1 SD of U (with optional controls) and bootstrap 95% CI.
+    - D: array-like of 0/1 (1 = answer, 0 = pass)
+    - U: array-like (e.g., -entropy so higher = more confidence)
+    - X: optional controls (array-like or DataFrame)
+         Numeric controls are standardized; categorical/bool are one-hot.
+    - C: L2 regularization strength for logistic regression
+    Returns: {'or_per_sd': float, 'or_ci': (low, high)}
+    """
+    from sklearn.utils import check_random_state
+    from pandas.api.types import is_numeric_dtype, is_bool_dtype
+
+    # Assemble and clean
+    D = np.asarray(D)
+    U = np.asarray(U, dtype=float)
+    df = pd.DataFrame({'D': D, 'U': U})
+    if X is not None:
+        X_df = pd.DataFrame(X)
+        df = pd.concat([df, X_df], axis=1)
+
+    df = df.replace([np.inf, -np.inf], np.nan).dropna()
+    y = df['D'].to_numpy().astype(int)
+    if y.min() == y.max():
+        raise ValueError("D must contain both 0 and 1 after cleaning.")
+
+    # Standardize U (per-SD), fixed for bootstrap
+    U_mean = df['U'].mean()
+    U_std = df['U'].std(ddof=0)
+    if not np.isfinite(U_std) or U_std == 0:
+        raise ValueError("U has zero/invalid variance.")
+    Uz = ((df['U'] - U_mean) / U_std).to_numpy().reshape(-1, 1)
+
+    # Controls: split into numeric (excluding bool) and categorical/bool
+    control_cols = [c for c in df.columns if c not in ['D', 'U']]
+    if control_cols:
+        num_cols = [c for c in control_cols if is_numeric_dtype(df[c]) and not is_bool_dtype(df[c])]
+        cat_cols = [c for c in control_cols if c not in num_cols]
+
+        # Standardize numeric controls (drop zero-variance)
+        if num_cols:
+            num_means = df[num_cols].mean()
+            num_stds = df[num_cols].std(ddof=0).replace(0, np.nan)
+            num_keep = num_stds.index[num_stds.notna()].tolist()
+            Z_num = ((df[num_keep] - num_means[num_keep]) / num_stds[num_keep]).to_numpy()
+        else:
+            num_keep, Z_num = [], None
+
+        # One-hot encode categorical/bool controls (fixed columns for bootstrap)
+        if cat_cols:
+            X_cat = pd.get_dummies(df[cat_cols], drop_first=True)
+            cat_dummy_cols = X_cat.columns.tolist()
+            X_cat_np = X_cat.to_numpy()
+        else:
+            cat_dummy_cols, X_cat_np = [], None
+
+        # Build design matrix
+        parts = [Uz]
+        if Z_num is not None: parts.append(Z_num)
+        if X_cat_np is not None: parts.append(X_cat_np)
+        X_mat = np.hstack(parts)
+    else:
+        num_keep, cat_cols, cat_dummy_cols = [], [], []
+        X_mat = Uz
+
+    # Point estimate
+    logit = LogisticRegression(
+        penalty='l2', C=C, solver='lbfgs',
+        fit_intercept=True, max_iter=2000
+    )
+    logit.fit(X_mat, y)
+    beta = float(logit.coef_[0][0])
+    or_per_sd = float(np.exp(beta))
+
+    # Bootstrap CI (percentile), reusing global scales and dummy columns
+    rng = check_random_state(seed)
+    n = len(df)
+    idx_all = np.arange(n)
+    or_samples = []
+
+    U_np = df['U'].to_numpy()
+    if num_keep:
+        NUM_np = df[num_keep].to_numpy()
+        num_means_vec = num_means[num_keep].to_numpy()
+        num_stds_vec = num_stds[num_keep].to_numpy()
+    if cat_cols:
+        CAT_df = df[cat_cols]
+
+    for _ in range(n_boot):
+        idx = rng.choice(idx_all, size=n, replace=True)
+        ys = y[idx]
+        if ys.min() == ys.max():
+            continue
+
+        Uz_b = ((U_np[idx] - U_mean) / U_std).reshape(-1, 1)
+
+        parts = [Uz_b]
+        if num_keep:
+            Z_num_b = (NUM_np[idx] - num_means_vec) / num_stds_vec
+            parts.append(Z_num_b)
+        if cat_cols:
+            X_cat_b = pd.get_dummies(CAT_df.iloc[idx], drop_first=True).reindex(columns=cat_dummy_cols, fill_value=0)
+            parts.append(X_cat_b.to_numpy())
+
+        Xm = np.hstack(parts)
+        try:
+            logit.fit(Xm, ys)
+            b = float(logit.coef_[0][0])
+            or_samples.append(np.exp(b))
+        except Exception:
+            continue
+
+    if len(or_samples) == 0:
+        or_ci = (float('nan'), float('nan'))
+    else:
+        lo = float(np.percentile(or_samples, 2.5))
+        hi = float(np.percentile(or_samples, 97.5))
+        or_ci = (lo, hi)
+
+    return {'or_per_sd': or_per_sd, 'or_ci': or_ci}
+
+
+def fraction_headroom_auc(D, U, X=None, n_boot=2000, seed=0, C=1.0):
+    """
+    Compute:
+      - fraction_headroom = (AUC_full − AUC_ctrl) / (1 − AUC_ctrl), with 95% CI
+      - auc_full with 95% CI
+    Inputs:
+      - D: 0/1 labels (1=answer, 0=pass)
+      - U: score (e.g., −entropy)
+      - X: optional controls (DataFrame or array-like)
+      - C: L2 strength for logistic regression
+    Returns:
+      {'fraction_headroom', 'fraction_headroom_ci', 'auc_full', 'auc_full_ci'}
+    """
+    import numpy as np
+    import pandas as pd
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import roc_auc_score
+    from sklearn.utils import check_random_state
+    from pandas.api.types import is_numeric_dtype, is_bool_dtype
+
+    rng = check_random_state(seed)
+
+    # Assemble and clean
+    D = np.asarray(D)
+    U = np.asarray(U, dtype=float)
+    df = pd.DataFrame({'D': D, 'U': U})
+    if X is not None:
+        X_df = pd.DataFrame(X)
+        df = pd.concat([df, X_df], axis=1)
+    df = df.replace([np.inf, -np.inf], np.nan).dropna()
+
+    y = df['D'].to_numpy().astype(int)
+    if y.min() == y.max():
+        raise ValueError("D must contain both 0 and 1 after cleaning.")
+    U_vec = df['U'].to_numpy()
+
+    # Controls preprocessing: standardize numeric, one-hot categorical/bool
+    control_cols = [c for c in df.columns if c not in ['D', 'U']]
+    if control_cols:
+        num_cols = [c for c in control_cols if is_numeric_dtype(df[c]) and not is_bool_dtype(df[c])]
+        cat_cols = [c for c in control_cols if c not in num_cols]
+
+        if num_cols:
+            num_means = df[num_cols].mean()
+            num_stds = df[num_cols].std(ddof=0).replace(0, np.nan)
+            num_keep = num_stds.index[num_stds.notna()].tolist()
+            Z_num = ((df[num_keep] - num_means[num_keep]) / num_stds[num_keep]).to_numpy()
+            NUM_np = df[num_keep].to_numpy()
+            num_means_vec = num_means[num_keep].to_numpy()
+            num_stds_vec = num_stds[num_keep].to_numpy()
+        else:
+            num_keep, Z_num = [], None
+            NUM_np = num_means_vec = num_stds_vec = None
+
+        if cat_cols:
+            X_cat = pd.get_dummies(df[cat_cols], drop_first=True)
+            cat_dummy_cols = X_cat.columns.tolist()
+            X_cat_np = X_cat.to_numpy()
+            CAT_df = df[cat_cols]
+        else:
+            cat_dummy_cols, X_cat_np = [], None
+            CAT_df = None
+
+        parts = []
+        if Z_num is not None: parts.append(Z_num)
+        if X_cat_np is not None: parts.append(X_cat_np)
+        X_ctrl = np.hstack(parts) if parts else None
+    else:
+        num_keep, cat_cols, cat_dummy_cols = [], [], []
+        X_ctrl = None
+        NUM_np = num_means_vec = num_stds_vec = None
+        CAT_df = None
+
+    # Standardize U with full-sample stats (fixed for bootstrap)
+    U_mean = U_vec.mean()
+    U_std = U_vec.std(ddof=0)
+    if not np.isfinite(U_std) or U_std == 0:
+        raise ValueError("U has zero/invalid variance.")
+    U_z = ((U_vec - U_mean) / U_std).reshape(-1, 1)
+
+    def fit_pred(Xm, ys):
+        lr = LogisticRegression(penalty='l2', C=C, solver='lbfgs',
+                                fit_intercept=True, max_iter=2000)
+        lr.fit(Xm, ys)
+        return lr.predict_proba(Xm)[:, 1]
+
+    # Point estimates
+    if X_ctrl is None:
+        auc_ctrl = 0.5
+    else:
+        p_ctrl = fit_pred(X_ctrl, y)
+        auc_ctrl = roc_auc_score(y, p_ctrl)
+
+    X_full = U_z if X_ctrl is None else np.hstack([U_z, X_ctrl])
+    p_full = fit_pred(X_full, y)
+    auc_full = roc_auc_score(y, p_full)
+
+    delta = auc_full - auc_ctrl
+    headroom = 1.0 - auc_ctrl
+    frac_headroom = delta / headroom if headroom > 0 else float('nan')
+
+    # Bootstrap CIs
+    auc_full_s = []
+    frac_s = []
+    n = len(y)
+    idx_all = np.arange(n)
+
+    for _ in range(n_boot):
+        idx = rng.choice(idx_all, size=n, replace=True)
+        ys = y[idx]
+        if ys.min() == ys.max():
+            continue
+
+        # Controls for bootstrap sample using fixed transforms/columns
+        if X_ctrl is None:
+            auc_ctrl_b = 0.5
+            Xm = None
+        else:
+            parts = []
+            if num_keep:
+                Zb = (NUM_np[idx] - num_means_vec) / num_stds_vec
+                parts.append(Zb)
+            if CAT_df is not None:
+                X_cat_b = pd.get_dummies(CAT_df.iloc[idx], drop_first=True)\
+                           .reindex(columns=cat_dummy_cols, fill_value=0).to_numpy()
+                parts.append(X_cat_b)
+            Xm = np.hstack(parts) if parts else None
+            p_ctrl_b = fit_pred(Xm, ys)
+            auc_ctrl_b = roc_auc_score(ys, p_ctrl_b)
+
+        Ub = U_vec[idx]
+        Uz_b = ((Ub - U_mean) / U_std).reshape(-1, 1)
+        Xf = Uz_b if Xm is None else np.hstack([Uz_b, Xm])
+        p_full_b = fit_pred(Xf, ys)
+        auc_full_b = roc_auc_score(ys, p_full_b)
+
+        delta_b = auc_full_b - auc_ctrl_b
+        headroom_b = 1.0 - auc_ctrl_b
+        frac_b = (delta_b / headroom_b) if headroom_b > 0 else np.nan
+
+        auc_full_s.append(auc_full_b)
+        frac_s.append(frac_b)
+
+    def ci(arr):
+        arr = [x for x in arr if np.isfinite(x)]
+        if not arr:
+            return (float('nan'), float('nan'))
+        return (float(np.percentile(arr, 2.5)), float(np.percentile(arr, 97.5)))
+
+    return {
+        'fraction_headroom': float(frac_headroom),
+        'fraction_headroom_ci': ci(frac_s),
+        'auc_full': float(auc_full),
+        'auc_full_ci': ci(auc_full_s),
+    }

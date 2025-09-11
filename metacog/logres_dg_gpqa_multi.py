@@ -356,7 +356,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"#"GPQA"# 
+    dataset = "GPQA"#"GPSA"# 
     game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -447,7 +447,7 @@ if __name__ == "__main__":
                     subject_answer = res_info.get("subject_answer")
                     a_i_map_for_this_model[q_id] = subject_answer
                     # Populate p_i_map_for_this_model
-                    if subject_answer is not None and isinstance(probs_dict, dict):
+                    if subject_answer is not None and isinstance(probs_dict, dict) and 'deepseek' not in model_name_part.lower():
                         prob_for_subject_answer = probs_dict.get(subject_answer)
                         if isinstance(prob_for_subject_answer, (int, float)):
                             if len(probs_dict.keys()) > 1:
@@ -455,7 +455,7 @@ if __name__ == "__main__":
                             else:
                                 p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)#-math.log(float(prob_for_subject_answer))/max((len(subject_answer)//2),1)###float(prob_for_subject_answer)**(len(subject_answer)//2) #approx token count
                     # Calculate and populate entropy_map_for_this_model
-                    if isinstance(probs_dict, dict) and probs_dict:
+                    if isinstance(probs_dict, dict) and probs_dict and 'deepseek' not in model_name_part.lower():
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
                         if prob_values:
                             entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else -math.log2(p_i_map_for_this_model[q_id])
@@ -658,7 +658,10 @@ if __name__ == "__main__":
 
                     #mcc, score, ci = mcc_ci_boot(TP=TP, FN=FN, FP=FP, TN=TN)
                     TP, FN, FP, TN = contingency(delegated, cap_corr)
-                    raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean())
+                    try: 
+                        raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean(), baseline_correct=df_model['s_i_capability'], delegated=df_model['delegate_choice'], baseline_probs = df_model['p_i_capability'] if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any() else None)
+                    except Exception as e:
+                        log_output(f"Error calculating raw_stats: {e}")
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
                     res_dicts[model_name_part]['introspection_score'] = {'mcc': raw_stats['mcc'], 'p': raw_stats['p_mcc']}
                     log_output(f"FP = {FP}")
@@ -691,6 +694,15 @@ if __name__ == "__main__":
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
                     log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}")
                     res_dicts[model_name_part]['self_acc_lift'] = {'lift': raw_stats['lift'], 'p': raw_stats['p_lift']}
+                    log_output(f"Normed Self-acc lift = {raw_stats['normed_lift']:.3f} [{raw_stats['normed_lift_ci'][0]:.3f}, {raw_stats['normed_lift_ci'][1]:.3f}]")
+                    res_dicts[model_name_part]['normed_self_acc_lift'] = {'lift': raw_stats['normed_lift'], 'ci_lo': raw_stats['normed_lift_ci'][0], 'ci_hi': raw_stats['normed_lift_ci'][1]}
+                    log_output(f"Balanced Accuracy Effect Size = {raw_stats['single_point_auc']:.3f} [{raw_stats['single_point_auc_ci'][0]:.3f}, {raw_stats['single_point_auc_ci'][1]:.3f}]")
+                    res_dicts[model_name_part]['single_point_auc'] = {'auc': raw_stats['single_point_auc'], 'ci_lo': raw_stats['single_point_auc_ci'][0], 'ci_hi': raw_stats['single_point_auc_ci'][1]}
+                    if raw_stats['full_auc'] is not None:
+                        log_output(f"Full AUC = {raw_stats['full_auc']:.3f} [{raw_stats['full_auc_ci'][0]:.3f}, {raw_stats['full_auc_ci'][1]:.3f}]")
+                        res_dicts[model_name_part]['full_auc'] = {'auc': raw_stats['full_auc'], 'ci_lo': raw_stats['full_auc_ci'][0], 'ci_hi': raw_stats['full_auc_ci'][1]}
+                        log_output(f"Calibration AUC = {raw_stats['calibration_auc']:.3f} [{raw_stats['calibration_auc_ci'][0]:.3f}, {raw_stats['calibration_auc_ci'][1]:.3f}]")
+                        res_dicts[model_name_part]['calibration_auc'] = {'auc': raw_stats['calibration_auc'], 'ci_lo': raw_stats['calibration_auc_ci'][0], 'ci_hi': raw_stats['calibration_auc_ci'][1]}
 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
                     log_output(f"Adjusted self-acc lift = {adj_stats['lift']:.3f} [{adj_stats['lift_ci'][0]:.3f}, {adj_stats['lift_ci'][1]:.3f}], p={adj_stats['p_lift']:.4g}")
@@ -1142,15 +1154,25 @@ if __name__ == "__main__":
                                 except Exception as e_full:
                                     log_output(f"                    Could not fit Model 4.63b: {e_full}")
 
-                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs CapEnt Model")
-                                res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])
-                                log_output(res)
+                                #log_output(f"\n                  Answer Choice by Stated (Self and Other) vs CapEnt Model")
+                                #res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])
+                                #log_output(res)
+                                log_output(f"\n====================Introspection Metrics====================")
+                                try:
+                                    imd = introspection_metrics(1-df_model['delegate_choice'], -df_model['capabilities_entropy'], X=df_model['o_prob'], C=1.0)
+                                    rd = fraction_headroom_auc(1-df_model['delegate_choice'], -df_model['capabilities_entropy'], X=df_model['o_prob'])
+                                except Exception as e_full:
+                                    log_output(f"                    Could not compute introspection metrics: {e_full}")
+                                    rd = {}
+                                log_output(f"Standardized Odds Ratio = {imd['or_per_sd']} [{imd['or_ci'][0]:.3f}, {imd['or_ci'][1]:.3f}]")
+                                log_output(f"Pct AUC Headroom Lift = {rd['fraction_headroom']:.3f} [{rd['fraction_headroom_ci'][0]:.3f}, {rd['fraction_headroom_ci'][1]:.3f}]")
+                                log_output(f"AUC With Controls = {rd['auc_full']:.3f} [{rd['auc_full_ci'][0]:.3f}, {rd['auc_full_ci'][1]:.3f}]")
 
                                 log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-#                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
-                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
+                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
+#                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
 
@@ -1199,16 +1221,16 @@ if __name__ == "__main__":
                                 except Exception as e_full:
                                     log_output(f"                    Could not fit Model 4.81b: {e_full}")
 
-                                log_output(f"\n                  Answer Choice by Stated (Self and Other) vs GameEnt Model")
-                                res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'])
-                                log_output(res)
+                                #log_output(f"\n                  Answer Choice by Stated (Self and Other) vs GameEnt Model")
+                                #res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'])
+                                #log_output(res)
 
                                 log_output(f"\n====================Simplified Complete GameEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'normalized_prob_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
-                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
-                                log_output(res)
-                                res_dicts[model_name_part]['gameent'] = res_dict
+                                #res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
+                                #log_output(res)
+                                #res_dicts[model_name_part]['gameent'] = res_dict
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: both entropies in full model

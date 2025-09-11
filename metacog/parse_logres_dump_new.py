@@ -19,10 +19,18 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     filtered_introspection_regex = re.compile(r"Filtered Introspection score = ([-\d.]+) \[([-\d.]+), ([-\d.]+)\]")
     
     adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-#    raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-    raw_self_acc_lift_regex = re.compile(r"Single-point AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     filtered_self_acc_lift_regex = re.compile(r"Filtered Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
 
+    normed_ba_regex = re.compile(r"Balanced Accuracy Effect Size = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    AUC_regex = re.compile(r"Full AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    calibration_AUC_regex = re.compile(r"Calibration AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    std_or_regex = re.compile(r"Standardized Odds Ratio = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    auc_w_cntl_regex = re.compile(r"AUC With Controls = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    auc_pct_head_regex = re.compile(r"Pct AUC Headroom Lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    cntl_capent_regex = re.compile(r"capabilities_entropy vs delegate_choice\s*\|\s*surface \+ o_prob: partial r=([-\d.]+),\s*CI\[([-\d.]+),([-\d.]+)\]")
+
+    phase1_accuracy_regex = re.compile(r"Phase 1 accuracy: ([-\d.]+)")
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
     game_test_good_change_regex = re.compile(r"Game-Test Good Change Rate: ([-\d.]+)")
 
@@ -96,6 +104,27 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     f"{prefix_lift}_self_acc_lift": "Not found",
                     f"{prefix_lift}_self_acc_lift_ci_low": "Not found",
                     f"{prefix_lift}_self_acc_lift_ci_high": "Not found",
+                    "normed_ba": "Not found",
+                    "normed_ba_ci_low": "Not found",
+                    "normed_ba_ci_high": "Not found",
+                    "auc": "Not found",
+                    "auc_ci_low": "Not found",
+                    "auc_ci_high": "Not found",
+                    "cntl_capent": "Not found",
+                    "cntl_capent_ci_low": "Not found",
+                    "cntl_capent_ci_high": "Not found",
+                    "std_or": "Not found",
+                    "std_or_ci_low": "Not found",
+                    "std_or_ci_high": "Not found",
+                    "auc_w_cntl": "Not found",
+                    "auc_w_cntl_ci_low": "Not found",
+                    "auc_w_cntl_ci_high": "Not found",
+                    "auc_pct_head": "Not found",
+                    "auc_pct_head_ci_low": "Not found",
+                    "auc_pct_head_ci_high": "Not found",
+                    "calibration_auc": "Not found",
+                    "calibration_auc_ci_low": "Not found",
+                    "calibration_auc_ci_high": "Not found",
                     "model4_si_cap_coef": "Not found",
                     "model4_si_cap_ci_low": "Not found",
                     "model4_si_cap_ci_high": "Not found",
@@ -150,6 +179,68 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info[f"{prefix_lift}_self_acc_lift"] = m.group(1)
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_low"] = m.group(2)
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract Normed Balanced Accuracy
+                    m = normed_ba_regex.search(line)
+                    if m:
+                        extracted_info["normed_ba"] = m.group(1)
+                        extracted_info["normed_ba_ci_low"] = m.group(2)
+                        extracted_info["normed_ba_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract AUC
+                    m = AUC_regex.search(line)
+                    if m:
+                        extracted_info["auc"] = m.group(1)
+                        extracted_info["auc_ci_low"] = m.group(2)
+                        extracted_info["auc_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract Calibration AUC
+                    m = calibration_AUC_regex.search(line)
+                    if m:
+                        extracted_info["calibration_auc"] = m.group(1)
+                        extracted_info["calibration_auc_ci_low"] = m.group(2)
+                        extracted_info["calibration_auc_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract Controlled Capabilities Entropy
+                    m = cntl_capent_regex.search(line)
+                    if m:
+                        extracted_info["cntl_capent"] = m.group(1)
+                        extracted_info["cntl_capent_ci_low"] = m.group(2)
+                        extracted_info["cntl_capent_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract Std OR
+                    m = std_or_regex.search(line)
+                    if m:
+                        extracted_info["std_or"] = m.group(1)
+                        extracted_info["std_or_ci_low"] = m.group(2)
+                        extracted_info["std_or_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract AUC w/ Cntl
+                    m = auc_w_cntl_regex.search(line)
+                    if m:
+                        extracted_info["auc_w_cntl"] = m.group(1)
+                        extracted_info["auc_w_cntl_ci_low"] = m.group(2)
+                        extracted_info["auc_w_cntl_ci_high"] = m.group(3)
+                        continue
+                    
+                    # Extract AUC Pct Head
+                    m = auc_pct_head_regex.search(line)
+                    if m:
+                        extracted_info["auc_pct_head"] = m.group(1)
+                        extracted_info["auc_pct_head_ci_low"] = m.group(2)
+                        extracted_info["auc_pct_head_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract Phase 1 Accuracy
+                    m = phase1_accuracy_regex.search(line)
+                    if m:
+                        extracted_info["phase1_accuracy"] = m.group(1)
                         continue
 
                     # Extract game test change rate
@@ -350,6 +441,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     
                 outfile.write(f"  {prefix_int_cln}introspection score: {extracted_info[f'{prefix_int}_introspection']} [{extracted_info[f'{prefix_int}_introspection_ci_low']}, {extracted_info[f'{prefix_int}_introspection_ci_high']}]\n")
                 outfile.write(f"  {prefix_lift_cln}self-acc lift: {extracted_info[f'{prefix_lift}_self_acc_lift']} [{extracted_info[f'{prefix_lift}_self_acc_lift_ci_low']}, {extracted_info[f'{prefix_lift}_self_acc_lift_ci_high']}]\n")
+                outfile.write(f"  Normed Balanced Accuracy: {extracted_info['normed_ba']} [{extracted_info['normed_ba_ci_low']}, {extracted_info['normed_ba_ci_high']}]\n")
+                outfile.write(f"  Full AUC: {extracted_info['auc']} [{extracted_info['auc_ci_low']}, {extracted_info['auc_ci_high']}]\n")
+                outfile.write(f"  Calibration AUC: {extracted_info['calibration_auc']} [{extracted_info['calibration_auc_ci_low']}, {extracted_info['calibration_auc_ci_high']}]\n")
+                outfile.write(f"  Controlled Capabilities Entropy: {extracted_info['cntl_capent']} [{extracted_info['cntl_capent_ci_low']}, {extracted_info['cntl_capent_ci_high']}]\n")
+                outfile.write(f"  Std OR: {extracted_info['std_or']} [{extracted_info['std_or_ci_low']}, {extracted_info['std_or_ci_high']}]\n")
+                outfile.write(f"  AUC w Cntl: {extracted_info['auc_w_cntl']} [{extracted_info['auc_w_cntl_ci_low']}, {extracted_info['auc_w_cntl_ci_high']}]\n")
+                outfile.write(f"  AUC Pct Head: {extracted_info['auc_pct_head']} [{extracted_info['auc_pct_head_ci_low']}, {extracted_info['auc_pct_head_ci_high']}]\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
                 outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
                 outfile.write(f"  Model 4.6 capabilities_entropy: {extracted_info['model46_cap_entropy_coef']} [{extracted_info['model46_cap_entropy_ci_low']}, {extracted_info['model46_cap_entropy_ci_high']}]\n")
@@ -417,6 +515,48 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info[f"{prefix_lift}_self_acc_lift"] = float(m.group(1))
                     current_subject_info[f"{prefix_lift}_self_acc_lift_ci_low"] = float(m.group(2))
                     current_subject_info[f"{prefix_lift}_self_acc_lift_ci_high"] = float(m.group(3))
+            elif "Normed Balanced Accuracy:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["normed_ba"] = float(m.group(1))
+                    current_subject_info["normed_ba_ci_low"] = float(m.group(2))
+                    current_subject_info["normed_ba_ci_high"] = float(m.group(3))
+            elif "Calibration AUC:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["calibration_auc"] = float(m.group(1))
+                    current_subject_info["calibration_auc_ci_low"] = float(m.group(2))
+                    current_subject_info["calibration_auc_ci_high"] = float(m.group(3))
+            elif "AUC:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["auc"] = float(m.group(1))
+                    current_subject_info["auc_ci_low"] = float(m.group(2))
+                    current_subject_info["auc_ci_high"] = float(m.group(3))
+            elif "Controlled Capabilities Entropy:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["cntl_capent"] = float(m.group(1))
+                    current_subject_info["cntl_capent_ci_low"] = float(m.group(2))
+                    current_subject_info["cntl_capent_ci_high"] = float(m.group(3))
+            elif "Std OR:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["std_or"] = float(m.group(1))
+                    current_subject_info["std_or_ci_low"] = float(m.group(2))
+                    current_subject_info["std_or_ci_high"] = float(m.group(3))
+            elif "AUC w Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["auc_w_cntl"] = float(m.group(1))
+                    current_subject_info["auc_w_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["auc_w_cntl_ci_high"] = float(m.group(3))
+            elif "AUC Pct Head:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["auc_pct_head"] = float(m.group(1))
+                    current_subject_info["auc_pct_head_ci_low"] = float(m.group(2))
+                    current_subject_info["auc_pct_head_ci_high"] = float(m.group(3))
             elif "Model 4 s_i_capability:" in line:
                 # Parse: "Model 4 s_i_capability: -0.8796 [-1.451, -0.309]"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
@@ -501,6 +641,34 @@ def analyze_parsed_data(input_summary_file):
         self_acc_lift_val = data.get(f"{current_prefix_lift}_self_acc_lift", np.nan)
         self_acc_lift_ci_low = data.get(f"{current_prefix_lift}_self_acc_lift_ci_low", np.nan)
         self_acc_lift_ci_high = data.get(f"{current_prefix_lift}_self_acc_lift_ci_high", np.nan)
+
+        normed_ba_val = data.get("normed_ba", np.nan)
+        normed_ba_ci_low = data.get("normed_ba_ci_low", np.nan)
+        normed_ba_ci_high = data.get("normed_ba_ci_high", np.nan)
+
+        auc_val = data.get("auc", np.nan)
+        auc_ci_low = data.get("auc_ci_low", np.nan)
+        auc_ci_high = data.get("auc_ci_high", np.nan)
+
+        calibration_auc_val = data.get("calibration_auc", np.nan)
+        calibration_auc_ci_low = data.get("calibration_auc_ci_low", np.nan)
+        calibration_auc_ci_high = data.get("calibration_auc_ci_high", np.nan)
+
+        cntl_capent_val = data.get("cntl_capent", np.nan)
+        cntl_capent_ci_low = data.get("cntl_capent_ci_low", np.nan)
+        cntl_capent_ci_high = data.get("cntl_capent_ci_high", np.nan)
+        
+        std_or_val = data.get("std_or", np.nan)
+        std_or_ci_low = data.get("std_or_ci_low", np.nan)
+        std_or_ci_high = data.get("std_or_ci_high", np.nan)
+        
+        auc_w_cntl_val = data.get("auc_w_cntl", np.nan)
+        auc_w_cntl_ci_low = data.get("auc_w_cntl_ci_low", np.nan)
+        auc_w_cntl_ci_high = data.get("auc_w_cntl_ci_high", np.nan)
+        
+        auc_pct_head_val = data.get("auc_pct_head", np.nan)
+        auc_pct_head_ci_low = data.get("auc_pct_head_ci_low", np.nan)
+        auc_pct_head_ci_high = data.get("auc_pct_head_ci_high", np.nan)
         
         si_coef = data.get("si_coef", np.nan)
         si_ci_low = data.get("si_coef_ci_low", np.nan)
@@ -539,6 +707,27 @@ def analyze_parsed_data(input_summary_file):
             f"{current_prefix_lift.capitalize()}AccLift": self_acc_lift_val,
             f"{current_prefix_lift.capitalize()}AccLift_LB": self_acc_lift_ci_low,
             f"{current_prefix_lift.capitalize()}AccLift_UB": self_acc_lift_ci_high,
+            "NormedBA": normed_ba_val,
+            "NormedBA_LB": normed_ba_ci_low,
+            "NormedBA_UB": normed_ba_ci_high,
+            "AUC": auc_val,
+            "AUC_LB": auc_ci_low,
+            "AUC_UB": auc_ci_high,
+            "CalibrationAUC": calibration_auc_val,
+            "CalibrationAUC_LB": calibration_auc_ci_low,
+            "CalibrationAUC_UB": calibration_auc_ci_high,
+            "CntlCapEnt": cntl_capent_val,
+            "CntlCapEnt_LB": cntl_capent_ci_low,
+            "CntlCapEnt_UB": cntl_capent_ci_high,
+            "StdOR": std_or_val,
+            "StdOR_LB": std_or_ci_low,
+            "StdOR_UB": std_or_ci_high,
+            "AUC_w_Cntl": auc_w_cntl_val,
+            "AUC_w_Cntl_LB": auc_w_cntl_ci_low,
+            "AUC_w_Cntl_UB": auc_w_cntl_ci_high,
+            "AUC_Pct_Head": auc_pct_head_val,
+            "AUC_Pct_Head_LB": auc_pct_head_ci_low,
+            "AUC_Pct_Head_UB": auc_pct_head_ci_high,
             "CapCoef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
@@ -623,13 +812,15 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         print("No subjects to plot after filtering/ordering.")
         return
 
-    # Check if we have entropy coefficients
-    has_cap_entropy = not df_results["CapEnt"].isna().all()
-    has_norm_prob_entropy = not df_results["GameEnt"].isna().all()
-    has_entropy = has_cap_entropy or has_norm_prob_entropy
+    # Check if any data exists for the right-hand column of plots
+    has_auc_data = 'AUC' in df_results.columns and not df_results["AUC"].isna().all()
+    has_cal_auc_data = 'CalibrationAUC' in df_results.columns and not df_results["CalibrationAUC"].isna().all()
+    has_cntl_cap_ent_data = 'CntlCapEnt' in df_results.columns and not df_results["CntlCapEnt"].isna().all()
+    has_std_or_data = 'StdOR' in df_results.columns and not df_results["StdOR"].isna().all()
+    has_right_column = has_auc_data or has_cal_auc_data or has_cntl_cap_ent_data or has_std_or_data
     
     # Determine number of columns
-    ncols = 2 if has_entropy else 1
+    ncols = 2 if has_right_column else 1
     
     # Apply name breaking for x-axis labels
     formatted_subject_names = [break_subject_name(name, max_parts_per_line=3) for name in df_results["Subject"]]
@@ -644,7 +835,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
             pass
 
     # Create figure with appropriate number of subplots
-    if has_entropy:
+    if has_right_column:
         fig, axs = plt.subplots(3, 2, figsize=(max(20, num_subjects * 2.0 + 4), 20))
         axs = axs.reshape(3, 2)  # Ensure it's a 2D array
     else:
@@ -672,72 +863,118 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     axs[0, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
     axs[0, 0].tick_params(axis='y', labelsize=tick_fontsize)
 
-    # --- Plot 2: Reversed s_i_capability Coefficient ---
-    yerr_si_low = np.nan_to_num(df_results["CapCoef"] - df_results["CapCoef_LB"], nan=0.0)
-    yerr_si_high = np.nan_to_num(df_results["CapCoef_UB"] - df_results["CapCoef"], nan=0.0)
-    yerr_si_low[yerr_si_low < 0] = 0
-    yerr_si_high[yerr_si_high < 0] = 0
-    
-    axs[1, 0].bar(formatted_subject_names, df_results["CapCoef"],
-                   color='mediumseagreen',
-                   yerr=[yerr_si_low, yerr_si_high], ecolor='gray', capsize=5, width=0.6)
-    axs[1, 0].set_ylabel('Coefficient Value (Log-Odds Scale)', fontsize=label_fontsize)
-    axs[1, 0].set_title('Introspection Coefficient by LLM (95% CI)', fontsize=title_fontsize)
-    axs[1, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
-    axs[1, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
-    axs[1, 0].tick_params(axis='y', labelsize=tick_fontsize)
-
-    # --- Plot 3: Adjusted Self-Accuracy Lift ---
-    yerr_acc_lift_low = np.nan_to_num(df_results[f"{prefix_lift}AccLift"] - df_results[f"{prefix_lift}AccLift_LB"], nan=0.0)
-    yerr_acc_lift_high = np.nan_to_num(df_results[f"{prefix_lift}AccLift_UB"] - df_results[f"{prefix_lift}AccLift"], nan=0.0)
-    yerr_acc_lift_low[yerr_acc_lift_low < 0] = 0
-    yerr_acc_lift_high[yerr_acc_lift_high < 0] = 0
-    
-    axs[2, 0].bar(formatted_subject_names, df_results[f"{prefix_lift}AccLift"],
-                   color='lightcoral',
-                   yerr=[yerr_acc_lift_low, yerr_acc_lift_high], ecolor='gray', capsize=5, width=0.6)
-    axs[2, 0].set_ylabel('Accuracy Difference', fontsize=label_fontsize)
-    axs[2, 0].set_title(f'{prefix_lift_cln}Self-Accuracy Lift by LLM (95% CI)', fontsize=title_fontsize)
-    axs[2, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
-    axs[2, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
-    axs[2, 0].tick_params(axis='y', labelsize=tick_fontsize)
-
-    # If we have entropy coefficients, plot them in the second column
-    if has_entropy:
-        # Hide the first row, second column (no plot there)
-        axs[0, 1].axis('off')
+    # --- Plot 2: AUC With Controls ---
+    has_auc_w_cntl = 'AUC_w_Cntl' in df_results.columns and not df_results["AUC_w_Cntl"].isna().all()
+    if has_auc_w_cntl:
+        df_auc_w_cntl = df_results.dropna(subset=['AUC_w_Cntl'])
+        formatted_subject_names_auc_w_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_auc_w_cntl["Subject"]]
+        yerr_auc_w_cntl_low = np.nan_to_num(df_auc_w_cntl["AUC_w_Cntl"] - df_auc_w_cntl["AUC_w_Cntl_LB"], nan=0.0)
+        yerr_auc_w_cntl_high = np.nan_to_num(df_auc_w_cntl["AUC_w_Cntl_UB"] - df_auc_w_cntl["AUC_w_Cntl"], nan=0.0)
+        yerr_auc_w_cntl_low[yerr_auc_w_cntl_low < 0] = 0
+        yerr_auc_w_cntl_high[yerr_auc_w_cntl_high < 0] = 0
         
-        if has_cap_entropy:
-            # --- Plot 4: Capabilities Entropy Coefficient ---
-            yerr_cap_low = np.nan_to_num(df_results["CapEnt"] - df_results["CapEnt_LB"], nan=0.0)
-            yerr_cap_high = np.nan_to_num(df_results["CapEnt_UB"] - df_results["CapEnt"], nan=0.0)
-            yerr_cap_low[yerr_cap_low < 0] = 0
-            yerr_cap_high[yerr_cap_high < 0] = 0
+        axs[1, 0].bar(formatted_subject_names_auc_w_cntl, df_auc_w_cntl["AUC_w_Cntl"],
+                       color='mediumseagreen',
+                       yerr=[yerr_auc_w_cntl_low, yerr_auc_w_cntl_high], ecolor='gray', capsize=5, width=0.6)
+        axs[1, 0].set_ylabel('AUC', fontsize=label_fontsize)
+        axs[1, 0].set_title('AUC With Controls by LLM (95% CI)', fontsize=title_fontsize)
+        axs[1, 0].axhline(0.5, color='black', linestyle='--', linewidth=0.8)
+        axs[1, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+        axs[1, 0].tick_params(axis='y', labelsize=tick_fontsize)
+    else:
+        axs[1, 0].axis('off')
+
+    # --- Plot 3: Pct AUC Headroom Lift ---
+    has_auc_pct_head = 'AUC_Pct_Head' in df_results.columns and not df_results["AUC_Pct_Head"].isna().all()
+    if has_auc_pct_head:
+        df_auc_pct_head = df_results.dropna(subset=['AUC_Pct_Head'])
+        formatted_subject_names_auc_pct_head = [break_subject_name(name, max_parts_per_line=3) for name in df_auc_pct_head["Subject"]]
+        yerr_auc_pct_head_low = np.nan_to_num(df_auc_pct_head["AUC_Pct_Head"] - df_auc_pct_head["AUC_Pct_Head_LB"], nan=0.0)
+        yerr_auc_pct_head_high = np.nan_to_num(df_auc_pct_head["AUC_Pct_Head_UB"] - df_auc_pct_head["AUC_Pct_Head"], nan=0.0)
+        yerr_auc_pct_head_low[yerr_auc_pct_head_low < 0] = 0
+        yerr_auc_pct_head_high[yerr_auc_pct_head_high < 0] = 0
+        
+        axs[2, 0].bar(formatted_subject_names_auc_pct_head, df_auc_pct_head["AUC_Pct_Head"],
+                       color='lightcoral',
+                       yerr=[yerr_auc_pct_head_low, yerr_auc_pct_head_high], ecolor='gray', capsize=5, width=0.6)
+        axs[2, 0].set_ylabel('Pct AUC Headroom Lift', fontsize=label_fontsize)
+        axs[2, 0].set_title('Pct AUC Headroom Lift by LLM (95% CI)', fontsize=title_fontsize)
+        axs[2, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
+        axs[2, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+        axs[2, 0].tick_params(axis='y', labelsize=tick_fontsize)
+    else:
+        axs[2, 0].axis('off')
+
+    # If we have data for the right column, plot it
+    if has_right_column:
+        # --- Plot for AUC in the first row, second column ---
+        has_auc = not df_results["AUC"].isna().all()
+        if has_auc:
+            df_auc = df_results.dropna(subset=['AUC'])
+            formatted_subject_names_auc = [break_subject_name(name, max_parts_per_line=3) for name in df_auc["Subject"]]
+            yerr_auc_low = np.nan_to_num(df_auc["AUC"] - df_auc["AUC_LB"], nan=0.0)
+            yerr_auc_high = np.nan_to_num(df_auc["AUC_UB"] - df_auc["AUC"], nan=0.0)
+            yerr_auc_low[yerr_auc_low < 0] = 0
+            yerr_auc_high[yerr_auc_high < 0] = 0
             
-            axs[1, 1].bar(formatted_subject_names, df_results["CapEnt"],
+            axs[0, 1].bar(formatted_subject_names_auc, df_auc["AUC"],
+                           color='skyblue',
+                           yerr=[yerr_auc_low, yerr_auc_high], ecolor='gray', capsize=5, width=0.6)
+            axs[0, 1].set_ylabel('AUC', fontsize=label_fontsize)
+            axs[0, 1].set_title('AUC by LLM (95% CI)', fontsize=title_fontsize)
+            axs[0, 1].axhline(0.5, color='black', linestyle='--', linewidth=0.8) # AUC baseline is 0.5
+            axs[0, 1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+            axs[0, 1].tick_params(axis='y', labelsize=tick_fontsize)
+        else:
+            axs[0, 1].axis('off')
+        
+        if 'CalibrationAUC' in df_results.columns:
+            has_calibration_auc = not df_results["CalibrationAUC"].isna().all()
+        else:
+            has_calibration_auc = False
+
+        if has_calibration_auc:
+            # --- Plot 4: Calibration AUC ---
+            df_cal_auc = df_results.dropna(subset=['CalibrationAUC']).copy()
+            if subject_order:
+                df_cal_auc['Subject_Cat'] = pd.Categorical(df_cal_auc['Subject'], categories=subject_order, ordered=True)
+                df_cal_auc = df_cal_auc.sort_values('Subject_Cat')
+            formatted_subject_names_cal_auc = [break_subject_name(name, max_parts_per_line=3) for name in df_cal_auc["Subject"]]
+            yerr_cal_auc_low = np.nan_to_num(df_cal_auc["CalibrationAUC"] - df_cal_auc["CalibrationAUC_LB"], nan=0.0)
+            yerr_cal_auc_high = np.nan_to_num(df_cal_auc["CalibrationAUC_UB"] - df_cal_auc["CalibrationAUC"], nan=0.0)
+            yerr_cal_auc_low[yerr_cal_auc_low < 0] = 0
+            yerr_cal_auc_high[yerr_cal_auc_high < 0] = 0
+            
+            axs[1, 1].bar(formatted_subject_names_cal_auc, df_cal_auc["CalibrationAUC"],
                            color='cornflowerblue',
-                           yerr=[yerr_cap_low, yerr_cap_high], ecolor='gray', capsize=5, width=0.6)
-            axs[1, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
-            axs[1, 1].set_title('Capabilities Entropy Coefficient (Model 4.6)', fontsize=title_fontsize)
-            axs[1, 1].axhline(0, color='black', linestyle='--', linewidth=0.8)
+                           yerr=[yerr_cal_auc_low, yerr_cal_auc_high], ecolor='gray', capsize=5, width=0.6)
+            axs[1, 1].set_ylabel('Calibration AUC', fontsize=label_fontsize)
+            axs[1, 1].set_title('Calibration AUC by LLM (95% CI)', fontsize=title_fontsize)
+            axs[1, 1].axhline(0.5, color='black', linestyle='--', linewidth=0.8)
             axs[1, 1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[1, 1].tick_params(axis='y', labelsize=tick_fontsize)
         else:
             axs[1, 1].axis('off')
         
-        if has_norm_prob_entropy:
-            # --- Plot 5: Normalized Probability Entropy Coefficient ---
-            yerr_norm_low = np.nan_to_num(df_results["GameEnt"] - df_results["GameEnt_LB"], nan=0.0)
-            yerr_norm_high = np.nan_to_num(df_results["GameEnt_UB"] - df_results["GameEnt"], nan=0.0)
-            yerr_norm_low[yerr_norm_low < 0] = 0
-            yerr_norm_high[yerr_norm_high < 0] = 0
+        has_std_or = 'StdOR' in df_results.columns and not df_results["StdOR"].isna().all()
+        if has_std_or:
+            # --- Plot 5: Std OR ---
+            df_std_or = df_results.dropna(subset=['StdOR']).copy()
+            if subject_order:
+                df_std_or['Subject_Cat'] = pd.Categorical(df_std_or['Subject'], categories=subject_order, ordered=True)
+                df_std_or = df_std_or.sort_values('Subject_Cat')
+            formatted_subject_names_std_or = [break_subject_name(name, max_parts_per_line=3) for name in df_std_or["Subject"]]
+            yerr_std_or_low = np.nan_to_num(df_std_or["StdOR"] - df_std_or["StdOR_LB"], nan=0.0)
+            yerr_std_or_high = np.nan_to_num(df_std_or["StdOR_UB"] - df_std_or["StdOR"], nan=0.0)
+            yerr_std_or_low[yerr_std_or_low < 0] = 0
+            yerr_std_or_high[yerr_std_or_high < 0] = 0
             
-            axs[2, 1].bar(formatted_subject_names, df_results["GameEnt"],
+            axs[2, 1].bar(formatted_subject_names_std_or, df_std_or["StdOR"],
                            color='darkorange',
-                           yerr=[yerr_norm_low, yerr_norm_high], ecolor='gray', capsize=5, width=0.6)
-            axs[2, 1].set_ylabel('Coefficient Value', fontsize=label_fontsize)
-            axs[2, 1].set_title('Normalized Probability Entropy Coefficient (Model 4.8)', fontsize=title_fontsize)
-            axs[2, 1].axhline(0, color='black', linestyle='--', linewidth=0.8)
+                           yerr=[yerr_std_or_low, yerr_std_or_high], ecolor='gray', capsize=5, width=0.6)
+            axs[2, 1].set_ylabel('Standardized Odds Ratio', fontsize=label_fontsize)
+            axs[2, 1].set_title('Standardized Odds Ratio by LLM (95% CI)', fontsize=title_fontsize)
+            axs[2, 1].axhline(1, color='black', linestyle='--', linewidth=0.8)
             axs[2, 1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[2, 1].tick_params(axis='y', labelsize=tick_fontsize)
         else:
@@ -751,15 +988,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "SimpleMC" #"SimpleQA" #"GPSA"#"GPQA"#
+    dataset = "GPSA"#"GPQA"#"SimpleQA" #"SimpleMC" #
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", "gemini-2.5-flash", "gemini-2.5-flash-lite", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
-    #model_list = ['claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'grok-3-latest', 'gemini-2.0-flash-001', 'deepseek-chat', 'claude-3-5-sonnet-20241022', 'gpt-4o-2024-08-06', 'gemini-1.5-pro', 'claude-3-haiku-20240307', 'claude-3-sonnet-20240229']
-    #model_list = ['grok-3-latest', 'claude-sonnet-4-20250514', 'gemini-2.5-flash-preview-04-17', 'gpt-4.1-2025-04-14', 'claude-3-5-sonnet-20241022', 'deepseek-chat', 'gpt-4o-2024-08-06', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
+    model_list = ["openai-gpt-5-chat", 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gpt-4o-mini', "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', "gemini-2.5-flash", 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gemini-1.5-pro', 'grok-3-latest', 'deepseek-chat']
+    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash", 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"
 
@@ -780,11 +1016,24 @@ if __name__ == "__main__":
         parse_analysis_log(log_content_from_file, output_filename, target_params, model_list, int_score_type=introspection_score_type, lift_score_type=lift_score_type)
 
         df_results = analyze_parsed_data(output_filename)
-        df_display = (df_results.set_index("Subject").reindex(model_list).reset_index())
+        
+        # Sort by Phase 1 Accuracy to determine plot order
+        if False:#'Phase1_Accuracy' in df_results.columns and not df_results['Phase1_Accuracy'].isna().all():
+            df_results_for_sorting = df_results.dropna(subset=['Phase1_Accuracy'])
+            df_results_for_sorting = df_results_for_sorting.sort_values(by='Phase1_Accuracy', ascending=False)
+            plot_order_model_list = df_results_for_sorting['Subject'].tolist()
+            
+            # Include models that might not have accuracy data but are in the original list, at the end
+            remaining_models = [m for m in model_list if m not in plot_order_model_list]
+            plot_order_model_list.extend(remaining_models)
+        else:
+            plot_order_model_list = model_list
+
+        df_display = (df_results.set_index("Subject").reindex(plot_order_model_list).reset_index())
         print(df_display.to_string(index=False, formatters={"LR_pvalue": lambda p: ("" if pd.isna(p) else f"{p:.1e}" if p < 1e-4 else f"{p:.4f}")}))
      
         if not df_results.empty:
-            plot_results(df_results, subject_order=model_list, dataset_name=f"{dataset}{suffix}", int_score_type=introspection_score_type, lift_score_type=lift_score_type)
+            plot_results(df_results, subject_order=plot_order_model_list, dataset_name=f"{dataset}{suffix}", int_score_type=introspection_score_type, lift_score_type=lift_score_type)
         else:
             print("No results to plot.")
 
