@@ -2307,3 +2307,450 @@ def fraction_headroom_auc(D, U, X=None, n_boot=2000, seed=0, C=1.0):
         'auc_full': float(auc_full),
         'auc_full_ci': ci(auc_full_s),
     }
+
+from statsmodels.api import Logit, add_constant
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from statsmodels.api import Logit, add_constant
+
+def logit_on_decision(pass_decision, iv_of_interest=None, control_vars=None):
+    """
+    Analyze a binary decision via logistic regression with adaptable predictors.
+
+    This version correctly differentiates between continuous variables (which are
+    standardized) and binary 0/1 variables (which are left as-is).
+
+    Args:
+        pass_decision (pd.Series): The dependent variable with 1/0 values.
+        iv_of_interest (pd.Series, optional): The primary independent variable.
+        control_vars (pd.DataFrame or list, optional): Control variables.
+
+    Returns:
+        statsmodels.results.api.RegressionResultsWrapper: The fitted regression results.
+    """
+    if iv_of_interest is None and (control_vars is None or len(control_vars) == 0):
+        raise ValueError("At least one predictor (iv_of_interest or control_vars) must be provided.")
+
+    if isinstance(control_vars, list): control_vars = pd.concat(control_vars, axis=1) if control_vars else None
+
+    # --- Combine all data and handle missing values ---
+    data_to_combine = [pass_decision.rename('pass_decision')]
+    if iv_of_interest is not None:
+        data_to_combine.append(iv_of_interest.rename(iv_of_interest.name or 'iv_of_interest'))
+    if control_vars is not None and not control_vars.empty:
+        data_to_combine.append(control_vars)
+    
+    model_data = pd.concat(data_to_combine, axis=1).dropna()
+
+    if model_data.empty:
+        raise ValueError("No complete cases remain after handling missing values.")
+
+    y = model_data['pass_decision']
+    X_raw = model_data.drop(columns=['pass_decision'])
+
+    # --- Differentiate between continuous, binary, and categorical predictors ---
+    continuous_cols = []
+    binary_cols = []
+    
+    # First, separate numeric from non-numeric
+    numeric_cols = X_raw.select_dtypes(include=np.number).columns
+    categorical_cols = list(X_raw.select_dtypes(include=['object', 'category', 'string']).columns)
+
+    # From the numeric columns, identify which are binary vs. continuous
+    for col in numeric_cols:
+        # If 2 or fewer unique values, treat as binary/categorical, not for scaling
+        if X_raw[col].nunique() <= 2:
+            binary_cols.append(col)
+        else:
+            continuous_cols.append(col)
+
+    # --- Process each predictor type correctly ---
+    # 1. Standardize ONLY the continuous variables
+    if continuous_cols:
+        scaler = StandardScaler()
+        X_continuous = pd.DataFrame(scaler.fit_transform(X_raw[continuous_cols]),
+                                    index=X_raw.index, columns=continuous_cols)
+    else:
+        X_continuous = pd.DataFrame(index=X_raw.index)
+
+    # 2. Dummy-encode the true categorical variables
+    if categorical_cols:
+        X_categorical = pd.get_dummies(X_raw[categorical_cols], drop_first=True, dtype=float)
+    else:
+        X_categorical = pd.DataFrame(index=X_raw.index)
+
+    # 3. Keep the binary variables as they are (no transformation)
+    X_binary = X_raw[binary_cols]
+
+    # Recombine into the final predictor matrix
+    X = pd.concat([X_continuous, X_binary, X_categorical], axis=1)
+    X = add_constant(X, has_constant='add')
+
+    # --- Fit Model ---
+    model = Logit(y, X)
+    results = model.fit(disp=0)
+    
+    return results
+
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from scipy import stats
+
+def partial_correlation_on_decision(dv_series, iv_series, control_series_list):
+    """
+    Compute partial correlation between iv and dv, controlling for surface features.
+    
+    Args:
+        iv_series: pd.Series of independent variable (e.g., baseline confidence)
+        dv_series: pd.Series of dependent variable (e.g., pass/answer decision)
+        control_series_list: list of pd.Series with control variables
+    
+    Returns:
+        dict with 'correlation', 'p_value', 'n_samples', 'ci_lower', 'ci_upper'
+    """
+    # Combine all series into a dataframe, aligning indices
+    all_data = pd.DataFrame({
+        'iv': iv_series,
+        'dv': dv_series
+    })
+    
+    # Add control variables
+    for i, control in enumerate(control_series_list):
+        col_name = control.name if control.name else f'control_{i}'
+        all_data[col_name] = control
+    
+    # Drop rows with any missing values
+    all_data = all_data.dropna()
+    n_samples = len(all_data)
+    
+    if n_samples < 3:
+        raise ValueError(f"Not enough samples after removing NaNs: {n_samples}")
+    
+    # Prepare control matrix
+    control_cols = [col for col in all_data.columns if col not in ['iv', 'dv']]
+    X_controls_list = []
+    
+    for col in control_cols:
+        if all_data[col].dtype in ['object', 'category']:
+            # Dummy encode categorical
+            dummies = pd.get_dummies(all_data[col], prefix=col, drop_first=True).astype(float)
+            X_controls_list.append(dummies)
+        else:
+            # Standardize continuous
+            scaler = StandardScaler()
+            standardized = pd.DataFrame(
+                scaler.fit_transform(all_data[[col]]),
+                columns=[col],
+                index=all_data.index
+            )
+            X_controls_list.append(standardized)
+    
+    # Combine all controls
+    if X_controls_list:
+        X_controls = pd.concat(X_controls_list, axis=1)
+    else:
+        X_controls = pd.DataFrame(index=all_data.index)
+    
+    # Add intercept
+    X_controls.insert(0, 'const', 1.0)
+    
+    # Convert to float arrays
+    X = X_controls.values.astype(float)
+    y_iv = all_data['iv'].values.astype(float)
+    y_dv = all_data['dv'].values.astype(float)
+    
+    # Regress iv and dv on controls to get residuals
+    from numpy.linalg import lstsq
+    
+    # IV residuals
+    coef_iv = lstsq(X, y_iv, rcond=None)[0]
+    iv_residuals = y_iv - X @ coef_iv
+    
+    # DV residuals  
+    coef_dv = lstsq(X, y_dv, rcond=None)[0]
+    dv_residuals = y_dv - X @ coef_dv
+    
+    # Compute correlation between residuals
+    corr, p_value = stats.pearsonr(iv_residuals, dv_residuals)
+    
+    # Compute 95% CI using Fisher z-transformation
+    z = np.arctanh(corr)
+    se = 1 / np.sqrt(n_samples - len(X_controls.columns) - 2)
+    z_ci = [z - 1.96*se, z + 1.96*se]
+    ci = np.tanh(z_ci)
+    
+    return {
+        'correlation': corr,
+        'p_value': p_value,
+        'n_samples': n_samples,
+        'ci_lower': ci[0],
+        'ci_upper': ci[1]
+    }
+
+
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from statsmodels.api import OLS
+
+def regression_std(dv_series, iv_series, control_series_list):
+    """
+    Regress dv on iv and/or controls.
+    Returns:
+        dict with 'coefficient', 'p_value', 'ci_lower', 'ci_upper', 'r_squared', 'n_samples'
+    """
+    if iv_series is None and (control_series_list is None or len(control_series_list) == 0):
+        raise ValueError("Must provide either iv_series or control variables (or both)")
+    
+    # Get name for iv if provided
+    iv_name = iv_series.name if iv_series is not None and iv_series.name else 'iv'
+    dv_name = dv_series.name if dv_series.name else 'dv'
+    
+    # Start building dataframe
+    all_data = pd.DataFrame({dv_name: dv_series})
+    
+    # Add IV if provided
+    if iv_series is not None:
+        all_data[iv_name] = iv_series
+    
+    # Add control variables if provided
+    if control_series_list is not None:
+        for i, control in enumerate(control_series_list):
+            col_name = control.name if control.name else f'control_{i}'
+            all_data[col_name] = control
+    
+    # Drop rows with any missing values
+    all_data = all_data.dropna()
+    n_samples = len(all_data)
+    
+    if n_samples < 3:
+        raise ValueError(f"Not enough samples after removing NaNs: {n_samples}")
+    
+    # Prepare predictor matrix
+    X_list = []
+    
+    # Add IV if present (not standardized to keep interpretable units)
+    if iv_series is not None:
+        X_list.append(all_data[[iv_name]])
+    
+    # Add controls if present
+    if control_series_list is not None and len(control_series_list) > 0:
+        control_cols = [col for col in all_data.columns if col not in [iv_name, dv_name]]
+        
+        for col in control_cols:
+            if all_data[col].dtype in ['object', 'category']:
+                # Dummy encode categorical
+                dummies = pd.get_dummies(all_data[col], prefix=col, drop_first=True).astype(float)
+                X_list.append(dummies)
+            else:
+                # Standardize continuous controls
+                scaler = StandardScaler()
+                standardized = pd.DataFrame(
+                    scaler.fit_transform(all_data[[col]]),
+                    columns=[col],
+                    index=all_data.index
+                )
+                X_list.append(standardized)
+    
+    # Combine all predictors
+    X = pd.concat(X_list, axis=1) if X_list else pd.DataFrame(index=all_data.index)
+    
+    # Add intercept
+    X.insert(0, 'const', 1.0)
+    
+    # Run regression
+    model = OLS(all_data[dv_name].astype(float), X.astype(float))
+    results = model.fit()
+    
+    # Extract results for IV if present
+    if iv_series is not None:
+        iv_coef = results.params[iv_name]
+        iv_pval = results.pvalues[iv_name]
+        iv_ci = results.conf_int().loc[iv_name]
+        
+        return {
+            'coefficient': iv_coef,
+            'p_value': iv_pval,
+            'ci_lower': iv_ci[0],
+            'ci_upper': iv_ci[1],
+            'r_squared': results.rsquared,
+            'n_samples': n_samples,
+            'full_results': results
+        }
+    else:
+        # No IV, just return model fit stats
+        return {
+            'coefficient': None,
+            'p_value': None,
+            'ci_lower': None,
+            'ci_upper': None,
+            'r_squared': results.rsquared,
+            'n_samples': n_samples,
+            'full_results': results
+        }
+    
+import numpy as np
+import pandas as pd
+
+def brier_ece(correctness_series, probability_series, n_bins=10, n_bootstrap=1000):
+    """
+    Compute Murphy decomposition of Brier score into reliability and resolution.
+    
+    Args:
+        correctness_series: pd.Series with 1=correct, 0=incorrect
+        probability_series: pd.Series with probability of chosen answer
+        n_bins: number of bins for decomposition
+        n_bootstrap: number of bootstrap samples for CIs
+    
+    Returns:
+        dict with Brier components and confidence intervals
+    """
+    # Align and drop NaNs
+    data = pd.DataFrame({
+        'correct': correctness_series,
+        'prob': probability_series
+    }).dropna()
+    
+    n_samples = len(data)
+    base_rate = data['correct'].mean()
+    
+    def compute_decomposition(df):
+        """Helper function to compute decomposition for a dataset"""
+        # Bin predictions
+        bin_boundaries = np.linspace(0, 1, n_bins + 1)
+        
+        reliability = 0
+        resolution = 0
+        
+        for i in range(n_bins):
+            bin_mask = (df['prob'] >= bin_boundaries[i]) & (df['prob'] < bin_boundaries[i+1])
+            n_bin = bin_mask.sum()
+            
+            if n_bin > 0:
+                bin_prob = df.loc[bin_mask, 'prob'].mean()  # average predicted prob in bin
+                bin_freq = df.loc[bin_mask, 'correct'].mean()  # actual frequency in bin
+                bin_weight = n_bin / len(df)
+                
+                # Reliability: weighted squared diff between predicted and actual
+                reliability += bin_weight * (bin_prob - bin_freq) ** 2
+                
+                # Resolution: weighted squared diff between bin frequency and base rate
+                resolution += bin_weight * (bin_freq - base_rate) ** 2
+        
+        # Uncertainty is just base rate variance
+        uncertainty = base_rate * (1 - base_rate)
+        
+        # Brier score
+        brier = ((df['prob'] - df['correct']) ** 2).mean()
+        
+        return {
+            'brier': brier,
+            'reliability': reliability,
+            'resolution': resolution,
+            'uncertainty': uncertainty
+        }
+    
+    # Compute for actual data
+    results = compute_decomposition(data)
+    
+    # Bootstrap for confidence intervals
+    bootstrap_results = {
+        'brier': [],
+        'reliability': [],
+        'resolution': []
+    }
+    
+    for _ in range(n_bootstrap):
+        indices = np.random.choice(n_samples, n_samples, replace=True)
+        boot_data = data.iloc[indices].copy()
+        boot_decomp = compute_decomposition(boot_data)
+        
+        bootstrap_results['brier'].append(boot_decomp['brier'])
+        bootstrap_results['reliability'].append(boot_decomp['reliability'])
+        bootstrap_results['resolution'].append(boot_decomp['resolution'])
+    
+    # Compute confidence intervals
+    results['brier_ci'] = np.percentile(bootstrap_results['brier'], [2.5, 97.5])
+    results['reliability_ci'] = np.percentile(bootstrap_results['reliability'], [2.5, 97.5])
+    results['resolution_ci'] = np.percentile(bootstrap_results['resolution'], [2.5, 97.5])
+
+    # 2. Expected Calibration Error (ECE)
+    # Bin predictions
+    bin_boundaries = np.linspace(0, 1, n_bins + 1)
+    bin_lowers = bin_boundaries[:-1]
+    bin_uppers = bin_boundaries[1:]
+    
+    ece = 0
+    bin_accuracies = []
+    bin_confidences = []
+    bin_counts = []
+    
+    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+        in_bin = (data['prob'] > bin_lower) & (data['prob'] <= bin_upper)
+        prop_in_bin = in_bin.mean()
+        
+        if prop_in_bin > 0:
+            bin_acc = data.loc[in_bin, 'correct'].mean()
+            bin_conf = data.loc[in_bin, 'prob'].mean()
+            bin_count = in_bin.sum()
+            
+            bin_accuracies.append(bin_acc)
+            bin_confidences.append(bin_conf)
+            bin_counts.append(bin_count)
+            
+            ece += prop_in_bin * abs(bin_acc - bin_conf)
+    
+    # ECE confidence interval using bootstrap
+    n_bootstrap = 1000
+    ece_bootstrap = []
+    
+    for _ in range(n_bootstrap):
+        indices = np.random.choice(n_samples, n_samples, replace=True)
+        boot_data = data.iloc[indices]
+        
+        boot_ece = 0
+        for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+            in_bin = (boot_data['prob'] > bin_lower) & (boot_data['prob'] <= bin_upper)
+            prop_in_bin = in_bin.mean()
+            
+            if prop_in_bin > 0:
+                bin_acc = boot_data.loc[in_bin, 'correct'].mean()
+                bin_conf = boot_data.loc[in_bin, 'prob'].mean()
+                boot_ece += prop_in_bin * abs(bin_acc - bin_conf)
+        
+        ece_bootstrap.append(boot_ece)
+    
+    ece_ci = np.percentile(ece_bootstrap, [2.5, 97.5])
+    results['ece'] = ece
+    results['ece_ci'] = ece_ci
+
+    return results
+
+def standardize_coefficient(results, iv_series, dv_series):
+    """
+    Convert regression coefficient to standardized units
+    
+    Args:
+        results: dict returned by regression_analysis
+        iv_series: original independent variable series
+        dv_series: original dependent variable series
+    
+    Returns:
+        dict with standardized coefficient and CI
+    """
+    # Calculate standard deviations (after dropping NaNs)
+    data = pd.DataFrame({'iv': iv_series, 'dv': dv_series}).dropna()
+    sd_iv = data['iv'].std()
+    sd_dv = data['dv'].std()
+    
+    # Standardize coefficient and CIs
+    scaling_factor = sd_iv / sd_dv
+    
+    return {
+        'std_coefficient': results['coefficient'] * scaling_factor,
+        'std_ci_lower': results['ci_lower'] * scaling_factor,
+        'std_ci_upper': results['ci_upper'] * scaling_factor
+    }
+

@@ -14,17 +14,18 @@ from pathlib import Path
 res_dicts = defaultdict(dict)
 
 FIRST_PASS = True
-def log_output(message_string, print_to_console=False):
+def log_output(message_string, print_to_console=False, suppress=True):
     global FIRST_PASS
     if FIRST_PASS:
         openstr = "w"
         FIRST_PASS = False
     else:
         openstr = "a"
-    with open(LOG_FILENAME, openstr, encoding='utf-8') as f:
-        f.write(str(message_string) + "\n")
     if print_to_console:
         print(message_string)
+    if suppress: return
+    with open(LOG_FILENAME, openstr, encoding='utf-8') as f:
+        f.write(str(message_string) + "\n")
 
 def get_average_word_length(question_text):
     """Calculates the average word length in the question."""
@@ -206,12 +207,12 @@ def prepare_regression_data_for_model(game_file_paths_list,
             prob_dict_trial = trial.get("probs")
             max_norm_prob_trial = None
             norm_prob_entropy_trial = None
+            t_prob = None
 
             if isinstance(prob_dict_trial, dict):
-                if "delegate" in game_file_paths_list[0]:
-                    non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "T" and isinstance(v, (int, float))]
-                else:
-                    non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != "P" and isinstance(v, (int, float))]
+                loi = "T" if "delegate" in game_file_paths_list[0] else "P"
+                non_t_probs_values = [float(v) for k, v in prob_dict_trial.items() if k != loi and isinstance(v, (int, float))]
+                t_prob = prob_dict_trial[loi] if loi in prob_dict_trial and isinstance(prob_dict_trial[loi], (int, float)) else 0.0
                 
                 if non_t_probs_values:
                     sum_non_t_probs = sum(non_t_probs_values)
@@ -267,6 +268,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
                     trial_data_dict['max_normalized_prob'] = max_norm_prob_trial
                 if norm_prob_entropy_trial is not None:
                     trial_data_dict['normalized_prob_entropy'] = norm_prob_entropy_trial
+                if t_prob is not None:
+                    trial_data_dict['t_prob'] = t_prob
 
                 if not np.isnan(trial_data_dict['judge_delegate']) and not np.isnan(trial_data_dict['teammate_judge_delegate']):
                     trial_data_dict['judge_delegate_combined'] = 0 if trial_data_dict['judge_delegate'] == 0 and trial_data_dict['teammate_judge_delegate'] == 1 else 1
@@ -356,7 +359,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPSA"# 
+    dataset = "GPSA"# "GPQA"#
     game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -517,7 +520,7 @@ if __name__ == "__main__":
 
             if not ((game_type == "dg" and "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered" in log_context_str) or (game_type == "aop" and "NoMsgHist, NoQCtr, NoPCtr, NoSCtr" in log_context_str)): continue
 
-            log_output(f"\n--- Analyzing {log_context_str} ---", print_to_console=True)
+            log_output(f"\n--- Analyzing {log_context_str} ---", print_to_console=True, suppress=False)
             log_output(f"              Game files for analysis: {current_game_files_for_analysis}\n")
             
             if current_game_files_for_analysis:
@@ -662,7 +665,7 @@ if __name__ == "__main__":
                         raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean(), baseline_correct=df_model['s_i_capability'], delegated=df_model['delegate_choice'], baseline_probs = df_model['p_i_capability'] if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any() else None)
                     except Exception as e:
                         log_output(f"Error calculating raw_stats: {e}")
-                    log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}")
+                    log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}", suppress=False)
                     res_dicts[model_name_part]['introspection_score'] = {'mcc': raw_stats['mcc'], 'p': raw_stats['p_mcc']}
                     log_output(f"FP = {FP}")
                     log_output(f"FN = {FN}")
@@ -688,20 +691,20 @@ if __name__ == "__main__":
                     prob_delegating_Si1 = df_model.loc[df_model['s_i_capability'] == 1, 'delegate_choice'].mean()
                     log_output(f"Probability of delegating when s_i_capability is 1: {prob_delegating_Si1:.4f}")
 #                    log_output(f"Phase 1 accuracy: {subject_acc_phase1:.4f} (n=400)")
-                    log_output(f"Phase 1 accuracy: {cap_corr.mean():.4f} (n={len(cap_corr)})")
+                    log_output(f"Phase 1 accuracy: {cap_corr.mean():.4f} (n={len(cap_corr)})", suppress=False)
                     log_output(f"Phase 2 self-accuracy: {phase2_corcnt/phase2_totalcnt:.4f} (n={phase2_totalcnt})")
                 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(cap_corr, team_corr, kept_mask)
-                    log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}")
+                    log_output(f"Self-acc lift = {raw_stats['lift']:.3f} [{raw_stats['lift_ci'][0]:.3f}, {raw_stats['lift_ci'][1]:.3f}], p={raw_stats['p_lift']:.4g}", suppress=False)
                     res_dicts[model_name_part]['self_acc_lift'] = {'lift': raw_stats['lift'], 'p': raw_stats['p_lift']}
-                    log_output(f"Normed Self-acc lift = {raw_stats['normed_lift']:.3f} [{raw_stats['normed_lift_ci'][0]:.3f}, {raw_stats['normed_lift_ci'][1]:.3f}]")
+                    log_output(f"Normed Self-acc lift = {raw_stats['normed_lift']:.3f} [{raw_stats['normed_lift_ci'][0]:.3f}, {raw_stats['normed_lift_ci'][1]:.3f}]", suppress=False)
                     res_dicts[model_name_part]['normed_self_acc_lift'] = {'lift': raw_stats['normed_lift'], 'ci_lo': raw_stats['normed_lift_ci'][0], 'ci_hi': raw_stats['normed_lift_ci'][1]}
-                    log_output(f"Balanced Accuracy Effect Size = {raw_stats['single_point_auc']:.3f} [{raw_stats['single_point_auc_ci'][0]:.3f}, {raw_stats['single_point_auc_ci'][1]:.3f}]")
+                    log_output(f"Balanced Accuracy Effect Size = {raw_stats['single_point_auc']:.3f} [{raw_stats['single_point_auc_ci'][0]:.3f}, {raw_stats['single_point_auc_ci'][1]:.3f}]", suppress=False)
                     res_dicts[model_name_part]['single_point_auc'] = {'auc': raw_stats['single_point_auc'], 'ci_lo': raw_stats['single_point_auc_ci'][0], 'ci_hi': raw_stats['single_point_auc_ci'][1]}
                     if raw_stats['full_auc'] is not None:
-                        log_output(f"Full AUC = {raw_stats['full_auc']:.3f} [{raw_stats['full_auc_ci'][0]:.3f}, {raw_stats['full_auc_ci'][1]:.3f}]")
+                        log_output(f"Full AUC = {raw_stats['full_auc']:.3f} [{raw_stats['full_auc_ci'][0]:.3f}, {raw_stats['full_auc_ci'][1]:.3f}]", suppress=False)
                         res_dicts[model_name_part]['full_auc'] = {'auc': raw_stats['full_auc'], 'ci_lo': raw_stats['full_auc_ci'][0], 'ci_hi': raw_stats['full_auc_ci'][1]}
-                        log_output(f"Calibration AUC = {raw_stats['calibration_auc']:.3f} [{raw_stats['calibration_auc_ci'][0]:.3f}, {raw_stats['calibration_auc_ci'][1]:.3f}]")
+                        log_output(f"Calibration AUC = {raw_stats['calibration_auc']:.3f} [{raw_stats['calibration_auc_ci'][0]:.3f}, {raw_stats['calibration_auc_ci'][1]:.3f}]", suppress=False)
                         res_dicts[model_name_part]['calibration_auc'] = {'auc': raw_stats['calibration_auc'], 'ci_lo': raw_stats['calibration_auc_ci'][0], 'ci_hi': raw_stats['calibration_auc_ci'][1]}
 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
@@ -1051,6 +1054,53 @@ if __name__ == "__main__":
                         else:                           
                             log_output(f"                    Could not fit Model 4: {e_full}")
                         """
+
+                    try:
+                        continuous_controls = [df_model[t] for t in final_model_terms if t not in ['s_i_capability', 's_i_capability:teammate_skill_ratio', 'teammate_skill_ratio'] and not (isinstance(t, str) and t.startswith('C('))]
+                        categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms if (isinstance(t, str) and t.startswith('C('))]
+                        control_vars = continuous_controls + categorical_controls 
+                        res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['s_i_capability'], control_vars=control_vars)
+                        #log_output(res.summary(), suppress=False)
+                        ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
+                        log_output(f"Baseline correctness coefficient with surface controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability'] :.4f}, stderr={res.bse['s_i_capability']:.4f}", suppress=False)
+                        std_results = standardize_coefficient({'coefficient': res.params['s_i_capability'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['s_i_capability'], 1-df_model['delegate_choice'])
+                        log_output(f"Baseline correctness coefficient with surface controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+                        res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['s_i_capability'], control_vars=None)
+                        #log_output(res.summary(), suppress=False)
+                        ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
+                        log_output(f"Baseline correctness coefficient with no controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability']:.4f}, stderr={res.bse['s_i_capability']:.4f}",suppress=False)
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Logit on decision with correctness and surface controls: {e_full}", suppress=False)
+
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                        try:
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['s_i_capability'], control_vars=[df_model['o_prob']])
+                            ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
+                            log_output(f"Baseline correctness coefficient with Stated Other control: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability']:.4f}, stderr={res.bse['s_i_capability']:.4f}",suppress=False)
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['s_i_capability'], control_vars=control_vars + [df_model['o_prob']])
+                            ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
+                            log_output(f"Baseline correctness coefficient with all controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability']:.4f}, stderr={res.bse['s_i_capability']:.4f}",suppress=False)
+                            log_output(res.summary())
+                            std_results = standardize_coefficient({'coefficient': res.params['s_i_capability'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['s_i_capability'], 1-df_model['delegate_choice'])
+                            log_output(f"Baseline correctness coefficient with all controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
+                            ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                            log_output(f"Capent coefficient with all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                            log_output(res.summary())
+
+                        except Exception as e_full:
+                            log_output(f"                    Could not fit Logit on decision with correctness and Stated Other control: {e_full}", suppress=False)
+
+                    log_output(" Logit on decision with controls")
+                    try:
+                        continuous_controls = [df_model[t] for t in final_model_terms if t not in ['s_i_capability', 's_i_capability:teammate_skill_ratio', 'teammate_skill_ratio'] and not (isinstance(t, str) and t.startswith('C('))]
+                        categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms if (isinstance(t, str) and t.startswith('C('))]
+                        control_vars = continuous_controls + categorical_controls 
+                        res = logit_on_decision(pass_decision=df_model['delegate_choice'], iv_of_interest=None, control_vars=control_vars)
+                        log_output(res.summary())
+                    except Exception as e_full:
+                        log_output(f"                    Could not fit Logit on decision with controls: {e_full}")
+
                     # Model 5 (No interaction)
                     final_model_terms_m5 = [t for t in final_model_terms if not (isinstance(t, str) and f"s_i_capability:teammate_skill_ratio" == t)]
                     model_def_str_5 = 'delegate_choice ~ ' + ' + '.join(final_model_terms_m5)
@@ -1164,9 +1214,9 @@ if __name__ == "__main__":
                                 except Exception as e_full:
                                     log_output(f"                    Could not compute introspection metrics: {e_full}")
                                     rd = {}
-                                log_output(f"Standardized Odds Ratio = {imd['or_per_sd']} [{imd['or_ci'][0]:.3f}, {imd['or_ci'][1]:.3f}]")
-                                log_output(f"Pct AUC Headroom Lift = {rd['fraction_headroom']:.3f} [{rd['fraction_headroom_ci'][0]:.3f}, {rd['fraction_headroom_ci'][1]:.3f}]")
-                                log_output(f"AUC With Controls = {rd['auc_full']:.3f} [{rd['auc_full_ci'][0]:.3f}, {rd['auc_full_ci'][1]:.3f}]")
+                                log_output(f"Standardized Odds Ratio = {imd['or_per_sd']} [{imd['or_ci'][0]:.3f}, {imd['or_ci'][1]:.3f}]", suppress=False)
+                                log_output(f"Pct AUC Headroom Lift = {rd['fraction_headroom']:.3f} [{rd['fraction_headroom_ci'][0]:.3f}, {rd['fraction_headroom_ci'][1]:.3f}]", suppress=False)
+                                log_output(f"AUC With Controls = {rd['auc_full']:.3f} [{rd['auc_full_ci'][0]:.3f}, {rd['auc_full_ci'][1]:.3f}]", suppress=False)
 
                                 log_output(f"\n====================Simplified Complete CapEnt Analysis====================")
                                 continuous_controls = [df_model[t] for t in final_model_terms_m45 if t not in ['sp_prob', 'o_prob', 'capabilities_entropy'] and not (isinstance(t, str) and t.startswith('C('))]
@@ -1177,6 +1227,39 @@ if __name__ == "__main__":
                                 res_dicts[model_name_part]['capent'] = res_dict
 
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
+                    if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
+                        log_output(f"\n====================Partial correlation on decision: Capent====================")
+                        try:
+                            res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
+                            log_output(f"Partial correlation on decision with Capent, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                                res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']])
+                                log_output(f"Partial correlation on decision with Capent, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                                res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                                log_output(f"Partial correlation on decision with Capent, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
+                        except Exception as e_full:
+                            log_output(f"                    Could not compute partial correlation on capent: {e_full}", suppress=False)
+                        log_output(f"\n====================Partial correlation on decision: topprob====================")
+                        try:
+                            res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['p_i_capability'], control_series_list=continuous_controls+categorical_controls)
+                            log_output(res)
+                        except Exception as e_full:
+                            log_output(f"                    Could not compute partial correlation on topprob: {e_full}", suppress=False)
+
+                        if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                            log_output(f"\n====================Regression of controls on oprob ====================")
+                            try:
+                                res = regression_std(dv_series=df_model['o_prob'], iv_series=None, control_series_list=continuous_controls+categorical_controls)
+                                log_output(res['full_results'].summary())
+                            except Exception as e_full:
+                                log_output(f"                    Could not compute regression of controls on oprob: {e_full}")
+
+                        log_output(f"\n====================Calibration metrics====================")
+                        calib_dict = brier_ece(correctness_series=df_model['s_i_capability'], probability_series=df_model['p_i_capability'])
+                        log_output(f"Brier Resolution (ranking): {calib_dict['resolution']:.4f} [{calib_dict['resolution_ci'][0]:.4f}, {calib_dict['resolution_ci'][1]:.4f}]", suppress=False)
+                        log_output(f"Brier Reliability (reality): {calib_dict['reliability']:.4f} [{calib_dict['reliability_ci'][0]:.4f}, {calib_dict['reliability_ci'][1]:.4f}]", suppress=False)
+                        log_output(f"ECE: {calib_dict['ece']:.4f} [{calib_dict['ece_ci'][0]:.4f}, {calib_dict['ece_ci'][1]:.4f}]", suppress=False)
 
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
@@ -1231,6 +1314,38 @@ if __name__ == "__main__":
                                 #res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['normalized_prob_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls)
                                 #log_output(res)
                                 #res_dicts[model_name_part]['gameent'] = res_dict
+
+                                log_output(f"\n====================Partial correlation on decision prob====================")
+                                try:
+                                    res = partial_correlation_on_decision(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
+                                    log_output(f"Partial correlation on decision prob with Capent, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                                    res = partial_correlation_on_decision(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']])
+                                    log_output(f"Partial correlation on decision prob with Capent, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                                    res = partial_correlation_on_decision(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                                    log_output(f"Partial correlation on decision prob with Capent, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                                except Exception as e_full:
+                                    log_output(f"                    Could not compute partial correlation on decision prob: {e_full}", suppress=False)
+
+                                results = regression_std(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
+                                res = results['full_results']
+                                ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                                log_output(f"Linres on decision prob with Capent, surface controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                                results = regression_std(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=None)
+                                res = results['full_results']
+                                ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                                log_output(f"Linres on decision prob with Capent, no controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                                results = regression_std(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']])
+                                res = results['full_results']
+                                ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                                log_output(f"Linres on decision prob with Capent, Stated Other control: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                                results = regression_std(dv_series=df_model['t_prob'], iv_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls+[df_model['o_prob']])
+                                res = results['full_results']
+                                ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                                log_output(f"Linres on decision prob with Capent, all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                                log_output(res.summary())
+                                std_results = standardize_coefficient({'coefficient': res.params['capabilities_entropy'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['capabilities_entropy'], df_model['t_prob'])
+                                log_output(f"Linres on decision prob with Capent, all controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
                         # Model 4.5: both entropies in full model
@@ -1318,10 +1433,10 @@ if __name__ == "__main__":
                         log_output(res.to_string(index=False))
                         misused_predictors = [row['predictor'] for _, row in res.iterrows() if row['misuse'] == True]
                         if misused_predictors:
-                            log_output(f"Misused predictors: {misused_predictors}")
+                            log_output(f"Misused predictors: {misused_predictors}", suppress=False)
 
                     except Exception as e_full:
-                        log_output(f"                    Could not fit Model XXX: {e_full}")
+                        log_output(f"                    Could not fit Model XXX: {e_full}", suppress=False)
 
                     # Model 8 (judge_delegate only)
                     if 'judge_delegate' in df_model.columns:

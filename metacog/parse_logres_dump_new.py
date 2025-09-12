@@ -29,7 +29,12 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     auc_w_cntl_regex = re.compile(r"AUC With Controls = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     auc_pct_head_regex = re.compile(r"Pct AUC Headroom Lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     cntl_capent_regex = re.compile(r"capabilities_entropy vs delegate_choice\s*\|\s*surface \+ o_prob: partial r=([-\d.]+),\s*CI\[([-\d.]+),([-\d.]+)\]")
-
+    correctness_coef_cntl_regex = re.compile(r"Baseline correctness coefficient with all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_coef_cntl2_regex = re.compile(r"Baseline correctness coefficient with surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_correl_cntl_regex = re.compile(r"Partial correlation on decision with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_correl_prob_cntl_regex = re.compile(r"Partial correlation on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_coef_prob_cntl_regex = re.compile(r"Linres on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+        
     phase1_accuracy_regex = re.compile(r"Phase 1 accuracy: ([-\d.]+)")
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
     game_test_good_change_regex = re.compile(r"Game-Test Good Change Rate: ([-\d.]+)")
@@ -122,6 +127,21 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "auc_pct_head": "Not found",
                     "auc_pct_head_ci_low": "Not found",
                     "auc_pct_head_ci_high": "Not found",
+                    "correctness_coef_cntl": "Not found",
+                    "correctness_coef_cntl_ci_low": "Not found",
+                    "correctness_coef_cntl_ci_high": "Not found",
+                    "correctness_coef_cntl2": "Not found",
+                    "correctness_coef_cntl2_ci_low": "Not found",
+                    "correctness_coef_cntl2_ci_high": "Not found",
+                    "capent_correl_cntl": "Not found",
+                    "capent_correl_cntl_ci_low": "Not found",
+                    "capent_correl_cntl_ci_high": "Not found",
+                    "capent_correl_prob_cntl": "Not found",
+                    "capent_correl_prob_cntl_ci_low": "Not found",
+                    "capent_correl_prob_cntl_ci_high": "Not found",
+                    "capent_coef_prob_cntl": "Not found",
+                    "capent_coef_prob_cntl_ci_low": "Not found",
+                    "capent_coef_prob_cntl_ci_high": "Not found",
                     "calibration_auc": "Not found",
                     "calibration_auc_ci_low": "Not found",
                     "calibration_auc_ci_high": "Not found",
@@ -235,6 +255,38 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["auc_pct_head"] = m.group(1)
                         extracted_info["auc_pct_head_ci_low"] = m.group(2)
                         extracted_info["auc_pct_head_ci_high"] = m.group(3)
+                        continue
+
+                    # Extract new metrics
+                    m = correctness_coef_cntl_regex.search(line)
+                    if m:
+                        extracted_info["correctness_coef_cntl"] = m.group(1)
+                        extracted_info["correctness_coef_cntl_ci_low"] = m.group(2)
+                        extracted_info["correctness_coef_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = correctness_coef_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["correctness_coef_cntl2"] = m.group(1)
+                        extracted_info["correctness_coef_cntl2_ci_low"] = m.group(2)
+                        extracted_info["correctness_coef_cntl2_ci_high"] = m.group(3)
+                        continue
+                    m = capent_correl_cntl_regex.search(line)
+                    if m:
+                        extracted_info["capent_correl_cntl"] = m.group(1)
+                        extracted_info["capent_correl_cntl_ci_low"] = m.group(2)
+                        extracted_info["capent_correl_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = capent_correl_prob_cntl_regex.search(line)
+                    if m:
+                        extracted_info["capent_correl_prob_cntl"] = m.group(1)
+                        extracted_info["capent_correl_prob_cntl_ci_low"] = m.group(2)
+                        extracted_info["capent_correl_prob_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = capent_coef_prob_cntl_regex.search(line)
+                    if m:
+                        extracted_info["capent_coef_prob_cntl"] = m.group(1)
+                        extracted_info["capent_coef_prob_cntl_ci_low"] = m.group(2)
+                        extracted_info["capent_coef_prob_cntl_ci_high"] = m.group(3)
                         continue
 
                     # Extract Phase 1 Accuracy
@@ -411,12 +463,19 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                             in_model4 = in_model46 = in_model48 = in_model7 = False
                 
                 # Validate required fields and write output
+                """
                 if extracted_info["model4_si_cap_coef"] == "Not found":
                     raise ValueError(f"Model 4 s_i_capability coefficient not found for {subject_name}. Check that Model 4 has Logit Regression Results.")
                 if extracted_info["model4_log_lik"] == "Not found":
                     raise ValueError(f"Model 4 Log-Likelihood not found for {subject_name}")
                 if extracted_info["model7_log_lik"] == "Not found":
                     raise ValueError(f"Model 7 Log-Likelihood not found for {subject_name}. Check that Model 7 has Logit Regression Results.")
+                """
+                
+                if extracted_info["correctness_coef_cntl"] == "Not found" and extracted_info["correctness_coef_cntl2"] != "Not found":
+                    extracted_info["correctness_coef_cntl"] = extracted_info["correctness_coef_cntl2"]
+                    extracted_info["correctness_coef_cntl_ci_low"] = extracted_info["correctness_coef_cntl2_ci_low"]
+                    extracted_info["correctness_coef_cntl_ci_high"] = extracted_info["correctness_coef_cntl2_ci_high"]
                 
                 # Warnings for optional fields
                 if extracted_info["model46_cap_entropy_coef"] == "Not found":
@@ -448,6 +507,10 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Std OR: {extracted_info['std_or']} [{extracted_info['std_or_ci_low']}, {extracted_info['std_or_ci_high']}]\n")
                 outfile.write(f"  AUC w Cntl: {extracted_info['auc_w_cntl']} [{extracted_info['auc_w_cntl_ci_low']}, {extracted_info['auc_w_cntl_ci_high']}]\n")
                 outfile.write(f"  AUC Pct Head: {extracted_info['auc_pct_head']} [{extracted_info['auc_pct_head_ci_low']}, {extracted_info['auc_pct_head_ci_high']}]\n")
+                outfile.write(f"  Correctness Coef Cntl: {extracted_info['correctness_coef_cntl']} [{extracted_info['correctness_coef_cntl_ci_low']}, {extracted_info['correctness_coef_cntl_ci_high']}]\n")
+                outfile.write(f"  Capent Correl Cntl: {extracted_info['capent_correl_cntl']} [{extracted_info['capent_correl_cntl_ci_low']}, {extracted_info['capent_correl_cntl_ci_high']}]\n")
+                outfile.write(f"  Capent Correl Prob Cntl: {extracted_info['capent_correl_prob_cntl']} [{extracted_info['capent_correl_prob_cntl_ci_low']}, {extracted_info['capent_correl_prob_cntl_ci_high']}]\n")
+                outfile.write(f"  Capent Coef Prob Cntl: {extracted_info['capent_coef_prob_cntl']} [{extracted_info['capent_coef_prob_cntl_ci_low']}, {extracted_info['capent_coef_prob_cntl_ci_high']}]\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
                 outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
                 outfile.write(f"  Model 4.6 capabilities_entropy: {extracted_info['model46_cap_entropy_coef']} [{extracted_info['model46_cap_entropy_ci_low']}, {extracted_info['model46_cap_entropy_ci_high']}]\n")
@@ -474,8 +537,8 @@ def parse_value(text, pattern, group=1, as_type=float):
             return as_type(match.group(group))
         except (ValueError, TypeError):
             print(f"Warning: Could not convert value from '{text}' using pattern '{pattern}' to type {as_type}")
-            return None
-    return None
+            return np.nan
+    return np.nan
 
 
 def analyze_parsed_data(input_summary_file):
@@ -557,6 +620,30 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["auc_pct_head"] = float(m.group(1))
                     current_subject_info["auc_pct_head_ci_low"] = float(m.group(2))
                     current_subject_info["auc_pct_head_ci_high"] = float(m.group(3))
+            elif "Correctness Coef Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["correctness_coef_cntl"] = float(m.group(1))
+                    current_subject_info["correctness_coef_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["correctness_coef_cntl_ci_high"] = float(m.group(3))
+            elif "Capent Correl Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["capent_correl_cntl"] = float(m.group(1))
+                    current_subject_info["capent_correl_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["capent_correl_cntl_ci_high"] = float(m.group(3))
+            elif "Capent Correl Prob Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["capent_correl_prob_cntl"] = float(m.group(1))
+                    current_subject_info["capent_correl_prob_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["capent_correl_prob_cntl_ci_high"] = float(m.group(3))
+            elif "Capent Coef Prob Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["capent_coef_prob_cntl"] = float(m.group(1))
+                    current_subject_info["capent_coef_prob_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["capent_coef_prob_cntl_ci_high"] = float(m.group(3))
             elif "Model 4 s_i_capability:" in line:
                 # Parse: "Model 4 s_i_capability: -0.8796 [-1.451, -0.309]"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
@@ -670,6 +757,22 @@ def analyze_parsed_data(input_summary_file):
         auc_pct_head_ci_low = data.get("auc_pct_head_ci_low", np.nan)
         auc_pct_head_ci_high = data.get("auc_pct_head_ci_high", np.nan)
         
+        correctness_coef_cntl_val = data.get("correctness_coef_cntl", np.nan)
+        correctness_coef_cntl_ci_low = data.get("correctness_coef_cntl_ci_low", np.nan)
+        correctness_coef_cntl_ci_high = data.get("correctness_coef_cntl_ci_high", np.nan)
+        
+        capent_correl_cntl_val = data.get("capent_correl_cntl", np.nan)
+        capent_correl_cntl_ci_low = data.get("capent_correl_cntl_ci_low", np.nan)
+        capent_correl_cntl_ci_high = data.get("capent_correl_cntl_ci_high", np.nan)
+        
+        capent_correl_prob_cntl_val = data.get("capent_correl_prob_cntl", np.nan)
+        capent_correl_prob_cntl_ci_low = data.get("capent_correl_prob_cntl_ci_low", np.nan)
+        capent_correl_prob_cntl_ci_high = data.get("capent_correl_prob_cntl_ci_high", np.nan)
+        
+        capent_coef_prob_cntl_val = data.get("capent_coef_prob_cntl", np.nan)
+        capent_coef_prob_cntl_ci_low = data.get("capent_coef_prob_cntl_ci_low", np.nan)
+        capent_coef_prob_cntl_ci_high = data.get("capent_coef_prob_cntl_ci_high", np.nan)
+        
         si_coef = data.get("si_coef", np.nan)
         si_ci_low = data.get("si_coef_ci_low", np.nan)
         si_ci_high = data.get("si_coef_ci_high", np.nan)
@@ -728,6 +831,18 @@ def analyze_parsed_data(input_summary_file):
             "AUC_Pct_Head": auc_pct_head_val,
             "AUC_Pct_Head_LB": auc_pct_head_ci_low,
             "AUC_Pct_Head_UB": auc_pct_head_ci_high,
+            "Correctness_Coef_Cntl": correctness_coef_cntl_val,
+            "Correctness_Coef_Cntl_LB": correctness_coef_cntl_ci_low,
+            "Correctness_Coef_Cntl_UB": correctness_coef_cntl_ci_high,
+            "Capent_Correl_Cntl": capent_correl_cntl_val,
+            "Capent_Correl_Cntl_LB": capent_correl_cntl_ci_low,
+            "Capent_Correl_Cntl_UB": capent_correl_cntl_ci_high,
+            "Capent_Correl_Prob_Cntl": capent_correl_prob_cntl_val,
+            "Capent_Correl_Prob_Cntl_LB": capent_correl_prob_cntl_ci_low,
+            "Capent_Correl_Prob_Cntl_UB": capent_correl_prob_cntl_ci_high,
+            "Capent_Coef_Prob_Cntl": capent_coef_prob_cntl_val,
+            "Capent_Coef_Prob_Cntl_LB": capent_coef_prob_cntl_ci_low,
+            "Capent_Coef_Prob_Cntl_UB": capent_coef_prob_cntl_ci_high,
             "CapCoef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
@@ -817,10 +932,21 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     has_cal_auc_data = 'CalibrationAUC' in df_results.columns and not df_results["CalibrationAUC"].isna().all()
     has_cntl_cap_ent_data = 'CntlCapEnt' in df_results.columns and not df_results["CntlCapEnt"].isna().all()
     has_std_or_data = 'StdOR' in df_results.columns and not df_results["StdOR"].isna().all()
-    has_right_column = has_auc_data or has_cal_auc_data or has_cntl_cap_ent_data or has_std_or_data
+    has_correctness_coef_cntl_data = 'Correctness_Coef_Cntl' in df_results.columns and not df_results["Correctness_Coef_Cntl"].isna().all()
+    has_capent_correl_cntl_data = 'Capent_Correl_Cntl' in df_results.columns and not df_results["Capent_Correl_Cntl"].isna().all()
+    has_capent_correl_prob_cntl_data = 'Capent_Correl_Prob_Cntl' in df_results.columns and not df_results["Capent_Correl_Prob_Cntl"].isna().all()
+    has_capent_coef_prob_cntl_data = 'Capent_Coef_Prob_Cntl' in df_results.columns and not df_results["Capent_Coef_Prob_Cntl"].isna().all()
+    
+    has_right_column = has_auc_data or has_cal_auc_data or has_std_or_data
+    has_far_right_column = has_capent_correl_cntl_data or has_capent_correl_prob_cntl_data or has_capent_coef_prob_cntl_data
     
     # Determine number of columns
-    ncols = 2 if has_right_column else 1
+    if has_far_right_column:
+        ncols = 3
+    elif has_right_column:
+        ncols = 2
+    else:
+        ncols = 1
     
     # Apply name breaking for x-axis labels
     formatted_subject_names = [break_subject_name(name, max_parts_per_line=3) for name in df_results["Subject"]]
@@ -835,12 +961,11 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
             pass
 
     # Create figure with appropriate number of subplots
-    if has_right_column:
-        fig, axs = plt.subplots(3, 2, figsize=(max(20, num_subjects * 2.0 + 4), 20))
-        axs = axs.reshape(3, 2)  # Ensure it's a 2D array
+    fig, axs = plt.subplots(3, ncols, figsize=(max(10 * ncols, num_subjects * 1.0 * ncols + 2), 20))
+    if ncols > 1:
+        axs = axs.reshape(3, ncols)
     else:
-        fig, axs = plt.subplots(3, 1, figsize=(max(10, num_subjects * 1.0 + 2), 20))
-        axs = axs.reshape(3, 1)  # Make it 2D for consistent indexing
+        axs = axs.reshape(3, 1)
 
     # Font sizes
     title_fontsize = 16
@@ -863,22 +988,21 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     axs[0, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
     axs[0, 0].tick_params(axis='y', labelsize=tick_fontsize)
 
-    # --- Plot 2: AUC With Controls ---
-    has_auc_w_cntl = 'AUC_w_Cntl' in df_results.columns and not df_results["AUC_w_Cntl"].isna().all()
-    if has_auc_w_cntl:
-        df_auc_w_cntl = df_results.dropna(subset=['AUC_w_Cntl'])
-        formatted_subject_names_auc_w_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_auc_w_cntl["Subject"]]
-        yerr_auc_w_cntl_low = np.nan_to_num(df_auc_w_cntl["AUC_w_Cntl"] - df_auc_w_cntl["AUC_w_Cntl_LB"], nan=0.0)
-        yerr_auc_w_cntl_high = np.nan_to_num(df_auc_w_cntl["AUC_w_Cntl_UB"] - df_auc_w_cntl["AUC_w_Cntl"], nan=0.0)
-        yerr_auc_w_cntl_low[yerr_auc_w_cntl_low < 0] = 0
-        yerr_auc_w_cntl_high[yerr_auc_w_cntl_high < 0] = 0
+    # --- Plot 2: Correctness Coef Cntl ---
+    if has_correctness_coef_cntl_data:
+        df_correctness_coef_cntl = df_results.dropna(subset=['Correctness_Coef_Cntl'])
+        formatted_subject_names_correctness_coef_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_correctness_coef_cntl["Subject"]]
+        yerr_correctness_coef_cntl_low = np.nan_to_num(df_correctness_coef_cntl["Correctness_Coef_Cntl"] - df_correctness_coef_cntl["Correctness_Coef_Cntl_LB"], nan=0.0)
+        yerr_correctness_coef_cntl_high = np.nan_to_num(df_correctness_coef_cntl["Correctness_Coef_Cntl_UB"] - df_correctness_coef_cntl["Correctness_Coef_Cntl"], nan=0.0)
+        yerr_correctness_coef_cntl_low[yerr_correctness_coef_cntl_low < 0] = 0
+        yerr_correctness_coef_cntl_high[yerr_correctness_coef_cntl_high < 0] = 0
         
-        axs[1, 0].bar(formatted_subject_names_auc_w_cntl, df_auc_w_cntl["AUC_w_Cntl"],
+        axs[1, 0].bar(formatted_subject_names_correctness_coef_cntl, df_correctness_coef_cntl["Correctness_Coef_Cntl"],
                        color='mediumseagreen',
-                       yerr=[yerr_auc_w_cntl_low, yerr_auc_w_cntl_high], ecolor='gray', capsize=5, width=0.6)
-        axs[1, 0].set_ylabel('AUC', fontsize=label_fontsize)
-        axs[1, 0].set_title('AUC With Controls by LLM (95% CI)', fontsize=title_fontsize)
-        axs[1, 0].axhline(0.5, color='black', linestyle='--', linewidth=0.8)
+                       yerr=[yerr_correctness_coef_cntl_low, yerr_correctness_coef_cntl_high], ecolor='gray', capsize=5, width=0.6)
+        axs[1, 0].set_ylabel('Coefficient', fontsize=label_fontsize)
+        axs[1, 0].set_title('Correctness Coef Cntl by LLM (95% CI)', fontsize=title_fontsize)
+        axs[1, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
         axs[1, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
         axs[1, 0].tick_params(axis='y', labelsize=tick_fontsize)
     else:
@@ -980,6 +1104,67 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         else:
             axs[2, 1].axis('off')
 
+    if has_far_right_column:
+        # --- Plot for Capent Correl Cntl in the first row, third column ---
+        if has_capent_correl_cntl_data:
+            df_capent_correl_cntl = df_results.dropna(subset=['Capent_Correl_Cntl'])
+            formatted_subject_names_capent_correl_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_capent_correl_cntl["Subject"]]
+            yerr_capent_correl_cntl_low = np.nan_to_num(df_capent_correl_cntl["Capent_Correl_Cntl"] - df_capent_correl_cntl["Capent_Correl_Cntl_LB"], nan=0.0)
+            yerr_capent_correl_cntl_high = np.nan_to_num(df_capent_correl_cntl["Capent_Correl_Cntl_UB"] - df_capent_correl_cntl["Capent_Correl_Cntl"], nan=0.0)
+            yerr_capent_correl_cntl_low[yerr_capent_correl_cntl_low < 0] = 0
+            yerr_capent_correl_cntl_high[yerr_capent_correl_cntl_high < 0] = 0
+            
+            axs[0, 2].bar(formatted_subject_names_capent_correl_cntl, df_capent_correl_cntl["Capent_Correl_Cntl"],
+                           color='teal',
+                           yerr=[yerr_capent_correl_cntl_low, yerr_capent_correl_cntl_high], ecolor='gray', capsize=5, width=0.6)
+            axs[0, 2].set_ylabel('Partial Correlation', fontsize=label_fontsize)
+            axs[0, 2].set_title('Capent Correl Cntl by LLM (95% CI)', fontsize=title_fontsize)
+            axs[0, 2].axhline(0, color='black', linestyle='--', linewidth=0.8)
+            axs[0, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+            axs[0, 2].tick_params(axis='y', labelsize=tick_fontsize)
+        else:
+            axs[0, 2].axis('off')
+
+        # --- Plot for Capent Correl Prob Cntl in the second row, third column ---
+        if has_capent_correl_prob_cntl_data:
+            df_capent_correl_prob_cntl = df_results.dropna(subset=['Capent_Correl_Prob_Cntl'])
+            formatted_subject_names_capent_correl_prob_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_capent_correl_prob_cntl["Subject"]]
+            yerr_capent_correl_prob_cntl_low = np.nan_to_num(df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"] - df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl_LB"], nan=0.0)
+            yerr_capent_correl_prob_cntl_high = np.nan_to_num(df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl_UB"] - df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"], nan=0.0)
+            yerr_capent_correl_prob_cntl_low[yerr_capent_correl_prob_cntl_low < 0] = 0
+            yerr_capent_correl_prob_cntl_high[yerr_capent_correl_prob_cntl_high < 0] = 0
+            
+            axs[1, 2].bar(formatted_subject_names_capent_correl_prob_cntl, df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"],
+                           color='cadetblue',
+                           yerr=[yerr_capent_correl_prob_cntl_low, yerr_capent_correl_prob_cntl_high], ecolor='gray', capsize=5, width=0.6)
+            axs[1, 2].set_ylabel('Partial Correlation', fontsize=label_fontsize)
+            axs[1, 2].set_title('Capent Correl Prob Cntl by LLM (95% CI)', fontsize=title_fontsize)
+            axs[1, 2].axhline(0, color='black', linestyle='--', linewidth=0.8)
+            axs[1, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+            axs[1, 2].tick_params(axis='y', labelsize=tick_fontsize)
+        else:
+            axs[1, 2].axis('off')
+
+        # --- Plot for Capent Coef Prob Cntl in the third row, third column ---
+        if has_capent_coef_prob_cntl_data:
+            df_capent_coef_prob_cntl = df_results.dropna(subset=['Capent_Coef_Prob_Cntl'])
+            formatted_subject_names_capent_coef_prob_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_capent_coef_prob_cntl["Subject"]]
+            yerr_capent_coef_prob_cntl_low = np.nan_to_num(df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl"] - df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl_LB"], nan=0.0)
+            yerr_capent_coef_prob_cntl_high = np.nan_to_num(df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl_UB"] - df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl"], nan=0.0)
+            yerr_capent_coef_prob_cntl_low[yerr_capent_coef_prob_cntl_low < 0] = 0
+            yerr_capent_coef_prob_cntl_high[yerr_capent_coef_prob_cntl_high < 0] = 0
+            
+            axs[2, 2].bar(formatted_subject_names_capent_coef_prob_cntl, df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl"],
+                           color='darkcyan',
+                           yerr=[yerr_capent_coef_prob_cntl_low, yerr_capent_coef_prob_cntl_high], ecolor='gray', capsize=5, width=0.6)
+            axs[2, 2].set_ylabel('Coefficient', fontsize=label_fontsize)
+            axs[2, 2].set_title('Capent Coef Prob Cntl by LLM (95% CI)', fontsize=title_fontsize)
+            axs[2, 2].axhline(0, color='black', linestyle='--', linewidth=0.8)
+            axs[2, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+            axs[2, 2].tick_params(axis='y', labelsize=tick_fontsize)
+        else:
+            axs[2, 2].axis('off')
+
     plt.tight_layout(pad=3.0, h_pad=4.0)
     plt.savefig(f"subject_analysis_charts_{dataset_name}_{prefix_int.lower()}_{prefix_lift.lower()}.png", dpi=300)
     print(f"Charts saved to subject_analysis_charts_{dataset_name}_{prefix_int.lower()}_{prefix_lift.lower()}.png")
@@ -988,7 +1173,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "GPSA"#"GPQA"#"SimpleQA" #"SimpleMC" #
+    dataset = "GPSA"#"SimpleQA" #"GPQA"#"SimpleMC" #
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
