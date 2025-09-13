@@ -29,15 +29,22 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     auc_w_cntl_regex = re.compile(r"AUC With Controls = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     auc_pct_head_regex = re.compile(r"Pct AUC Headroom Lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     cntl_capent_regex = re.compile(r"capabilities_entropy vs delegate_choice\s*\|\s*surface \+ o_prob: partial r=([-\d.]+),\s*CI\[([-\d.]+),([-\d.]+)\]")
-    correctness_coef_cntl_regex = re.compile(r"Baseline correctness coefficient with all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-    correctness_coef_cntl2_regex = re.compile(r"Baseline correctness coefficient with surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_coef_cntl_regex = re.compile(r"Baseline correctness coefficient with all controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_coef_cntl2_regex = re.compile(r"Baseline correctness coefficient with surface controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_cntl_regex = re.compile(r"Partial correlation on decision with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_prob_cntl_regex = re.compile(r"Partial correlation on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-    capent_coef_prob_cntl_regex = re.compile(r"Linres on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-        
+    capent_coef_prob_cntl_regex = re.compile(r"Linres on decision prob with Capent, all controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    pseudor2_cntl_regex = re.compile(r"pseudo-R2, all controls model: ([-\d.]+)")
+    pseudor2_cntl2_regex = re.compile(r"pseudo-R2, surface controls only model: ([-\d.]+)")
+    brier_res_regex = re.compile(r"Brier Resolution \(ranking\): ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    brier_rel_regex = re.compile(r"Brier Reliability \(reality\): ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    brier_regex = re.compile(r"Brier: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    ece_regex = re.compile(r"ECE: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     phase1_accuracy_regex = re.compile(r"Phase 1 accuracy: ([-\d.]+)")
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
     game_test_good_change_regex = re.compile(r"Game-Test Good Change Rate: ([-\d.]+)")
+    delegation_rate_regex = re.compile(r"Delegation rate: ([-\d.]+) \(n=(\d+)\)")
+    topprob_regex = re.compile(r"df_model\[p_i_capability\] mean: ([-\d.]+), std: ([\d.]+)")
 
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
@@ -142,6 +149,20 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "capent_coef_prob_cntl": "Not found",
                     "capent_coef_prob_cntl_ci_low": "Not found",
                     "capent_coef_prob_cntl_ci_high": "Not found",
+                    "pseudor2_cntl": "Not found",
+                    "pseudor2_cntl2": "Not found",
+                    "brier_res": "Not found",
+                    "brier_res_ci_low": "Not found",
+                    "brier_res_ci_high": "Not found",
+                    "brier_rel": "Not found",
+                    "brier_rel_ci_low": "Not found",
+                    "brier_rel_ci_high": "Not found",
+                    "brier": "Not found",
+                    "brier_ci_low": "Not found",
+                    "brier_ci_high": "Not found",
+                    "ece": "Not found",
+                    "ece_ci_low": "Not found",
+                    "ece_ci_high": "Not found",
                     "calibration_auc": "Not found",
                     "calibration_auc_ci_low": "Not found",
                     "calibration_auc_ci_high": "Not found",
@@ -160,6 +181,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "model48_norm_prob_entropy_ci_high": "Not found",
                     "model7_log_lik": "Not found",
                     "delegation_rate": "Not found",
+                    "topprob_mean": "Not found",
+                    "topprob_ci_low": "Not found",
+                    "topprob_ci_high": "Not found",
                     "phase1_accuracy": "Not found",
                     "total_n": "Not found",
                     "game_test_change_rate": "Not found",
@@ -287,6 +311,57 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["capent_coef_prob_cntl"] = m.group(1)
                         extracted_info["capent_coef_prob_cntl_ci_low"] = m.group(2)
                         extracted_info["capent_coef_prob_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = pseudor2_cntl_regex.search(line)
+                    if m:
+                        extracted_info["pseudor2_cntl"] = m.group(1)
+                        continue
+                    m = pseudor2_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["pseudor2_cntl2"] = m.group(1)
+                        continue
+                    m = brier_res_regex.search(line)
+                    if m:
+                        extracted_info["brier_res"] = m.group(1)
+                        extracted_info["brier_res_ci_low"] = m.group(2)
+                        extracted_info["brier_res_ci_high"] = m.group(3)
+                        continue
+                    m = brier_rel_regex.search(line)
+                    if m:
+                        extracted_info["brier_rel"] = m.group(1)
+                        extracted_info["brier_rel_ci_low"] = m.group(2)
+                        extracted_info["brier_rel_ci_high"] = m.group(3)
+                        continue
+                    m = brier_regex.search(line)
+                    if m:
+                        extracted_info["brier"] = m.group(1)
+                        extracted_info["brier_ci_low"] = m.group(2)
+                        extracted_info["brier_ci_high"] = m.group(3)
+                        continue
+                    m = ece_regex.search(line)
+                    if m:
+                        extracted_info["ece"] = m.group(1)
+                        extracted_info["ece_ci_low"] = m.group(2)
+                        extracted_info["ece_ci_high"] = m.group(3)
+                        continue
+                    m = delegation_rate_regex.search(line)
+                    if m:
+                        extracted_info["delegation_rate"] = m.group(1)
+                        extracted_info["total_n"] = m.group(2)
+                        continue
+                    
+                    m = topprob_regex.search(line)
+                    if m:
+                        mean = float(m.group(1))
+                        std = float(m.group(2))
+                        n = int(extracted_info["total_n"])
+                        
+                        lb = mean - 1.96 * std / (n**0.5)
+                        ub = mean + 1.96 * std / (n**0.5)
+                        
+                        extracted_info["topprob_mean"] = str(mean)
+                        extracted_info["topprob_ci_low"] = str(lb)
+                        extracted_info["topprob_ci_high"] = str(ub)
                         continue
 
                     # Extract Phase 1 Accuracy
@@ -477,6 +552,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     extracted_info["correctness_coef_cntl_ci_low"] = extracted_info["correctness_coef_cntl2_ci_low"]
                     extracted_info["correctness_coef_cntl_ci_high"] = extracted_info["correctness_coef_cntl2_ci_high"]
                 
+                if extracted_info["pseudor2_cntl"] == "Not found" and extracted_info["pseudor2_cntl2"] != "Not found":
+                    extracted_info["pseudor2_cntl"] = extracted_info["pseudor2_cntl2"]
+
                 # Warnings for optional fields
                 if extracted_info["model46_cap_entropy_coef"] == "Not found":
                     pass#print(f"Warning: Model 4.6 capabilities_entropy coefficient not found for {subject_name}")
@@ -511,6 +589,11 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Capent Correl Cntl: {extracted_info['capent_correl_cntl']} [{extracted_info['capent_correl_cntl_ci_low']}, {extracted_info['capent_correl_cntl_ci_high']}]\n")
                 outfile.write(f"  Capent Correl Prob Cntl: {extracted_info['capent_correl_prob_cntl']} [{extracted_info['capent_correl_prob_cntl_ci_low']}, {extracted_info['capent_correl_prob_cntl_ci_high']}]\n")
                 outfile.write(f"  Capent Coef Prob Cntl: {extracted_info['capent_coef_prob_cntl']} [{extracted_info['capent_coef_prob_cntl_ci_low']}, {extracted_info['capent_coef_prob_cntl_ci_high']}]\n")
+                outfile.write(f"  Pseudo R2 Cntl: {extracted_info['pseudor2_cntl']}\n")
+                outfile.write(f"  Brier Resolution: {extracted_info['brier_res']} [{extracted_info['brier_res_ci_low']}, {extracted_info['brier_res_ci_high']}]\n")
+                outfile.write(f"  Brier Reliability: {extracted_info['brier_rel']} [{extracted_info['brier_rel_ci_low']}, {extracted_info['brier_rel_ci_high']}]\n")
+                outfile.write(f"  Brier: {extracted_info['brier']} [{extracted_info['brier_ci_low']}, {extracted_info['brier_ci_high']}]\n")
+                outfile.write(f"  ECE: {extracted_info['ece']} [{extracted_info['ece_ci_low']}, {extracted_info['ece_ci_high']}]\n")
                 outfile.write(f"  Model 4 s_i_capability: {extracted_info['model4_si_cap_coef']} [{extracted_info['model4_si_cap_ci_low']}, {extracted_info['model4_si_cap_ci_high']}]\n")
                 outfile.write(f"  Model 4 Log-Likelihood: {extracted_info['model4_log_lik']}\n")
                 outfile.write(f"  Model 4.6 capabilities_entropy: {extracted_info['model46_cap_entropy_coef']} [{extracted_info['model46_cap_entropy_ci_low']}, {extracted_info['model46_cap_entropy_ci_high']}]\n")
@@ -518,6 +601,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Model 4.8 normalized_prob_entropy: {extracted_info['model48_norm_prob_entropy_coef']} [{extracted_info['model48_norm_prob_entropy_ci_low']}, {extracted_info['model48_norm_prob_entropy_ci_high']}]\n")
                 outfile.write(f"  Model 7 Log-Likelihood: {extracted_info['model7_log_lik']}\n")
                 outfile.write(f"  Delegation rate: {extracted_info['delegation_rate']}\n")
+                outfile.write(f"  Top Prob Mean: {extracted_info['topprob_mean']} [{extracted_info['topprob_ci_low']}, {extracted_info['topprob_ci_high']}]\n")
                 outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
                 outfile.write(f"  Total N: {extracted_info['total_n']}\n")
                 outfile.write(f"  Game-Test Change Rate: {extracted_info['game_test_change_rate']}\n")
@@ -644,6 +728,32 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["capent_coef_prob_cntl"] = float(m.group(1))
                     current_subject_info["capent_coef_prob_cntl_ci_low"] = float(m.group(2))
                     current_subject_info["capent_coef_prob_cntl_ci_high"] = float(m.group(3))
+            elif "Pseudo R2 Cntl:" in line:
+                current_subject_info["pseudor2_cntl"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Brier Resolution:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["brier_res"] = float(m.group(1))
+                    current_subject_info["brier_res_ci_low"] = float(m.group(2))
+                    current_subject_info["brier_res_ci_high"] = float(m.group(3))
+            elif "Brier Reliability:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["brier_rel"] = float(m.group(1))
+                    current_subject_info["brier_rel_ci_low"] = float(m.group(2))
+                    current_subject_info["brier_rel_ci_high"] = float(m.group(3))
+            elif "Brier:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["brier"] = float(m.group(1))
+                    current_subject_info["brier_ci_low"] = float(m.group(2))
+                    current_subject_info["brier_ci_high"] = float(m.group(3))
+            elif "ECE:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["ece"] = float(m.group(1))
+                    current_subject_info["ece_ci_low"] = float(m.group(2))
+                    current_subject_info["ece_ci_high"] = float(m.group(3))
             elif "Model 4 s_i_capability:" in line:
                 # Parse: "Model 4 s_i_capability: -0.8796 [-1.451, -0.309]"
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
@@ -678,6 +788,12 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["loglik7"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "Delegation rate:" in line:
                 current_subject_info["delegation_rate"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Top Prob Mean:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["topprob_mean"] = float(m.group(1))
+                    current_subject_info["topprob_ci_low"] = float(m.group(2))
+                    current_subject_info["topprob_ci_high"] = float(m.group(3))
             elif "Phase 1 accuracy:" in line:
                 current_subject_info["phase1_accuracy"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "Total N:" in line:
@@ -773,6 +889,24 @@ def analyze_parsed_data(input_summary_file):
         capent_coef_prob_cntl_ci_low = data.get("capent_coef_prob_cntl_ci_low", np.nan)
         capent_coef_prob_cntl_ci_high = data.get("capent_coef_prob_cntl_ci_high", np.nan)
         
+        pseudor2_cntl_val = data.get("pseudor2_cntl", np.nan)
+        
+        brier_res_val = data.get("brier_res", np.nan)
+        brier_res_ci_low = data.get("brier_res_ci_low", np.nan)
+        brier_res_ci_high = data.get("brier_res_ci_high", np.nan)
+        
+        brier_rel_val = data.get("brier_rel", np.nan)
+        brier_rel_ci_low = data.get("brier_rel_ci_low", np.nan)
+        brier_rel_ci_high = data.get("brier_rel_ci_high", np.nan)
+        
+        brier_val = data.get("brier", np.nan)
+        brier_ci_low = data.get("brier_ci_low", np.nan)
+        brier_ci_high = data.get("brier_ci_high", np.nan)
+        
+        ece_val = data.get("ece", np.nan)
+        ece_ci_low = data.get("ece_ci_low", np.nan)
+        ece_ci_high = data.get("ece_ci_high", np.nan)
+        
         si_coef = data.get("si_coef", np.nan)
         si_ci_low = data.get("si_coef_ci_low", np.nan)
         si_ci_high = data.get("si_coef_ci_high", np.nan)
@@ -799,11 +933,17 @@ def analyze_parsed_data(input_summary_file):
 
         # Get delegation rate, phase 1 accuracy, and total N
         delegation_rate = data.get("delegation_rate", np.nan)
+        topprob_mean = data.get("topprob_mean", np.nan)
+        topprob_ci_low = data.get("topprob_ci_low", np.nan)
+        topprob_ci_high = data.get("topprob_ci_high", np.nan)
         phase1_accuracy = data.get("phase1_accuracy", np.nan)
         total_n = data.get("total_n", np.nan)
 
         results.append({
             "Subject": subject_name,
+            "TopProb": topprob_mean,
+            "TopProb_LB": topprob_ci_low,
+            "TopProb_UB": topprob_ci_high,
             f"{current_prefix_int.capitalize()}Intro": introspection_val,
             f"{current_prefix_int.capitalize()}Intro_LB": introspection_ci_low,
             f"{current_prefix_int.capitalize()}Intro_UB": introspection_ci_high,
@@ -843,6 +983,19 @@ def analyze_parsed_data(input_summary_file):
             "Capent_Coef_Prob_Cntl": capent_coef_prob_cntl_val,
             "Capent_Coef_Prob_Cntl_LB": capent_coef_prob_cntl_ci_low,
             "Capent_Coef_Prob_Cntl_UB": capent_coef_prob_cntl_ci_high,
+            "PseudoR2_Cntl": pseudor2_cntl_val,
+            "Brier_Res": brier_res_val,
+            "Brier_Res_LB": brier_res_ci_low,
+            "Brier_Res_UB": brier_res_ci_high,
+            "Brier_Rel": brier_rel_val,
+            "Brier_Rel_LB": brier_rel_ci_low,
+            "Brier_Rel_UB": brier_rel_ci_high,
+            "Brier": brier_val,
+            "Brier_LB": brier_ci_low,
+            "Brier_UB": brier_ci_high,
+            "ECE": ece_val,
+            "ECE_LB": ece_ci_low,
+            "ECE_UB": ece_ci_high,
             "CapCoef": rev_si_coef,
             "CapCoef_LB": rev_si_ci_low,
             "CapCoef_UB": rev_si_ci_high,
@@ -936,8 +1089,9 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     has_capent_correl_cntl_data = 'Capent_Correl_Cntl' in df_results.columns and not df_results["Capent_Correl_Cntl"].isna().all()
     has_capent_correl_prob_cntl_data = 'Capent_Correl_Prob_Cntl' in df_results.columns and not df_results["Capent_Correl_Prob_Cntl"].isna().all()
     has_capent_coef_prob_cntl_data = 'Capent_Coef_Prob_Cntl' in df_results.columns and not df_results["Capent_Coef_Prob_Cntl"].isna().all()
+    has_delegation_rate_data = 'Delegation_Rate' in df_results.columns and not df_results["Delegation_Rate"].isna().all()
     
-    has_right_column = has_auc_data or has_cal_auc_data or has_std_or_data
+    has_right_column = has_auc_data or has_cal_auc_data or has_std_or_data or has_delegation_rate_data
     has_far_right_column = has_capent_correl_cntl_data or has_capent_correl_prob_cntl_data or has_capent_coef_prob_cntl_data
     
     # Determine number of columns
@@ -1008,21 +1162,16 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
     else:
         axs[1, 0].axis('off')
 
-    # --- Plot 3: Pct AUC Headroom Lift ---
-    has_auc_pct_head = 'AUC_Pct_Head' in df_results.columns and not df_results["AUC_Pct_Head"].isna().all()
-    if has_auc_pct_head:
-        df_auc_pct_head = df_results.dropna(subset=['AUC_Pct_Head'])
-        formatted_subject_names_auc_pct_head = [break_subject_name(name, max_parts_per_line=3) for name in df_auc_pct_head["Subject"]]
-        yerr_auc_pct_head_low = np.nan_to_num(df_auc_pct_head["AUC_Pct_Head"] - df_auc_pct_head["AUC_Pct_Head_LB"], nan=0.0)
-        yerr_auc_pct_head_high = np.nan_to_num(df_auc_pct_head["AUC_Pct_Head_UB"] - df_auc_pct_head["AUC_Pct_Head"], nan=0.0)
-        yerr_auc_pct_head_low[yerr_auc_pct_head_low < 0] = 0
-        yerr_auc_pct_head_high[yerr_auc_pct_head_high < 0] = 0
+    # --- Plot 3: Pseudo R^2 ---
+    has_pseudor2_cntl = 'PseudoR2_Cntl' in df_results.columns and not df_results["PseudoR2_Cntl"].isna().all()
+    if has_pseudor2_cntl:
+        df_pseudor2_cntl = df_results.dropna(subset=['PseudoR2_Cntl'])
+        formatted_subject_names_pseudor2_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_pseudor2_cntl["Subject"]]
         
-        axs[2, 0].bar(formatted_subject_names_auc_pct_head, df_auc_pct_head["AUC_Pct_Head"],
-                       color='lightcoral',
-                       yerr=[yerr_auc_pct_head_low, yerr_auc_pct_head_high], ecolor='gray', capsize=5, width=0.6)
-        axs[2, 0].set_ylabel('Pct AUC Headroom Lift', fontsize=label_fontsize)
-        axs[2, 0].set_title('Pct AUC Headroom Lift by LLM (95% CI)', fontsize=title_fontsize)
+        axs[2, 0].bar(formatted_subject_names_pseudor2_cntl, df_pseudor2_cntl["PseudoR2_Cntl"],
+                       color='lightcoral', capsize=5, width=0.6)
+        axs[2, 0].set_ylabel('Pseudo R^2', fontsize=label_fontsize)
+        axs[2, 0].set_title('Pseudo R^2 by LLM', fontsize=title_fontsize)
         axs[2, 0].axhline(0, color='black', linestyle='--', linewidth=0.8)
         axs[2, 0].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
         axs[2, 0].tick_params(axis='y', labelsize=tick_fontsize)
@@ -1031,22 +1180,22 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
     # If we have data for the right column, plot it
     if has_right_column:
-        # --- Plot for AUC in the first row, second column ---
-        has_auc = not df_results["AUC"].isna().all()
-        if has_auc:
-            df_auc = df_results.dropna(subset=['AUC'])
-            formatted_subject_names_auc = [break_subject_name(name, max_parts_per_line=3) for name in df_auc["Subject"]]
-            yerr_auc_low = np.nan_to_num(df_auc["AUC"] - df_auc["AUC_LB"], nan=0.0)
-            yerr_auc_high = np.nan_to_num(df_auc["AUC_UB"] - df_auc["AUC"], nan=0.0)
-            yerr_auc_low[yerr_auc_low < 0] = 0
-            yerr_auc_high[yerr_auc_high < 0] = 0
+        # --- Plot for TopProb in the first row, second column ---
+        has_topprob = 'TopProb' in df_results.columns and not df_results["TopProb"].isna().all()
+        if has_topprob:
+            df_topprob = df_results.dropna(subset=['TopProb'])
+            formatted_subject_names_topprob = [break_subject_name(name, max_parts_per_line=3) for name in df_topprob["Subject"]]
+            yerr_topprob_low = np.nan_to_num(df_topprob["TopProb"] - df_topprob["TopProb_LB"], nan=0.0)
+            yerr_topprob_high = np.nan_to_num(df_topprob["TopProb_UB"] - df_topprob["TopProb"], nan=0.0)
+            yerr_topprob_low[yerr_topprob_low < 0] = 0
+            yerr_topprob_high[yerr_topprob_high < 0] = 0
             
-            axs[0, 1].bar(formatted_subject_names_auc, df_auc["AUC"],
+            axs[0, 1].bar(formatted_subject_names_topprob, df_topprob["TopProb"],
                            color='skyblue',
-                           yerr=[yerr_auc_low, yerr_auc_high], ecolor='gray', capsize=5, width=0.6)
-            axs[0, 1].set_ylabel('AUC', fontsize=label_fontsize)
-            axs[0, 1].set_title('AUC by LLM (95% CI)', fontsize=title_fontsize)
-            axs[0, 1].axhline(0.5, color='black', linestyle='--', linewidth=0.8) # AUC baseline is 0.5
+                           yerr=[yerr_topprob_low, yerr_topprob_high], ecolor='gray', capsize=5, width=0.6)
+            axs[0, 1].set_ylabel('Top Probability', fontsize=label_fontsize)
+            axs[0, 1].set_title('Top Probability by LLM (95% CI)', fontsize=title_fontsize)
+            axs[0, 1].axhline(0.5, color='black', linestyle='--', linewidth=0.8)
             axs[0, 1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[0, 1].tick_params(axis='y', labelsize=tick_fontsize)
         else:
@@ -1080,25 +1229,20 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         else:
             axs[1, 1].axis('off')
         
-        has_std_or = 'StdOR' in df_results.columns and not df_results["StdOR"].isna().all()
-        if has_std_or:
-            # --- Plot 5: Std OR ---
-            df_std_or = df_results.dropna(subset=['StdOR']).copy()
+        # --- Plot 5: Delegation Rate ---
+        has_delegation_rate = 'Delegation_Rate' in df_results.columns and not df_results["Delegation_Rate"].isna().all()
+        if has_delegation_rate:
+            df_delegation_rate = df_results.dropna(subset=['Delegation_Rate']).copy()
             if subject_order:
-                df_std_or['Subject_Cat'] = pd.Categorical(df_std_or['Subject'], categories=subject_order, ordered=True)
-                df_std_or = df_std_or.sort_values('Subject_Cat')
-            formatted_subject_names_std_or = [break_subject_name(name, max_parts_per_line=3) for name in df_std_or["Subject"]]
-            yerr_std_or_low = np.nan_to_num(df_std_or["StdOR"] - df_std_or["StdOR_LB"], nan=0.0)
-            yerr_std_or_high = np.nan_to_num(df_std_or["StdOR_UB"] - df_std_or["StdOR"], nan=0.0)
-            yerr_std_or_low[yerr_std_or_low < 0] = 0
-            yerr_std_or_high[yerr_std_or_high < 0] = 0
+                df_delegation_rate['Subject_Cat'] = pd.Categorical(df_delegation_rate['Subject'], categories=subject_order, ordered=True)
+                df_delegation_rate = df_delegation_rate.sort_values('Subject_Cat')
+            formatted_subject_names_delegation_rate = [break_subject_name(name, max_parts_per_line=3) for name in df_delegation_rate["Subject"]]
             
-            axs[2, 1].bar(formatted_subject_names_std_or, df_std_or["StdOR"],
-                           color='darkorange',
-                           yerr=[yerr_std_or_low, yerr_std_or_high], ecolor='gray', capsize=5, width=0.6)
-            axs[2, 1].set_ylabel('Standardized Odds Ratio', fontsize=label_fontsize)
-            axs[2, 1].set_title('Standardized Odds Ratio by LLM (95% CI)', fontsize=title_fontsize)
-            axs[2, 1].axhline(1, color='black', linestyle='--', linewidth=0.8)
+            axs[2, 1].bar(formatted_subject_names_delegation_rate, df_delegation_rate["Delegation_Rate"],
+                           color='darkorange', capsize=5, width=0.6)
+            axs[2, 1].set_ylabel('Delegation Rate', fontsize=label_fontsize)
+            axs[2, 1].set_title('Delegation Rate by LLM', fontsize=title_fontsize)
+            axs[2, 1].axhline(0, color='black', linestyle='--', linewidth=0.8)
             axs[2, 1].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[2, 1].tick_params(axis='y', labelsize=tick_fontsize)
         else:
@@ -1146,7 +1290,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
             axs[1, 2].axis('off')
 
         # --- Plot for Capent Coef Prob Cntl in the third row, third column ---
-        if has_capent_coef_prob_cntl_data:
+        if False:#has_capent_coef_prob_cntl_data:
             df_capent_coef_prob_cntl = df_results.dropna(subset=['Capent_Coef_Prob_Cntl'])
             formatted_subject_names_capent_coef_prob_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_capent_coef_prob_cntl["Subject"]]
             yerr_capent_coef_prob_cntl_low = np.nan_to_num(df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl"] - df_capent_coef_prob_cntl["Capent_Coef_Prob_Cntl_LB"], nan=0.0)
@@ -1163,7 +1307,26 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
             axs[2, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[2, 2].tick_params(axis='y', labelsize=tick_fontsize)
         else:
-            axs[2, 2].axis('off')
+            # --- Plot for Brier Reliability in the third row, third column ---
+            has_brier_rel = 'Brier_Rel' in df_results.columns and not df_results["Brier_Rel"].isna().all()
+            if has_brier_rel:
+                df_brier_rel = df_results.dropna(subset=['Brier_Rel'])
+                formatted_subject_names_brier_rel = [break_subject_name(name, max_parts_per_line=3) for name in df_brier_rel["Subject"]]
+                yerr_brier_rel_low = np.nan_to_num(df_brier_rel["Brier_Rel"] - df_brier_rel["Brier_Rel_LB"], nan=0.0)
+                yerr_brier_rel_high = np.nan_to_num(df_brier_rel["Brier_Rel_UB"] - df_brier_rel["Brier_Rel"], nan=0.0)
+                yerr_brier_rel_low[yerr_brier_rel_low < 0] = 0
+                yerr_brier_rel_high[yerr_brier_rel_high < 0] = 0
+                
+                axs[2, 2].bar(formatted_subject_names_brier_rel, df_brier_rel["Brier_Rel"],
+                               color='darkcyan',
+                               yerr=[yerr_brier_rel_low, yerr_brier_rel_high], ecolor='gray', capsize=5, width=0.6)
+                axs[2, 2].set_ylabel('Brier Reliability', fontsize=label_fontsize)
+                axs[2, 2].set_title('Brier Reliability by LLM (95% CI)', fontsize=title_fontsize)
+                axs[2, 2].axhline(0, color='black', linestyle='--', linewidth=0.8)
+                axs[2, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
+                axs[2, 2].tick_params(axis='y', labelsize=tick_fontsize)
+            else:
+                axs[2, 2].axis('off')
 
     plt.tight_layout(pad=3.0, h_pad=4.0)
     plt.savefig(f"subject_analysis_charts_{dataset_name}_{prefix_int.lower()}_{prefix_lift.lower()}.png", dpi=300)
@@ -1173,14 +1336,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "GPSA"#"SimpleQA" #"GPQA"#"SimpleMC" #
+    dataset = "GPQA"#"GPSA"#"SimpleMC" #"SimpleQA" #
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
-    model_list = ["openai-gpt-5-chat", 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gpt-4o-mini', "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', "gemini-2.5-flash", 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gemini-1.5-pro', 'grok-3-latest', 'deepseek-chat']
-    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash", 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
+    model_list = ["openai-gpt-5-chat", 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gpt-4o-mini', "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', "gemini-2.5-flash", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gemini-1.5-pro', 'grok-3-latest', 'deepseek-chat']
+    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"
 

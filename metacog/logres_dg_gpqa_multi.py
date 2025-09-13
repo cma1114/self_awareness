@@ -456,7 +456,7 @@ if __name__ == "__main__":
                             if len(probs_dict.keys()) > 1:
                                 p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)
                             else:
-                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)#-math.log(float(prob_for_subject_answer))/max((len(subject_answer)//2),1)###float(prob_for_subject_answer)**(len(subject_answer)//2) #approx token count
+                                p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)**(1/max((len(subject_answer)//2),1)) #-math.log(float(prob_for_subject_answer))/max((len(subject_answer)//2),1)###float(prob_for_subject_answer)#approx token count
                     # Calculate and populate entropy_map_for_this_model
                     if isinstance(probs_dict, dict) and probs_dict and 'deepseek' not in model_name_part.lower():
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
@@ -590,6 +590,7 @@ if __name__ == "__main__":
                 log_output(f"Mean normalized game entropy by game correctness:\n{cap_entropy_mean}\n")
             
             try:
+                log_output(f"Delegation rate: {df_model['delegate_choice'].mean():.4f} (n={len(df_model)})", suppress=False)
                 log_output(f"df_model['delegate_choice'].value_counts()= {df_model['delegate_choice'].value_counts(dropna=False)}\n")
                 if 's_i_capability' in df_model.columns:
                     #### filter out conflicts between capabilities and game
@@ -1063,8 +1064,8 @@ if __name__ == "__main__":
                         #log_output(res.summary(), suppress=False)
                         ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
                         log_output(f"Baseline correctness coefficient with surface controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability'] :.4f}, stderr={res.bse['s_i_capability']:.4f}", suppress=False)
-                        std_results = standardize_coefficient({'coefficient': res.params['s_i_capability'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['s_i_capability'], 1-df_model['delegate_choice'])
-                        log_output(f"Baseline correctness coefficient with surface controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+                        z, z_ci_low, z_ci_high = (res.params['s_i_capability']/res.bse['s_i_capability'],) + tuple((res.conf_int().loc['s_i_capability'] / res.bse['s_i_capability']).values)
+                        log_output(f"Baseline correctness coefficient with surface controls, standardized: {z:.4f} [{z_ci_low:.4f}, {z_ci_high:.4f}]", suppress=False)
                         res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['s_i_capability'], control_vars=None)
                         #log_output(res.summary(), suppress=False)
                         ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
@@ -1081,12 +1082,14 @@ if __name__ == "__main__":
                             ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
                             log_output(f"Baseline correctness coefficient with all controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability']:.4f}, stderr={res.bse['s_i_capability']:.4f}",suppress=False)
                             log_output(res.summary())
-                            std_results = standardize_coefficient({'coefficient': res.params['s_i_capability'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['s_i_capability'], 1-df_model['delegate_choice'])
-                            log_output(f"Baseline correctness coefficient with all controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+                            z, z_ci_low, z_ci_high = (res.params['s_i_capability']/res.bse['s_i_capability'],) + tuple((res.conf_int().loc['s_i_capability'] / res.bse['s_i_capability']).values)
+                            log_output(f"Baseline correctness coefficient with all controls, standardized: {z:.4f} [{z_ci_low:.4f}, {z_ci_high:.4f}]", suppress=False)
                             res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
                             ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
                             log_output(f"Capent coefficient with all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
                             log_output(res.summary())
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=None, control_vars=control_vars + [df_model['o_prob']])
+                            log_output(f"pseudo-R2, all controls model: {res.prsquared:.4f}", suppress=False)
 
                         except Exception as e_full:
                             log_output(f"                    Could not fit Logit on decision with correctness and Stated Other control: {e_full}", suppress=False)
@@ -1098,6 +1101,7 @@ if __name__ == "__main__":
                         control_vars = continuous_controls + categorical_controls 
                         res = logit_on_decision(pass_decision=df_model['delegate_choice'], iv_of_interest=None, control_vars=control_vars)
                         log_output(res.summary())
+                        log_output(f"pseudo-R2, surface controls only model: {res.prsquared:.4f}", suppress=False)
                     except Exception as e_full:
                         log_output(f"                    Could not fit Logit on decision with controls: {e_full}")
 
@@ -1259,7 +1263,9 @@ if __name__ == "__main__":
                         calib_dict = brier_ece(correctness_series=df_model['s_i_capability'], probability_series=df_model['p_i_capability'])
                         log_output(f"Brier Resolution (ranking): {calib_dict['resolution']:.4f} [{calib_dict['resolution_ci'][0]:.4f}, {calib_dict['resolution_ci'][1]:.4f}]", suppress=False)
                         log_output(f"Brier Reliability (reality): {calib_dict['reliability']:.4f} [{calib_dict['reliability_ci'][0]:.4f}, {calib_dict['reliability_ci'][1]:.4f}]", suppress=False)
+                        log_output(f"Brier: {calib_dict['brier']:.4f} [{calib_dict['brier_ci'][0]:.4f}, {calib_dict['brier_ci'][1]:.4f}]", suppress=False)
                         log_output(f"ECE: {calib_dict['ece']:.4f} [{calib_dict['ece_ci'][0]:.4f}, {calib_dict['ece_ci'][1]:.4f}]", suppress=False)
+                        log_output(f"df_model[p_i_capability] mean: {df_model['p_i_capability'].mean():.4f}, std: {df_model['p_i_capability'].std():.4f}", suppress=False)
 
 
                     if 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
@@ -1343,8 +1349,8 @@ if __name__ == "__main__":
                                 ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
                                 log_output(f"Linres on decision prob with Capent, all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
                                 log_output(res.summary())
-                                std_results = standardize_coefficient({'coefficient': res.params['capabilities_entropy'], 'ci_lower': ci_lower, 'ci_upper': ci_upper}, df_model['capabilities_entropy'], df_model['t_prob'])
-                                log_output(f"Linres on decision prob with Capent, all controls, standardized: {std_results['std_coefficient']:.4f} [{std_results['std_ci_lower']:.4f}, {std_results['std_ci_upper']:.4f}]", suppress=False)
+                                z, z_ci_low, z_ci_high = (res.params['capabilities_entropy']/res.bse['capabilities_entropy'],) + tuple((res.conf_int().loc['capabilities_entropy'] / res.bse['capabilities_entropy']).values)
+                                log_output(f"Linres on decision prob with Capent, all controls, standardized: {z:.4f} [{z_ci_low:.4f}, {z_ci_high:.4f}]", suppress=False)
 
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():

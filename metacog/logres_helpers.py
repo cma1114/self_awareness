@@ -2615,31 +2615,31 @@ def brier_ece(correctness_series, probability_series, n_bins=10, n_bootstrap=100
     
     n_samples = len(data)
     base_rate = data['correct'].mean()
-    
+
     def compute_decomposition(df):
         """Helper function to compute decomposition for a dataset"""
+        # Per-sample base rate (fix)
+        base_rate = df['correct'].mean()
+
         # Bin predictions
         bin_boundaries = np.linspace(0, 1, n_bins + 1)
         
-        reliability = 0
-        resolution = 0
+        reliability = 0.0
+        resolution = 0.0
         
         for i in range(n_bins):
             bin_mask = (df['prob'] >= bin_boundaries[i]) & (df['prob'] < bin_boundaries[i+1])
             n_bin = bin_mask.sum()
             
             if n_bin > 0:
-                bin_prob = df.loc[bin_mask, 'prob'].mean()  # average predicted prob in bin
-                bin_freq = df.loc[bin_mask, 'correct'].mean()  # actual frequency in bin
+                bin_prob = df.loc[bin_mask, 'prob'].mean()
+                bin_freq = df.loc[bin_mask, 'correct'].mean()
                 bin_weight = n_bin / len(df)
                 
-                # Reliability: weighted squared diff between predicted and actual
                 reliability += bin_weight * (bin_prob - bin_freq) ** 2
-                
-                # Resolution: weighted squared diff between bin frequency and base rate
                 resolution += bin_weight * (bin_freq - base_rate) ** 2
         
-        # Uncertainty is just base rate variance
+        # Uncertainty uses the per-sample base rate (fix)
         uncertainty = base_rate * (1 - base_rate)
         
         # Brier score
@@ -2651,7 +2651,7 @@ def brier_ece(correctness_series, probability_series, n_bins=10, n_bootstrap=100
             'resolution': resolution,
             'uncertainty': uncertainty
         }
-    
+
     # Compute for actual data
     results = compute_decomposition(data)
     
@@ -2727,30 +2727,4 @@ def brier_ece(correctness_series, probability_series, n_bins=10, n_bootstrap=100
     results['ece_ci'] = ece_ci
 
     return results
-
-def standardize_coefficient(results, iv_series, dv_series):
-    """
-    Convert regression coefficient to standardized units
-    
-    Args:
-        results: dict returned by regression_analysis
-        iv_series: original independent variable series
-        dv_series: original dependent variable series
-    
-    Returns:
-        dict with standardized coefficient and CI
-    """
-    # Calculate standard deviations (after dropping NaNs)
-    data = pd.DataFrame({'iv': iv_series, 'dv': dv_series}).dropna()
-    sd_iv = data['iv'].std()
-    sd_dv = data['dv'].std()
-    
-    # Standardize coefficient and CIs
-    scaling_factor = sd_iv / sd_dv
-    
-    return {
-        'std_coefficient': results['coefficient'] * scaling_factor,
-        'std_ci_lower': results['ci_lower'] * scaling_factor,
-        'std_ci_upper': results['ci_upper'] * scaling_factor
-    }
 
