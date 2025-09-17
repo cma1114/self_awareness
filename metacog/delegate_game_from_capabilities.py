@@ -1187,12 +1187,12 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["GPQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["SimpleQA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "gpt-4o-mini"#"gemini-2.5-flash"#"claude-opus-4-1-20250805"#"gemini-2.5-flash-lite"#'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "gemini-2.5-flash-lite_think"#"gpt-4o-mini"#"gemini-2.5-flash"#"claude-opus-4-1-20250805"##'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"claude-sonnet-4-20250514"#"claude-3-5-sonnet-20241022"#"deepseek-chat"#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"grok-3-latest"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters

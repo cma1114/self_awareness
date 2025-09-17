@@ -25,6 +25,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     normed_ba_regex = re.compile(r"Balanced Accuracy Effect Size = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     AUC_regex = re.compile(r"Full AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     calibration_AUC_regex = re.compile(r"Calibration AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    calibration_ent_AUC_regex = re.compile(r"Calibration Entropy AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     std_or_regex = re.compile(r"Standardized Odds Ratio = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     auc_w_cntl_regex = re.compile(r"AUC With Controls = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     auc_pct_head_regex = re.compile(r"Pct AUC Headroom Lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
@@ -32,6 +33,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     correctness_coef_cntl_regex = re.compile(r"Baseline correctness coefficient with all controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     correctness_coef_cntl2_regex = re.compile(r"Baseline correctness coefficient with surface controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_cntl_regex = re.compile(r"Partial correlation on decision with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Capent, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_prob_cntl_regex = re.compile(r"Partial correlation on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_coef_prob_cntl_regex = re.compile(r"Linres on decision prob with Capent, all controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     pseudor2_cntl_regex = re.compile(r"pseudo-R2, all controls model: ([-\d.]+)")
@@ -41,11 +43,14 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     brier_regex = re.compile(r"Brier: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     ece_regex = re.compile(r"ECE: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     phase1_accuracy_regex = re.compile(r"Phase 1 accuracy: ([-\d.]+)")
+    teammate_acc_regex = re.compile(r"Teammate accuracy phase 1: ([-\d.]+)")
     game_test_change_regex = re.compile(r"Game-Test Change Rate: ([-\d.]+)")
     game_test_good_change_regex = re.compile(r"Game-Test Good Change Rate: ([-\d.]+)")
     delegation_rate_regex = re.compile(r"Delegation rate: ([-\d.]+) \(n=(\d+)\)")
     topprob_regex = re.compile(r"df_model\[p_i_capability\] mean: ([-\d.]+), std: ([\d.]+)")
-
+    correctness_correl_cntl_regex = re.compile(r"Partial correlation on decision with Correctness, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Correctness, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -143,6 +148,15 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "capent_correl_cntl": "Not found",
                     "capent_correl_cntl_ci_low": "Not found",
                     "capent_correl_cntl_ci_high": "Not found",
+                    "correctness_correl_cntl": "Not found",
+                    "correctness_correl_cntl_ci_low": "Not found",
+                    "correctness_correl_cntl_ci_high": "Not found",
+                    "correctness_correl_cntl2": "Not found",
+                    "correctness_correl_cntl2_ci_low": "Not found",
+                    "correctness_correl_cntl2_ci_high": "Not found",
+                    "capent_correl_cntl2": "Not found",
+                    "capent_correl_cntl2_ci_low": "Not found",
+                    "capent_correl_cntl2_ci_high": "Not found",
                     "capent_correl_prob_cntl": "Not found",
                     "capent_correl_prob_cntl_ci_low": "Not found",
                     "capent_correl_prob_cntl_ci_high": "Not found",
@@ -166,6 +180,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "calibration_auc": "Not found",
                     "calibration_auc_ci_low": "Not found",
                     "calibration_auc_ci_high": "Not found",
+                    "calibration_ent_auc": "Not found",
+                    "calibration_ent_auc_ci_low": "Not found",
+                    "calibration_ent_auc_ci_high": "Not found",
                     "model4_si_cap_coef": "Not found",
                     "model4_si_cap_ci_low": "Not found",
                     "model4_si_cap_ci_high": "Not found",
@@ -185,6 +202,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "topprob_ci_low": "Not found",
                     "topprob_ci_high": "Not found",
                     "phase1_accuracy": "Not found",
+                    "teammate_accuracy": "Not found",
                     "total_n": "Not found",
                     "game_test_change_rate": "Not found",
                     "game_test_good_change_rate": "Not found",
@@ -249,6 +267,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["calibration_auc_ci_high"] = m.group(3)
                         continue
 
+                    m = calibration_ent_AUC_regex.search(line)
+                    if m:
+                        extracted_info["calibration_ent_auc"] = m.group(1)
+                        extracted_info["calibration_ent_auc_ci_low"] = m.group(2)
+                        extracted_info["calibration_ent_auc_ci_high"] = m.group(3)
+                        continue
+
                     # Extract Controlled Capabilities Entropy
                     m = cntl_capent_regex.search(line)
                     if m:
@@ -300,11 +325,29 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["capent_correl_cntl_ci_low"] = m.group(2)
                         extracted_info["capent_correl_cntl_ci_high"] = m.group(3)
                         continue
+                    m = capent_correl_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["capent_correl_cntl2"] = m.group(1)
+                        extracted_info["capent_correl_cntl2_ci_low"] = m.group(2)
+                        extracted_info["capent_correl_cntl2_ci_high"] = m.group(3)
+                        continue
                     m = capent_correl_prob_cntl_regex.search(line)
                     if m:
                         extracted_info["capent_correl_prob_cntl"] = m.group(1)
                         extracted_info["capent_correl_prob_cntl_ci_low"] = m.group(2)
                         extracted_info["capent_correl_prob_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = correctness_correl_cntl_regex.search(line)
+                    if m:
+                        extracted_info["correctness_correl_cntl"] = m.group(1)
+                        extracted_info["correctness_correl_cntl_ci_low"] = m.group(2)
+                        extracted_info["correctness_correl_cntl_ci_high"] = m.group(3)
+                        continue
+                    m = correctness_correl_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["correctness_correl_cntl2"] = m.group(1)
+                        extracted_info["correctness_correl_cntl2_ci_low"] = m.group(2)
+                        extracted_info["correctness_correl_cntl2_ci_high"] = m.group(3)
                         continue
                     m = capent_coef_prob_cntl_regex.search(line)
                     if m:
@@ -368,6 +411,12 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     m = phase1_accuracy_regex.search(line)
                     if m:
                         extracted_info["phase1_accuracy"] = m.group(1)
+                        continue
+
+                    # Extract Phase 1 Accuracy
+                    m = teammate_acc_regex.search(line)
+                    if m:
+                        extracted_info["teammate_accuracy"] = m.group(1)
                         continue
 
                     # Extract game test change rate
@@ -552,8 +601,18 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     extracted_info["correctness_coef_cntl_ci_low"] = extracted_info["correctness_coef_cntl2_ci_low"]
                     extracted_info["correctness_coef_cntl_ci_high"] = extracted_info["correctness_coef_cntl2_ci_high"]
                 
+                if extracted_info["capent_correl_cntl"] == "Not found" and extracted_info["capent_correl_cntl2"] != "Not found":
+                    extracted_info["capent_correl_cntl"] = extracted_info["capent_correl_cntl2"]
+                    extracted_info["capent_correl_cntl_ci_low"] = extracted_info["capent_correl_cntl2_ci_low"]
+                    extracted_info["capent_correl_cntl_ci_high"] = extracted_info["capent_correl_cntl2_ci_high"]
+                
                 if extracted_info["pseudor2_cntl"] == "Not found" and extracted_info["pseudor2_cntl2"] != "Not found":
                     extracted_info["pseudor2_cntl"] = extracted_info["pseudor2_cntl2"]
+
+                if extracted_info["correctness_correl_cntl"] == "Not found" and extracted_info["correctness_correl_cntl2"] != "Not found":
+                    extracted_info["correctness_correl_cntl"] = extracted_info["correctness_correl_cntl2"]
+                    extracted_info["correctness_correl_cntl_ci_low"] = extracted_info["correctness_correl_cntl2_ci_low"]
+                    extracted_info["correctness_correl_cntl_ci_high"] = extracted_info["correctness_correl_cntl2_ci_high"]
 
                 # Warnings for optional fields
                 if extracted_info["model46_cap_entropy_coef"] == "Not found":
@@ -581,11 +640,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Normed Balanced Accuracy: {extracted_info['normed_ba']} [{extracted_info['normed_ba_ci_low']}, {extracted_info['normed_ba_ci_high']}]\n")
                 outfile.write(f"  Full AUC: {extracted_info['auc']} [{extracted_info['auc_ci_low']}, {extracted_info['auc_ci_high']}]\n")
                 outfile.write(f"  Calibration AUC: {extracted_info['calibration_auc']} [{extracted_info['calibration_auc_ci_low']}, {extracted_info['calibration_auc_ci_high']}]\n")
+                outfile.write(f"  Calibration Entropy AUC: {extracted_info['calibration_ent_auc']} [{extracted_info['calibration_ent_auc_ci_low']}, {extracted_info['calibration_ent_auc_ci_high']}]\n")
                 outfile.write(f"  Controlled Capabilities Entropy: {extracted_info['cntl_capent']} [{extracted_info['cntl_capent_ci_low']}, {extracted_info['cntl_capent_ci_high']}]\n")
                 outfile.write(f"  Std OR: {extracted_info['std_or']} [{extracted_info['std_or_ci_low']}, {extracted_info['std_or_ci_high']}]\n")
                 outfile.write(f"  AUC w Cntl: {extracted_info['auc_w_cntl']} [{extracted_info['auc_w_cntl_ci_low']}, {extracted_info['auc_w_cntl_ci_high']}]\n")
                 outfile.write(f"  AUC Pct Head: {extracted_info['auc_pct_head']} [{extracted_info['auc_pct_head_ci_low']}, {extracted_info['auc_pct_head_ci_high']}]\n")
                 outfile.write(f"  Correctness Coef Cntl: {extracted_info['correctness_coef_cntl']} [{extracted_info['correctness_coef_cntl_ci_low']}, {extracted_info['correctness_coef_cntl_ci_high']}]\n")
+                outfile.write(f"  Correctness Correl Cntl: {extracted_info['correctness_correl_cntl']} [{extracted_info['correctness_correl_cntl_ci_low']}, {extracted_info['correctness_correl_cntl_ci_high']}]\n")
                 outfile.write(f"  Capent Correl Cntl: {extracted_info['capent_correl_cntl']} [{extracted_info['capent_correl_cntl_ci_low']}, {extracted_info['capent_correl_cntl_ci_high']}]\n")
                 outfile.write(f"  Capent Correl Prob Cntl: {extracted_info['capent_correl_prob_cntl']} [{extracted_info['capent_correl_prob_cntl_ci_low']}, {extracted_info['capent_correl_prob_cntl_ci_high']}]\n")
                 outfile.write(f"  Capent Coef Prob Cntl: {extracted_info['capent_coef_prob_cntl']} [{extracted_info['capent_coef_prob_cntl_ci_low']}, {extracted_info['capent_coef_prob_cntl_ci_high']}]\n")
@@ -603,11 +664,19 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Delegation rate: {extracted_info['delegation_rate']}\n")
                 outfile.write(f"  Top Prob Mean: {extracted_info['topprob_mean']} [{extracted_info['topprob_ci_low']}, {extracted_info['topprob_ci_high']}]\n")
                 outfile.write(f"  Phase 1 accuracy: {extracted_info['phase1_accuracy']}\n")
+                outfile.write(f"  Teammate accuracy: {extracted_info['teammate_accuracy']}\n")
                 outfile.write(f"  Total N: {extracted_info['total_n']}\n")
                 outfile.write(f"  Game-Test Change Rate: {extracted_info['game_test_change_rate']}\n")
                 outfile.write(f"  Game-Test Good Change Rate: {extracted_info['game_test_good_change_rate']}\n")
                 outfile.write(f"  FP: {extracted_info['fp']}\n")
                 outfile.write(f"  FN: {extracted_info['fn']}\n")
+                outfile.write(f"  Naive Confidence: {(1 - float(extracted_info['phase1_accuracy']) - float(extracted_info['delegation_rate']))}\n")
+                fp, fn, n = float(extracted_info['fp']), float(extracted_info['fn']), float(extracted_info['total_n'])
+                a, b, pfp, pfn = float(extracted_info['teammate_accuracy']), float(extracted_info['teammate_accuracy'])-1, fp/n, fn/n
+                delta = (a*fn + b*fp)/n; 
+                var = (a*a*pfn*(1-pfn) + b*b*pfp*(1-pfp) - 2*a*b*pfp*pfn)/n
+                lo, hi = delta - 1.96*var**0.5, delta + 1.96*var**0.5
+                outfile.write(f"  Teammate-weighted confidence: {delta} [{lo}, {hi}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -674,6 +743,12 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["calibration_auc"] = float(m.group(1))
                     current_subject_info["calibration_auc_ci_low"] = float(m.group(2))
                     current_subject_info["calibration_auc_ci_high"] = float(m.group(3))
+            elif "Calibration Entropy AUC:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["calibration_ent_auc"] = float(m.group(1))
+                    current_subject_info["calibration_ent_auc_ci_low"] = float(m.group(2))
+                    current_subject_info["calibration_ent_auc_ci_high"] = float(m.group(3))
             elif "AUC:" in line:
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
@@ -796,6 +871,8 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["topprob_ci_high"] = float(m.group(3))
             elif "Phase 1 accuracy:" in line:
                 current_subject_info["phase1_accuracy"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Teammate accuracy:" in line:
+                current_subject_info["teammate_accuracy"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "Total N:" in line:
                 current_subject_info["total_n"] = parse_value(line, r":\s*(\d+)", as_type=int)
             elif "Game-Test Change Rate:" in line:
@@ -806,6 +883,12 @@ def analyze_parsed_data(input_summary_file):
                 current_subject_info["fp"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
             elif "FN:" in line:
                 current_subject_info["fn"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Teammate-weighted confidence:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["teammate_weighted_conf"] = float(m.group(1))
+                    current_subject_info["teammate_weighted_conf_ci_low"] = float(m.group(2))
+                    current_subject_info["teammate_weighted_conf_ci_high"] = float(m.group(3))
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -856,6 +939,10 @@ def analyze_parsed_data(input_summary_file):
         calibration_auc_val = data.get("calibration_auc", np.nan)
         calibration_auc_ci_low = data.get("calibration_auc_ci_low", np.nan)
         calibration_auc_ci_high = data.get("calibration_auc_ci_high", np.nan)
+
+        calibration_ent_auc_val = data.get("calibration_ent_auc", np.nan)
+        calibration_ent_auc_ci_low = data.get("calibration_ent_auc_ci_low", np.nan)
+        calibration_ent_auc_ci_high = data.get("calibration_ent_auc_ci_high", np.nan)
 
         cntl_capent_val = data.get("cntl_capent", np.nan)
         cntl_capent_ci_low = data.get("cntl_capent_ci_low", np.nan)
@@ -937,6 +1024,10 @@ def analyze_parsed_data(input_summary_file):
         topprob_ci_low = data.get("topprob_ci_low", np.nan)
         topprob_ci_high = data.get("topprob_ci_high", np.nan)
         phase1_accuracy = data.get("phase1_accuracy", np.nan)
+        teammate_accuracy = data.get("teammate_accuracy", np.nan)
+        teammate_weighted_conf = data.get("teammate_weighted_conf", np.nan)
+        teammate_weighted_conf_ci_low = data.get("teammate_weighted_conf_ci_low", np.nan)
+        teammate_weighted_conf_ci_high = data.get("teammate_weighted_conf_ci_high", np.nan)
         total_n = data.get("total_n", np.nan)
 
         results.append({
@@ -959,6 +1050,9 @@ def analyze_parsed_data(input_summary_file):
             "CalibrationAUC": calibration_auc_val,
             "CalibrationAUC_LB": calibration_auc_ci_low,
             "CalibrationAUC_UB": calibration_auc_ci_high,
+            "CalibrationEntAUC": calibration_ent_auc_val,
+            "CalibrationEntAUC_LB": calibration_ent_auc_ci_low,
+            "CalibrationEntAUC_UB": calibration_ent_auc_ci_high,
             "CntlCapEnt": cntl_capent_val,
             "CntlCapEnt_LB": cntl_capent_ci_low,
             "CntlCapEnt_UB": cntl_capent_ci_high,
@@ -1011,6 +1105,10 @@ def analyze_parsed_data(input_summary_file):
             "LR_pvalue": LR_pvalue,
             "Delegation_Rate": delegation_rate,
             "Phase1_Accuracy": phase1_accuracy,
+            "Teammate_Accuracy": teammate_accuracy,
+            "Teammate_Weighted_Conf": teammate_weighted_conf,
+            "Teammate_Weighted_Conf_LB": teammate_weighted_conf_ci_low,
+            "Teammate_Weighted_Conf_UB": teammate_weighted_conf_ci_high,
             "Total_N": total_n,
             "Change%": data.get("game_test_change_rate", np.nan),
             "Good_Change%": data.get("game_test_good_change_rate", np.nan),
@@ -1269,20 +1367,21 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
         else:
             axs[0, 2].axis('off')
 
-        # --- Plot for Capent Correl Prob Cntl in the second row, third column ---
-        if has_capent_correl_prob_cntl_data:
-            df_capent_correl_prob_cntl = df_results.dropna(subset=['Capent_Correl_Prob_Cntl'])
-            formatted_subject_names_capent_correl_prob_cntl = [break_subject_name(name, max_parts_per_line=3) for name in df_capent_correl_prob_cntl["Subject"]]
-            yerr_capent_correl_prob_cntl_low = np.nan_to_num(df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"] - df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl_LB"], nan=0.0)
-            yerr_capent_correl_prob_cntl_high = np.nan_to_num(df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl_UB"] - df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"], nan=0.0)
-            yerr_capent_correl_prob_cntl_low[yerr_capent_correl_prob_cntl_low < 0] = 0
-            yerr_capent_correl_prob_cntl_high[yerr_capent_correl_prob_cntl_high < 0] = 0
+        # --- Plot for Teammate-weighted confidence in the second row, third column ---
+        has_teammate_weighted_conf = 'Teammate_Weighted_Conf' in df_results.columns and not df_results["Teammate_Weighted_Conf"].isna().all()
+        if has_teammate_weighted_conf:
+            df_teammate_weighted_conf = df_results.dropna(subset=['Teammate_Weighted_Conf'])
+            formatted_subject_names_teammate_weighted_conf = [break_subject_name(name, max_parts_per_line=3) for name in df_teammate_weighted_conf["Subject"]]
+            yerr_teammate_weighted_conf_low = np.nan_to_num(df_teammate_weighted_conf["Teammate_Weighted_Conf"] - df_teammate_weighted_conf["Teammate_Weighted_Conf_LB"], nan=0.0)
+            yerr_teammate_weighted_conf_high = np.nan_to_num(df_teammate_weighted_conf["Teammate_Weighted_Conf_UB"] - df_teammate_weighted_conf["Teammate_Weighted_Conf"], nan=0.0)
+            yerr_teammate_weighted_conf_low[yerr_teammate_weighted_conf_low < 0] = 0
+            yerr_teammate_weighted_conf_high[yerr_teammate_weighted_conf_high < 0] = 0
             
-            axs[1, 2].bar(formatted_subject_names_capent_correl_prob_cntl, df_capent_correl_prob_cntl["Capent_Correl_Prob_Cntl"],
+            axs[1, 2].bar(formatted_subject_names_teammate_weighted_conf, df_teammate_weighted_conf["Teammate_Weighted_Conf"],
                            color='cadetblue',
-                           yerr=[yerr_capent_correl_prob_cntl_low, yerr_capent_correl_prob_cntl_high], ecolor='gray', capsize=5, width=0.6)
-            axs[1, 2].set_ylabel('Partial Correlation', fontsize=label_fontsize)
-            axs[1, 2].set_title('Capent Correl Prob Cntl by LLM (95% CI)', fontsize=title_fontsize)
+                           yerr=[yerr_teammate_weighted_conf_low, yerr_teammate_weighted_conf_high], ecolor='gray', capsize=5, width=0.6)
+            axs[1, 2].set_ylabel('Teammate-Weighted Confidence', fontsize=label_fontsize)
+            axs[1, 2].set_title('Teammate-Weighted Confidence by LLM (95% CI)', fontsize=title_fontsize)
             axs[1, 2].axhline(0, color='black', linestyle='--', linewidth=0.8)
             axs[1, 2].tick_params(axis='x', rotation=45, labelsize=tick_fontsize)
             axs[1, 2].tick_params(axis='y', labelsize=tick_fontsize)
@@ -1336,14 +1435,14 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "GPQA"#"GPSA"#"SimpleMC" #"SimpleQA" #
+    dataset = "SimpleMC" #"GPSA"#"SimpleQA" #"GPQA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
     else:
         target_params = "NoMsgHist, NoQCtr, NoPCtr, NoSCtr"
     model_list = ["openai-gpt-5-chat", 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gpt-4o-mini', "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', "gemini-2.5-flash", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gemini-1.5-pro', 'grok-3-latest', 'deepseek-chat']
-    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
+    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash_think", "gemini-2.5-flash_nothink", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite_think", "gemini-2.5-flash-lite_nothink", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
     introspection_score_type = "raw" # "adjusted", "filtered", or "raw"
     lift_score_type = "raw" # "adjusted", "filtered", or "raw"
 

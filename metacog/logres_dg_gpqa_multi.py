@@ -230,13 +230,18 @@ def prepare_regression_data_for_model(game_file_paths_list,
 
             if gpqa_features and gpqa_features.get('difficulty') is not None and s_i_capability is not None:
                 delegate_choice_numeric = 0 if delegation_choice_str == "Self" else 1
-                
+                subject_answer = trial.get("subject_answer")
+                try:
+                    subject_answer_full = trial['options'][subject_answer] if 'options' in trial and subject_answer and trial['options'] and isinstance(trial['options'], dict) and subject_answer in trial['options'] else subject_answer
+                except Exception as e:
+                    print(f"Error on qid {q_id} in file {game_file_paths_list[file_ctr]}, subject_answer={subject_answer}: {e}")
+                    raise e
                 trial_data_dict = {
                     'q_id': q_id, 
                     'delegate_choice': delegate_choice_numeric,
                     's_i_capability': s_i_capability,
                     'subject_correct': False if trial.get('subject_correct') is None else trial['subject_correct'],
-                    'answer_changed': False if a_i_map_for_this_model[q_id] == trial.get('subject_answer') else True,
+                    'answer_changed': False if a_i_map_for_this_model[q_id][1] == subject_answer_full else True,
                     'human_difficulty': gpqa_features['difficulty'],
                     'q_length': np.log(len(gpqa_features.get('q_text', ''))),
                     'domain': domain,#####("Biology" if domain == "biology" else "NonBiology"),
@@ -359,7 +364,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"# "GPQA"#
+    dataset = "GPQA"#"GPSA"# 
     game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -448,9 +453,15 @@ if __name__ == "__main__":
 
                     probs_dict = res_info.get("probs")
                     subject_answer = res_info.get("subject_answer")
-                    a_i_map_for_this_model[q_id] = subject_answer
+                    try: 
+                        options = res_info['options'] if 'options' in res_info else res_info['question']['options'] if 'options' in res_info['question'] else None
+                        subject_answer_full = options[subject_answer] if options and isinstance(options, dict) and subject_answer in options else subject_answer
+                    except Exception as e:
+                        print(f"Error on capabilities qid {q_id}, res_info={res_info}: {e}")
+                        raise e
+                    a_i_map_for_this_model[q_id] = (subject_answer, subject_answer_full)
                     # Populate p_i_map_for_this_model
-                    if subject_answer is not None and isinstance(probs_dict, dict) and 'deepseek' not in model_name_part.lower():
+                    if subject_answer is not None and isinstance(probs_dict, dict):### and 'deepseek' not in model_name_part.lower():
                         prob_for_subject_answer = probs_dict.get(subject_answer)
                         if isinstance(prob_for_subject_answer, (int, float)):
                             if len(probs_dict.keys()) > 1:
@@ -458,7 +469,7 @@ if __name__ == "__main__":
                             else:
                                 p_i_map_for_this_model[q_id] = float(prob_for_subject_answer)**(1/max((len(subject_answer)//2),1)) #-math.log(float(prob_for_subject_answer))/max((len(subject_answer)//2),1)###float(prob_for_subject_answer)#approx token count
                     # Calculate and populate entropy_map_for_this_model
-                    if isinstance(probs_dict, dict) and probs_dict and 'deepseek' not in model_name_part.lower():
+                    if isinstance(probs_dict, dict) and probs_dict:### and 'deepseek' not in model_name_part.lower():
                         prob_values = [float(p) for p in probs_dict.values() if isinstance(p, (int, float)) and p > 1e-9]
                         if prob_values:
                             entropy = -np.sum([p_val * np.log2(p_val) for p_val in prob_values if p_val > 1e-9]) if len(probs_dict.keys()) > 1 else -math.log2(p_i_map_for_this_model[q_id])
@@ -522,6 +533,7 @@ if __name__ == "__main__":
 
             log_output(f"\n--- Analyzing {log_context_str} ---", print_to_console=True, suppress=False)
             log_output(f"              Game files for analysis: {current_game_files_for_analysis}\n")
+            if game_type == "dg": log_output(f"Teammate accuracy phase 1: {teammate_acc_phase1:.4f}", suppress=False)
             
             if current_game_files_for_analysis:
                 first_game_log_path = current_game_files_for_analysis[0].replace("_game_data.json", ".log")
@@ -664,12 +676,13 @@ if __name__ == "__main__":
                     TP, FN, FP, TN = contingency(delegated, cap_corr)
                     try: 
                         raw_stats = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean(), baseline_correct=df_model['s_i_capability'], delegated=df_model['delegate_choice'], baseline_probs = df_model['p_i_capability'] if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any() else None)
+                        raw_stats_ent = lift_mcc_stats(TP, FN, FP, TN, team_corr[kept_mask], cap_corr.mean(), baseline_correct=1-df_model['s_i_capability'], delegated=df_model['delegate_choice'], baseline_probs = df_model['capabilities_entropy'] if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() else None)
                     except Exception as e:
                         log_output(f"Error calculating raw_stats: {e}")
                     log_output(f"Introspection score = {raw_stats['mcc']:.3f} [{raw_stats['mcc_ci'][0]:.3f}, {raw_stats['mcc_ci'][1]:.3f}], p={raw_stats['p_mcc']:.4g}", suppress=False)
                     res_dicts[model_name_part]['introspection_score'] = {'mcc': raw_stats['mcc'], 'p': raw_stats['p_mcc']}
-                    log_output(f"FP = {FP}")
-                    log_output(f"FN = {FN}")
+                    log_output(f"FP = {FP}", suppress=False)
+                    log_output(f"FN = {FN}", suppress=False)
                     delta_d, ci_low, ci_high, p_val = delegate_gap_stats(TP=TP, FN=FN, FP=FP, TN=TN)
                     log_output(f"Delegate Gap = {delta_d:.3f} [{ci_low:.3f}, {ci_high:.3f}, p={p_val:.4g}]")
 
@@ -707,6 +720,8 @@ if __name__ == "__main__":
                         res_dicts[model_name_part]['full_auc'] = {'auc': raw_stats['full_auc'], 'ci_lo': raw_stats['full_auc_ci'][0], 'ci_hi': raw_stats['full_auc_ci'][1]}
                         log_output(f"Calibration AUC = {raw_stats['calibration_auc']:.3f} [{raw_stats['calibration_auc_ci'][0]:.3f}, {raw_stats['calibration_auc_ci'][1]:.3f}]", suppress=False)
                         res_dicts[model_name_part]['calibration_auc'] = {'auc': raw_stats['calibration_auc'], 'ci_lo': raw_stats['calibration_auc_ci'][0], 'ci_hi': raw_stats['calibration_auc_ci'][1]}
+                        log_output(f"Calibration Entropy AUC = {raw_stats_ent['calibration_auc']:.3f} [{raw_stats_ent['calibration_auc_ci'][0]:.3f}, {raw_stats_ent['calibration_auc_ci'][1]:.3f}]", suppress=False)
+                        res_dicts[model_name_part]['calibration_entropy_auc'] = {'auc': raw_stats_ent['calibration_auc'], 'ci_lo': raw_stats_ent['calibration_auc_ci'][0], 'ci_hi': raw_stats_ent['calibration_auc_ci'][1]}
 
                     #lift_sub, ci_low, ci_high, p_boot = self_acc_stats(true_label, team_corr, kept_mask)
                     log_output(f"Adjusted self-acc lift = {adj_stats['lift']:.3f} [{adj_stats['lift_ci'][0]:.3f}, {adj_stats['lift_ci'][1]:.3f}], p={adj_stats['p_lift']:.4g}")
@@ -720,12 +735,32 @@ if __name__ == "__main__":
                         cross_tab_self_s_i_vs_team = pd.crosstab(self_choice_df['s_i_capability'], self_choice_df['subject_correct'])
                         log_output(f"Cross-tabulation of s_i_capability vs. self_correct (for self_choice trials):\n{cross_tab_self_s_i_vs_team}\n")
                         TP = cross_tab_self_s_i_vs_team.loc[1, False]; FP = cross_tab_self_s_i_vs_team.loc[1, True]; FN = cross_tab_self_s_i_vs_team.loc[0, False]; TN = cross_tab_self_s_i_vs_team.loc[0, True]
-                        log_output(f"Game-Test Change Rate: {(TP+TN)/(TP+TN+FP+FN):.4f}")
-                        log_output(f"Game-Test Good Change Rate: {(TN)/(TP+TN+FP+FN):.4f}")
+                        log_output(f"Game-Test Change Rate Orig: {(TP+TN)/(TP+TN+FP+FN):.4f}")
+                        log_output(f"Game-Test Good Change Rate Orig: {(TN)/(TP+TN+FP+FN):.4f}")
+                        cr = len(self_choice_df[self_choice_df['answer_changed'] == True]) / len(self_choice_df)
+                        gcr = len(self_choice_df[(self_choice_df['subject_correct'] == True) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df)
+                        bcr = len(self_choice_df[(self_choice_df['s_i_capability'] == 1) & (self_choice_df['subject_correct'] == False) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df)
+                        b2bcr = len(self_choice_df[(self_choice_df['s_i_capability'] == 0) & (self_choice_df['subject_correct'] == False) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df)
+                        log_output(f"Game-Test Change Rate: {cr:.4f}", suppress=False)
+                        log_output(f"Game-Test Good Change Rate: {gcr:.4f}", suppress=False)
+                        log_output(f"Game-Test Bad Change Rate: {bcr:.4f}", suppress=False)
+                        log_output(f"Game-Test Bad-to-Bad Change Rate: {b2bcr:.4f}", suppress=False)
+
+                        weird_cases = self_choice_df[(self_choice_df['answer_changed'] == True) & (self_choice_df['s_i_capability'] == 1) & (self_choice_df['subject_correct'] == True)]
+                        log_output(f"Number of answer changes without correctness flip: {len(weird_cases)}", suppress=False)
+                        if len(weird_cases)>0: log_output(weird_cases[['s_i_capability', 'subject_correct', 'answer_changed', 'q_id']].head(), suppress=False)
+
+                        changes_df = self_choice_df[self_choice_df['answer_changed'] == True]
+                        if len(changes_df) > 0:
+                            good_given_change = len(changes_df[changes_df['subject_correct'] == True]) / len(changes_df)
+                            bad_given_change = len(changes_df[(changes_df['s_i_capability'] == 1) & (changes_df['subject_correct'] == False)]) / len(changes_df)
+                            log_output(f"P(good | change): {good_given_change:.4f}", suppress=False)
+                            log_output(f"P(bad | change): {bad_given_change:.4f}", suppress=False)
+
                         cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 0) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 0])
-                        log_output(f"Game-Test Change on Incor Rate: {cir}")
+                        log_output(f"Game-Test Change on Incor Rate: {cir}", suppress=False)
                         cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 1) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 1])
-                        log_output(f"Game-Test Change on Cor Rate: {cir}")
+                        log_output(f"Game-Test Change on Cor Rate: {cir}", suppress=False)
 
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")
@@ -990,10 +1025,10 @@ if __name__ == "__main__":
                     if 'implicit_prob_str' in df_model.columns and df_model['implicit_prob_str'].notna().any():
                         log_output(f"\nCorrelation between {implicit_prob_str} and human_difficulty: {df_model['implicit_prob_str'].corr(df_model['human_difficulty'])}")
 
-                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
-                        log_output(f"\nCorrelation between Other's Prob and human_difficulty: {df_model['o_prob'].corr(df_model['human_difficulty'])}")
-                        log_output(f"\nCorrelation between Other's Prob and Self Prob: {df_model['o_prob'].corr(df_model['sp_prob'])}")
-                        log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}")
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any() and 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                        log_output(f"\nCorrelation between Other's Prob and human_difficulty: {df_model['o_prob'].corr(df_model['human_difficulty'])}", suppress=False)
+                        log_output(f"\nCorrelation between Other's Prob and Self Prob: {df_model['o_prob'].corr(df_model['sp_prob'])}", suppress=False)
+                        log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
                         df_model['sp_binary'] = (df_model['sp_prob'] >= 0.5).astype(int)
 
                     log_output(f"\n{df_model.groupby('domain_grouped')['delegate_choice'].value_counts(normalize=True)}\n")
@@ -1070,6 +1105,10 @@ if __name__ == "__main__":
                         #log_output(res.summary(), suppress=False)
                         ci_lower, ci_upper = res.conf_int().loc['s_i_capability']
                         log_output(f"Baseline correctness coefficient with no controls: {res.params['s_i_capability']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['s_i_capability']:.4f}, stderr={res.bse['s_i_capability']:.4f}",suppress=False)
+
+                        res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=continuous_controls+categorical_controls)
+                        log_output(f"Partial correlation on decision with Correctness, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
                     except Exception as e_full:
                         log_output(f"                    Could not fit Logit on decision with correctness and surface controls: {e_full}", suppress=False)
 
@@ -1084,6 +1123,12 @@ if __name__ == "__main__":
                             log_output(res.summary())
                             z, z_ci_low, z_ci_high = (res.params['s_i_capability']/res.bse['s_i_capability'],) + tuple((res.conf_int().loc['s_i_capability'] / res.bse['s_i_capability']).values)
                             log_output(f"Baseline correctness coefficient with all controls, standardized: {z:.4f} [{z_ci_low:.4f}, {z_ci_high:.4f}]", suppress=False)
+
+                            res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']])
+                            log_output(f"Partial correlation on decision with Correctness, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                            log_output(f"Partial correlation on decision with Correctness, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
                             res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
                             ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
                             log_output(f"Capent coefficient with all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
@@ -1227,8 +1272,9 @@ if __name__ == "__main__":
                                 categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m45 if (isinstance(t, str) and t.startswith('C('))]
                                 res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])####, continuous_controls, categorical_controls)
 #                                res, res_dict = compare_predictors_of_choice_simple(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], continuous_controls, categorical_controls, normvars=True)
-                                log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
+                                log_output(f"Correlation between baseline entropy and Stated Self Prob: {res_dict['unadjusted_influence']['capabilities_entropy_vs_sp_prob']['r']} [{res_dict['unadjusted_influence']['capabilities_entropy_vs_sp_prob']['ci_lo']}, {res_dict['unadjusted_influence']['capabilities_entropy_vs_sp_prob']['ci_hi']}]", suppress=False)
+                                log_output(f"Correlation between baseline entropy and Stated Other Prob: {res_dict['unadjusted_influence']['capabilities_entropy_vs_o_prob']['r']} [{res_dict['unadjusted_influence']['capabilities_entropy_vs_o_prob']['ci_lo']}, {res_dict['unadjusted_influence']['capabilities_entropy_vs_o_prob']['ci_hi']}]", suppress=False)
 
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():

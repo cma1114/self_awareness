@@ -346,10 +346,11 @@ class SecondChanceGame(BaseGameClass):
                         list(question["options"].keys()) if not self.is_short_answer else None,
                         content, message_history=message_history, keep_appending=False,
                         setup_text=setup_text, MAX_TOKENS=None,# if self.is_short_answer else 1,
-                        temp = self.temperature
+                        temp = self.temperature,
+                        accept_any=False if not self.is_short_answer else True
                     )
 
-                if len(subject_answer) == 0 or self.is_short_answer:
+                if len(subject_answer.rstrip(string.whitespace + string.punctuation)) == 0 or self.is_short_answer:
                     new_answer = subject_answer
                 else:
                     arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
@@ -596,20 +597,20 @@ class SecondChanceGame(BaseGameClass):
         # Return for further use
         return analysis
 
-def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
+def main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=0.0):
     """
     Main function to run the Second-Chance Game
     """
     # Configuration
     resume_from = None#"./secondchance_game_logs/qwen3-235b-a22b-2507_GPQA_redacted_cor_temp0.0_1756235281_game_data.json" #
     IS_HUMAN = False
-    PROMPT_VARIANT = "_neut" # "_pos" or "_neut" or ""
+    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
     #USE_CORRECT_ANSWERS = False  
     NUM_QUESTIONS = None  # Use all questions if None
     RESAMPLE = False
     seed = 42
-    TEMPERATURE = 0.0
+    TEMPERATURE = temp
     for SUBJECT_NAME, datasets in model_dataset_dict.items():
         for DATASET in datasets:
     
@@ -669,7 +670,10 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        'gemini-2.5-flash-lite': ["GPQA", "SimpleMC"]
+        'gpt-4.1-2025-04-14': ["GPQA", "SimpleMC"],
+        "gpt-4o-2024-08-06": ["GPQA", "SimpleMC"],
+        "gpt-4o-mini": ["GPQA", "SimpleMC"],
+        "gemini-2.0-flash-001": ["GPQA", "SimpleMC"],
         }
-    main(model_dataset_dict, USE_CORRECT_ANSWERS=False)
-    main(model_dataset_dict, USE_CORRECT_ANSWERS=True)
+#    main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=1.0)
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=True, temp=1.0)

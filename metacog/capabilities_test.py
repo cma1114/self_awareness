@@ -162,7 +162,7 @@ class CapabilitiesTest(BaseGameClass):
                         RANGE_MIDPOINTS[key.strip()] * mass
                         for key, mass in probs.items()
                         if key.strip() in RANGE_MIDPOINTS
-                    )
+                    ) if probs else 0.0
                 else:
                     is_correct = (subject_decision == question["correct_answer"])
 
@@ -251,7 +251,7 @@ class CapabilitiesTest(BaseGameClass):
                         RANGE_MIDPOINTS[key.strip()] * mass
                         for key, mass in probs.items()
                         if key.strip() in RANGE_MIDPOINTS
-                    )
+                    ) if probs else 0.0
                 else:
                     is_correct = (subject_decision == question["correct_answer"])
 
@@ -378,7 +378,7 @@ class CapabilitiesTest(BaseGameClass):
                     RANGE_MIDPOINTS[key.strip()] * mass
                     for key, mass in probs.items()
                     if key.strip() in RANGE_MIDPOINTS
-                )
+                    ) if probs else 0.0
             else:
                 is_correct = (subject_decision == question["correct_answer"])
             if is_correct:
@@ -482,59 +482,64 @@ class CapabilitiesTest(BaseGameClass):
         self._log(f"Capabilities measurement completed. Results saved to: {capabilities_file_path}")
         return True, capabilities_file_path
 
-def main():
-    IS_HUMAN = False
-    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
-    subject_name = "gpt-4o-mini"#"gemini-2.5-flash"#"grok-4-0709"#"claude-opus-4-1-20250805"#"gemini-2.5-flash-lite"#"claude-3-haiku-20240307"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
-    resume_from = None#"./capabilities_test_logs/qwen3-235b-a22b-2507_GPQA_447_1756209710_test_data.json" #
-    RESAMPLE = False
-    NESTED = None #values: None, "Self", "Other"
-    temp = 0.0
-    seed = 42
-    
-    N_QUESTIONS = 447 if DATASET_NAME.startswith("GP") else 500#   # Number of questions for capabilities measurement
-    SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
-    try:
-        # Load questions for capabilities measurement
-        print(f"Loading {N_QUESTIONS} questions for capabilities measurement...")
-        formatted_questions = load_and_format_dataset(DATASET_NAME, N_QUESTIONS)
+def main(model_dataset_dict, temp):
+    for subject_name, datasets in model_dataset_dict.items():
+        for DATASET_NAME in datasets:
+            IS_HUMAN = False
+        #    DATASET_NAME = "SimpleQA"    # "TruthfulQA" or "GPQA" or "MMLU or SimpleQA" or "SimpleMC" or "GPSA"
+        #    subject_name = "gpt-4o-mini"#"gemini-2.5-flash"#"grok-4-0709"#"claude-opus-4-1-20250805"#"gemini-2.5-flash-lite"#"claude-3-haiku-20240307"#"grok-4-0709"#"qwen3-235b-a22b-2507"#"gpt-4o-2024-08-06"#"grok-3-latest"#"gpt-4.1-2025-04-14"#'gemini-2.0-flash-001'#"claude-3-5-sonnet-20241022" #"claude-3-sonnet-20240229"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"o3-2025-04-16"#"deepseek-chat"#"gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B"#"gemini-2.5-pro-exp-03-25"#"claude-3-7-sonnet-20250219"#"gpt-4-turbo-2024-04-09"#"Chris"#
+            resume_from = None#"./capabilities_test_logs/qwen3-235b-a22b-2507_GPQA_447_1756209710_test_data.json" #
+            RESAMPLE = False
+            NESTED = "Other" #values: None, "Self", "Other"
+            temp = temp
+            seed = 42
+            
+            N_QUESTIONS = 447 if DATASET_NAME.startswith("GP") else 500#   # Number of questions for capabilities measurement
+            SUBJECT_ID = f"{subject_name.replace('/', '-')}_{DATASET_NAME}_{N_QUESTIONS}"
+            try:
+                # Load questions for capabilities measurement
+                print(f"Loading {N_QUESTIONS} questions for capabilities measurement...")
+                formatted_questions = load_and_format_dataset(DATASET_NAME, N_QUESTIONS)
 
-        random.seed(seed)
-        random.shuffle(formatted_questions)
-            
-        if not formatted_questions or len(formatted_questions) < N_QUESTIONS:
-            print(f"Error: Not enough questions available ({len(formatted_questions) if formatted_questions else 0}). Needed: {N_QUESTIONS}")
-            return
-        
-        # Create game instance for capabilities measurement
-        game = CapabilitiesTest(
-            subject_id=SUBJECT_ID,
-            subject_name=subject_name,
-            questions=formatted_questions,
-            n_questions=N_QUESTIONS,
-            is_human_player=IS_HUMAN,
-            resume_from=resume_from,
-            temperature=temp,
-            resample_for_probs=RESAMPLE,
-            nested = NESTED
-        )
+                random.seed(seed)
+                random.shuffle(formatted_questions)
                     
-        # Run capabilities measurement
-        if (DATASET_NAME == "SimpleQA" or DATASET_NAME == "GPSA") and not NESTED: success, capabilities_file = game.run_capabilities_measurement_sa()
-        else: success, capabilities_file = game.run_capabilities_measurement()
-        
-        if success:
-            print(f"\nCapabilities measurement completed successfully.")
-            print(f"Results saved to: {capabilities_file}")
-        else:
-            print("\nCapabilities measurement failed.")
-            
-    except Exception as e:
-        print(f"Error during execution: {e}")
-        import traceback
-        traceback.print_exc()
+                if not formatted_questions or len(formatted_questions) < N_QUESTIONS:
+                    print(f"Error: Not enough questions available ({len(formatted_questions) if formatted_questions else 0}). Needed: {N_QUESTIONS}")
+                    return
+                
+                # Create game instance for capabilities measurement
+                game = CapabilitiesTest(
+                    subject_id=SUBJECT_ID,
+                    subject_name=subject_name,
+                    questions=formatted_questions,
+                    n_questions=N_QUESTIONS,
+                    is_human_player=IS_HUMAN,
+                    resume_from=resume_from,
+                    temperature=temp,
+                    resample_for_probs=RESAMPLE,
+                    nested = NESTED
+                )
+                            
+                # Run capabilities measurement
+                if (DATASET_NAME == "SimpleQA" or DATASET_NAME == "GPSA") and not NESTED: success, capabilities_file = game.run_capabilities_measurement_sa()
+                else: success, capabilities_file = game.run_capabilities_measurement()
+                
+                if success:
+                    print(f"\nCapabilities measurement completed successfully.")
+                    print(f"Results saved to: {capabilities_file}")
+                else:
+                    print("\nCapabilities measurement failed.")
+                    
+            except Exception as e:
+                print(f"Error during execution: {e}")
+                import traceback
+                traceback.print_exc()
     
     print("\nExecution completed.")
 
 if __name__ == "__main__":
-    main()
+    model_dataset_dict = {
+        "gemini-2.5-flash-lite_think": ["GPSA", "SimpleQA"],
+        }
+    main(model_dataset_dict, temp=1.0)

@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load API keys
-anthropic_api_key = os.environ.get("ANTHROPIC_SPAR_API_KEY")##os.environ.get("ANTHROPIC_API_KEY")##
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")##os.environ.get("ANTHROPIC_SPAR_API_KEY")##
 hyperbolic_api_key = os.environ.get("HYPERBOLIC_API_KEY")
 CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
@@ -70,8 +70,8 @@ class BaseGameClass:
                 self.provider = "xAI"
             elif re.match(r"meta-llama/Meta-Llama-3\.1-\d+B", self.subject_name):
                 self.provider = "NDIF"###"Hyperbolic"###
-            elif "deepseek" in self.subject_name:
-                self.provider = "DeepSeek"
+            #elif "deepseek" in self.subject_name:
+            #    self.provider = "DeepSeek"
             else:
                 self.provider = "OpenRouter"#"Hyperbolic"
 
@@ -145,7 +145,7 @@ class BaseGameClass:
             system_msg = f"{setup_text}"
             options = " " #just to have len(options) be 1 for number of logprobs to return in short answer case
         
-        MAX_ATTEMPTS = 10 #for bad resp format
+        MAX_ATTEMPTS = 50 #for bad resp format
         MAX_CALL_ATTEMPTS = 10 #for rate limit/timeout/server errors
         delay = 1.0
         attempt = 0
@@ -168,7 +168,7 @@ class BaseGameClass:
                     message = self.client.messages.create(
                         model=self.subject_name,
                         max_tokens=(MAX_TOKENS if MAX_TOKENS else 1024),
-                        temperature=temp + attempt * temp_inc,
+                        temperature=min(temp + attempt * temp_inc, max(temp,1.0)),
                         **({"system": system_msg} if system_msg != "" else {}),
                         **({"top_p": top_p} if top_p else {}),
                         **({"top_k": top_k} if top_k else {}),
@@ -178,7 +178,7 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else self.subject_name
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else "deepseek/deepseek-chat-v3-0324" if self.subject_name == "deepseek-chat" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -190,8 +190,8 @@ class BaseGameClass:
                     #print(f"formatted_messages={formatted_messages}")
                     completion = self.client.chat.completions.create(
                         model=model_name,
-                        max_tokens=None,#**({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o3") else {"max_tokens": (None if 'gpt-5' in self.subject_name else MAX_TOKENS)}),
-                        **({"temperature": temp + attempt * temp_inc} if not self.subject_name.startswith("o3") else {}),
+                        **({"max_completion_tokens": MAX_TOKENS} if self.subject_name.startswith("o3") else {"max_tokens": (None if 'gpt-5' in self.subject_name else MAX_TOKENS)}),
+                        **({"temperature": min(temp + attempt * temp_inc, max(temp,1.0))} if not self.subject_name.startswith("o3") else {}),
                         messages=formatted_messages,
                         **({"logprobs": True} if not self.subject_name.startswith("o3") else {}),
                         **({"top_logprobs": len(options)} if not self.subject_name.startswith("o3") else {}),
@@ -219,6 +219,7 @@ class BaseGameClass:
                             tokens = [tl.token for tl in entry.top_logprobs]
                             probs = [math.exp(tl.logprob) for tl in entry.top_logprobs]
                             token_probs = dict(zip(tokens, probs))
+                            resp = max(token_probs, key=token_probs.get)
                         #logprob_tensor = torch.tensor([tl.logprob for tl in entry.top_logprobs])
                         #prob_tensor = torch.nn.functional.softmax(logprob_tensor, dim=0)
                         #token_probs = dict(zip(tokens, prob_tensor.tolist()))
@@ -350,16 +351,27 @@ class BaseGameClass:
                         message_history.append(user_msg)
                     #print(f"system_msg={system_msg}")                     
                     #print(f"formatted_messages={formatted_messages}")  
+                    if "_think" in self.subject_name: think=True
+                    elif "_nothink" in self.subject_name: think=False
+                    else: think=None
                     message = self.client.models.generate_content(
-                        model=self.subject_name,
+                        model=self.subject_name.replace("_think","").replace("_nothink",""),
                         contents=formatted_messages,
                         config=types.GenerateContentConfig(
                             **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
-                            temperature=temp + attempt * temp_inc,
+                            temperature=min(temp + attempt * temp_inc, max(temp,1.0)),
                             candidate_count=1,
                             **({"response_logprobs": True} if '1.5' not in self.subject_name else {}),
-                            **({"logprobs": len(options)} if '1.5' not in self.subject_name else {})
+                            **({"logprobs": len(options)} if '1.5' not in self.subject_name else {}),
+#                            **({"thinking_config": types.ThinkingConfig(thinking_budget=0) if '2.5' in self.subject_name and 'flash' in self.subject_name else {}})
+                            **(
+                                {"thinking_config": types.ThinkingConfig(thinking_budget=-1)}
+                                if '2.5' in self.subject_name and 'flash' in self.subject_name and think is not None and think == True else
+                                {"thinking_config": types.ThinkingConfig(thinking_budget=0)}
+                                if '2.5' in self.subject_name and 'flash' in self.subject_name and think is not None and think == False else
+                                {}
+                            )
                         ), 
                     )
                     if '1.5' in self.subject_name: return message.text.strip(), None
@@ -373,12 +385,16 @@ class BaseGameClass:
 
                     else:                                   # multiple-choice – inspect 1st token only
                         # top_candidates[0].candidates = k alternatives for the 1st token
-                        first_step = logres.top_candidates[0].candidates
-                        if len(first_step) < len(options) and callctr < MAX_CALL_ATTEMPTS - 1:  
-                            raise ValueError("full logprobs not returned")
-                        tokens = [alt.token for alt in first_step]
-                        probs  = [math.exp(alt.log_probability) for alt in first_step]
-                        token_probs = dict(zip(tokens, probs))
+                        if False:#len(resp) > 1:
+                            resp, token_probs = find_answer_in_output(logres, options)
+                        else:
+                            first_step = logres.top_candidates[0].candidates
+                            if len(first_step) < len(options) and callctr < MAX_CALL_ATTEMPTS - 1:  
+                                raise ValueError("full logprobs not returned")
+                            tokens = [alt.token for alt in first_step]
+                            probs  = [math.exp(alt.log_probability) for alt in first_step]
+                            token_probs = dict(zip(tokens, probs))
+                            resp = max(token_probs, key=token_probs.get)
                     return resp, token_probs
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
@@ -563,3 +579,84 @@ class BaseGameClass:
                         'error': exc
                     })
         return results
+    
+
+import math
+
+def find_answer_in_output(logprobs_result, options_list):
+    """
+    Analyzes logprobs from a SINGLE pass to find the most likely answer token based on heuristics.
+
+    THIS FUNCTION IMPLEMENTS THE USER'S SPECIFIED LOGIC. Please see notes on methodological implications.
+
+    Args:
+        logprobs_result: The logprobs_result object from the Gemini API candidate.
+        options_list: A list of valid answer tokens (e.g., ["A", "B", "C", "D"]).
+
+    Returns:
+        A tuple containing:
+        - chosen_token (str): The token determined to be the answer.
+        - token_probs_at_step (dict): The dictionary of token->probability for the step where the answer was found.
+        Returns (None, {}) if no logprobs are available.
+    """
+    # Safety check: Ensure logprobs and the top_candidates list exist and are not empty.
+    if not logprobs_result or not logprobs_result.top_candidates:
+        return None, {}
+
+    # --- CORRECTED SYNTAX SECTION ---
+    # Get the full sequence of tokens that were actually generated.
+    # The generated token at each step is the first candidate in its own list.
+    generated_tokens = []
+    for step in logprobs_result.top_candidates:
+        if step.candidates:
+            generated_tokens.append(step.candidates[0].token)
+        else:
+            # Handle the unlikely case of a step with no candidates
+            generated_tokens.append(None) 
+    # --- END CORRECTION ---
+
+    chosen_token = None
+    target_logprobs_list = None
+
+    # 1. Check if the FIRST generated token is a valid option.
+    if generated_tokens and generated_tokens[0] in options_list:
+        # The chosen token is the first one.
+        chosen_token = generated_tokens[0]
+        # The relevant logprobs are from the very first step (index 0).
+        target_logprobs_list = logprobs_result.top_candidates[0].candidates
+
+    # 2. If not, and if there are multiple tokens, search the LAST part of the response.
+    elif len(generated_tokens) > 1:
+        # Define the search window: up to the last 4 tokens.
+        # Search backwards to find the last occurrence of an option.
+        start_index = max(0, len(generated_tokens) - 4)
+        for i in range(len(generated_tokens) - 1, start_index - 1, -1):
+            token = generated_tokens[i]
+            if token in options_list:
+                chosen_token = token
+                # The relevant logprobs are from the step where this token was generated (index i).
+                target_logprobs_list = logprobs_result.top_candidates[i].candidates
+                break # Stop as soon as we find the first valid option from the end.
+
+    # 3. FALLBACK: If no valid option was found in the generated text,
+    #    get the token with the highest probability from the FIRST step.
+    if chosen_token is None:
+        first_step_logprobs = logprobs_result.top_candidates[0].candidates
+        if not first_step_logprobs:
+             return None, {} # Cannot proceed
+        
+        # Find the token object with the max logprob in the first step's candidates
+        max_prob_obj = max(first_step_logprobs, key=lambda c: c.log_probability)
+        chosen_token = max_prob_obj.token
+        target_logprobs_list = first_step_logprobs
+
+    # 4. Convert the final, targeted logprobs list to a probability dictionary.
+    if not target_logprobs_list:
+        return chosen_token, {} # Return the token we found, but indicate no probs were available for it.
+        
+    token_probs_at_step = {
+        alt.token: math.exp(alt.log_probability) 
+        for alt in target_logprobs_list
+    }
+
+    return chosen_token, token_probs_at_step

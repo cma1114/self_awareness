@@ -377,9 +377,9 @@ class AnswerOrPassGame(BaseGameClass):
                     message_history if self.accumulate_history else [],
                     keep_appending=self.accumulate_history,
                     setup_text=setup_text,
-                    MAX_TOKENS=None if self.is_short_answer else 1,
+                    MAX_TOKENS=None if ('opus-4' in self.subject_name or 'sonnet-4' in self.subject_name or self.is_short_answer) else 1,
                     temp=self.temperature,
-                    accept_any=False
+                    accept_any=True
                 )
             
             # Process decision
@@ -719,7 +719,7 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
-    models = ["openai/gpt-5-chat"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"gemini-2.5-flash-lite"#'gemini-2.0-flash-001'
+    models = ["claude-opus-4-1-20250805"]#"claude-3-5-sonnet-20241022"#"claude-3-haiku-20240307"#"claude-3-sonnet-20240229"#"claude-sonnet-4-20250514"#"gemini-2.5-flash-preview-04-17"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#"gemini-2.5-flash-lite"#'gemini-2.0-flash-001'#"openai/gpt-5-chat"
 
     for model in models:
         for DATASET in DATASETS:
