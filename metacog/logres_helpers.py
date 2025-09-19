@@ -2728,3 +2728,364 @@ def brier_ece(correctness_series, probability_series, n_bins=10, n_bootstrap=100
 
     return results
 
+from scipy import stats
+from pandas.api.types import is_categorical_dtype, is_object_dtype
+
+def compare_partial_correlations(predictor_series, outcome1_series, outcome2_series, 
+                                 control_series_list=None, n_bootstrap=1000, eps=1e-12):
+    """
+    Compare two partial correlations that share the same predictor using Steiger's test.
+    """
+    if control_series_list is None:
+        control_series_list = []
+
+    # Combine all data and drop NaNs
+    all_data = pd.DataFrame({
+        'predictor': predictor_series,
+        'outcome1': outcome1_series,
+        'outcome2': outcome2_series
+    })
+
+    for i, control in enumerate(control_series_list):
+        col_name = control.name if (hasattr(control, 'name') and control.name) else f'control_{i}'
+        all_data[col_name] = control
+
+    all_data = all_data.dropna()
+    n = len(all_data)
+    if n < 5:
+        raise ValueError("Not enough complete cases after dropping NaNs.")
+
+    # Identify control columns
+    control_cols = [c for c in all_data.columns if c not in ['predictor', 'outcome1', 'outcome2']]
+
+    # Build a single control matrix once (avoid re-doing it for each variable)
+    def build_X_controls(df, cols):
+        X_parts = []
+        effective_cols = []
+        for col in cols:
+            s = df[col]
+            if is_categorical_dtype(s) or is_object_dtype(s):
+                if s.nunique() < 2:
+                    # Drop single-level categorical controls
+                    continue
+                dummies = pd.get_dummies(s, prefix=col, drop_first=True).astype(float)
+                if dummies.shape[1] == 0:
+                    continue
+                X_parts.append(dummies)
+                effective_cols.append(col)
+            else:
+                # Numeric: drop if near zero variance
+                if np.nanstd(s.values.astype(float)) < eps:
+                    continue
+                # Standardization not required, but harmless; residualization is invariant to scaling
+                x = (s - s.mean()) / (s.std(ddof=0) if s.std(ddof=0) > 0 else 1.0)
+                X_parts.append(pd.DataFrame({col: x.values}, index=df.index))
+                effective_cols.append(col)
+
+        if X_parts:
+            X_controls = pd.concat(X_parts, axis=1)
+        else:
+            X_controls = pd.DataFrame(index=df.index)
+
+        # Add intercept
+        X_controls.insert(0, 'const', 1.0)
+        return X_controls, effective_cols
+
+    X_controls, effective_cols = build_X_controls(all_data, control_cols)
+    X = X_controls.values.astype(float)
+
+    # Residualize a variable on controls
+    def residualize(y):
+        y = y.values.astype(float)
+        # OLS via lstsq
+        coef, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
+        return y - X @ coef
+
+    # Compute residuals
+    predictor_resid = residualize(all_data['predictor'])
+    outcome1_resid = residualize(all_data['outcome1'])
+    outcome2_resid = residualize(all_data['outcome2'])
+
+    # Partial correlations (correlations among residuals)
+    r_p1 = np.corrcoef(predictor_resid, outcome1_resid)[0, 1]  # predictor–outcome1
+    r_p2 = np.corrcoef(predictor_resid, outcome2_resid)[0, 1]  # predictor–outcome2
+    r_12 = np.corrcoef(outcome1_resid, outcome2_resid)[0, 1]   # outcome1–outcome2
+
+    # Steiger's test (1980): dependent correlations with one variable in common
+    # Use raw r difference, t distribution with df = n - 3
+    r_det = 1 - r_p1**2 - r_p2**2 - r_12**2 + 2*r_p1*r_p2*r_12  # det of 3x3 correlation matrix
+    # Numerical guard
+    if r_det < 0 and r_det > -1e-12:
+        r_det = 0.0
+
+    if r_det <= 0:
+        t_stat = np.nan
+        p_value = np.nan
+    else:
+        df = n - 3
+        num = (r_p1 - r_p2)
+        den = np.sqrt(2 * r_det / ( (n - 3) * (1 + r_12) ))
+        # Avoid divide-by-zero
+        if den == 0:
+            t_stat = np.nan
+            p_value = np.nan
+        else:
+            t_stat = num / den
+            p_value = 2 * (1 - stats.t.cdf(np.abs(t_stat), df=df))
+
+    # Bootstrap CI for the difference in partial correlations
+    diff_bootstrap = []
+    rng = np.random.default_rng()
+    for _ in range(n_bootstrap):
+        idx = rng.integers(0, n, size=n, endpoint=False)
+        boot = all_data.iloc[idx].reset_index(drop=True)
+
+        # Rebuild controls for the bootstrap sample (skip if degenerate)
+        Xc, eff = build_X_controls(boot, control_cols)
+        Xb = Xc.values.astype(float)
+
+        if Xb.shape[1] == 0:  # only intercept
+            # Still valid; proceed
+            pass
+
+        def resid_b(y):
+            y = y.values.astype(float)
+            coef, _, _, _ = np.linalg.lstsq(Xb, y, rcond=None)
+            return y - Xb @ coef
+
+        try:
+            br1 = resid_b(boot['predictor'])
+            br2 = resid_b(boot['outcome1'])
+            br3 = resid_b(boot['outcome2'])
+            rr_p1 = np.corrcoef(br1, br2)[0, 1]
+            rr_p2 = np.corrcoef(br1, br3)[0, 1]
+            if np.isfinite(rr_p1) and np.isfinite(rr_p2):
+                diff_bootstrap.append(rr_p1 - rr_p2)
+        except Exception:
+            continue
+
+    if len(diff_bootstrap) >= max(10, int(0.1 * n_bootstrap)):
+        diff_ci = np.percentile(diff_bootstrap, [2.5, 97.5])
+    else:
+        diff_ci = np.array([np.nan, np.nan])
+
+    diff = r_p1 - r_p2
+    if np.isfinite(diff):
+        if abs(diff) < 1e-12:
+            interpretation = 'tie'
+        else:
+            interpretation = 'outcome1 better' if diff > 0 else 'outcome2 better'
+    else:
+        interpretation = 'undetermined'
+
+    return {
+        'partial_corr_outcome1': r_p1,
+        'partial_corr_outcome2': r_p2,
+        'correlation_between_outcomes': r_12,
+        'difference': diff,
+        'difference_ci': diff_ci,
+        'steiger_z': t_stat,
+        'p_value': p_value,
+        'df': n - 3,
+        'n_samples': n,
+        'controls_used': effective_cols,
+        'interpretation': interpretation,
+        'test': 'Steiger (1980), one variable in common'
+    }
+
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_numeric_dtype
+from statsmodels.regression.linear_model import OLS
+
+def compare_surface_contamination(
+    outcome1_series,
+    outcome2_series,
+    control_series_list,
+    outcome1_name='outcome1',
+    outcome2_name='outcome2',
+    n_bootstrap=1000,
+    random_state=None,
+    eps=1e-12
+):
+    """
+    Compare how well a shared set of surface features predicts two outcomes
+    by comparing in-sample R^2 (and adjusted R^2), with bootstrap CIs.
+    Returns a dict with R^2 for each outcome, their difference, and CIs.
+    """
+
+    # Assemble full data
+    all_data = pd.DataFrame({
+        'outcome1': outcome1_series,
+        'outcome2': outcome2_series
+    })
+    for i, s in enumerate(control_series_list):
+        col_name = getattr(s, 'name', None) or f'feature_{i}'
+        all_data[col_name] = s
+
+    # Clean and reset index to keep design aligned with outcomes
+    all_data = all_data.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+
+    n = len(all_data)
+    if n < 5:
+        raise ValueError("Not enough complete cases after cleaning.")
+
+    feature_cols = [c for c in all_data.columns if c not in ['outcome1', 'outcome2']]
+
+    # Infer feature types
+    num_cols, cat_cols = [], []
+    for c in feature_cols:
+        s = all_data[c]
+        if is_numeric_dtype(s):
+            if np.nanstd(s.values.astype(float)) > eps:  # drop zero-variance numerics
+                num_cols.append(c)
+        else:
+            cat_cols.append(c)
+
+    # Record categorical levels (drop single-level)
+    cat_levels = {}
+    for c in cat_cols:
+        sc = all_data[c].astype('category')
+        if sc.cat.categories.size > 1:
+            cat_levels[c] = list(sc.cat.categories)
+
+    # Build design matrix with fixed columns based on full data
+    def build_X(df):
+        parts = []
+
+        # Numeric (standardize within df; keep zeros if sd ~ 0)
+        for c in num_cols:
+            x = df[c].astype(float).values
+            sd = x.std(ddof=0)
+            if sd <= eps:
+                parts.append(pd.DataFrame({c: np.zeros(len(df))}, index=df.index))
+            else:
+                xz = (x - x.mean()) / sd
+                parts.append(pd.DataFrame({c: xz}, index=df.index))
+
+        # Categorical (fixed levels; drop_first=True). Ensure index alignment.
+        for c, levels in cat_levels.items():
+            sc = pd.Categorical(df[c], categories=levels)
+            sser = pd.Series(sc, index=df.index)
+            dummies = pd.get_dummies(sser, prefix=c, drop_first=True).astype(float)
+            dummies.index = df.index  # ensure same index
+            parts.append(dummies)
+
+        X = pd.concat(parts, axis=1) if parts else pd.DataFrame(index=df.index)
+        X.insert(0, 'const', 1.0)  # intercept first
+        X = X.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+        return X
+
+    # Full-sample design
+    X_full = build_X(all_data)
+    if X_full.shape[0] != n:
+        raise ValueError(f"Design row count {X_full.shape[0]} != n {n}")
+    if not np.isfinite(X_full.values).all():
+        raise ValueError("Design matrix contains non-finite values after cleaning.")
+    X_cols = list(X_full.columns)
+    p = X_full.shape[1] - 1  # predictors excluding intercept
+
+    # Fit statsmodels OLS
+    y1 = all_data['outcome1'].astype(float).values
+    y2 = all_data['outcome2'].astype(float).values
+
+    model1 = OLS(y1, X_full.values).fit()
+    model2 = OLS(y2, X_full.values).fit()
+
+    r2_out1 = model1.rsquared
+    r2_out2 = model2.rsquared
+    r2_diff = r2_out1 - r2_out2
+
+    adj_r2_out1 = model1.rsquared_adj
+    adj_r2_out2 = model2.rsquared_adj
+    adj_r2_diff = adj_r2_out1 - adj_r2_out2
+
+    # Bootstrap (no stratification; sample-until-success)
+    rng = np.random.default_rng(random_state)
+    r2_out1_bootstrap, r2_out2_bootstrap, r2_diffs_bootstrap = [], [], []
+
+    def r2_from_lstsq(X_arr, y, eps=1e-12):
+        y = y.astype(float)
+        ybar = y.mean()
+        sst = np.sum((y - ybar) ** 2)
+        if sst <= eps:
+            return np.nan
+        coef, _, _, _ = np.linalg.lstsq(X_arr, y, rcond=None)
+        yhat = X_arr @ coef
+        sse = np.sum((y - yhat) ** 2)
+        return 1.0 - sse / sst
+
+    target_success = n_bootstrap
+    max_attempts = max(5 * n_bootstrap, n_bootstrap + 5000)
+    attempts = 0
+    successes = 0
+
+    while successes < target_success and attempts < max_attempts:
+        attempts += 1
+        idx = rng.integers(0, n, size=n)
+        boot = all_data.iloc[idx].reset_index(drop=True)
+
+        Xb = build_X(boot).reindex(columns=X_cols, fill_value=0.0).values
+        y1b = boot['outcome1'].astype(float).values
+        y2b = boot['outcome2'].astype(float).values
+
+        r2_1 = r2_from_lstsq(Xb, y1b)
+        r2_2 = r2_from_lstsq(Xb, y2b)
+
+        if np.isfinite(r2_1) and np.isfinite(r2_2):
+            r2_out1_bootstrap.append(r2_1)
+            r2_out2_bootstrap.append(r2_2)
+            r2_diffs_bootstrap.append(r2_1 - r2_2)
+            successes += 1
+
+    warning = None
+    if successes < target_success:
+        warning = f"Warning: only {successes}/{target_success} valid bootstrap reps after {attempts} attempts."
+
+    def pct_ci(a):
+        a = np.asarray(a)
+        if a.size == 0:
+            return np.array([np.nan, np.nan])
+        return np.percentile(a, [2.5, 97.5])
+
+    r2_out1_ci = pct_ci(r2_out1_bootstrap)
+    r2_out2_ci = pct_ci(r2_out2_bootstrap)
+    r2_diff_ci = pct_ci(r2_diffs_bootstrap)
+
+    diff_significant = (
+        np.isfinite(r2_diff_ci).all() and not (r2_diff_ci[0] <= 0 <= r2_diff_ci[1])
+    )
+
+    if r2_out1 > r2_out2:
+        more_contaminated, less_contaminated = outcome1_name, outcome2_name
+    elif r2_out2 > r2_out1:
+        more_contaminated, less_contaminated = outcome2_name, outcome1_name
+    else:
+        more_contaminated, less_contaminated = 'tie', 'tie'
+
+    high_p = (p >= n - 1)
+    note = "High model complexity: predictors >= (n - 1). In-sample R^2 may be inflated." if high_p else None
+
+    return {
+        f'r2_{outcome1_name}': r2_out1,
+        f'r2_{outcome2_name}': r2_out2,
+        f'r2_{outcome1_name}_ci': r2_out1_ci,
+        f'r2_{outcome2_name}_ci': r2_out2_ci,
+        f'adj_r2_{outcome1_name}': adj_r2_out1,
+        f'adj_r2_{outcome2_name}': adj_r2_out2,
+        'r2_difference': r2_diff,
+        'r2_difference_ci': r2_diff_ci,
+        'adj_r2_difference': adj_r2_diff,
+        'difference_significant': diff_significant,
+        'more_contaminated': more_contaminated,
+        'less_contaminated': less_contaminated,
+        'n_samples': n,
+        'n_predictors': p,
+        'n_bootstrap_success': successes,
+        'warning': warning,
+        'note': note,
+        f'full_results_{outcome1_name}': model1,
+        f'full_results_{outcome2_name}': model2,
+        'design_columns': X_cols,
+    }
+

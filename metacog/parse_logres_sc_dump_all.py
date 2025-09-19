@@ -474,7 +474,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA_SecondChance
 
 if __name__ == "__main__":
     
-    dataset = "SimpleQA"#"GPSA" #"GPQA"#"SimpleMC"# 
+    dataset = "SimpleMC"# "SimpleQA"#"GPSA" #"GPQA"#
     suffix = ""
     sc_version = "_new"  # "_new" or "" or "_neut"
 
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     output_filename = f"{input_log_filename.split('.')[0]}{suffix}_parsed.txt"
     
     model_list = ['claude-sonnet-4-20250514','claude-3-5-sonnet-20241022', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'grok-3-latest', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'gemini-2.5-flash-preview-04-17', 'gemini-2.0-flash-001', 'gemini-1.5-pro', 'deepseek-chat']
-
+    model_list = ["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'qwen3-235b-a22b-2507', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash_think", "gemini-2.5-flash_nothink", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite_think", "gemini-2.5-flash-lite_nothink", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
 
     try:
         with open(input_log_filename, 'r', encoding='utf-8') as f:

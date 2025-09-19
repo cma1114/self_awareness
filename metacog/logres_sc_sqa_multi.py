@@ -280,7 +280,7 @@ if __name__ == "__main__":
     dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
     sc_version = "_new"  # "_new" or "" or "_neut"
-    suffix = ""  # "_all" or ""
+    suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}.txt"
@@ -347,7 +347,8 @@ if __name__ == "__main__":
             {'name_prefix': "Correctness", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_cor_" in bn, "Correct", "Incorrect")},
             )
 
-    for model_name_part, game_files_for_model in model_game_files.items():
+    for model_name_part, all_game_files_for_model in model_game_files.items():
+        game_files_for_model = [f for f in all_game_files_for_model if not ('temp0.0' in f and any('temp1.0' in other for other in all_game_files_for_model))]
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
         if not game_files_for_model:
             print(f"  No game files found for model {model_name_part}. Skipping.")

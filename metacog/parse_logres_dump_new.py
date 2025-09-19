@@ -21,6 +21,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     adj_self_acc_lift_regex = re.compile(r"Adjusted self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     raw_self_acc_lift_regex = re.compile(r"Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     filtered_self_acc_lift_regex = re.compile(r"Filtered Self-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    team_acc_lift_regex = re.compile(r"Team-acc lift = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
 
     normed_ba_regex = re.compile(r"Balanced Accuracy Effect Size = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     AUC_regex = re.compile(r"Full AUC = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
@@ -50,7 +51,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     topprob_regex = re.compile(r"df_model\[p_i_capability\] mean: ([-\d.]+), std: ([\d.]+)")
     correctness_correl_cntl_regex = re.compile(r"Partial correlation on decision with Correctness, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     correctness_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Correctness, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
-    
+    ent_dg_vs_stated_cntl_regex = re.compile(r"Decision Prob minus Stated Prob entropy correlation, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    confounds_dg_vs_stated_regex = re.compile(r"Influence of surface confounds on game-stated: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -121,6 +123,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     f"{prefix_lift}_self_acc_lift": "Not found",
                     f"{prefix_lift}_self_acc_lift_ci_low": "Not found",
                     f"{prefix_lift}_self_acc_lift_ci_high": "Not found",
+                    "team_acc_lift": "Not found",
+                    "team_acc_lift_ci_low": "Not found",
+                    "team_acc_lift_ci_high": "Not found",
                     "normed_ba": "Not found",
                     "normed_ba_ci_low": "Not found",
                     "normed_ba_ci_high": "Not found",
@@ -207,7 +212,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "game_test_change_rate": "Not found",
                     "game_test_good_change_rate": "Not found",
                     "fp": "Not found",
-                    "fn": "Not found"
+                    "fn": "Not found",
+                    "ent_dg_vs_stated_cntl": "Not found",
+                    "ent_dg_vs_stated_cntl_ci_low": "Not found",
+                    "ent_dg_vs_stated_cntl_ci_high": "Not found",
+                    "confounds_dg_vs_stated": "Not found",
+                    "confounds_dg_vs_stated_ci_low": "Not found",
+                    "confounds_dg_vs_stated_ci_high": "Not found"
                 }
                 
                 # Model parsing states
@@ -241,6 +252,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info[f"{prefix_lift}_self_acc_lift"] = m.group(1)
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_low"] = m.group(2)
                         extracted_info[f"{prefix_lift}_self_acc_lift_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = team_acc_lift_regex.search(line)
+                    if m:
+                        extracted_info["team_acc_lift"] = m.group(1)
+                        extracted_info["team_acc_lift_ci_low"] = m.group(2)
+                        extracted_info["team_acc_lift_ci_high"] = m.group(3)
                         continue
 
                     # Extract Normed Balanced Accuracy
@@ -437,6 +455,20 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     m_fn = fn_regex.search(line)
                     if m_fn:
                         extracted_info["fn"] = m_fn.group(1)
+                        continue
+                    
+                    m = ent_dg_vs_stated_cntl_regex.search(line)
+                    if m:
+                        extracted_info["ent_dg_vs_stated_cntl"] = m.group(1)
+                        extracted_info["ent_dg_vs_stated_cntl_ci_low"] = m.group(2)
+                        extracted_info["ent_dg_vs_stated_cntl_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = confounds_dg_vs_stated_regex.search(line)
+                    if m:
+                        extracted_info["confounds_dg_vs_stated"] = m.group(1)
+                        extracted_info["confounds_dg_vs_stated_ci_low"] = m.group(2)
+                        extracted_info["confounds_dg_vs_stated_ci_high"] = m.group(3)
                         continue
 
                     # Cross-tabulation parsing state machine
@@ -637,6 +669,7 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     
                 outfile.write(f"  {prefix_int_cln}introspection score: {extracted_info[f'{prefix_int}_introspection']} [{extracted_info[f'{prefix_int}_introspection_ci_low']}, {extracted_info[f'{prefix_int}_introspection_ci_high']}]\n")
                 outfile.write(f"  {prefix_lift_cln}self-acc lift: {extracted_info[f'{prefix_lift}_self_acc_lift']} [{extracted_info[f'{prefix_lift}_self_acc_lift_ci_low']}, {extracted_info[f'{prefix_lift}_self_acc_lift_ci_high']}]\n")
+                outfile.write(f"  Team Accuracy Lift: {extracted_info['team_acc_lift']} [{extracted_info['team_acc_lift_ci_low']}, {extracted_info['team_acc_lift_ci_high']}]\n")
                 outfile.write(f"  Normed Balanced Accuracy: {extracted_info['normed_ba']} [{extracted_info['normed_ba_ci_low']}, {extracted_info['normed_ba_ci_high']}]\n")
                 outfile.write(f"  Full AUC: {extracted_info['auc']} [{extracted_info['auc_ci_low']}, {extracted_info['auc_ci_high']}]\n")
                 outfile.write(f"  Calibration AUC: {extracted_info['calibration_auc']} [{extracted_info['calibration_auc_ci_low']}, {extracted_info['calibration_auc_ci_high']}]\n")
@@ -677,6 +710,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 var = (a*a*pfn*(1-pfn) + b*b*pfp*(1-pfp) - 2*a*b*pfp*pfn)/n
                 lo, hi = delta - 1.96*var**0.5, delta + 1.96*var**0.5
                 outfile.write(f"  Teammate-weighted confidence: {delta} [{lo}, {hi}]\n")
+                outfile.write(f"  Game-Stated Entropy Diff: {extracted_info['ent_dg_vs_stated_cntl']} [{extracted_info['ent_dg_vs_stated_cntl_ci_low']}, {extracted_info['ent_dg_vs_stated_cntl_ci_high']}]\n")
+                outfile.write(f"  Game-Stated Confounds Diff: {extracted_info['confounds_dg_vs_stated']} [{extracted_info['confounds_dg_vs_stated_ci_low']}, {extracted_info['confounds_dg_vs_stated_ci_high']}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -731,6 +766,12 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info[f"{prefix_lift}_self_acc_lift"] = float(m.group(1))
                     current_subject_info[f"{prefix_lift}_self_acc_lift_ci_low"] = float(m.group(2))
                     current_subject_info[f"{prefix_lift}_self_acc_lift_ci_high"] = float(m.group(3))
+            elif "Team Accuracy Lift:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["team_acc_lift"] = float(m.group(1))
+                    current_subject_info["team_acc_lift_ci_low"] = float(m.group(2))
+                    current_subject_info["team_acc_lift_ci_high"] = float(m.group(3))
             elif "Normed Balanced Accuracy:" in line:
                 m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
                 if m:
@@ -889,6 +930,12 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["teammate_weighted_conf"] = float(m.group(1))
                     current_subject_info["teammate_weighted_conf_ci_low"] = float(m.group(2))
                     current_subject_info["teammate_weighted_conf_ci_high"] = float(m.group(3))
+            elif "Stated-Game Entropy Diff Correl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["ent_dg_vs_stated_cntl"] = float(m.group(1))
+                    current_subject_info["ent_dg_vs_stated_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["ent_dg_vs_stated_cntl_ci_high"] = float(m.group(3))
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -927,6 +974,10 @@ def analyze_parsed_data(input_summary_file):
         self_acc_lift_val = data.get(f"{current_prefix_lift}_self_acc_lift", np.nan)
         self_acc_lift_ci_low = data.get(f"{current_prefix_lift}_self_acc_lift_ci_low", np.nan)
         self_acc_lift_ci_high = data.get(f"{current_prefix_lift}_self_acc_lift_ci_high", np.nan)
+
+        team_acc_lift_val = data.get("team_acc_lift", np.nan)
+        team_acc_lift_ci_low = data.get("team_acc_lift_ci_low", np.nan)
+        team_acc_lift_ci_high = data.get("team_acc_lift_ci_high", np.nan)
 
         normed_ba_val = data.get("normed_ba", np.nan)
         normed_ba_ci_low = data.get("normed_ba_ci_low", np.nan)
@@ -1028,6 +1079,12 @@ def analyze_parsed_data(input_summary_file):
         teammate_weighted_conf = data.get("teammate_weighted_conf", np.nan)
         teammate_weighted_conf_ci_low = data.get("teammate_weighted_conf_ci_low", np.nan)
         teammate_weighted_conf_ci_high = data.get("teammate_weighted_conf_ci_high", np.nan)
+        ent_dg_vs_stated_cntl = data.get("ent_dg_vs_stated_cntl", np.nan)
+        ent_dg_vs_stated_cntl_ci_low = data.get("ent_dg_vs_stated_cntl_ci_low", np.nan)
+        ent_dg_vs_stated_cntl_ci_high = data.get("ent_dg_vs_stated_cntl_ci_high", np.nan)
+        confounds_dg_vs_stated = data.get("confounds_dg_vs_stated", np.nan)
+        confounds_dg_vs_stated_ci_low = data.get("confounds_dg_vs_stated_ci_low", np.nan)
+        confounds_dg_vs_stated_ci_high = data.get("confounds_dg_vs_stated_ci_high", np.nan)
         total_n = data.get("total_n", np.nan)
 
         results.append({
@@ -1109,6 +1166,12 @@ def analyze_parsed_data(input_summary_file):
             "Teammate_Weighted_Conf": teammate_weighted_conf,
             "Teammate_Weighted_Conf_LB": teammate_weighted_conf_ci_low,
             "Teammate_Weighted_Conf_UB": teammate_weighted_conf_ci_high,
+            "Ent_DG_vs_Stated_Cntl": ent_dg_vs_stated_cntl,
+            "Ent_DG_vs_Stated_Cntl_LB": ent_dg_vs_stated_cntl_ci_low,
+            "Ent_DG_vs_Stated_Cntl_UB": ent_dg_vs_stated_cntl_ci_high,
+            "Conf_DG_vs_Stated": confounds_dg_vs_stated,
+            "Conf_DG_vs_Stated_LB": confounds_dg_vs_stated_ci_low,
+            "Conf_DG_vs_Stated_UB": confounds_dg_vs_stated_ci_high,
             "Total_N": total_n,
             "Change%": data.get("game_test_change_rate", np.nan),
             "Good_Change%": data.get("game_test_good_change_rate", np.nan),
@@ -1434,8 +1497,8 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "dg"#"aop" #
-    dataset = "SimpleMC" #"GPSA"#"SimpleQA" #"GPQA"#
+    game_type = "aop" #"dg"#
+    dataset = "GPQA"#"SimpleQA" #"GPSA"#"SimpleMC" #
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

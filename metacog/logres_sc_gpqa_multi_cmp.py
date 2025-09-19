@@ -103,7 +103,7 @@ def extract_file_key(filename):
     temp_idx = None
     for i, part in enumerate(parts):
         if part.startswith("temp"):
-            temp_idx = i
+            temp_idx = i + 1 # Include temp part in key
             break
     
     if temp_idx is None:
@@ -582,7 +582,8 @@ if __name__ == "__main__":
         {'name_prefix': "Correctness", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_cor_" in bn, "Correct", "Incorrect")},
         )
 
-    for model_name_part, game_files_for_model in model_game_files.items():
+    for model_name_part, all_game_files_for_model in model_game_files.items():
+        game_files_for_model = [f for f in all_game_files_for_model if not ('temp0.0' in f and any('temp1.0' in other for other in all_game_files_for_model))]
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
         if not game_files_for_model:
             print(f"  No game files found for model {model_name_part}. Skipping.")

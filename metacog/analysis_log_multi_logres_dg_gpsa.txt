@@ -2,6 +2,7 @@
 --- Analyzing claude-3-5-sonnet-20241022 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.7000
 Delegation rate: 0.4828 (n=377)
+Team-acc lift = -0.225 [-0.275, -0.175]
 Introspection score = 0.124 [0.027, 0.224], p=0.017
 FP = 26
 FN = 148
@@ -33,6 +34,7 @@ pseudo-R2, surface controls only model: 0.0715
 --- Analyzing claude-3-haiku-20240307 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.1000
 Delegation rate: 0.9446 (n=397)
+Team-acc lift = 0.006 [-0.021, 0.040]
 Introspection score = 0.083 [-0.047, 0.231], p=0.203
 FP = 30
 FN = 18
@@ -52,16 +54,11 @@ P(good | change): 0.1765
 P(bad | change): 0.0588
 Game-Test Change on Incor Rate: 0.7777777777777778
 Game-Test Change on Cor Rate: 0.75
-Baseline correctness coefficient with surface controls: 1.4008 [0.1523, 2.6493], z=2.1990, stderr=0.6370
-Baseline correctness coefficient with surface controls, standardized: 2.1990 [0.2391, 4.1590]
-Baseline correctness coefficient with no controls: 0.9383 [-0.2076, 2.0841], z=1.6049, stderr=0.5846
-Partial correlation on decision with Correctness, surface controls: 0.1013 [0.0022, 0.1985]
-pseudo-R2, surface controls only model: 0.0872
-Misused predictors: ['human_difficulty']
 
 --- Analyzing claude-3-sonnet-20240229 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.2000
 Delegation rate: 0.9118 (n=397)
+Team-acc lift = -0.009 [-0.044, 0.033]
 Introspection score = 0.023 [-0.071, 0.131], p=0.689
 FP = 33
 FN = 31
@@ -91,6 +88,7 @@ Misused predictors: ['human_difficulty']
 --- Analyzing claude-opus-4-1-20250805 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.2000
 Delegation rate: 0.5811 (n=370)
+Team-acc lift = -0.022 [-0.065, 0.026]
 Introspection score = 0.233 [0.128, 0.335], p=0
 FP = 45
 FN = 89
@@ -122,6 +120,7 @@ pseudo-R2, surface controls only model: 0.1507
 --- Analyzing claude-sonnet-4-20250514 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.5000
 Delegation rate: 0.2317 (n=397)
+Team-acc lift = -0.178 [-0.222, -0.130]
 Introspection score = 0.192 [0.115, 0.263], p=0
 FP = 9
 FN = 215
@@ -153,6 +152,7 @@ pseudo-R2, surface controls only model: 0.1334
 --- Analyzing deepseek-chat (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.8000
 Delegation rate: 0.2292 (n=397)
+Team-acc lift = -0.455 [-0.500, -0.407]
 Introspection score = 0.092 [0.004, 0.173], p=0.043
 FP = 13
 FN = 235
@@ -184,15 +184,16 @@ Baseline correctness coefficient with no controls: 0.5949 [-0.0495, 1.2392], z=1
 Partial correlation on decision with Correctness, surface controls: 0.0783 [-0.0210, 0.1762]
 pseudo-R2, surface controls only model: 0.2826
 Partial correlation on decision with Capent, surface controls: -0.0131 [-0.1137, 0.0877]
-Brier Resolution (ranking): 0.0029 [0.0007, 0.0092]
-Brier Reliability (reality): 0.0147 [0.0056, 0.0295]
-Brier: 0.7752 [0.7334, 0.8146]
-ECE: 0.7765 [0.7377, 0.8194]
+Brier Resolution (ranking): 0.0029 [0.0008, 0.0092]
+Brier Reliability (reality): 0.0147 [0.0054, 0.0285]
+Brier: 0.7752 [0.7307, 0.8139]
+ECE: 0.7765 [0.7331, 0.8220]
 df_model[p_i_capability] mean: 0.9843, std: 0.1105
 
 --- Analyzing gemini-1.5-pro (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.4000
 Delegation rate: 0.1108 (n=397)
+Team-acc lift = -0.221 [-0.256, -0.180]
 Introspection score = 0.084 [-0.007, 0.148], p=0.062
 FP = 3
 FN = 295
@@ -224,6 +225,7 @@ pseudo-R2, surface controls only model: 0.1828
 --- Analyzing gemini-2.0-flash-001 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.1000
 Delegation rate: 0.9027 (n=370)
+Team-acc lift = -0.046 [-0.075, -0.010]
 Introspection score = 0.054 [-0.052, 0.170], p=0.357
 FP = 60
 FN = 27
@@ -247,6 +249,12 @@ P(good | change): 0.3200
 P(bad | change): 0.1200
 Game-Test Change on Incor Rate: 0.7037037037037037
 Game-Test Change on Cor Rate: 0.6666666666666666
+
+Correlation between Other's Prob and human_difficulty: -0.203895219786233
+
+Correlation between Other's Prob and Self Prob: 0.6556535559117883
+
+Correlation between p_i_capability and Self Prob: 0.17546383217949077
 Baseline correctness coefficient with surface controls: 0.3993 [-0.4414, 1.2400], z=0.9308, stderr=0.4289
 Baseline correctness coefficient with surface controls, standardized: 0.9308 [-1.0291, 2.8908]
 Baseline correctness coefficient with no controls: 0.4202 [-0.3843, 1.2246], z=1.0237, stderr=0.4104
@@ -259,21 +267,19 @@ Partial correlation on decision with Correctness, all controls: 0.0141 [-0.0890,
 Capent coefficient with all controls: 0.1518 [-0.2031, 0.5068], z=0.8385, stderr=0.1811
 pseudo-R2, all controls model: 0.1096
 pseudo-R2, surface controls only model: 0.0169
-Standardized Odds Ratio = 0.8926219686511789 [0.642, 2.074]
-Pct AUC Headroom Lift = -0.054 [-0.104, 0.093]
-AUC With Controls = 0.700 [0.639, 0.784]
 Partial correlation on decision with Capent, surface controls: 0.0148 [-0.0900, 0.1193]
 Partial correlation on decision with Capent, Stated Other control: -0.0274 [-0.1310, 0.0768]
 Partial correlation on decision with Capent, all controls: -0.0353 [-0.1396, 0.0698]
-Brier Resolution (ranking): 0.0037 [0.0021, 0.0098]
-Brier Reliability (reality): 0.4982 [0.4380, 0.5570]
-Brier: 0.6462 [0.6089, 0.6824]
-ECE: 0.6987 [0.6578, 0.7378]
+Brier Resolution (ranking): 0.0037 [0.0020, 0.0100]
+Brier Reliability (reality): 0.4982 [0.4431, 0.5583]
+Brier: 0.6462 [0.6088, 0.6808]
+ECE: 0.6987 [0.6580, 0.7378]
 df_model[p_i_capability] mean: 0.8852, std: 0.1268
 
 --- Analyzing gemini-2.5-flash-lite_nothink (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.1000
 Delegation rate: 0.6778 (n=388)
+Team-acc lift = -0.009 [-0.037, 0.026]
 Introspection score = 0.067 [-0.041, 0.175], p=0.236
 FP = 26
 FN = 107
@@ -296,21 +302,140 @@ P(good | change): 0.0667
 P(bad | change): 0.1238
 Game-Test Change on Incor Rate: 0.8411214953271028
 Game-Test Change on Cor Rate: 0.8333333333333334
+
+Correlation between Other's Prob and human_difficulty: -0.15768455765585893
+
+Correlation between Other's Prob and Self Prob: 0.2745422000244988
+
+Correlation between p_i_capability and Self Prob: 0.06934489893805676
 Baseline correctness coefficient with surface controls: 0.7227 [0.0078, 1.4377], z=1.9812, stderr=0.3648
 Baseline correctness coefficient with surface controls, standardized: 1.9812 [0.0213, 3.9412]
 Baseline correctness coefficient with no controls: 0.4275 [-0.2154, 1.0704], z=1.3034, stderr=0.3280
 Partial correlation on decision with Correctness, surface controls: 0.1026 [0.0023, 0.2009]
+Baseline correctness coefficient with Stated Other control: 0.4211 [-0.2250, 1.0673], z=1.2775, stderr=0.3297
+Baseline correctness coefficient with all controls: 0.7269 [0.0111, 1.4426], z=1.9904, stderr=0.3652
+Baseline correctness coefficient with all controls, standardized: 1.9904 [0.0304, 3.9504]
+Partial correlation on decision with Correctness, Stated Other control: 0.0653 [-0.0346, 0.1639]
+Partial correlation on decision with Correctness, all controls: 0.1028 [0.0024, 0.2012]
+Capent coefficient with all controls: -1.2009 [-1.7493, -0.6526], z=-4.2925, stderr=0.2798
+pseudo-R2, all controls model: 0.1041
 pseudo-R2, surface controls only model: 0.1017
 Partial correlation on decision with Capent, surface controls: 0.2445 [0.1459, 0.3383]
-Brier Resolution (ranking): 0.0012 [0.0011, 0.0058]
-Brier Reliability (reality): 0.4829 [0.4387, 0.5323]
-Brier: 0.5807 [0.5485, 0.6120]
-ECE: 0.6637 [0.6279, 0.6979]
+Partial correlation on decision with Capent, Stated Other control: 0.2343 [0.1360, 0.3281]
+Partial correlation on decision with Capent, all controls: 0.2421 [0.1433, 0.3361]
+Brier Resolution (ranking): 0.0012 [0.0011, 0.0059]
+Brier Reliability (reality): 0.4829 [0.4376, 0.5316]
+Brier: 0.5807 [0.5480, 0.6131]
+ECE: 0.6637 [0.6254, 0.6983]
 df_model[p_i_capability] mean: 0.7771, std: 0.2262
+Partial correlation on decision prob with Capent, surface controls: 0.2683 [0.1707, 0.3606]
+Partial correlation on decision prob with Capent, Stated Other control: 0.2515 [0.1539, 0.3443]
+Partial correlation on decision prob with Capent, all controls: 0.2614 [0.1634, 0.3543]
+Linres on decision prob with Capent, surface controls: 0.1451 [0.0915, 0.1987], z=5.3276, stderr=0.0272
+Linres on decision prob with Capent, no controls: 0.1496 [0.0946, 0.2046], z=5.3472, stderr=0.0280
+Linres on decision prob with Capent, Stated Other control: 0.1397 [0.0848, 0.1945], z=5.0061, stderr=0.0279
+Linres on decision prob with Capent, all controls: 0.1407 [0.0872, 0.1941], z=5.1731, stderr=0.0272
+Linres on decision prob with Capent, all controls, standardized: 5.1731 [3.2066, 7.1396]
+Partial correlation (entropy → game): 0.261
+Partial correlation (entropy → stated): 0.109
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.152 [0.038, 0.283]
+Steiger's test: z = 2.27, p = 0.024
+Partial correlation (entropy → game): 0.267
+Partial correlation (entropy → stated): 0.130
+Decision Prob minus Stated Prob entropy correlation, no controls: 0.137 [0.031, 0.253]
+Steiger's test: z = 2.10, p = 0.036
+Partial correlation (entropy → stated): 0.130
+Partial correlation (entropy → other): 0.122
+Stated Prob minus Other Prob entropy correlation, no controls: 0.009 [-0.103, 0.116]
+Steiger's test: z = 0.14, p = 0.891
+Influence of surface confounds on game decisions: R² = 0.137 [0.096, 0.223]
+Influence of surface confounds on stated confidence: R² = 0.132 [0.086, 0.219]
+Influence of surface confounds on game-stated: 0.005 [-0.083, 0.088]
+
+--- Analyzing gemini-2.5-flash-lite_think (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
+Teammate accuracy phase 1: 0.5000
+Delegation rate: 0.1347 (n=386)
+Team-acc lift = -0.155 [-0.201, -0.107]
+Introspection score = 0.134 [0.043, 0.212], p=0.001
+FP = 8
+FN = 222
+Phase 1 accuracy: 0.3109 (n=386)
+Self-acc lift = -0.065 [-0.110, -0.017], p=0.009264
+Normed Self-acc lift = -0.095 [-0.160, -0.025]
+Balanced Accuracy Effect Size = 0.315 [0.100, 0.531]
+Full AUC = 0.563 [0.481, 0.644]
+Calibration AUC = 0.518 [0.453, 0.584]
+Calibration Entropy AUC = 0.517 [0.449, 0.585]
+Game-Test Change Rate: 0.8862
+Game-Test Good Change Rate: 0.1856
+Game-Test Bad Change Rate: 0.1557
+Game-Test Bad-to-Bad Change Rate: 0.5449
+Number of answer changes without correctness flip: 40
+    s_i_capability  subject_correct  answer_changed                          q_id
+11               1             True            True  gpqa_train_recEO0cONj7M4p94J
+12               1             True            True  gpqa_train_recIN1LyuCWtFwrJ4
+24               1             True            True  gpqa_train_recyl3usDqb7ruXJx
+29               1             True            True  gpqa_train_recuYEkVjdVUwA3c0
+42               1             True            True  gpqa_train_recr71WEmXEEMzRgq
+P(good | change): 0.2095
+P(bad | change): 0.1757
+Game-Test Change on Incor Rate: 0.918918918918919
+Game-Test Change on Cor Rate: 0.8214285714285714
+
+Correlation between Other's Prob and human_difficulty: -0.08927378268116232
+
+Correlation between Other's Prob and Self Prob: -0.03932182530255553
+
+Correlation between p_i_capability and Self Prob: -0.07604806201132915
+Baseline correctness coefficient with surface controls: 1.0108 [0.1986, 1.8230], z=2.4392, stderr=0.4144
+Baseline correctness coefficient with surface controls, standardized: 2.4392 [0.4793, 4.3992]
+Baseline correctness coefficient with no controls: 1.0206 [0.2337, 1.8074], z=2.5422, stderr=0.4014
+Partial correlation on decision with Correctness, surface controls: 0.1282 [0.0279, 0.2258]
+Baseline correctness coefficient with Stated Other control: 1.0213 [0.2344, 1.8083], z=2.5437, stderr=0.4015
+Baseline correctness coefficient with all controls: 1.0130 [0.2001, 1.8258], z=2.4425, stderr=0.4147
+Baseline correctness coefficient with all controls, standardized: 2.4425 [0.4825, 4.4025]
+Partial correlation on decision with Correctness, Stated Other control: 0.1340 [0.0345, 0.2308]
+Partial correlation on decision with Correctness, all controls: 0.1284 [0.0280, 0.2262]
+Capent coefficient with all controls: -0.0166 [-0.2891, 0.2559], z=-0.1196, stderr=0.1390
+pseudo-R2, all controls model: 0.0279
+pseudo-R2, surface controls only model: 0.0278
+Partial correlation on decision with Capent, surface controls: 0.0071 [-0.0943, 0.1083]
+Partial correlation on decision with Capent, Stated Other control: 0.0194 [-0.0814, 0.1197]
+Partial correlation on decision with Capent, all controls: 0.0068 [-0.0946, 0.1082]
+Brier Resolution (ranking): 0.0042 [0.0011, 0.0127]
+Brier Reliability (reality): 0.4344 [0.3776, 0.5043]
+Brier: 0.6434 [0.5997, 0.6916]
+ECE: 0.6543 [0.6063, 0.6984]
+df_model[p_i_capability] mean: 0.9617, std: 0.0653
+Partial correlation on decision prob with Capent, surface controls: 0.0119 [-0.0913, 0.1148]
+Partial correlation on decision prob with Capent, Stated Other control: 0.0227 [-0.0799, 0.1247]
+Partial correlation on decision prob with Capent, all controls: 0.0115 [-0.0918, 0.1146]
+Linres on decision prob with Capent, surface controls: 0.0303 [-0.2340, 0.2946], z=0.2254, stderr=0.1344
+Linres on decision prob with Capent, no controls: 0.0577 [-0.2036, 0.3191], z=0.4342, stderr=0.1329
+Linres on decision prob with Capent, Stated Other control: 0.0576 [-0.2041, 0.3193], z=0.4328, stderr=0.1331
+Linres on decision prob with Capent, all controls: 0.0295 [-0.2356, 0.2946], z=0.2186, stderr=0.1348
+Linres on decision prob with Capent, all controls, standardized: 0.2186 [-1.7479, 2.1852]
+Partial correlation (entropy → game): 0.012
+Partial correlation (entropy → stated): -0.083
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.094 [-0.035, 0.208]
+Steiger's test: z = 1.22, p = 0.224
+Partial correlation (entropy → game): 0.023
+Partial correlation (entropy → stated): -0.094
+Decision Prob minus Stated Prob entropy correlation, no controls: 0.117 [-0.029, 0.227]
+Steiger's test: z = 1.49, p = 0.136
+Partial correlation (entropy → stated): -0.090
+Partial correlation (entropy → other): -0.023
+Stated Prob minus Other Prob entropy correlation, no controls: -0.067 [-0.202, 0.121]
+Steiger's test: z = -0.91, p = 0.363
+Influence of surface confounds on game decisions: R² = 0.025 [0.014, 0.092]
+Influence of surface confounds on stated confidence: R² = 0.087 [0.052, 0.163]
+Influence of surface confounds on game-stated: -0.062 [-0.125, 0.006]
+Misused predictors: ['q_length']
 
 --- Analyzing gemini-2.5-flash-preview-04-17 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.6000
 Delegation rate: 0.0765 (n=392)
+Team-acc lift = -0.171 [-0.219, -0.122]
 Introspection score = 0.151 [0.079, 0.216], p=0.001
 FP = 3
 FN = 228
@@ -341,47 +466,166 @@ pseudo-R2, surface controls only model: 0.1034
 
 --- Analyzing gemini-2.5-flash_nothink (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.5000
-Delegation rate: 0.6247 (n=373)
-Introspection score = 0.137 [0.031, 0.244], p=0.012
-FP = 25
-FN = 111
-Phase 1 accuracy: 0.1448 (n=373)
-Self-acc lift = 0.120 [0.048, 0.191], p=0.0002501
-Normed Self-acc lift = 0.140 [0.056, 0.223]
-Balanced Accuracy Effect Size = 0.383 [0.095, 0.672]
-Full AUC = 0.643 [0.582, 0.702]
-Calibration AUC = 0.675 [0.590, 0.760]
-Calibration Entropy AUC = 0.661 [0.558, 0.752]
-Game-Test Change Rate: 0.8571
-Game-Test Good Change Rate: 0.1929
-Game-Test Bad Change Rate: 0.0500
-Game-Test Bad-to-Bad Change Rate: 0.6143
-Number of answer changes without correctness flip: 12
+Delegation rate: 0.6213 (n=367)
+Team-acc lift = -0.080 [-0.130, -0.029]
+Introspection score = 0.153 [0.047, 0.257], p=0.003
+FP = 30
+FN = 104
+Phase 1 accuracy: 0.1771 (n=367)
+Self-acc lift = 0.082 [0.010, 0.154], p=0.01437
+Normed Self-acc lift = 0.100 [0.012, 0.187]
+Balanced Accuracy Effect Size = 0.394 [0.126, 0.662]
+Full AUC = 0.639 [0.575, 0.702]
+Calibration AUC = 0.663 [0.581, 0.742]
+Calibration Entropy AUC = 0.658 [0.578, 0.737]
+Game-Test Change Rate: 0.6978
+Game-Test Good Change Rate: 0.1223
+Game-Test Bad Change Rate: 0.0576
+Game-Test Bad-to-Bad Change Rate: 0.5180
+Number of answer changes without correctness flip: 8
      s_i_capability  subject_correct  answer_changed                          q_id
-15                1             True            True  gpqa_train_recXfU8eT0BtQtqlE
 21                1             True            True  gpqa_train_reclx98uq6gUM42UR
-48                1             True            True  gpqa_train_recywRj5a8EEjj2Ib
-90                1             True            True  gpqa_train_recyPffUDqC2k7ZZO
-116               1             True            True  gpqa_train_recPzW1WqRnPs57D6
-P(good | change): 0.2250
-P(bad | change): 0.0583
-Game-Test Change on Incor Rate: 0.9099099099099099
-Game-Test Change on Cor Rate: 0.6551724137931034
-Baseline correctness coefficient with surface controls: 0.8244 [0.2138, 1.4351], z=2.6461, stderr=0.3116
-Baseline correctness coefficient with surface controls, standardized: 2.6461 [0.6861, 4.6061]
-Baseline correctness coefficient with no controls: 0.7764 [0.1940, 1.3588], z=2.6129, stderr=0.2972
-Partial correlation on decision with Correctness, surface controls: 0.1404 [0.0386, 0.2393]
-pseudo-R2, surface controls only model: 0.0500
-Partial correlation on decision with Capent, surface controls: 0.1687 [0.0639, 0.2697]
-Brier Resolution (ranking): 0.0104 [0.0053, 0.0243]
-Brier Reliability (reality): 0.3351 [0.2950, 0.3826]
-Brier: 0.4491 [0.4156, 0.4811]
-ECE: 0.5395 [0.5026, 0.5829]
-df_model[p_i_capability] mean: 0.6779, std: 0.2647
+81                1             True            True  gpqa_train_recixxJmdux0d8LZQ
+114               1             True            True  gpqa_train_rec90hpebagUgiRpS
+141               1             True            True  gpqa_train_recySCwROqoVpo0UG
+189               1             True            True  gpqa_train_recReg13iV2HwJTaA
+P(good | change): 0.1753
+P(bad | change): 0.0825
+Game-Test Change on Incor Rate: 0.7788461538461539
+Game-Test Change on Cor Rate: 0.45714285714285713
+
+Correlation between Other's Prob and human_difficulty: -0.11349435362776443
+
+Correlation between Other's Prob and Self Prob: 0.5520375357067571
+
+Correlation between p_i_capability and Self Prob: 0.13067448036557683
+Baseline correctness coefficient with surface controls: 0.8179 [0.2459, 1.3899], z=2.8026, stderr=0.2918
+Baseline correctness coefficient with surface controls, standardized: 2.8026 [0.8426, 4.7625]
+Baseline correctness coefficient with no controls: 0.7980 [0.2557, 1.3404], z=2.8839, stderr=0.2767
+Partial correlation on decision with Correctness, surface controls: 0.1497 [0.0472, 0.2491]
+Baseline correctness coefficient with Stated Other control: 0.7987 [0.2562, 1.3411], z=2.8858, stderr=0.2768
+Baseline correctness coefficient with all controls: 0.8137 [0.2412, 1.3861], z=2.7859, stderr=0.2921
+Baseline correctness coefficient with all controls, standardized: 2.7859 [0.8259, 4.7458]
+Partial correlation on decision with Correctness, Stated Other control: 0.1529 [0.0511, 0.2514]
+Partial correlation on decision with Correctness, all controls: 0.1489 [0.0463, 0.2485]
+Capent coefficient with all controls: -0.2311 [-0.4801, 0.0180], z=-1.8183, stderr=0.1271
+pseudo-R2, all controls model: 0.0542
+pseudo-R2, surface controls only model: 0.0533
+Partial correlation on decision with Capent, surface controls: 0.1037 [-0.0008, 0.2060]
+Partial correlation on decision with Capent, Stated Other control: 0.1038 [0.0000, 0.2054]
+Partial correlation on decision with Capent, all controls: 0.1017 [-0.0030, 0.2042]
+Brier Resolution (ranking): 0.0116 [0.0061, 0.0233]
+Brier Reliability (reality): 0.3969 [0.3501, 0.4486]
+Brier: 0.5297 [0.4958, 0.5609]
+ECE: 0.5965 [0.5515, 0.6372]
+df_model[p_i_capability] mean: 0.7737, std: 0.2276
+Partial correlation on decision prob with Capent, surface controls: 0.0746 [-0.0301, 0.1778]
+Partial correlation on decision prob with Capent, Stated Other control: 0.0591 [-0.0450, 0.1619]
+Partial correlation on decision prob with Capent, all controls: 0.0706 [-0.0344, 0.1740]
+Linres on decision prob with Capent, surface controls: 0.0392 [-0.0159, 0.0943], z=1.4003, stderr=0.0280
+Linres on decision prob with Capent, no controls: 0.0307 [-0.0248, 0.0862], z=1.0892, stderr=0.0282
+Linres on decision prob with Capent, Stated Other control: 0.0319 [-0.0243, 0.0882], z=1.1159, stderr=0.0286
+Linres on decision prob with Capent, all controls: 0.0372 [-0.0182, 0.0926], z=1.3218, stderr=0.0281
+Linres on decision prob with Capent, all controls, standardized: 1.3218 [-0.6450, 3.2886]
+Partial correlation (entropy → game): 0.071
+Partial correlation (entropy → stated): 0.053
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.017 [-0.115, 0.147]
+Steiger's test: z = 0.27, p = 0.786
+Partial correlation (entropy → game): 0.058
+Partial correlation (entropy → stated): 0.140
+Decision Prob minus Stated Prob entropy correlation, no controls: -0.082 [-0.213, 0.053]
+Steiger's test: z = -1.25, p = 0.212
+Partial correlation (entropy → stated): 0.140
+Partial correlation (entropy → other): 0.160
+Stated Prob minus Other Prob entropy correlation, no controls: -0.021 [-0.102, 0.055]
+Steiger's test: z = -0.41, p = 0.679
+Influence of surface confounds on game decisions: R² = 0.090 [0.055, 0.163]
+Influence of surface confounds on stated confidence: R² = 0.347 [0.298, 0.430]
+Influence of surface confounds on game-stated: -0.257 [-0.341, -0.167]
+
+--- Analyzing gemini-2.5-flash_think (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
+Teammate accuracy phase 1: 0.9000
+Delegation rate: 0.0208 (n=384)
+Team-acc lift = -0.507 [-0.554, -0.457]
+Introspection score = 0.074 [-0.019, 0.137], p=0.102
+FP = 1
+FN = 235
+Phase 1 accuracy: 0.3698 (n=384)
+Self-acc lift = 0.013 [-0.037, 0.064], p=0.5937
+Normed Self-acc lift = 0.021 [-0.059, 0.101]
+Balanced Accuracy Effect Size = 0.174 [-0.033, 0.381]
+Full AUC = 0.428 [nan, nan]
+Calibration AUC = 0.478 [0.423, 0.522]
+Calibration Entropy AUC = 0.469 [0.400, 0.535]
+Game-Test Change Rate: 0.9096
+Game-Test Good Change Rate: 0.3298
+Game-Test Bad Change Rate: 0.0745
+Game-Test Bad-to-Bad Change Rate: 0.5053
+Number of answer changes without correctness flip: 93
+   s_i_capability  subject_correct  answer_changed                          q_id
+0               1             True            True  gpqa_train_recMLNCge97pgSDHq
+1               1             True            True  gpqa_train_reckYqR92oJkqJXkE
+2               1             True            True  gpqa_train_recV1nqYQvpII94oC
+4               1             True            True  gpqa_train_rec5rjeLsEq5Fg7Oj
+9               1             True            True  gpqa_train_recNFJjE5PPTqVJGv
+P(good | change): 0.3626
+P(bad | change): 0.0819
+Game-Test Change on Incor Rate: 0.9404255319148936
+Game-Test Change on Cor Rate: 0.8581560283687943
+
+Correlation between Other's Prob and human_difficulty: -0.1065793995476284
+
+Correlation between Other's Prob and Self Prob: -0.06265536352523089
+
+Correlation between p_i_capability and Self Prob: -0.0769185016469254
+Baseline correctness coefficient with surface controls: 1.6678 [-0.5302, 3.8659], z=1.4872, stderr=1.1215
+Baseline correctness coefficient with surface controls, standardized: 1.4872 [-0.4728, 3.4472]
+Baseline correctness coefficient with no controls: 1.4351 [-0.6706, 3.5408], z=1.3358, stderr=1.0743
+Partial correlation on decision with Correctness, surface controls: 0.0790 [-0.0220, 0.1785]
+Baseline correctness coefficient with Stated Other control: 1.4332 [-0.6727, 3.5390], z=1.3339, stderr=1.0744
+Baseline correctness coefficient with all controls: 1.6647 [-0.5333, 3.8626], z=1.4844, stderr=1.1214
+Baseline correctness coefficient with all controls, standardized: 1.4844 [-0.4756, 3.4444]
+Partial correlation on decision with Correctness, Stated Other control: 0.0738 [-0.0266, 0.1728]
+Partial correlation on decision with Correctness, all controls: 0.0790 [-0.0222, 0.1786]
+Capent coefficient with all controls: -0.2528 [-0.8486, 0.3431], z=-0.8314, stderr=0.3040
+pseudo-R2, all controls model: 0.0688
+pseudo-R2, surface controls only model: 0.0685
+Partial correlation on decision with Capent, surface controls: 0.0456 [-0.0657, 0.1559]
+Partial correlation on decision with Capent, Stated Other control: 0.0387 [-0.0717, 0.1482]
+Partial correlation on decision with Capent, all controls: 0.0457 [-0.0659, 0.1561]
+Brier Resolution (ranking): 0.0006 [0.0001, 0.0064]
+Brier Reliability (reality): 0.3489 [0.2973, 0.4107]
+Brier: 0.5819 [0.5373, 0.6280]
+ECE: 0.5874 [0.5341, 0.6361]
+df_model[p_i_capability] mean: 0.9572, std: 0.0442
+Partial correlation on decision prob with Capent, surface controls: 0.0500 [-0.0614, 0.1602]
+Partial correlation on decision prob with Capent, Stated Other control: 0.0445 [-0.0660, 0.1539]
+Partial correlation on decision prob with Capent, all controls: 0.0498 [-0.0618, 0.1601]
+Linres on decision prob with Capent, surface controls: 0.0842 [-0.1036, 0.2720], z=0.8820, stderr=0.0954
+Linres on decision prob with Capent, no controls: 0.0727 [-0.1082, 0.2536], z=0.7907, stderr=0.0920
+Linres on decision prob with Capent, Stated Other control: 0.0728 [-0.1084, 0.2540], z=0.7901, stderr=0.0921
+Linres on decision prob with Capent, all controls: 0.0838 [-0.1044, 0.2719], z=0.8761, stderr=0.0956
+Linres on decision prob with Capent, all controls, standardized: 0.8761 [-1.0915, 2.8438]
+Partial correlation (entropy → game): 0.050
+Partial correlation (entropy → stated): -0.092
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.141 [-0.078, 0.382]
+Steiger's test: z = 1.70, p = 0.091
+Partial correlation (entropy → game): 0.044
+Partial correlation (entropy → stated): -0.089
+Decision Prob minus Stated Prob entropy correlation, no controls: 0.134 [-0.099, 0.434]
+Steiger's test: z = 1.61, p = 0.108
+Partial correlation (entropy → stated): -0.089
+Partial correlation (entropy → other): 0.009
+Stated Prob minus Other Prob entropy correlation, no controls: -0.098 [-0.252, 0.058]
+Steiger's test: z = -1.20, p = 0.229
+Influence of surface confounds on game decisions: R² = 0.012 [0.008, 0.071]
+Influence of surface confounds on stated confidence: R² = 0.040 [0.021, 0.102]
+Influence of surface confounds on game-stated: -0.028 [-0.086, 0.027]
 
 --- Analyzing gpt-4.1-2025-04-14 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.6000
 Delegation rate: 0.3342 (n=392)
+Team-acc lift = -0.243 [-0.289, -0.194]
 Introspection score = 0.195 [0.110, 0.276], p=0
 FP = 16
 FN = 183
@@ -407,6 +651,12 @@ P(good | change): 0.2578
 P(bad | change): 0.1133
 Game-Test Change on Incor Rate: 0.9781420765027322
 Game-Test Change on Cor Rate: 0.9871794871794872
+
+Correlation between Other's Prob and human_difficulty: -0.10631679618021447
+
+Correlation between Other's Prob and Self Prob: 0.2216872175603659
+
+Correlation between p_i_capability and Self Prob: 0.26533139075583967
 Baseline correctness coefficient with surface controls: 0.9877 [0.3733, 1.6021], z=3.1507, stderr=0.3135
 Baseline correctness coefficient with surface controls, standardized: 3.1507 [1.1907, 5.1106]
 Baseline correctness coefficient with no controls: 1.1196 [0.5333, 1.7059], z=3.7427, stderr=0.2991
@@ -419,16 +669,13 @@ Partial correlation on decision with Correctness, all controls: 0.1583 [0.0593, 
 Capent coefficient with all controls: -0.2954 [-0.6336, 0.0427], z=-1.7124, stderr=0.1725
 pseudo-R2, all controls model: 0.0351
 pseudo-R2, surface controls only model: 0.0330
-Standardized Odds Ratio = 1.4215289567212825 [1.018, 2.816]
-Pct AUC Headroom Lift = 0.142 [-0.023, 0.342]
-AUC With Controls = 0.600 [0.520, 0.697]
 Partial correlation on decision with Capent, surface controls: 0.1488 [0.0030, 0.2884]
 Partial correlation on decision with Capent, Stated Other control: 0.1676 [0.0244, 0.3042]
 Partial correlation on decision with Capent, all controls: 0.1470 [0.0007, 0.2871]
-Brier Resolution (ranking): 0.0039 [0.0010, 0.0095]
-Brier Reliability (reality): 0.4463 [0.3952, 0.5022]
-Brier: 0.6247 [0.5903, 0.6577]
-ECE: 0.6674 [0.6241, 0.7077]
+Brier Resolution (ranking): 0.0039 [0.0010, 0.0100]
+Brier Reliability (reality): 0.4463 [0.3920, 0.5022]
+Brier: 0.6247 [0.5886, 0.6590]
+ECE: 0.6674 [0.6218, 0.7099]
 df_model[p_i_capability] mean: 0.9072, std: 0.0515
 Partial correlation on decision prob with Capent, surface controls: 0.1549 [0.0092, 0.2941]
 Partial correlation on decision prob with Capent, Stated Other control: 0.1762 [0.0332, 0.3122]
@@ -438,10 +685,26 @@ Linres on decision prob with Capent, no controls: 0.5706 [0.0986, 1.0427], z=2.3
 Linres on decision prob with Capent, Stated Other control: 0.5799 [0.1087, 1.0511], z=2.4281, stderr=0.2388
 Linres on decision prob with Capent, all controls: 0.4786 [0.0121, 0.9451], z=2.0247, stderr=0.2364
 Linres on decision prob with Capent, all controls, standardized: 2.0247 [0.0513, 3.9980]
+Partial correlation (entropy → game): 0.150
+Partial correlation (entropy → stated): 0.203
+Decision Prob minus Stated Prob entropy correlation, all controls: -0.053 [-0.450, 0.208]
+Steiger's test: z = -0.60, p = 0.547
+Partial correlation (entropy → game): 0.173
+Partial correlation (entropy → stated): 0.217
+Decision Prob minus Stated Prob entropy correlation, no controls: -0.044 [-0.339, 0.236]
+Steiger's test: z = -0.49, p = 0.625
+Partial correlation (entropy → stated): 0.217
+Partial correlation (entropy → other): 0.029
+Stated Prob minus Other Prob entropy correlation, no controls: 0.188 [-0.003, 0.380]
+Steiger's test: z = 2.13, p = 0.034
+Influence of surface confounds on game decisions: R² = 0.052 [0.028, 0.117]
+Influence of surface confounds on stated confidence: R² = 0.139 [0.100, 0.220]
+Influence of surface confounds on game-stated: -0.086 [-0.151, -0.024]
 
 --- Analyzing gpt-4o-2024-08-06 (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.7000
 Delegation rate: 0.7708 (n=384)
+Team-acc lift = -0.104 [-0.153, -0.056]
 Introspection score = 0.277 [0.162, 0.390], p=0
 FP = 34
 FN = 56
@@ -467,6 +730,12 @@ P(good | change): 0.2716
 P(bad | change): 0.1605
 Game-Test Change on Incor Rate: 0.8928571428571429
 Game-Test Change on Cor Rate: 0.96875
+
+Correlation between Other's Prob and human_difficulty: -0.1387156477408311
+
+Correlation between Other's Prob and Self Prob: 0.5437074105952142
+
+Correlation between p_i_capability and Self Prob: 0.23401422386133675
 Baseline correctness coefficient with surface controls: 1.3465 [0.7525, 1.9405], z=4.4426, stderr=0.3031
 Baseline correctness coefficient with surface controls, standardized: 4.4426 [2.4826, 6.4026]
 Baseline correctness coefficient with no controls: 1.4824 [0.9200, 2.0448], z=5.1661, stderr=0.2869
@@ -479,16 +748,13 @@ Partial correlation on decision with Correctness, all controls: 0.2486 [0.1514, 
 Capent coefficient with all controls: -0.6096 [-1.0430, -0.1762], z=-2.7567, stderr=0.2211
 pseudo-R2, all controls model: 0.0744
 pseudo-R2, surface controls only model: 0.0494
-Standardized Odds Ratio = 1.8284022969720513 [1.312, 2.824]
-Pct AUC Headroom Lift = 0.129 [-0.018, 0.350]
-AUC With Controls = 0.689 [0.614, 0.774]
 Partial correlation on decision with Capent, surface controls: 0.2357 [0.0851, 0.3758]
 Partial correlation on decision with Capent, Stated Other control: 0.2268 [0.0780, 0.3656]
 Partial correlation on decision with Capent, all controls: 0.2328 [0.0816, 0.3736]
-Brier Resolution (ranking): 0.0040 [0.0010, 0.0094]
-Brier Reliability (reality): 0.5449 [0.4911, 0.6011]
-Brier: 0.6812 [0.6485, 0.7117]
-ECE: 0.7375 [0.7003, 0.7756]
+Brier Resolution (ranking): 0.0040 [0.0010, 0.0101]
+Brier Reliability (reality): 0.5449 [0.4944, 0.5996]
+Brier: 0.6812 [0.6505, 0.7124]
+ECE: 0.7375 [0.7017, 0.7721]
 df_model[p_i_capability] mean: 0.9094, std: 0.0405
 Partial correlation on decision prob with Capent, surface controls: 0.2823 [0.1344, 0.4179]
 Partial correlation on decision prob with Capent, Stated Other control: 0.2696 [0.1232, 0.4045]
@@ -498,10 +764,26 @@ Linres on decision prob with Capent, no controls: 1.5587 [0.6845, 2.4329], z=3.5
 Linres on decision prob with Capent, Stated Other control: 1.5709 [0.7111, 2.4307], z=3.6072, stderr=0.4355
 Linres on decision prob with Capent, all controls: 1.5442 [0.7173, 2.3710], z=3.6881, stderr=0.4187
 Linres on decision prob with Capent, all controls, standardized: 3.6881 [1.7132, 5.6630]
+Partial correlation (entropy → game): 0.280
+Partial correlation (entropy → stated): 0.129
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.151 [-0.039, 0.314]
+Steiger's test: z = 1.79, p = 0.075
+Partial correlation (entropy → game): 0.263
+Partial correlation (entropy → stated): 0.148
+Decision Prob minus Stated Prob entropy correlation, no controls: 0.115 [-0.047, 0.267]
+Steiger's test: z = 1.49, p = 0.138
+Partial correlation (entropy → stated): 0.148
+Partial correlation (entropy → other): -0.011
+Stated Prob minus Other Prob entropy correlation, no controls: 0.159 [-0.010, 0.327]
+Steiger's test: z = 2.16, p = 0.032
+Influence of surface confounds on game decisions: R² = 0.154 [0.110, 0.239]
+Influence of surface confounds on stated confidence: R² = 0.363 [0.309, 0.437]
+Influence of surface confounds on game-stated: -0.209 [-0.283, -0.124]
 
 --- Analyzing gpt-4o-mini (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.5000
 Delegation rate: 0.4602 (n=389)
+Team-acc lift = -0.217 [-0.260, -0.171]
 Introspection score = 0.095 [-0.003, 0.184], p=0.057
 FP = 12
 FN = 184
@@ -527,6 +809,12 @@ P(good | change): 0.1050
 P(bad | change): 0.0550
 Game-Test Change on Incor Rate: 0.9565217391304348
 Game-Test Change on Cor Rate: 0.9230769230769231
+
+Correlation between Other's Prob and human_difficulty: -0.03218257718395982
+
+Correlation between Other's Prob and Self Prob: 0.3286028476608026
+
+Correlation between p_i_capability and Self Prob: 0.21961382067425364
 Baseline correctness coefficient with surface controls: 0.8565 [0.1137, 1.5994], z=2.2599, stderr=0.3790
 Baseline correctness coefficient with surface controls, standardized: 2.2599 [0.2999, 4.2198]
 Baseline correctness coefficient with no controls: 0.6762 [-0.0391, 1.3916], z=1.8528, stderr=0.3650
@@ -539,16 +827,13 @@ Partial correlation on decision with Correctness, all controls: 0.1171 [0.0170, 
 Capent coefficient with all controls: -0.5122 [-0.8073, -0.2172], z=-3.4028, stderr=0.1505
 pseudo-R2, all controls model: 0.0583
 pseudo-R2, surface controls only model: 0.0388
-Standardized Odds Ratio = 1.4215266038089618 [1.115, 1.864]
-Pct AUC Headroom Lift = 0.110 [-0.051, 0.275]
-AUC With Controls = 0.637 [0.575, 0.708]
 Partial correlation on decision with Capent, surface controls: 0.2327 [0.1152, 0.3438]
 Partial correlation on decision with Capent, Stated Other control: 0.1694 [0.0508, 0.2832]
 Partial correlation on decision with Capent, all controls: 0.2178 [0.0995, 0.3301]
-Brier Resolution (ranking): 0.0006 [0.0000, 0.0025]
-Brier Reliability (reality): 0.6800 [0.6329, 0.7283]
-Brier: 0.7665 [0.7418, 0.7919]
-ECE: 0.8246 [0.7959, 0.8522]
+Brier Resolution (ranking): 0.0006 [0.0000, 0.0022]
+Brier Reliability (reality): 0.6800 [0.6298, 0.7248]
+Brier: 0.7665 [0.7397, 0.7906]
+ECE: 0.8246 [0.7929, 0.8512]
 df_model[p_i_capability] mean: 0.9223, std: 0.0367
 Partial correlation on decision prob with Capent, surface controls: 0.2489 [0.1321, 0.3588]
 Partial correlation on decision prob with Capent, Stated Other control: 0.1819 [0.0636, 0.2950]
@@ -558,10 +843,26 @@ Linres on decision prob with Capent, no controls: 1.3922 [0.5387, 2.2456], z=3.2
 Linres on decision prob with Capent, Stated Other control: 1.3068 [0.4554, 2.1582], z=3.0219, stderr=0.4324
 Linres on decision prob with Capent, all controls: 1.7002 [0.8459, 2.5545], z=3.9186, stderr=0.4339
 Linres on decision prob with Capent, all controls, standardized: 3.9186 [1.9495, 5.8877]
+Partial correlation (entropy → game): 0.236
+Partial correlation (entropy → stated): 0.129
+Decision Prob minus Stated Prob entropy correlation, all controls: 0.106 [-0.052, 0.261]
+Steiger's test: z = 1.41, p = 0.161
+Partial correlation (entropy → game): 0.193
+Partial correlation (entropy → stated): 0.179
+Decision Prob minus Stated Prob entropy correlation, no controls: 0.013 [-0.143, 0.165]
+Steiger's test: z = 0.17, p = 0.866
+Partial correlation (entropy → stated): 0.179
+Partial correlation (entropy → other): 0.092
+Stated Prob minus Other Prob entropy correlation, no controls: 0.087 [-0.019, 0.212]
+Steiger's test: z = 1.27, p = 0.206
+Influence of surface confounds on game decisions: R² = 0.065 [0.040, 0.130]
+Influence of surface confounds on stated confidence: R² = 0.261 [0.213, 0.336]
+Influence of surface confounds on game-stated: -0.196 [-0.266, -0.117]
 
 --- Analyzing grok-3-latest (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.1000
 Delegation rate: 0.8061 (n=392)
+Team-acc lift = -0.015 [-0.046, 0.024]
 Introspection score = 0.172 [0.054, 0.283], p=0.004
 FP = 50
 FN = 51
@@ -587,6 +888,12 @@ P(good | change): 0.2941
 P(bad | change): 0.1029
 Game-Test Change on Incor Rate: 0.9019607843137255
 Game-Test Change on Cor Rate: 0.88
+
+Correlation between Other's Prob and human_difficulty: -0.0965548078290513
+
+Correlation between Other's Prob and Self Prob: 0.4070634403239557
+
+Correlation between p_i_capability and Self Prob: 0.08302693581391292
 Baseline correctness coefficient with surface controls: 1.1622 [0.5271, 1.7972], z=3.5866, stderr=0.3240
 Baseline correctness coefficient with surface controls, standardized: 3.5866 [1.6267, 5.5466]
 Baseline correctness coefficient with no controls: 0.9585 [0.3926, 1.5244], z=3.3197, stderr=0.2887
@@ -599,16 +906,13 @@ Partial correlation on decision with Correctness, all controls: 0.1877 [0.0894, 
 Capent coefficient with all controls: -0.1250 [-0.4748, 0.2248], z=-0.7003, stderr=0.1785
 pseudo-R2, all controls model: 0.0838
 pseudo-R2, surface controls only model: 0.0597
-Standardized Odds Ratio = 1.042599419948968 [0.813, 6.254]
-Pct AUC Headroom Lift = 0.041 [-0.238, 0.232]
-AUC With Controls = 0.668 [0.535, 0.748]
 Partial correlation on decision with Capent, surface controls: 0.0051 [-0.1023, 0.1123]
 Partial correlation on decision with Capent, Stated Other control: 0.0129 [-0.0938, 0.1192]
 Partial correlation on decision with Capent, all controls: 0.0362 [-0.0715, 0.1431]
-Brier Resolution (ranking): 0.0023 [0.0004, 0.0063]
-Brier Reliability (reality): 0.5842 [0.5256, 0.6475]
-Brier: 0.7346 [0.6981, 0.7722]
-ECE: 0.7627 [0.7230, 0.7990]
+Brier Resolution (ranking): 0.0023 [0.0004, 0.0070]
+Brier Reliability (reality): 0.5842 [0.5249, 0.6408]
+Brier: 0.7346 [0.6971, 0.7692]
+ECE: 0.7627 [0.7273, 0.8054]
 df_model[p_i_capability] mean: 0.9516, std: 0.0746
 Partial correlation on decision prob with Capent, surface controls: -0.0376 [-0.1444, 0.0700]
 Partial correlation on decision prob with Capent, Stated Other control: -0.0387 [-0.1446, 0.0681]
@@ -618,10 +922,26 @@ Linres on decision prob with Capent, no controls: -0.0994 [-0.3098, 0.1110], z=-
 Linres on decision prob with Capent, Stated Other control: -0.0764 [-0.2879, 0.1351], z=-0.7102, stderr=0.1075
 Linres on decision prob with Capent, all controls: -0.0368 [-0.2488, 0.1753], z=-0.3410, stderr=0.1078
 Linres on decision prob with Capent, all controls, standardized: -0.3410 [-2.3081, 1.6262]
+Partial correlation (entropy → game): -0.019
+Partial correlation (entropy → stated): 0.140
+Decision Prob minus Stated Prob entropy correlation, all controls: -0.159 [-0.277, 0.034]
+Steiger's test: z = -2.57, p = 0.010
+Partial correlation (entropy → game): -0.050
+Partial correlation (entropy → stated): 0.058
+Decision Prob minus Stated Prob entropy correlation, no controls: -0.109 [-0.219, 0.013]
+Steiger's test: z = -1.80, p = 0.072
+Partial correlation (entropy → stated): 0.058
+Partial correlation (entropy → other): -0.126
+Stated Prob minus Other Prob entropy correlation, no controls: 0.184 [0.037, 0.409]
+Steiger's test: z = 3.14, p = 0.002
+Influence of surface confounds on game decisions: R² = 0.048 [0.028, 0.108]
+Influence of surface confounds on stated confidence: R² = 0.238 [0.189, 0.335]
+Influence of surface confounds on game-stated: -0.190 [-0.266, -0.122]
 
 --- Analyzing openai-gpt-5-chat (Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered, 1 game files) ---
 Teammate accuracy phase 1: 0.8000
 Delegation rate: 0.3249 (n=394)
+Team-acc lift = -0.308 [-0.357, -0.258]
 Introspection score = 0.302 [0.219, 0.383], p=0
 FP = 16
 FN = 152

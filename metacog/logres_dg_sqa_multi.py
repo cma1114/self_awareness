@@ -339,7 +339,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleMC" #"SimpleQA" #
-    game_type = "dg" #"aop"#
+    game_type = "aop"#"dg" #
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -642,7 +642,7 @@ if __name__ == "__main__":
                             hi = p_team + 1.96 * se
                             excess = p_team - p_const
                         ci_excess = (lo - p_const, hi - p_const)
-                        log_output(f"Team-acc lift = {excess:.3f} [{ci_excess[0]:.3f}, {ci_excess[1]:.3f}]")
+                        log_output(f"Team-acc lift = {excess:.3f} [{ci_excess[0]:.3f}, {ci_excess[1]:.3f}]", suppress=False)
                         res_dicts[model_name_part]['team_acc_lift'] = {'lift': excess, 'ci_lo': ci_excess[0], 'ci_hi': ci_excess[1]}
                     except Exception as e:
                         log_output(f"Error calculating team-acc lift: {e}")
@@ -1069,6 +1069,11 @@ if __name__ == "__main__":
                             res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
                             log_output(f"Partial correlation on decision with Correctness, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
 
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
+                            ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
+                            log_output(f"Capent coefficient with all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
+                            log_output(res.summary())
+                            res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=None, control_vars=control_vars + [df_model['o_prob']])
                             log_output(f"pseudo-R2, all controls model: {res.prsquared:.4f}", suppress=False)
                         except Exception as e_full:
                             log_output(f"                    Could not fit Logit on decision with correctness and Stated Other control: {e_full}", suppress=False)
@@ -1189,6 +1194,7 @@ if __name__ == "__main__":
                                 #log_output(f"\n                  Answer Choice by Stated (Self and Other) vs CapEnt Model")
                                 #res = compare_predictors_of_choice(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'])
                                 #log_output(res)
+                                """
                                 log_output(f"\n====================Introspection Metrics====================")
                                 try:
                                     imd = introspection_metrics(1-df_model['delegate_choice'], -df_model['capabilities_entropy'], X=df_model['o_prob'], C=1.0)
@@ -1212,6 +1218,7 @@ if __name__ == "__main__":
                                 log_output(res)
                                 res_dicts[model_name_part]['capent'] = res_dict
                                 res_dicts[model_name_part]['capent']['introspection'] = rd
+                                """
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                         log_output(f"\n====================Partial correlation on decision: Capent====================")
@@ -1332,6 +1339,42 @@ if __name__ == "__main__":
                                 log_output(f"Linres on decision prob with Capent, all controls: {res.params['capabilities_entropy']:.4f} [{ci_lower:.4f}, {ci_upper:.4f}], z={res.tvalues['capabilities_entropy']:.4f}, stderr={res.bse['capabilities_entropy']:.4f}",suppress=False)
                                 z, z_ci_low, z_ci_high = (res.params['capabilities_entropy']/res.bse['capabilities_entropy'],) + tuple((res.conf_int().loc['capabilities_entropy'] / res.bse['capabilities_entropy']).values)
                                 log_output(f"Linres on decision prob with Capent, all controls, standardized: {z:.4f} [{z_ci_low:.4f}, {z_ci_high:.4f}]", suppress=False)
+
+
+                                if 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
+                                    log_output(f"\n==================== Entropy as Predictor of Decision Prob vs Stated Prob ====================")
+                                    try:
+                                        results = compare_partial_correlations(predictor_series=df_model['capabilities_entropy'],
+                                                                            outcome1_series=df_model['t_prob'],
+                                                                            outcome2_series=1-df_model['sp_prob'],
+                                                                            control_series_list=continuous_controls+categorical_controls+[df_model['o_prob']])
+                                        log_output(f"Partial correlation (entropy → game): {results['partial_corr_outcome1']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → stated): {results['partial_corr_outcome2']:.3f}", suppress=False)
+                                        log_output(f"Decision Prob minus Stated Prob entropy correlation, all controls: {results['difference']:.3f} [{results['difference_ci'][0]:.3f}, {results['difference_ci'][1]:.3f}]", suppress=False)
+                                        log_output(f"Steiger's test: z = {results['steiger_z']:.2f}, p = {results['p_value']:.3f}", suppress=False)
+
+                                        results = compare_partial_correlations(predictor_series=df_model['capabilities_entropy'],
+                                                                            outcome1_series=df_model['t_prob'],
+                                                                            outcome2_series=1-df_model['sp_prob'])
+                                        log_output(f"Partial correlation (entropy → game): {results['partial_corr_outcome1']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → stated): {results['partial_corr_outcome2']:.3f}", suppress=False)
+                                        log_output(f"Decision Prob minus Stated Prob entropy correlation, no controls: {results['difference']:.3f} [{results['difference_ci'][0]:.3f}, {results['difference_ci'][1]:.3f}]", suppress=False)
+                                        log_output(f"Steiger's test: z = {results['steiger_z']:.2f}, p = {results['p_value']:.3f}", suppress=False)
+
+                                        results = compare_partial_correlations(predictor_series=df_model['capabilities_entropy'],
+                                                                            outcome1_series=1-df_model['sp_prob'],
+                                                                            outcome2_series=1-df_model['o_prob'])
+                                        log_output(f"Partial correlation (entropy → stated): {results['partial_corr_outcome1']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → other): {results['partial_corr_outcome2']:.3f}", suppress=False)
+                                        log_output(f"Stated Prob minus Other Prob entropy correlation, no controls: {results['difference']:.3f} [{results['difference_ci'][0]:.3f}, {results['difference_ci'][1]:.3f}]", suppress=False)
+                                        log_output(f"Steiger's test: z = {results['steiger_z']:.2f}, p = {results['p_value']:.3f}", suppress=False)
+
+                                        results = compare_surface_contamination(outcome1_series=df_model['t_prob'], outcome2_series=1-df_model['sp_prob'],control_series_list=continuous_controls+categorical_controls+[df_model['o_prob']])
+                                        log_output(f"Influence of surface confounds on game decisions: R² = {results['r2_outcome1']:.3f} [{results['r2_outcome1_ci'][0]:.3f}, {results['r2_outcome1_ci'][1]:.3f}]", suppress=False)
+                                        log_output(f"Influence of surface confounds on stated confidence: R² = {results['r2_outcome2']:.3f} [{results['r2_outcome2_ci'][0]:.3f}, {results['r2_outcome2_ci'][1]:.3f}]", suppress=False)
+                                        log_output(f"Influence of surface confounds on game-stated: {results['r2_difference']:.3f} [{results['r2_difference_ci'][0]:.3f}, {results['r2_difference_ci'][1]:.3f}]", suppress=False)
+                                    except Exception as e_full:
+                                        log_output(f"                    Could not compute entropy as predictor of decision prob vs stated prob: {e_full}", suppress=False)
 
 
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():

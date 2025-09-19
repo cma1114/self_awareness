@@ -670,10 +670,7 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=0.0):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        'gpt-4.1-2025-04-14': ["GPQA", "SimpleMC"],
-        "gpt-4o-2024-08-06": ["GPQA", "SimpleMC"],
-        "gpt-4o-mini": ["GPQA", "SimpleMC"],
-        "gemini-2.0-flash-001": ["GPQA", "SimpleMC"],
+        "gemini-2.5-flash_think": ["GPQA", "SimpleMC"],
         }
-#    main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=1.0)
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=1.0)
     main(model_dataset_dict, USE_CORRECT_ANSWERS=True, temp=1.0)

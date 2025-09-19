@@ -235,7 +235,7 @@ class CapabilitiesTest(BaseGameClass):
                     )
                 
                 # --- Same result processing logic as parallel path ---
-                if len(subject_answer) == 0:
+                if len(subject_answer.rstrip(string.whitespace + string.punctuation)) == 0:
                     subject_decision = subject_answer
                 else:
                     arr = subject_answer.upper().rstrip(string.whitespace + string.punctuation)
@@ -251,7 +251,7 @@ class CapabilitiesTest(BaseGameClass):
                         RANGE_MIDPOINTS[key.strip()] * mass
                         for key, mass in probs.items()
                         if key.strip() in RANGE_MIDPOINTS
-                    ) if probs else 0.0
+                    ) if probs else RANGE_MIDPOINTS[subject_decision] if subject_decision in RANGE_MIDPOINTS else 0.0
                 else:
                     is_correct = (subject_decision == question["correct_answer"])
 
@@ -540,6 +540,6 @@ def main(model_dataset_dict, temp):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        "gemini-2.5-flash-lite_think": ["GPSA", "SimpleQA"],
+        "gemini-1.5-pro": ["SimpleQA"],
         }
-    main(model_dataset_dict, temp=1.0)
+    main(model_dataset_dict, temp=0.0)
