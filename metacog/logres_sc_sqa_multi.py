@@ -280,7 +280,7 @@ if __name__ == "__main__":
     dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
     sc_version = "_new"  # "_new" or "" or "_neut"
-    suffix = "_all"  # "_all" or ""
+    suffix = ""  # "_all" or ""
     VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}.txt"

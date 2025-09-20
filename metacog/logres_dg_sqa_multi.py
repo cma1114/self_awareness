@@ -339,7 +339,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 if __name__ == "__main__":
 
     dataset = "SimpleMC" #"SimpleQA" #
-    game_type = "aop"#"dg" #
+    game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -785,6 +785,7 @@ if __name__ == "__main__":
 
 
                     implicit_prob_str = 'capabilities_entropy' #'p_i_capability' # 
+                    """
                     results = compare_predictors_of_answer(
                         np.array(df_model['sp_prob']),
                         np.array(df_model[implicit_prob_str]),
@@ -850,7 +851,7 @@ if __name__ == "__main__":
                     results = compare_predictors_of_implicit_conf(np.array([1-p for p in df_model['sp_prob']]), df_model['delegate_choice'],df_model[implicit_prob_str])
                     log_output(f"Stated pass continuous correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
                     log_output(f"Actual-Continuous Stated Difference: p={results['p_diff']:.4f}")
-
+                    """
                 if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
                     log_output("\n  Model 1.4: Delegate_Choice ~ capabilities_prob")
                     try:

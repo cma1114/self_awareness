@@ -76,4 +76,4 @@ def make_plots(filename):
     out_filename = filename.replace('.json', '_game_vs_stated_plots.png')
     plt.savefig(out_filename)
 
-make_plots('res_dicts_reasoning_sa_dg.json')
+make_plots('res_dicts_reasoning_mc_dg.json')

@@ -301,10 +301,10 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "GPQA" #"GPSA"#
+    dataset = "GPSA"#"GPQA" #
     game_type = "sc"
     sc_version = "_new"  # "_new" or "" or "_neut"
-    suffix = "_all"  # "_all" or ""
+    suffix = ""  # "_all" or ""
     VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}.txt"

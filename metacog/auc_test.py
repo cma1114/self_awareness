@@ -167,7 +167,10 @@ def compare_external_influence(json1_paths, json2_paths, variant1_name='delegate
             print(f"\n→ {variant2_name} shows MORE introspection (higher entropy AUC)")
         elif mean_diff_e < 0:
             print(f"\n→ {variant1_name} shows MORE introspection (higher entropy AUC)")
-        
+
+        print("\nPer-observation results:")
+        print(entropy_df.to_string(index=False))        
+
     return df, {
         'mean_diff': mean_diff,
         'p_value_t': p_value_t,
@@ -175,9 +178,9 @@ def compare_external_influence(json1_paths, json2_paths, variant1_name='delegate
         'ci_95': (ci_lower, ci_upper)
     }
 
-results_df, stats_dict = compare_external_influence(['res_dicts_factual_sa_dg.json','res_dicts_reasoning_sa_dg.json'], ['res_dicts_factual_sa_aop.json','res_dicts_reasoning_sa_aop.json'])
-#results_df, stats_dict = compare_external_influence(['res_dicts_factual_mc_dg.json','res_dicts_reasoning_mc_dg.json'], ['res_dicts_factual_mc_aop.json','res_dicts_reasoning_mc_aop.json'])
+#results_df, stats_dict = compare_external_influence(['res_dicts_factual_sa_dg.json','res_dicts_reasoning_sa_dg.json'], ['res_dicts_factual_sa_aop.json','res_dicts_reasoning_sa_aop.json'])
+results_df, stats_dict = compare_external_influence(['res_dicts_factual_mc_dg.json','res_dicts_reasoning_mc_dg.json'], ['res_dicts_factual_mc_aop.json','res_dicts_reasoning_mc_aop.json'])
 #results_df, stats_dict = compare_external_influence(['res_dicts_factual_sa_dg.json','res_dicts_reasoning_sa_dg.json','res_dicts_factual_mc_dg.json','res_dicts_reasoning_mc_dg.json'], ['res_dicts_factual_sa_aop.json','res_dicts_reasoning_sa_aop.json','res_dicts_factual_mc_aop.json','res_dicts_reasoning_mc_aop.json'])
 print("\nOverall Statistics:", stats_dict)
-print("\nDetailed Results DataFrame:")
-print(results_df)
+#print("\nDetailed Results DataFrame:")
+#print(results_df)

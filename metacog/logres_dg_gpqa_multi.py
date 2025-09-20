@@ -364,7 +364,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPSA"#"GPQA"# 
+    dataset = "GPQA"# "GPSA"#
     game_type = "aop"#"dg"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree

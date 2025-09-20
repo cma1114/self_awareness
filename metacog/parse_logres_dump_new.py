@@ -704,12 +704,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  FP: {extracted_info['fp']}\n")
                 outfile.write(f"  FN: {extracted_info['fn']}\n")
                 outfile.write(f"  Naive Confidence: {(1 - float(extracted_info['phase1_accuracy']) - float(extracted_info['delegation_rate']))}\n")
-                fp, fn, n = float(extracted_info['fp']), float(extracted_info['fn']), float(extracted_info['total_n'])
-                a, b, pfp, pfn = float(extracted_info['teammate_accuracy']), float(extracted_info['teammate_accuracy'])-1, fp/n, fn/n
-                delta = (a*fn + b*fp)/n; 
-                var = (a*a*pfn*(1-pfn) + b*b*pfp*(1-pfp) - 2*a*b*pfp*pfn)/n
-                lo, hi = delta - 1.96*var**0.5, delta + 1.96*var**0.5
-                outfile.write(f"  Teammate-weighted confidence: {delta} [{lo}, {hi}]\n")
+                if 'fp' in extracted_info  and extracted_info['fp'] != "Not found" and 'fn' in extracted_info and extracted_info['fn'] != "Not found" and 'total_n' in extracted_info and extracted_info['total_n'] != "Not found" and 'teammate_accuracy' in extracted_info and extracted_info['teammate_accuracy'] != "Not found":
+                    fp, fn, n = float(extracted_info['fp']), float(extracted_info['fn']), float(extracted_info['total_n'])
+                    a, b, pfp, pfn = float(extracted_info['teammate_accuracy']), float(extracted_info['teammate_accuracy'])-1, fp/n, fn/n
+                    delta = (a*fn + b*fp)/n; 
+                    var = (a*a*pfn*(1-pfn) + b*b*pfp*(1-pfp) - 2*a*b*pfp*pfn)/n
+                    lo, hi = delta - 1.96*var**0.5, delta + 1.96*var**0.5
+                    outfile.write(f"  Teammate-weighted confidence: {delta} [{lo}, {hi}]\n")
                 outfile.write(f"  Game-Stated Entropy Diff: {extracted_info['ent_dg_vs_stated_cntl']} [{extracted_info['ent_dg_vs_stated_cntl_ci_low']}, {extracted_info['ent_dg_vs_stated_cntl_ci_high']}]\n")
                 outfile.write(f"  Game-Stated Confounds Diff: {extracted_info['confounds_dg_vs_stated']} [{extracted_info['confounds_dg_vs_stated_ci_low']}, {extracted_info['confounds_dg_vs_stated_ci_high']}]\n")
                 outfile.write("\n")
@@ -1498,7 +1499,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "aop" #"dg"#
-    dataset = "GPQA"#"SimpleQA" #"GPSA"#"SimpleMC" #
+    dataset = "SimpleMC" #"GPQA"#"SimpleQA" #"GPSA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
