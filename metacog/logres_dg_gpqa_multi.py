@@ -364,8 +364,8 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"# "GPSA"#
-    game_type = "aop"#"dg"#
+    dataset = "GPQA"#"GPSA"# 
+    game_type = "dg"#"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
@@ -422,7 +422,7 @@ if __name__ == "__main__":
         {'name_prefix': "SCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noscnt_" in bn, "NoSCtr", "SCtr")},
         ]
 
-    entropy_rows = []
+    entropy_rows, misused_results = [], []
     entropy_ofile = f"entropy_{game_type}_npcp_summary.csv"
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
@@ -805,6 +805,7 @@ if __name__ == "__main__":
 
 
                     implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
+                    """
                     results = compare_predictors_of_answer(
                         np.array(df_model['sp_prob']),
                         np.array(df_model[implicit_prob_str]),
@@ -858,7 +859,6 @@ if __name__ == "__main__":
                         better_in_combined = 'self' if abs(results['coef_stated']) > abs(results['coef_implicit']) else 'other'
                         log_output(f"better_standalone: {better_standalone}")
                         log_output(f"better_in_combined: {better_in_combined}")
-
                     if game_type == "aop":
                         results = compare_predictors_of_implicit_conf((df_model['sp_prob'] < 0.5).astype(int), df_model['delegate_choice'],df_model[implicit_prob_str])
                     else:
@@ -870,7 +870,7 @@ if __name__ == "__main__":
                     results = compare_predictors_of_implicit_conf(np.array([1-p for p in df_model['sp_prob']]), df_model['delegate_choice'],df_model[implicit_prob_str])
                     log_output(f"Stated pass continuous correlation: {results['corr_stated']:.3f} (p={results['p_stated']:.4f})") 
                     log_output(f"Actual-Continuous Stated Difference: p={results['p_diff']:.4f}")
-
+                    """
 
 
                 if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
@@ -1408,8 +1408,8 @@ if __name__ == "__main__":
                                                                             outcome1_series=df_model['t_prob'],
                                                                             outcome2_series=1-df_model['sp_prob'],
                                                                             control_series_list=continuous_controls+categorical_controls+[df_model['o_prob']])
-                                        log_output(f"Partial correlation (entropy → game): {results['partial_corr_outcome1']:.3f}", suppress=False)
-                                        log_output(f"Partial correlation (entropy → stated): {results['partial_corr_outcome2']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → game), all controls: {results['partial_corr_outcome1']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → stated), all controls: {results['partial_corr_outcome2']:.3f}", suppress=False)
                                         log_output(f"Decision Prob minus Stated Prob entropy correlation, all controls: {results['difference']:.3f} [{results['difference_ci'][0]:.3f}, {results['difference_ci'][1]:.3f}]", suppress=False)
                                         log_output(f"Steiger's test: z = {results['steiger_z']:.2f}, p = {results['p_value']:.3f}", suppress=False)
 
@@ -1520,6 +1520,7 @@ if __name__ == "__main__":
                     categorical_controls = [df_model[t.replace('C(', '').replace(')', '')] for t in final_model_terms_m7 if (isinstance(t, str) and t.startswith('C('))]
                     try: 
                         res, models = analyze_wrong_way(df_model, continuous_controls, categorical_controls, alpha=0.05)
+                        misused_results.append(res)
                         log_output(res.to_string(index=False))
                         misused_predictors = [row['predictor'] for _, row in res.iterrows() if row['misuse'] == True]
                         if misused_predictors:
@@ -1612,3 +1613,22 @@ if __name__ == "__main__":
     rtype = "mc" if dataset in ['SimpleMC', 'GPQA'] else "sa"
     with open(f"res_dicts_{qtype}_{rtype}_{game_type}.json", 'w') as f:
         json.dump(res_dicts, f, indent=2)
+
+    summary = summarize_wrong_way(misused_results, alpha=0.05)
+    log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)
+
+    summary = summarize_wrong_wayB(misused_results, alpha=0.05)
+    log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)    
+
+    potential_misuses = summarize_wrong_wayC(misused_results, alpha=0.05)
+    n_potential = len(potential_misuses)
+    if n_potential > 0:
+        n_significant = potential_misuses['misuse_fdr'].sum()
+        log_output(f"\nPotential misuses tested: {n_potential}; Significant after FDR correction: {n_significant}; Significant misused predictors: ", suppress=False)
+        significant_misuses = potential_misuses[potential_misuses['misuse_fdr']]
+        if len(significant_misuses) > 0:
+            log_output(significant_misuses[['predictor', 'beta_correct', 'beta_delegate', 'p_one_sided_delegate_gt0', 'p_adjusted']], suppress=False)
+        else:
+            log_output("None survived FDR correction", suppress=False)
+    else:
+        log_output("\nNo potential misuses found (no predictors with positive baseline and positive delegation effects)", suppress=False)

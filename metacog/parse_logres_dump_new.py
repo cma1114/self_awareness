@@ -53,6 +53,10 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     correctness_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Correctness, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     ent_dg_vs_stated_cntl_regex = re.compile(r"Decision Prob minus Stated Prob entropy correlation, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     confounds_dg_vs_stated_regex = re.compile(r"Influence of surface confounds on game-stated: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    ent_dg_regex = re.compile(r"Partial correlation \(entropy → game\), all controls: ([-\d.]+)")
+    ent_stated_regex = re.compile(r"Partial correlation \(entropy → stated\), all controls: ([-\d.]+)")
+    confounds_dg_regex = re.compile(r"Influence of surface confounds on game decisions: R² = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    confounds_stated_regex = re.compile(r"Influence of surface confounds on stated confidence: R² = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -218,7 +222,19 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "ent_dg_vs_stated_cntl_ci_high": "Not found",
                     "confounds_dg_vs_stated": "Not found",
                     "confounds_dg_vs_stated_ci_low": "Not found",
-                    "confounds_dg_vs_stated_ci_high": "Not found"
+                    "confounds_dg_vs_stated_ci_high": "Not found",
+                    "ent_dg": "Not found",
+                    "ent_dg_ci_low": "Not found",
+                    "ent_dg_ci_high": "Not found",
+                    "ent_stated": "Not found",
+                    "ent_stated_ci_low": "Not found",
+                    "ent_stated_ci_high": "Not found",
+                    "confounds_dg": "Not found",
+                    "confounds_dg_ci_low": "Not found",
+                    "confounds_dg_ci_high": "Not found",
+                    "confounds_stated": "Not found",
+                    "confounds_stated_ci_low": "Not found",
+                    "confounds_stated_ci_high": "Not found"
                 }
                 
                 # Model parsing states
@@ -470,6 +486,30 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["confounds_dg_vs_stated_ci_low"] = m.group(2)
                         extracted_info["confounds_dg_vs_stated_ci_high"] = m.group(3)
                         continue
+                    
+                    m = ent_dg_regex.search(line)
+                    if m:
+                        extracted_info["ent_dg"] = m.group(1)
+                        continue
+                    
+                    m = ent_stated_regex.search(line)
+                    if m:
+                        extracted_info["ent_stated"] = m.group(1)
+                        continue
+
+                    m = confounds_dg_regex.search(line)
+                    if m:
+                        extracted_info["confounds_dg"] = m.group(1)
+                        extracted_info["confounds_dg_ci_low"] = m.group(2)
+                        extracted_info["confounds_dg_ci_high"] = m.group(3)
+                        continue
+
+                    m = confounds_stated_regex.search(line)
+                    if m:
+                        extracted_info["confounds_stated"] = m.group(1)
+                        extracted_info["confounds_stated_ci_low"] = m.group(2)
+                        extracted_info["confounds_stated_ci_high"] = m.group(3)
+                        continue
 
                     # Cross-tabulation parsing state machine
                     if not parsing_crosstab and not any([in_model4, in_model46, in_model463, in_model48, in_model7]) and crosstab_title_regex.match(line):
@@ -713,6 +753,10 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     outfile.write(f"  Teammate-weighted confidence: {delta} [{lo}, {hi}]\n")
                 outfile.write(f"  Game-Stated Entropy Diff: {extracted_info['ent_dg_vs_stated_cntl']} [{extracted_info['ent_dg_vs_stated_cntl_ci_low']}, {extracted_info['ent_dg_vs_stated_cntl_ci_high']}]\n")
                 outfile.write(f"  Game-Stated Confounds Diff: {extracted_info['confounds_dg_vs_stated']} [{extracted_info['confounds_dg_vs_stated_ci_low']}, {extracted_info['confounds_dg_vs_stated_ci_high']}]\n")
+                outfile.write(f"  Entropy-Game Impact: {extracted_info['ent_dg']}\n")
+                outfile.write(f"  Entropy-Stated Impact: {extracted_info['ent_stated']}\n")
+                outfile.write(f"  Game Confounds: {extracted_info['confounds_dg']} [{extracted_info['confounds_dg_ci_low']}, {extracted_info['confounds_dg_ci_high']}]\n")
+                outfile.write(f"  Stated Confounds: {extracted_info['confounds_stated']} [{extracted_info['confounds_stated_ci_low']}, {extracted_info['confounds_stated_ci_high']}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -1498,8 +1542,8 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 
 if __name__ == "__main__":
     
-    game_type = "aop" #"dg"#
-    dataset = "SimpleMC" #"GPQA"#"SimpleQA" #"GPSA"#
+    game_type = "dg"#"aop" #
+    dataset = "GPQA"#"SimpleMC" #"SimpleQA" #"GPSA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

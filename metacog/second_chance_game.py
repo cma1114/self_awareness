@@ -347,7 +347,7 @@ class SecondChanceGame(BaseGameClass):
                         content, message_history=message_history, keep_appending=False,
                         setup_text=setup_text, MAX_TOKENS=None,# if self.is_short_answer else 1,
                         temp = self.temperature,
-                        accept_any=False if not self.is_short_answer else True
+                        accept_any=True####False if not self.is_short_answer else True
                     )
 
                 if len(subject_answer.rstrip(string.whitespace + string.punctuation)) == 0 or self.is_short_answer:
@@ -604,7 +604,7 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=0.0):
     # Configuration
     resume_from = None#"./secondchance_game_logs/qwen3-235b-a22b-2507_GPQA_redacted_cor_temp0.0_1756235281_game_data.json" #
     IS_HUMAN = False
-    PROMPT_VARIANT = "_neut" # "_pos" or "_neut" or ""
+    PROMPT_VARIANT = "" # "_pos" or "_neut" or ""
     SHOW_ORIGINAL_ANSWER = False
     #USE_CORRECT_ANSWERS = False  
     NUM_QUESTIONS = None  # Use all questions if None
@@ -670,7 +670,7 @@ def main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=0.0):
 
 if __name__ == "__main__":
     model_dataset_dict = {
-        "gemini-2.5-flash_think": ["SimpleMC"],
+        "claude-opus-4-1-20250805": ["SimpleMC"],
         }
-#    main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=1.0)
-    main(model_dataset_dict, USE_CORRECT_ANSWERS=True, temp=1.0)
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=False, temp=0.0)
+    main(model_dataset_dict, USE_CORRECT_ANSWERS=True, temp=0.0)

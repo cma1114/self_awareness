@@ -400,7 +400,7 @@ if __name__ == "__main__":
         {'name_prefix': "SCtr", 'split_logic': lambda fl: split_by_filename_attr(fl, lambda bn: "_noscnt_" in bn, "NoSCtr", "SCtr")},
         ]
         
-    entropy_rows = []
+    entropy_rows, misused_results = [], []
     entropy_ofile = f"entropy_{game_type}_npcp_summary.csv"
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
@@ -1067,8 +1067,12 @@ if __name__ == "__main__":
 
                             res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']])
                             log_output(f"Partial correlation on decision with Correctness, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
-                            res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
-                            log_output(f"Partial correlation on decision with Correctness, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            try:
+                                res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                                log_output(f"Partial correlation on decision with Correctness, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            except Exception as e_full:
+                                log_output(f"                    Could not fit partial correlation on decision with Correctness, all controls: {e_full}", suppress=False)
+                            #log_output(f"res={res}", suppress=False)
 
                             res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
                             ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
@@ -1349,8 +1353,8 @@ if __name__ == "__main__":
                                                                             outcome1_series=df_model['t_prob'],
                                                                             outcome2_series=1-df_model['sp_prob'],
                                                                             control_series_list=continuous_controls+categorical_controls+[df_model['o_prob']])
-                                        log_output(f"Partial correlation (entropy → game): {results['partial_corr_outcome1']:.3f}", suppress=False)
-                                        log_output(f"Partial correlation (entropy → stated): {results['partial_corr_outcome2']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → game), all controls: {results['partial_corr_outcome1']:.3f}", suppress=False)
+                                        log_output(f"Partial correlation (entropy → stated), all controls: {results['partial_corr_outcome2']:.3f}", suppress=False)
                                         log_output(f"Decision Prob minus Stated Prob entropy correlation, all controls: {results['difference']:.3f} [{results['difference_ci'][0]:.3f}, {results['difference_ci'][1]:.3f}]", suppress=False)
                                         log_output(f"Steiger's test: z = {results['steiger_z']:.2f}, p = {results['p_value']:.3f}", suppress=False)
 
@@ -1521,6 +1525,7 @@ if __name__ == "__main__":
                         misused_predictors = [row['predictor'] for _, row in res.iterrows() if row['misuse'] == True]
                         if misused_predictors:
                             log_output(f"Misused predictors: {misused_predictors}", suppress=False)
+                        misused_results.append(res)
                     except Exception as e_full:
                         log_output(f"                    Could not fit Model XXX: {e_full}", suppress=False)
 
@@ -1608,3 +1613,20 @@ if __name__ == "__main__":
     rtype = "mc" if dataset in ['SimpleMC', 'GPQA'] else "sa"
     with open(f"res_dicts_{qtype}_{rtype}_{game_type}.json", 'w') as f:
         json.dump(res_dicts, f, indent=2)
+
+    summary = summarize_wrong_way(misused_results, alpha=0.05)
+    log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)
+
+
+    potential_misuses = summarize_wrong_wayC(misused_results, alpha=0.05)
+    n_potential = len(potential_misuses)
+    if n_potential > 0:
+        n_significant = potential_misuses['misuse_fdr'].sum()
+        log_output(f"\nPotential misuses tested: {n_potential}; Significant after FDR correction: {n_significant}; Significant misused predictors: ", suppress=False)
+        significant_misuses = potential_misuses[potential_misuses['misuse_fdr']]
+        if len(significant_misuses) > 0:
+            log_output(significant_misuses[['predictor', 'beta_correct', 'beta_delegate', 'p_one_sided_delegate_gt0', 'p_adjusted']], suppress=False)
+        else:
+            log_output("None survived FDR correction", suppress=False)
+    else:
+        log_output("\nNo potential misuses found (no predictors with positive baseline and positive delegation effects)", suppress=False)

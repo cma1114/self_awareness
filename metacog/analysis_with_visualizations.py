@@ -457,7 +457,7 @@ metrics = [
     "Game-Stated Confounds Diff",
 ]
 chance = None#0.5
-model_order=["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash_think", "gemini-2.5-flash_nothink", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite_think", "gemini-2.5-flash-lite_nothink", 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307', 'gemini-1.5-pro']
+model_order=["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash_think", "gemini-2.5-flash_nothink", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite_think", "gemini-2.5-flash-lite_nothink", 'gemini-1.5-pro', 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
 
 model_aliases = {
     "openai-gpt-5-chat": "GPT-5",
@@ -478,19 +478,42 @@ model_aliases = {
     'claude-3-haiku-20240307': "Haiku 3",
     'gemini-1.5-pro': "Gemini 1.5 Pro",
 }
-metric = "Phase 1 accuracy"
-#pooled = pool_metric_ivw(metric=metric, files=files)#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
-#files = [{model: {metric: stats} for model, stats in pooled.items()}]
+metric_aliases = {
+    "Phase 1 accuracy": ["acc", "Baseline Accuracy (%)"],
+    "Correctness Coef Cntl": ["is", "Beta"],
+    "Correctness Correl Cntl": ["is_pc", "Partial correlation"],
+    "Capent Correl Cntl": ["capent_correl", "Partial correlation"],
+    "Capent Correl Prob Cntl": ["sc_capent_prob", "Partial correlation"],
+    "Delegation rate": ["dg", "Delegation Rate (%)"],
+    "Naive Confidence": ["naive_conf", "Naive Confidence (%)"],
+    "Teammate-weighted confidence": ["tw_conf", "Teammate-weighted Confidence (%)"],
+    "Raw introspection score": ["raw_introspec", "Raw Introspection Score"],
+    "Raw self-acc lift": ["raw_lift", "Raw Self-accuracy Lift"],
+    "Pseudo R2 Cntl": ["sc_pseudoR2", "Pseudo R²"],
+    "Calibration AUC": ["cal_auc", "AUC"],
+    "Calibration Entropy AUC": ["calib_ent_auc", "Calibration Entropy AUC"],
+    "ECE": ["ece", "Expected Calibration Error (ECE)"],
+    "Brier": ["brier", "Brier Score"],
+    "Brier Resolution": ["brier_res", "Brier Resolution"],
+    "Brier Reliability": ["brier_rel", "Brier Reliability"],
+    "Top Prob Mean": ["top_prob", "Top Predicted Probability (%)"],
+    "Game-Stated Entropy Diff": ["entropy_diff", "Game-Stated Entropy Diff"],
+    "Game-Stated Confounds Diff": ["confounds_diff", "Game-Stated Confounds Diff"],
+}
+show_trend = True
+metric = "Correctness Correl Cntl"
+pooled = None#pool_metric_ivw(metric=metric, files=files)#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
+if pooled: files = [{model: {metric: stats} for model, stats in pooled.items()}]
 
 fig, ax, df_wide = plot_metric_panels_from_results(
     metric=metric,
     files=files,
-    series_names=["GPQA", "SimpleMC", "GPSA", "SimpleQA"],#["GPQA-SimpleMC Combined"],#["All Combined"],#
+    series_names=["All Combined"] if pooled else ["GPQA", "SimpleMC", "GPSA", "SimpleQA"],#["GPQA-SimpleMC Combined"],#
     model_order=model_order,
     aliases=model_aliases,
     suptitle="",#"Partial correlation between baseline correctness and answer/delegate decision",
-    outfile="acc_by_model_notrend.png"
-    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label="Baseline Accuracy (%)", show_trend=False
+    outfile=f"{metric_aliases[metric][0]}_by_model_{'notrend' if not show_trend else ''}{'_pooled' if pooled else ''}.png"
+    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label=metric_aliases[metric][1], show_trend=show_trend
 )
 
 

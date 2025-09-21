@@ -2398,7 +2398,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 
-def partial_correlation_on_decision(dv_series, iv_series, control_series_list):
+def partial_correlation_on_decision_orig(dv_series, iv_series, control_series_list):
     """
     Compute partial correlation between iv and dv, controlling for surface features.
     
@@ -2489,6 +2489,243 @@ def partial_correlation_on_decision(dv_series, iv_series, control_series_list):
         'ci_upper': ci[1]
     }
 
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_numeric_dtype
+
+def collapse_categorical(s: pd.Series, max_levels=8, min_count=10):
+    s = s.astype('category')
+    counts = s.value_counts(dropna=False)
+    # Keep top max_levels, also ensure any level with count >= min_count is kept
+    keep = set(counts.nlargest(max_levels).index)
+    keep |= set(counts[counts >= min_count].index)
+    s2 = s.where(s.isin(keep), other='Collapsed')
+    return s2.astype('category')
+
+def prune_numeric_by_variance(df_num: pd.DataFrame, zero_var_tol=1e-12, nzv_prop=0.95):
+    keep = []
+    for c in df_num.columns:
+        x = df_num[c].astype(float).values
+        if np.std(x, ddof=0) <= zero_var_tol:
+            continue
+        # near-zero-variance by dominance of one value (for discretized vars)
+        vals, counts = np.unique(x, return_counts=True)
+        if counts.max() / len(x) >= nzv_prop:
+            continue
+        keep.append(c)
+    return df_num[keep]
+
+def prune_numeric_by_correlation(df_num: pd.DataFrame, corr_thresh=0.9):
+    if df_num.shape[1] <= 1:
+        return df_num
+    corr = df_num.corr().abs().fillna(0.0)
+    keep = []
+    dropped = set()
+    for c in corr.columns:
+        if c in dropped:
+            continue
+        keep.append(c)
+        # drop others highly correlated with c
+        drop_these = corr.index[(corr[c] >= corr_thresh) & (corr.index != c)].tolist()
+        dropped.update(drop_these)
+    return df_num[keep]
+
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_numeric_dtype
+
+def simplify_controls(series_list, max_levels=8, min_count=None, eps=1e-12):  
+    """
+    Accepts a list of pandas Series (one per control) and returns a simplified DataFrame:
+      - Numeric: drops near-constant columns.
+      - Categorical/object: collapses rare levels to 'Collapsed' safely (adds category first),
+        removes single-level vars.
+
+    Parameters
+    ----------
+    series_list : list[pd.Series]
+        Controls to simplify. Each Series should have a .name.
+    max_levels : int or None
+        Keep at most this many most frequent levels per categorical (None = no cap).
+    min_count : int or None
+        Minimum count to keep a level (None = no threshold).
+    eps : float
+        Threshold for "near-constant" numeric std.
+    """
+    parts = []
+    for i, s in enumerate(series_list):
+        if s is None:
+            continue
+        s = pd.Series(s).copy()
+        name = s.name if s.name is not None else f'ctrl_{i}'
+        s = s.replace([np.inf, -np.inf], np.nan)
+
+        if is_numeric_dtype(s):
+            # Drop near-constant or single-unique numerics
+            x = pd.to_numeric(s, errors='coerce').astype(float)
+            if x.std(ddof=0) <= eps or x.nunique(dropna=True) <= 1:
+                continue
+            x.name = name
+            parts.append(x)
+            continue
+
+        # Categorical branch: collapse rare levels to 'Other'
+        sc = s.astype('category').cat.remove_unused_categories()
+
+        # If everything is NaN or only one level, drop
+        if sc.nunique(dropna=True) <= 1:
+            continue
+
+        counts = sc.value_counts(dropna=True)
+
+        # Decide which levels to keep
+        if min_count is not None:
+            keep = counts[counts >= min_count].index
+            if max_levels is not None and len(keep) > max_levels:
+                # If too many still, cap to most frequent among those
+                keep = counts.loc[keep].nlargest(max_levels).index
+        else:
+            # Keep top-k by frequency
+            keep = counts.nlargest(max_levels).index if max_levels is not None else counts.index
+
+        # Ensure 'Collapsed' exists before relabeling
+        if 'Collapsed' not in sc.cat.categories:
+            sc = sc.cat.add_categories('Collapsed')
+
+        # Relabel rare levels to 'Other' (preserve NaN)
+        sc = sc.where(sc.isna() | sc.isin(keep), 'Collapsed')
+
+        # Clean up categories again
+        sc = sc.cat.remove_unused_categories()
+        if sc.nunique(dropna=True) <= 1:
+            # If collapsing made it single-level, drop
+            continue
+
+        sc.name = name
+        parts.append(sc)
+
+    if not parts:
+        return pd.DataFrame()
+
+    out = pd.concat(parts, axis=1)
+    return out
+
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_numeric_dtype
+from scipy import stats
+
+def partial_correlation_on_decision(dv_series, iv_series, control_series_list, eps=1e-12):
+    """
+    Compute partial correlation between iv and dv, controlling for surface features.
+
+    Args:
+        dv_series: pd.Series (dependent variable; can be binary)
+        iv_series: pd.Series (independent variable)
+        control_series_list: list of pd.Series with control variables
+
+    Returns:
+        dict with 'correlation', 'p_value', 'n_samples', 'ci_lower', 'ci_upper'
+    """
+    # Combine and clean
+    all_data = pd.DataFrame({'iv': iv_series, 'dv': dv_series})
+    for i, s in enumerate(control_series_list):
+        name = getattr(s, 'name', None) or f'control_{i}'
+        all_data[name] = s
+
+    all_data = all_data.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+    n = len(all_data)
+    if n < 5:
+        raise ValueError(f"Not enough samples after cleaning: n={n}")
+
+    control_names = [c for c in all_data.columns if c not in ['iv', 'dv']]
+    control_df = simplify_controls([all_data[c] for c in control_names])
+
+    # Align iv/dv with controls (single listwise deletion)
+    df = pd.concat([all_data[['iv', 'dv']], control_df], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
+    ctrl = df.drop(columns=['iv', 'dv'])
+
+    # Build control design matrix X (intercept + effective controls)
+    parts = []
+    for c in ctrl.columns:
+        s = ctrl[c]
+        if is_numeric_dtype(s):
+            x = s.astype(float).values
+            sd = x.std(ddof=0)
+            if sd <= eps:
+                continue
+            zx = (x - x.mean()) / sd
+            parts.append(pd.DataFrame({c: zx}, index=ctrl.index))
+        else:
+            sc = s.astype('category')
+            if sc.cat.categories.size <= 1:
+                continue
+            dummies = pd.get_dummies(sc, prefix=c, drop_first=True, dtype=float)
+            parts.append(dummies)
+
+    X_controls = pd.concat(parts, axis=1) if parts else pd.DataFrame(index=ctrl.index)
+    X_controls.insert(0, 'const', 1.0)
+    X = X_controls.values.astype(float)
+
+    # Effective number of controls = rank(X) - 1 (exclude intercept)
+    rank_X = np.linalg.matrix_rank(X)
+    k_eff = max(rank_X - 1, 0)
+
+    # Residualize iv and dv on X
+    coef_iv, _, _, _ = np.linalg.lstsq(X, all_data['iv'].astype(float).values, rcond=None)
+    coef_dv, _, _, _ = np.linalg.lstsq(X, all_data['dv'].astype(float).values, rcond=None)
+    iv_res = all_data['iv'].astype(float).values - X @ coef_iv
+    dv_res = all_data['dv'].astype(float).values - X @ coef_dv
+
+    # Guard against zero variance in residuals
+    s_iv = np.std(iv_res, ddof=0)
+    s_dv = np.std(dv_res, ddof=0)
+    if s_iv <= eps or s_dv <= eps:
+        return {
+            'correlation': np.nan,
+            'p_value': np.nan,
+            'n_samples': n,
+            'ci_lower': np.nan,
+            'ci_upper': np.nan,
+            'k_controls_effective': k_eff,
+            'rank_X': rank_X
+        }
+
+    # Partial correlation = Pearson r between residuals
+    r = np.corrcoef(iv_res, dv_res)[0, 1]
+    r = float(np.clip(r, -1.0, 1.0))
+
+    # p-value via t-test for partial correlation
+    # df_t = n - k - 2 (k excludes intercept)
+    df_t = n - k_eff - 2
+    if df_t > 0 and abs(r) < 1:
+        t_stat = r * np.sqrt(df_t / (1 - r**2))
+        p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df=df_t))
+    else:
+        t_stat = np.nan
+        p_value = np.nan
+
+    # 95% CI via Fisher z with SE = 1/sqrt(n - k - 3)
+    df_z = n - k_eff - 3
+    if df_z > 0 and abs(r) < 1:
+        z = np.arctanh(r)
+        se = 1.0 / np.sqrt(df_z)
+        ci_z = (z - 1.96 * se, z + 1.96 * se)
+        ci = (np.tanh(ci_z[0]), np.tanh(ci_z[1]))
+    else:
+        ci = (np.nan, np.nan)
+
+    return {
+        'correlation': r,
+        'p_value': p_value,
+        'n_samples': n,
+        'ci_lower': ci[0],
+        'ci_upper': ci[1],
+        'k_controls_effective': k_eff,
+        'rank_X': rank_X,
+        'df_t': df_t,
+        'df_z': df_z
+    }
 
 import pandas as pd
 import numpy as np
@@ -3089,3 +3326,150 @@ def compare_surface_contamination(
         'design_columns': X_cols,
     }
 
+import pandas as pd
+from scipy.stats import binomtest
+
+def summarize_wrong_way(results_list, alpha=0.05):
+    """
+    results_list: list of 'res' DataFrames returned by analyze_wrong_way for this question set.
+    alpha: the same per-predictor one-sided threshold you used in analyze_wrong_way.
+    """
+    df = pd.concat(results_list, ignore_index=True)
+    tested = df.loc[df['baseline_positive'] & df['p_one_sided_delegate_gt0'].notna()]
+    n = int(len(tested))
+    k = int(tested['misuse'].sum())
+    if n == 0:
+        return {'n_candidates': 0, 'n_wrong_way': 0, 'expected_by_chance': 0.0, 'p_value': float('nan'),
+                'conclusion': 'insufficient data'}
+    pval = binomtest(k, n, p=alpha, alternative='greater').pvalue
+    conclusion = ('Models used wrong-way predictors more often than chance'
+                  if pval < 0.05 else
+                  'Models did not use wrong-way predictors more often than chance')
+    return {'n_candidates': n,
+            'n_wrong_way': k,
+            'expected_by_chance': alpha * n,
+            'p_value': pval,
+            'conclusion': conclusion}
+
+import numpy as np
+import pandas as pd
+from scipy.stats import norm, binomtest
+
+def summarize_wrong_wayB(results, alpha=0.05,
+                        col_baseline_pos='baseline_positive',
+                        col_beta_correct='beta_correct',
+                        col_p_one='p_one_sided_delegate_gt0',
+                        col_z_delegate='z_delegate'):
+    """
+    Option B:
+    - Candidates (m): predictors with one-sided p for β_delegate>0 below alpha.
+    - Wrong-way count (k): among candidates, how many have baseline-positive (β_correct>0).
+    - Expected by chance: q_base * m, where q_base is the baseline-positive rate among all valid predictors.
+    - Test: X ~ Binomial(m, q_base), alternative='greater'.
+
+    Returns dict:
+      n_candidates (m), n_wrong_way (k), expected_by_chance, p_value, alpha, conclusion.
+    """
+    # Accept list of DataFrames
+    if isinstance(results, list):
+        df = pd.concat(results, ignore_index=True)
+    else:
+        df = results.copy()
+
+    # Ensure baseline_positive exists (fallback from beta_correct > 0)
+    if col_baseline_pos not in df.columns:
+        if col_beta_correct not in df.columns:
+            raise ValueError(f"Need either '{col_baseline_pos}' or '{col_beta_correct}'")
+        beta = pd.to_numeric(df[col_beta_correct], errors='coerce')
+        df[col_baseline_pos] = beta > 0
+
+    # Ensure one-sided p for delegation > 0 exists (fallback from z_delegate)
+    if col_p_one not in df.columns:
+        if col_z_delegate not in df.columns:
+            raise ValueError(f"Need either '{col_p_one}' or '{col_z_delegate}'")
+        z = pd.to_numeric(df[col_z_delegate], errors='coerce')
+        df[col_p_one] = 1 - norm.cdf(z)
+
+    bp = df[col_baseline_pos]
+    p_one = pd.to_numeric(df[col_p_one], errors='coerce')
+
+    # Valid rows must have both baseline sign and a p-value
+    valid = bp.notna() & p_one.notna()
+    if not valid.any():
+        return {
+            'n_candidates': 0,
+            'n_wrong_way': 0,
+            'expected_by_chance': 0.0,
+            'p_value': np.nan,
+            'alpha': alpha,
+            'conclusion': 'no valid predictors'
+        }
+
+    # Base rate of baseline-positive among all valid predictors
+    q_base = float((bp[valid] > 0).mean())
+
+    # Gate on significant-positive delegation (candidates)
+    sig_pos = valid & (p_one < alpha)
+    m = int(sig_pos.sum())
+    if m == 0:
+        return {
+            'n_candidates': 0,
+            'n_wrong_way': 0,
+            'expected_by_chance': 0.0,
+            'p_value': np.nan,
+            'alpha': alpha,
+            'conclusion': 'no significant-positive delegation effects'
+        }
+
+    # Count baseline-positive within the candidates
+    k = int(((bp > 0) & sig_pos).sum())
+    expected = q_base * m
+
+    # Binomial test: is k larger than expected under base rate q_base?
+    pval = binomtest(k, m, p=q_base, alternative='greater').pvalue
+
+    conclusion = 'more than expected by chance' if pval < 0.05 else 'not more than expected by chance'
+
+    return {
+        'n_candidates': m,
+        'n_wrong_way': k,
+        'expected_by_chance': expected,
+        'p_value': pval,
+        'alpha': alpha,
+        'conclusion': conclusion
+    }
+
+import pandas as pd
+import numpy as np
+from statsmodels.stats.multitest import multipletests
+
+def summarize_wrong_wayC(misused_results, alpha=0.05):
+    # Concatenate input (handles list of DataFrames or a single DataFrame)
+    if isinstance(misused_results, list):
+        all_results = pd.concat(misused_results, keys=range(len(misused_results)), names=['model_idx', 'row_idx'])
+    else:
+        all_results = misused_results.copy()
+
+    # Family = baseline-positive with valid one-sided p for β_delegate>0
+    valid_p = all_results['p_one_sided_delegate_gt0'].notna()
+    fam_mask = all_results['baseline_positive'] & valid_p
+    potential_misuses = all_results.loc[fam_mask].copy()
+
+    if len(potential_misuses) > 0:
+        p_values = potential_misuses['p_one_sided_delegate_gt0'].values
+        rejected, adjusted_p, _, _ = multipletests(p_values, method='fdr_bh', alpha=alpha)
+
+        # Add adjusted p-values and FDR decision
+        potential_misuses['p_adjusted'] = adjusted_p
+        potential_misuses['misuse_fdr'] = rejected
+
+        # Merge back (local) so downstream code that expects these columns in all_results can use them if needed
+        all_results = all_results.merge(
+            potential_misuses[['p_adjusted', 'misuse_fdr']],
+            left_index=True,
+            right_index=True,
+            how='left'
+        )
+        all_results['misuse_fdr'] = all_results['misuse_fdr'].fillna(False)
+
+    return potential_misuses
