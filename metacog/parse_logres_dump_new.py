@@ -57,6 +57,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     ent_stated_regex = re.compile(r"Partial correlation \(entropy → stated\), all controls: ([-\d.]+)")
     confounds_dg_regex = re.compile(r"Influence of surface confounds on game decisions: R² = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     confounds_stated_regex = re.compile(r"Influence of surface confounds on stated confidence: R² = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    self_other_correl_regex = re.compile(r"Correlation between Other's Prob and Self Prob: ([-\d.]+)")
+    capent_gament_correl_regex = re.compile(r"Capent-Gament corr: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -234,7 +236,13 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "confounds_dg_ci_high": "Not found",
                     "confounds_stated": "Not found",
                     "confounds_stated_ci_low": "Not found",
-                    "confounds_stated_ci_high": "Not found"
+                    "confounds_stated_ci_high": "Not found",
+                    "self_other_correl": "Not found",
+                    "self_other_correl_ci_low": "Not found",
+                    "self_other_correl_ci_high": "Not found",
+                    "capent_gament_correl": "Not found",
+                    "capent_gament_correl_ci_low": "Not found",
+                    "capent_gament_correl_ci_high": "Not found"
                 }
                 
                 # Model parsing states
@@ -511,6 +519,18 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["confounds_stated_ci_high"] = m.group(3)
                         continue
 
+                    m = self_other_correl_regex.search(line)
+                    if m:
+                        extracted_info["self_other_correl"] = m.group(1)
+                        continue
+
+                    m = capent_gament_correl_regex.search(line)
+                    if m:
+                        extracted_info["capent_gament_correl"] = m.group(1)
+                        extracted_info["capent_gament_correl_ci_low"] = m.group(2)
+                        extracted_info["capent_gament_correl_ci_high"] = m.group(3)
+                        continue
+
                     # Cross-tabulation parsing state machine
                     if not parsing_crosstab and not any([in_model4, in_model46, in_model463, in_model48, in_model7]) and crosstab_title_regex.match(line):
                         parsing_crosstab = True
@@ -757,6 +777,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Entropy-Stated Impact: {extracted_info['ent_stated']}\n")
                 outfile.write(f"  Game Confounds: {extracted_info['confounds_dg']} [{extracted_info['confounds_dg_ci_low']}, {extracted_info['confounds_dg_ci_high']}]\n")
                 outfile.write(f"  Stated Confounds: {extracted_info['confounds_stated']} [{extracted_info['confounds_stated_ci_low']}, {extracted_info['confounds_stated_ci_high']}]\n")
+                outfile.write(f"  Self Other Correl: {extracted_info['self_other_correl']}\n")
+                outfile.write(f"  Capent Gament Correl: {extracted_info['capent_gament_correl']} [{extracted_info['capent_gament_correl_ci_low']}, {extracted_info['capent_gament_correl_ci_high']}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -981,6 +1003,14 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["ent_dg_vs_stated_cntl"] = float(m.group(1))
                     current_subject_info["ent_dg_vs_stated_cntl_ci_low"] = float(m.group(2))
                     current_subject_info["ent_dg_vs_stated_cntl_ci_high"] = float(m.group(3))
+            elif "Self Other Correl:" in line:
+                current_subject_info["self_other_correl"] = parse_value(line, r":\s*([-\d.]+)", as_type=float)
+            elif "Capent Gament Correl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["capent_gament_correl"] = float(m.group(1))
+                    current_subject_info["capent_gament_correl_ci_low"] = float(m.group(2))
+                    current_subject_info["capent_gament_correl_ci_high"] = float(m.group(3))
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -1221,7 +1251,11 @@ def analyze_parsed_data(input_summary_file):
             "Change%": data.get("game_test_change_rate", np.nan),
             "Good_Change%": data.get("game_test_good_change_rate", np.nan),
             "FP": data.get("fp", np.nan),
-            "FN": data.get("fn", np.nan)
+            "FN": data.get("fn", np.nan),
+            "Self_Other_Correl": data.get("self_other_correl", np.nan),
+            "Capent_Gament_Correl": data.get("capent_gament_correl", np.nan),
+            "Capent_Gament_Correl_LB": data.get("capent_gament_correl_ci_low", np.nan),
+            "Capent_Gament_Correl_UB": data.get("capent_gament_correl_ci_high", np.nan)
         })
         
     return pd.DataFrame(results)
@@ -1543,7 +1577,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "GPQA"#"SimpleMC" #"SimpleQA" #"GPSA"#
+    dataset = "GPSA"#"GPQA"#"SimpleMC" #"SimpleQA" #
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

@@ -88,9 +88,13 @@ def pool_metric_ivw(metric: str, files: List[str], ci_level: float = 0.95) -> Di
             mu = entry.get("value")
             lo = entry.get("lo")
             hi = entry.get("hi")
-            if mu is None or lo is None or hi is None or not np.isfinite([mu, lo, hi]).all():
+            if mu is None or not np.isfinite([mu]).all():
                 continue
-            se = (hi - lo) / (2.0 * z)
+            if lo is None or hi is None:
+                #compute SE of proportions, using N=447
+                se = math.sqrt(mu * (1.0 - mu) / 447)
+            else:
+                se = (hi - lo) / (2.0 * z)
             if se <= 0 or not np.isfinite(se):
                 continue
             means.append(mu)
@@ -265,7 +269,7 @@ def plot_metric_panels_from_results(
 
         # X/ticks
         x = np.arange(len(models_panel))
-        width = 0.6
+        width = 0.7
         ticklabels = [aliases.get(m, m) for m in models_panel] if aliases else models_panel
 
         # Error bars
@@ -456,7 +460,6 @@ metrics = [
     "Game-Stated Entropy Diff",
     "Game-Stated Confounds Diff",
 ]
-chance = None#0.5
 model_order=["openai-gpt-5-chat", "claude-opus-4-1-20250805", 'claude-sonnet-4-20250514', 'grok-3-latest', 'claude-3-5-sonnet-20241022', 'gpt-4.1-2025-04-14', 'gpt-4o-2024-08-06', 'deepseek-chat', "gemini-2.5-flash_think", "gemini-2.5-flash_nothink", 'gemini-2.0-flash-001', "gemini-2.5-flash-lite_think", "gemini-2.5-flash-lite_nothink", 'gemini-1.5-pro', 'gpt-4o-mini', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
 
 model_aliases = {
@@ -499,10 +502,15 @@ metric_aliases = {
     "Top Prob Mean": ["top_prob", "Top Predicted Probability (%)"],
     "Game-Stated Entropy Diff": ["entropy_diff", "Game-Stated Entropy Diff"],
     "Game-Stated Confounds Diff": ["confounds_diff", "Game-Stated Confounds Diff"],
+    "Self Other Correl": ["self_other_correl", "Self-Other Correlation"],
+    "Team Accuracy Lift": ["team_acc_lift", "Team Accuracy Lift"],
+    "Game-Test Change Rate": ["game_test_change_rate", "Game-Test Change Rate (%)"],
+    "Capent Gament Correl": ["capent_game_correl", "Game-Capability Correlation"],
 }
+chance = None#0.5
 show_trend = True
-metric = "Correctness Correl Cntl"
-pooled = None#pool_metric_ivw(metric=metric, files=files)#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
+metric = "Capent Gament Correl"
+pooled = None#pool_metric_ivw(metric=metric, files=files[:2])#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
 if pooled: files = [{model: {metric: stats} for model, stats in pooled.items()}]
 
 fig, ax, df_wide = plot_metric_panels_from_results(
@@ -512,8 +520,6 @@ fig, ax, df_wide = plot_metric_panels_from_results(
     model_order=model_order,
     aliases=model_aliases,
     suptitle="",#"Partial correlation between baseline correctness and answer/delegate decision",
-    outfile=f"{metric_aliases[metric][0]}_by_model_{'notrend' if not show_trend else ''}{'_pooled' if pooled else ''}.png"
-    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label=metric_aliases[metric][1], show_trend=show_trend
+    outfile=f"{metric_aliases[metric][0]}_by_model{'_notrend' if not show_trend else ''}{'_pooled' if pooled else ''}.png"
+    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label=metric_aliases[metric][1], show_trend=show_trend, bar_color=None##="#84bdf7"#="#f5b446"#="#2fae2d"='brown'#
 )
-
-

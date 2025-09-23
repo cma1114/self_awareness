@@ -274,7 +274,8 @@ def prepare_regression_data_for_model(game_file_paths_list,
         df_to_return = df_to_return.drop(columns=['judge_delegate'])
     if 'teammate_judge_delegate' in df_to_return.columns and not df_to_return['teammate_judge_delegate'].notna().any():
         df_to_return = df_to_return.drop(columns=['teammate_judge_delegate'])
-    
+
+    print(f"\nPrepared regression DataFrame with {len(df_to_return)} rows and columns: {list(df_to_return.columns)}")    
     return df_to_return, subject_acc_for_ratio_calc, phase2_corcnt, phase2_totalcnt, np.mean(teammate_accs_phase1) if teammate_accs_phase1 else None
 
 # --- File Grouping Logic ---
@@ -338,7 +339,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC" #"SimpleQA" #
+    dataset = "SimpleMC" #"SimpleQA" # 
     game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -457,6 +458,7 @@ if __name__ == "__main__":
                 print(f"{'  '*(len(group_names_tuple)+1)}Error loading Capabilities file {capabilities_file_path}: {e}. Skipping this group.")
                 continue
 
+            print(f"{'  '*(len(group_names_tuple)+1)}Loaded responses for {len(s_i_map_for_this_model)} items.")
             o_map_for_this_model = {}
             from pathlib import Path
             capabilities_3p_file_path = next(Path("capabilities_3p_test_logs/").glob(f"{model_name_part}_{dataset}*.json"), None)
@@ -743,6 +745,17 @@ if __name__ == "__main__":
                         log_output(f"Game-Test Change on Incor Rate: {cir}", suppress=False)
                         cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 1) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 1])
                         log_output(f"Game-Test Change on Cor Rate: {cir}", suppress=False)
+
+                        if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                            #compute correlation between capabilities_entropy and normalized_prob_entropy with confidence intervals
+                            corr, p_val = pearsonr(self_choice_df['capabilities_entropy'], self_choice_df['normalized_prob_entropy'])
+                            n = len(self_choice_df)
+                            stderr = 1.0 / math.sqrt(n - 3)
+                            delta = 1.96 * stderr
+                            atanh_corr = np.arctanh(corr)
+                            ci_low = np.tanh(atanh_corr - delta)
+                            ci_high = np.tanh(atanh_corr + delta)
+                            log_output(f"Capent-Gament corr: {corr:.4f} [{ci_low:.4f}, {ci_high:.4f}], p={p_val:.4g}", suppress=False)
 
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")

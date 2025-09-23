@@ -762,6 +762,17 @@ if __name__ == "__main__":
                         cir = len(self_choice_df[(self_choice_df['s_i_capability'] == 1) & (self_choice_df['answer_changed'] == True)]) / len(self_choice_df[self_choice_df['s_i_capability'] == 1])
                         log_output(f"Game-Test Change on Cor Rate: {cir}", suppress=False)
 
+                        if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any() and 'normalized_prob_entropy' in df_model.columns and df_model['normalized_prob_entropy'].notna().any():
+                            #compute correlation between capabilities_entropy and normalized_prob_entropy with confidence intervals
+                            corr, p_val = pearsonr(self_choice_df['capabilities_entropy'], self_choice_df['normalized_prob_entropy'])
+                            n = len(self_choice_df)
+                            stderr = 1.0 / math.sqrt(n - 3)
+                            delta = 1.96 * stderr
+                            atanh_corr = np.arctanh(corr)
+                            ci_low = np.tanh(atanh_corr - delta)
+                            ci_high = np.tanh(atanh_corr + delta)
+                            log_output(f"Capent-Gament corr: {corr:.4f} [{ci_low:.4f}, {ci_high:.4f}], p={p_val:.4g}", suppress=False)
+
                 if USE_FILTERED_FOR_LOGRES:
                     log_output("Using filtered data for regression analysis.")
                     df_model = df_clean
