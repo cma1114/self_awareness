@@ -3473,3 +3473,433 @@ def summarize_wrong_wayC(misused_results, alpha=0.05):
         all_results['misuse_fdr'] = all_results['misuse_fdr'].fillna(False)
 
     return potential_misuses
+
+def compute_optimal_accuracy_with_introspection(model_correctness, model_confidence, delegate_choice, teammate_accuracy):
+    """
+    Compute accuracy if model uses optimal policy based on its confidence signal
+    """
+    # Optimal policy: answer when confidence > teammate_accuracy
+
+    def bootstrap_ci(stat_fn, *arrays, B=10000, alpha=0.05, random_state=None, **kwargs):
+        """
+        Percentile bootstrap CI for any scalar statistic.
+
+        stat_fn(*arrays, **kwargs) -> float
+        - Should compute the metric from per-item arrays (same length).
+        - Scalars (like teammate_accuracy) should be passed via **kwargs.
+
+        Returns (ci_lo, ci_hi).
+        """
+        arrays = [np.asarray(a) for a in arrays]
+        N = len(arrays[0])
+        for a in arrays[1:]:
+            if len(a) != N:
+                raise ValueError("All arrays must have the same length")
+        rng = np.random.default_rng(random_state)
+
+        stats = np.empty(B, dtype=float)
+        for b in range(B):
+            idx = rng.integers(0, N, size=N)
+            resampled = [a[idx] for a in arrays]
+            stats[b] = float(stat_fn(*resampled, **kwargs))
+
+        lo = float(np.quantile(stats, alpha/2))
+        hi = float(np.quantile(stats, 1 - alpha/2))
+        return lo, hi
+
+    def wilson_ci(k, n, alpha=0.05):
+        """
+        Wilson score interval for a binomial proportion (k successes out of n).
+
+        Returns (ci_lo, ci_hi). If n == 0, returns (np.nan, np.nan).
+        """
+        if n == 0:
+            return (np.nan, np.nan)
+        z = 1.959963984540054 if alpha == 0.05 else float(np.abs(np.sqrt(2)*np.erfinv(1 - alpha)))
+        phat = k / n
+        denom = 1 + z*z/n
+        center = (phat + z*z/(2*n)) / denom
+        half = z * np.sqrt(phat*(1 - phat)/n + z*z/(4*n*n)) / denom
+        return (float(center - half), float(center + half))
+
+
+    answer_mask = model_confidence > teammate_accuracy
+    delegate_mask = ~answer_mask
+    
+    # Compute resulting accuracy
+    n_answer = answer_mask.sum()
+    n_delegate = delegate_mask.sum()
+    
+    if n_answer > 0:
+        acc_when_answer = model_correctness[answer_mask].mean()
+    else:
+        acc_when_answer = 0
+        
+    # Overall accuracy
+    total_accuracy = (n_answer * acc_when_answer + 
+                     n_delegate * teammate_accuracy) / len(model_correctness)
+    
+    # Also compute what they actually chose
+    answer_rate = n_answer / len(model_correctness)
+
+    opt_delegate = (model_confidence < teammate_accuracy)          # optimal decision: True=delegate
+    decide_delegate = delegate_choice.astype(bool)
+    disagree = opt_delegate ^ decide_delegate                      # XOR: True where decisions differ
+    agreement_rate = 1.0 - disagree.mean()
+    agree_ci_lo, agree_ci_hi = wilson_ci(int((~disagree).sum()), len(disagree), alpha=0.05)
+
+    severity_aware = np.mean(np.abs(model_confidence - teammate_accuracy) * disagree)    
+
+    weights = np.abs(model_confidence - teammate_accuracy)
+    # Normalized version: 1.0 = perfect, 0.0 = always take the opposite of the optimal decision
+    denom = weights.sum()
+    norm_weighted_agreement = 1.0 if denom == 0 else 1.0 - (weights[disagree].sum() / denom)
+
+    s = model_confidence
+    c = teammate_accuracy
+    dec = delegate_choice.astype(bool)         # True=delegate, False=answer
+    w = np.abs(s - c)
+    opt_delegate = (s < c)
+    opt_answer  = (s >= c)                    
+    # Mistake types
+    underconf = opt_answer & dec               # should answer, but delegated
+    overconf  = opt_delegate & (~dec)          # should delegate, but answered
+    # Rates (fraction of all items)
+    under_rate = underconf.mean()
+    over_rate  = overconf.mean()
+    # Severity contributions (avg expected accuracy lost per item)
+    under_severity = np.mean(w * underconf)    # points left on the table from underconfidence
+    over_severity  = np.mean(w * overconf)
+
+    # Normalized by total margin mass (0..1): share of |s-c| mass lost to each type
+    W = w.sum()
+    under_norm = 0.0 if W == 0 else w[underconf].sum() / W
+    over_norm  = 0.0 if W == 0 else w[overconf].sum()  / W
+    OWB = (over_norm - under_norm) / (over_norm + under_norm) if (over_norm + under_norm) > 0 else 0.0
+
+    # OWB CI (bootstrap)
+    def owb_stat(y, s, dec, c):
+        m = s - c
+        w = np.abs(m)
+        over = (s < c) & (~dec.astype(bool))
+        under = (s >= c) & (dec.astype(bool))
+        Wb = w.sum()
+        if Wb == 0:
+            return 0.0
+        over_norm_b = w[over].sum() / Wb
+        under_norm_b = w[under].sum() / Wb
+        den_b = over_norm_b + under_norm_b
+        return 0.0 if den_b == 0 else (over_norm_b - under_norm_b) / den_b
+
+    ci_owb = bootstrap_ci(owb_stat, model_correctness, model_confidence, delegate_choice,
+                          B=10000, alpha=0.05, random_state=0, c=teammate_accuracy)
+
+    # OBB and CI (bootstrap)
+    N_over = int(overconf.sum())
+    N_under = int(underconf.sum())
+    obb_den = N_over + N_under
+    OBB = 0.0 if obb_den == 0 else (N_over - N_under) / obb_den
+
+    def obb_stat(y, s, dec, c):
+        over_b = (s < c) & (~dec.astype(bool))
+        under_b = (s >= c) & (dec.astype(bool))
+        N_over_b = int(over_b.sum())
+        N_under_b = int(under_b.sum())
+        den_b = N_over_b + N_under_b
+        return 0.0 if den_b == 0 else (N_over_b - N_under_b) / den_b
+
+    ci_obb = bootstrap_ci(obb_stat, model_correctness, model_confidence, delegate_choice,
+                          B=10000, alpha=0.05, random_state=0, c=teammate_accuracy)
+
+    return {
+        'optimal_accuracy': total_accuracy,
+        'optimal_answer_rate': answer_rate,
+        'accuracy_on_answered': acc_when_answer,
+        'agreement_rate': agreement_rate,
+        'agreement_rate_ci': (agree_ci_lo, agree_ci_hi),
+        'weighted_agreement_rate': 1-severity_aware,
+        'norm_weighted_agreement_rate': norm_weighted_agreement,
+        'underconf_rate': under_rate,
+        'overconf_rate': over_rate,
+        'weighted_underconf_rate': 1-under_severity,
+        'weighted_overconf_rate': 1-over_severity,
+        'unweighted_confidence': OBB,
+        'unweighted_confidence_ci': ci_obb,
+        'weighted_confidence': OWB,
+        'weighted_confidence_ci': ci_owb,
+    }
+
+def block_partial_controls_given_entropy(dv_series, entropy_series, control_series_list, B=2000, alpha=0.05, random_state=None):
+    """
+    How much the surface cues (in aggregate) explain the decision after controlling for entropy.
+
+    Returns:
+      {
+        'partial_R2_controls_given_entropy': ...,
+        'R_controls_given_entropy': ...,
+        'delta_R2': ...,
+        'R2_reduced': ...,
+        'R2_full': ...,
+        'F': ...,
+        'p_value': ...,
+        'n_samples': ...,
+        'df1': ...,
+        'df2': ...,
+        'partial_R2_CI': (lo, hi) or None,
+      }
+    """
+    import numpy as np
+    import pandas as pd
+    from sklearn.preprocessing import StandardScaler
+    from scipy import stats
+    from numpy.linalg import lstsq
+
+    # Assemble data frame and align
+    all_data = pd.DataFrame({'dv': dv_series, 'entropy': entropy_series})
+    for i, control in enumerate(control_series_list):
+        col_name = control.name if control.name else f'control_{i}'
+        all_data[col_name] = control
+    all_data = all_data.dropna()
+    n = len(all_data)
+    if n < 5:
+        raise ValueError(f"Not enough samples after removing NaNs: {n}")
+
+    # Build controls matrix (dummy encode categoricals, standardize continuous)
+    control_cols = [c for c in all_data.columns if c not in ['dv', 'entropy']]
+    Xc_list = []
+    for col in control_cols:
+        if all_data[col].dtype in ['object', 'category']:
+            dummies = pd.get_dummies(all_data[col], prefix=col, drop_first=True).astype(float)
+            Xc_list.append(dummies)
+        else:
+            scaler = StandardScaler()
+            standardized = pd.DataFrame(
+                scaler.fit_transform(all_data[[col]]),
+                columns=[col],
+                index=all_data.index
+            )
+            Xc_list.append(standardized)
+    Xc = pd.concat(Xc_list, axis=1) if Xc_list else pd.DataFrame(index=all_data.index)
+
+    # Design matrices
+    y = all_data['dv'].values.astype(float)
+    ones = np.ones((n, 1), dtype=float)
+    iv = all_data['entropy'].values.astype(float).reshape(-1, 1)
+
+    X_reduced = np.concatenate([ones, iv], axis=1)             # intercept + entropy
+    if Xc.shape[1] == 0:
+        # No surface cues supplied
+        return {
+            'partial_R2_controls_given_entropy': 0.0,
+            'R_controls_given_entropy': 0.0,
+            'delta_R2': 0.0,
+            'R2_reduced': 1.0 - np.sum((y - X_reduced @ lstsq(X_reduced, y, rcond=None)[0])**2) / np.sum((y - y.mean())**2),
+            'R2_full': None,
+            'F': None,
+            'p_value': None,
+            'n_samples': n,
+            'df1': 0,
+            'df2': max(n - X_reduced.shape[1], 0),
+            'partial_R2_CI': None,
+        }
+
+    X_full = np.concatenate([X_reduced, Xc.values.astype(float)], axis=1)
+
+    # OLS fits
+    beta_red = lstsq(X_reduced, y, rcond=None)[0]
+    yhat_red = X_reduced @ beta_red
+    rss_red = np.sum((y - yhat_red)**2)
+
+    beta_full = lstsq(X_full, y, rcond=None)[0]
+    yhat_full = X_full @ beta_full
+    rss_full = np.sum((y - yhat_full)**2)
+
+    tss = np.sum((y - y.mean())**2)
+    R2_reduced = 1.0 - rss_red / tss
+    R2_full = 1.0 - rss_full / tss
+
+    p = X_full.shape[1] - X_reduced.shape[1]     # number of added controls
+    k_full = X_full.shape[1]
+    df1 = p
+    df2 = n - k_full
+
+    delta_R2 = max(R2_full - R2_reduced, 0.0)
+    denom = max(1.0 - R2_reduced, 0.0)
+    partial_R2 = (delta_R2 / denom) if denom > 0 else np.nan
+    R_block = np.sqrt(max(partial_R2, 0.0)) if np.isfinite(partial_R2) else np.nan
+
+    if df2 > 0 and df1 > 0 and (1 - R2_full) > 0:
+        F = (delta_R2 / df1) / ((1.0 - R2_full) / df2)
+        p_value = 1.0 - stats.f.cdf(F, df1, df2)
+    else:
+        F, p_value = np.nan, np.nan
+
+    # Optional bootstrap CI for partial_R2
+    ci = None
+    if B is not None and B > 0:
+        rng = np.random.default_rng(random_state)
+        vals = np.empty(B, dtype=float)
+        idx_all = np.arange(n)
+        Xc_mat = Xc.values.astype(float)
+        for b in range(B):
+            idx = rng.integers(0, n, size=n)
+            y_b = y[idx]
+            Xr_b = np.concatenate([np.ones((n,1)), iv[idx]], axis=1)
+            Xf_b = np.concatenate([Xr_b, Xc_mat[idx]], axis=1)
+
+            # Fit
+            br = lstsq(Xr_b, y_b, rcond=None)[0]
+            yr = Xr_b @ br
+            rr = np.sum((y_b - yr)**2)
+
+            bf = lstsq(Xf_b, y_b, rcond=None)[0]
+            yf = Xf_b @ bf
+            rf = np.sum((y_b - yf)**2)
+
+            tt = np.sum((y_b - y_b.mean())**2)
+            R2r = 1.0 - rr/tt
+            R2f = 1.0 - rf/tt
+            dR2 = max(R2f - R2r, 0.0)
+            denom_b = max(1.0 - R2r, 0.0)
+            #vals[b] = (dR2/denom_b) if denom_b > 0 else np.nan
+            partial_R2_b = (dR2 / denom_b) if denom_b > 0 else np.nan
+            vals[b] = np.sqrt(max(partial_R2_b, 0.0)) if np.isfinite(partial_R2_b) else np.nan
+
+        vals = vals[np.isfinite(vals)]
+        if len(vals) > 0:
+            lo = float(np.quantile(vals, alpha/2))
+            hi = float(np.quantile(vals, 1 - alpha/2))
+            R_ci = (lo, hi)
+            partial_R2_CI = (lo**2, hi**2)
+    return {
+        'partial_R2_controls_given_entropy': float(partial_R2),
+        'R_controls_given_entropy': float(R_block),
+        'delta_R2': float(delta_R2),
+        'R2_reduced': float(R2_reduced),
+        'R2_full': float(R2_full),
+        'F': float(F),
+        'p_value': float(p_value),
+        'n_samples': int(n),
+        'df1': int(df1),
+        'df2': int(df2),
+        'partial_R2_CI': partial_R2_CI,
+        'R_CI': R_ci
+    }
+
+def variance_partition_entropy_cues(dv_series, entropy_series, control_series_list, B=2000, alpha=0.05, random_state=None):
+    """
+    Commonality analysis for two predictor sets:
+      - entropy (single predictor)
+      - surface cues (block)
+    Returns unique, shared, and unexplained proportions on the R^2 scale, plus the component R^2s.
+    """
+    import numpy as np
+    import pandas as pd
+    from sklearn.preprocessing import StandardScaler
+    from numpy.linalg import lstsq
+
+    # Assemble and align
+    all_data = pd.DataFrame({'dv': dv_series, 'entropy': entropy_series})
+    for i, control in enumerate(control_series_list):
+        col_name = control.name if control.name else f'control_{i}'
+        all_data[col_name] = control
+    all_data = all_data.dropna()
+    n = len(all_data)
+    if n < 5:
+        raise ValueError(f"Not enough samples after removing NaNs: {n}")
+
+    # Build cue matrix (dummy encode categoricals, standardize continuous)
+    control_cols = [c for c in all_data.columns if c not in ['dv', 'entropy']]
+    Xc_list = []
+    for col in control_cols:
+        if all_data[col].dtype in ['object', 'category']:
+            dummies = pd.get_dummies(all_data[col], prefix=col, drop_first=True).astype(float)
+            Xc_list.append(dummies)
+        else:
+            scaler = StandardScaler()
+            standardized = pd.DataFrame(
+                scaler.fit_transform(all_data[[col]]),
+                columns=[col],
+                index=all_data.index
+            )
+            Xc_list.append(standardized)
+    Xc = pd.concat(Xc_list, axis=1) if Xc_list else pd.DataFrame(index=all_data.index)
+
+    y = all_data['dv'].values.astype(float)
+    one = np.ones((n,1))
+    E = all_data['entropy'].values.astype(float).reshape(-1,1)
+    C = Xc.values.astype(float) if Xc.shape[1] else np.empty((n,0))
+
+    def R2(X):
+        b = lstsq(X, y, rcond=None)[0]
+        yhat = X @ b
+        rss = np.sum((y - yhat)**2)
+        tss = np.sum((y - y.mean())**2)
+        return 1.0 - rss/tss
+
+    XE = np.concatenate([one, E], axis=1)
+    XC = np.concatenate([one, C], axis=1) if C.shape[1] else one
+    XEC = np.concatenate([one, E, C], axis=1) if C.shape[1] else XE
+
+    R2_E = R2(XE)
+    R2_C = R2(XC)
+    R2_EC = R2(XEC)
+
+    U_E = max(R2_EC - R2_C, 0.0)
+    U_C = max(R2_EC - R2_E, 0.0)
+    S = R2_E + R2_C - R2_EC  # may be negative (suppression)
+    U_unexpl = 1.0 - R2_EC
+
+    out = dict(
+        n_samples=int(n),
+        R2_entropy=float(R2_E),
+        R2_cues=float(R2_C),
+        R2_full=float(R2_EC),
+        unique_entropy=float(U_E),
+        unique_cues=float(U_C),
+        shared=float(S),
+        unexplained=float(U_unexpl),
+    )
+
+    # Optional bootstrap CIs
+    if B is not None and B > 0:
+        rng = np.random.default_rng(random_state)
+        vals = np.empty((B, 4), dtype=float)  # U_E, U_C, S, U_unexpl
+        for b in range(B):
+            idx = rng.integers(0, n, size=n)
+            y_b = y[idx]
+            E_b = E[idx]
+            C_b = C[idx] if C.shape[1] else C
+            one_b = np.ones((n,1))
+
+            def R2_b(X):
+                bb = lstsq(X, y_b, rcond=None)[0]
+                yhat = X @ bb
+                rss = np.sum((y_b - yhat)**2)
+                tss = np.sum((y_b - y_b.mean())**2)
+                return 1.0 - rss/tss
+
+            XE_b = np.concatenate([one_b, E_b], axis=1)
+            XC_b = np.concatenate([one_b, C_b], axis=1) if C_b.shape[1] else one_b
+            XEC_b = np.concatenate([one_b, E_b, C_b], axis=1) if C_b.shape[1] else XE_b
+
+            R2E = R2_b(XE_b)
+            R2C = R2_b(XC_b)
+            R2EC = R2_b(XEC_b)
+
+            UE = max(R2EC - R2C, 0.0)
+            UC = max(R2EC - R2E, 0.0)
+            S_b = R2E + R2C - R2EC
+            Uu = 1.0 - R2EC
+            vals[b] = (UE, UC, S_b, Uu)
+
+        qs = np.quantile(vals, [alpha/2, 1 - alpha/2], axis=0)
+        out.update(dict(
+            unique_entropy_CI=(float(qs[0,0]), float(qs[1,0])),
+            unique_cues_CI=(float(qs[0,1]), float(qs[1,1])),
+            shared_CI=(float(qs[0,2]), float(qs[1,2])),
+            unexplained_CI=(float(qs[0,3]), float(qs[1,3])),
+        ))
+
+    return out
+

@@ -59,6 +59,11 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     confounds_stated_regex = re.compile(r"Influence of surface confounds on stated confidence: R² = ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     self_other_correl_regex = re.compile(r"Correlation between Other's Prob and Self Prob: ([-\d.]+)")
     capent_gament_correl_regex = re.compile(r"Capent-Gament corr: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    optimal_decision_regex = re.compile(r"Agreement rate: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    unweighted_conf_regex = re.compile(r"Unweighted confidence: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    weighted_conf_regex = re.compile(r"Weighted confidence: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    controls_correl_regex = re.compile(r"Partial correlation on decision with all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    controls_correl2_regex = re.compile(r"Partial correlation on decision with surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -242,7 +247,22 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "self_other_correl_ci_high": "Not found",
                     "capent_gament_correl": "Not found",
                     "capent_gament_correl_ci_low": "Not found",
-                    "capent_gament_correl_ci_high": "Not found"
+                    "capent_gament_correl_ci_high": "Not found",
+                    "optimal_decision": "Not found",
+                    "optimal_decision_ci_low": "Not found",
+                    "optimal_decision_ci_high": "Not found",
+                    "unweighted_conf": "Not found",
+                    "unweighted_conf_ci_low": "Not found",
+                    "unweighted_conf_ci_high": "Not found",
+                    "weighted_conf": "Not found",
+                    "weighted_conf_ci_low": "Not found",
+                    "weighted_conf_ci_high": "Not found",
+                    "controls_correl": "Not found",
+                    "controls_correl_ci_low": "Not found",
+                    "controls_correl_ci_high": "Not found",
+                    "controls_correl2": "Not found",
+                    "controls_correl2_ci_low": "Not found",
+                    "controls_correl2_ci_high": "Not found"
                 }
                 
                 # Model parsing states
@@ -531,6 +551,41 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["capent_gament_correl_ci_high"] = m.group(3)
                         continue
 
+                    m = optimal_decision_regex.search(line)
+                    if m:
+                        extracted_info["optimal_decision"] = m.group(1)
+                        extracted_info["optimal_decision_ci_low"] = m.group(2)
+                        extracted_info["optimal_decision_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = unweighted_conf_regex.search(line)
+                    if m:
+                        extracted_info["unweighted_conf"] = m.group(1)
+                        extracted_info["unweighted_conf_ci_low"] = m.group(2)
+                        extracted_info["unweighted_conf_ci_high"] = m.group(3)
+                        continue
+
+                    m = weighted_conf_regex.search(line)
+                    if m:
+                        extracted_info["weighted_conf"] = m.group(1)
+                        extracted_info["weighted_conf_ci_low"] = m.group(2)
+                        extracted_info["weighted_conf_ci_high"] = m.group(3)
+                        continue
+
+                    m = controls_correl_regex.search(line)
+                    if m:
+                        extracted_info["controls_correl"] = m.group(1)
+                        extracted_info["controls_correl_ci_low"] = m.group(2)
+                        extracted_info["controls_correl_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = controls_correl2_regex.search(line)
+                    if m:
+                        extracted_info["controls_correl2"] = m.group(1)
+                        extracted_info["controls_correl2_ci_low"] = m.group(2)
+                        extracted_info["controls_correl2_ci_high"] = m.group(3)
+                        continue
+
                     # Cross-tabulation parsing state machine
                     if not parsing_crosstab and not any([in_model4, in_model46, in_model463, in_model48, in_model7]) and crosstab_title_regex.match(line):
                         parsing_crosstab = True
@@ -706,6 +761,11 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     extracted_info["correctness_correl_cntl_ci_low"] = extracted_info["correctness_correl_cntl2_ci_low"]
                     extracted_info["correctness_correl_cntl_ci_high"] = extracted_info["correctness_correl_cntl2_ci_high"]
 
+                if extracted_info["controls_correl"] == "Not found" and extracted_info["controls_correl2"] != "Not found":
+                    extracted_info["controls_correl"] = extracted_info["controls_correl2"]
+                    extracted_info["controls_correl_ci_low"] = extracted_info["controls_correl2_ci_low"]
+                    extracted_info["controls_correl_ci_high"] = extracted_info["controls_correl2_ci_high"]
+
                 # Warnings for optional fields
                 if extracted_info["model46_cap_entropy_coef"] == "Not found":
                     pass#print(f"Warning: Model 4.6 capabilities_entropy coefficient not found for {subject_name}")
@@ -779,6 +839,10 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Stated Confounds: {extracted_info['confounds_stated']} [{extracted_info['confounds_stated_ci_low']}, {extracted_info['confounds_stated_ci_high']}]\n")
                 outfile.write(f"  Self Other Correl: {extracted_info['self_other_correl']}\n")
                 outfile.write(f"  Capent Gament Correl: {extracted_info['capent_gament_correl']} [{extracted_info['capent_gament_correl_ci_low']}, {extracted_info['capent_gament_correl_ci_high']}]\n")
+                outfile.write(f"  Optimal Decision Rate: {extracted_info['optimal_decision']} [{extracted_info['optimal_decision_ci_low']}, {extracted_info['optimal_decision_ci_high']}]\n")
+                outfile.write(f"  Unweighted Confidence: {extracted_info['unweighted_conf']} [{extracted_info['unweighted_conf_ci_low']}, {extracted_info['unweighted_conf_ci_high']}]\n")
+                outfile.write(f"  Weighted Confidence: {extracted_info['weighted_conf']} [{extracted_info['weighted_conf_ci_low']}, {extracted_info['weighted_conf_ci_high']}]\n")
+                outfile.write(f"  Controls Correl: {extracted_info['controls_correl']} [{extracted_info['controls_correl_ci_low']}, {extracted_info['controls_correl_ci_high']}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -1011,6 +1075,30 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["capent_gament_correl"] = float(m.group(1))
                     current_subject_info["capent_gament_correl_ci_low"] = float(m.group(2))
                     current_subject_info["capent_gament_correl_ci_high"] = float(m.group(3))
+            elif "Optimal Decision:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["optimal_decision"] = float(m.group(1))
+                    current_subject_info["optimal_decision_ci_low"] = float(m.group(2))
+                    current_subject_info["optimal_decision_ci_high"] = float(m.group(3))
+            elif "Unweighted Confidence:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["unweighted_conf"] = float(m.group(1))
+                    current_subject_info["unweighted_conf_ci_low"] = float(m.group(2))
+                    current_subject_info["unweighted_conf_ci_high"] = float(m.group(3))
+            elif "Weighted Confidence:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["weighted_conf"] = float(m.group(1))
+                    current_subject_info["weighted_conf_ci_low"] = float(m.group(2))
+                    current_subject_info["weighted_conf_ci_high"] = float(m.group(3))
+            elif "Controls Correl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["controls_correl"] = float(m.group(1))
+                    current_subject_info["controls_correl_ci_low"] = float(m.group(2))
+                    current_subject_info["controls_correl_ci_high"] = float(m.group(3))
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -1255,7 +1343,19 @@ def analyze_parsed_data(input_summary_file):
             "Self_Other_Correl": data.get("self_other_correl", np.nan),
             "Capent_Gament_Correl": data.get("capent_gament_correl", np.nan),
             "Capent_Gament_Correl_LB": data.get("capent_gament_correl_ci_low", np.nan),
-            "Capent_Gament_Correl_UB": data.get("capent_gament_correl_ci_high", np.nan)
+            "Capent_Gament_Correl_UB": data.get("capent_gament_correl_ci_high", np.nan),
+            "Optimal_Decision": data.get("optimal_decision", np.nan),
+            "Optimal_Decision_LB": data.get("optimal_decision_ci_low", np.nan),
+            "Optimal_Decision_UB": data.get("optimal_decision_ci_high", np.nan),
+            "Unweighted_Conf": data.get("unweighted_conf", np.nan),
+            "Unweighted_Conf_LB": data.get("unweighted_conf_ci_low", np.nan),
+            "Unweighted_Conf_UB": data.get("unweighted_conf_ci_high", np.nan),
+            "Weighted_Conf": data.get("weighted_conf", np.nan),
+            "Weighted_Conf_LB": data.get("weighted_conf_ci_low", np.nan),
+            "Weighted_Conf_UB": data.get("weighted_conf_ci_high", np.nan),
+            "Controls_Correl": data.get("controls_correl", np.nan),
+            "Controls_Correl_LB": data.get("controls_correl_ci_low", np.nan),
+            "Controls_Correl_UB": data.get("controls_correl_ci_high", np.nan)
         })
         
     return pd.DataFrame(results)
@@ -1577,7 +1677,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "GPSA"#"GPQA"#"SimpleMC" #"SimpleQA" #
+    dataset = "SimpleMC" #"SimpleQA" #"GPSA"#"GPQA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")

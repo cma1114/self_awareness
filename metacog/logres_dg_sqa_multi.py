@@ -339,7 +339,7 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "SimpleMC" #"SimpleQA" # 
+    dataset = "SimpleMC" # "SimpleQA" #
     game_type = "dg" #"aop"#
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
@@ -644,10 +644,30 @@ if __name__ == "__main__":
                             hi = p_team + 1.96 * se
                             excess = p_team - p_const
                         ci_excess = (lo - p_const, hi - p_const)
+                        log_output(f"Team-acc: {excess+p_const}", suppress=False)
                         log_output(f"Team-acc lift = {excess:.3f} [{ci_excess[0]:.3f}, {ci_excess[1]:.3f}]", suppress=False)
                         res_dicts[model_name_part]['team_acc_lift'] = {'lift': excess, 'ci_lo': ci_excess[0], 'ci_hi': ci_excess[1]}
                     except Exception as e:
                         log_output(f"Error calculating team-acc lift: {e}")
+
+                    if 'p_i_capability' in df_model.columns and df_model['p_i_capability'].notna().any():
+                        try:
+                            team_acc = teammate_acc_phase1 if teammate_acc_phase1 else cap_corr.mean()
+                            res = compute_optimal_accuracy_with_introspection(df_model['p_i_capability'], df_model['s_i_capability'], df_model['delegate_choice'], team_acc)
+                            log_output(f"Max possible team accuracy: {res['optimal_accuracy']:.4f}", suppress=False)
+                            log_output(f"Optimal delegation rate: {(1-res['optimal_answer_rate']):.4f}", suppress=False)
+                            log_output(f"Best possible self-accuracy: {res['accuracy_on_answered']:.4f}", suppress=False)
+                            log_output(f"Agreement rate: {res['agreement_rate']:.4f} [{res['agreement_rate_ci'][0]:.4f}, {res['agreement_rate_ci'][1]:.4f}]", suppress=False)
+                            log_output(f"Weighted agreement rate: {res['weighted_agreement_rate']:.4f}", suppress=False)
+                            log_output(f"Norm-weighted agreement rate: {res['norm_weighted_agreement_rate']:.4f}", suppress=False)
+                            log_output(f"Underconfidence rate: {res['underconf_rate']:.4f}", suppress=False)
+                            log_output(f"Overconfidence rate: {res['overconf_rate']:.4f}", suppress=False)
+                            log_output(f"Weighted underconfidence rate: {res['weighted_underconf_rate']:.4f}", suppress=False)
+                            log_output(f"Weighted overconfidence rate: {res['weighted_overconf_rate']:.4f}", suppress=False)
+                            log_output(f"Unweighted confidence: {res['unweighted_confidence']:.4f} [{res['unweighted_confidence_ci'][0]:.4f}, {res['unweighted_confidence_ci'][1]:.4f}]", suppress=False)
+                            log_output(f"Weighted confidence: {res['weighted_confidence']:.4f} [{res['weighted_confidence_ci'][0]:.4f}, {res['weighted_confidence_ci'][1]:.4f}]", suppress=False)
+                        except Exception as e:
+                            log_output(f"Error calculating optimal accuracy with introspection: {e}", suppress=False)
 
                     # Hybrid correctness label 
                     #    – use real game correctness when the model kept
@@ -1238,9 +1258,20 @@ if __name__ == "__main__":
                                 res_dicts[model_name_part]['capent']['introspection'] = rd
                                 """
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
+
+                    res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=continuous_controls+categorical_controls)
+                    log_output(f"Partial correlation on decision with surface controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                        res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']])
+                        log_output(f"Partial correlation on decision with Stated Other control, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                        res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                        log_output(f"Partial correlation on decision with all controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                         log_output(f"\n====================Partial correlation on decision: Capent====================")
                         try:
+                            res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=[])
+                            log_output(f"Partial correlation on decision with Capent, no controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
                             res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
                             log_output(f"Partial correlation on decision with Capent, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
                             if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
@@ -1248,6 +1279,20 @@ if __name__ == "__main__":
                                 log_output(f"Partial correlation on decision with Capent, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
                                 res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
                                 log_output(f"Partial correlation on decision with Capent, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
+                            res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
+                            log_output(f"Partial correlation on decision with surface controls: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                            if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                                res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']])
+                                log_output(f"Partial correlation on decision with Stated Other control: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                                res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                                log_output(f"Partial correlation on decision with all controls: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+
+                                res = variance_partition_entropy_cues(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                                log_output(f"Variance partitioning: Entropy unique R2={res['unique_entropy']:.4f} [{res['unique_entropy_CI'][0]:.4f}, {res['unique_entropy_CI'][1]:.4f}]", suppress=False)
+                                log_output(f"Variance partitioning: Surface unique R2={res['unique_cues']:.4f} [{res['unique_cues_CI'][0]:.4f}, {res['unique_cues_CI'][1]:.4f}]", suppress=False)
+                                log_output(f"Variance partitioning: Shared R2={res['shared']:.4f} [{res['shared_CI'][0]:.4f}, {res['shared_CI'][1]:.4f}]", suppress=False)
+                                log_output(f"Variance partitioning: Unexplained R2={res['unexplained']:.4f} [{res['unexplained_CI'][0]:.4f}, {res['unexplained_CI'][1]:.4f}]", suppress=False)
 
                         except Exception as e_full:
                             log_output(f"                    Could not compute partial correlation on capent: {e_full}", suppress=False)

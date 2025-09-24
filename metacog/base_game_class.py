@@ -178,7 +178,7 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else "deepseek/deepseek-chat-v3-0324" if self.subject_name == "deepseek-chat" else self.subject_name
+                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else "deepseek/deepseek-chat" if self.subject_name == "deepseek-chat" else self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
@@ -195,7 +195,8 @@ class BaseGameClass:
                         messages=formatted_messages,
                         **({"logprobs": True} if not self.subject_name.startswith("o3") else {}),
                         **({"top_logprobs": len(options)} if not self.subject_name.startswith("o3") else {}),
-                        **({"reasoning_effort": "low"} if 'gpt-5' in self.subject_name else {})
+                        **({"reasoning_effort": "low"} if 'gpt-5' in self.subject_name else {}),
+                        **({"top_p": 1.0} if temp > 0.0 else {}),
                     )   
                     print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
@@ -361,6 +362,8 @@ class BaseGameClass:
                             **({"system_instruction": system_msg} if system_msg != "" else {}),
                             max_output_tokens=(None if "2.5" in self.subject_name else MAX_TOKENS),
                             temperature=min(temp + attempt * temp_inc, max(temp,1.0)),
+                            **({"top_p": 1.0} if temp > 0.0 else {}),
+                            **({"top_k": 64} if temp > 0.0 else {}),
                             candidate_count=1,
                             **({"response_logprobs": True} if '1.5' not in self.subject_name else {}),
                             **({"logprobs": len(options)} if '1.5' not in self.subject_name else {}),
@@ -385,7 +388,7 @@ class BaseGameClass:
 
                     else:                                   # multiple-choice – inspect 1st token only
                         # top_candidates[0].candidates = k alternatives for the 1st token
-                        if False:#len(resp) > 1:
+                        if len(resp) > 1:
                             resp, token_probs = find_answer_in_output(logres, options)
                         else:
                             first_step = logres.top_candidates[0].candidates

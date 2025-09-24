@@ -506,10 +506,14 @@ metric_aliases = {
     "Team Accuracy Lift": ["team_acc_lift", "Team Accuracy Lift"],
     "Game-Test Change Rate": ["game_test_change_rate", "Game-Test Change Rate (%)"],
     "Capent Gament Correl": ["capent_game_correl", "Game-Capability Correlation"],
+    "Optimal Decision Rate": ["optimal_decision_rate", "Optimal Decision Rate (%)"],
+    "Unweighted Confidence": ["unweighted_conf", "Unweighted Confidence (%)"],
+    "Weighted Confidence": ["weighted_conf", "Weighted Confidence (%)"],
+    "Controls Correl": ["controls_correl", "Multi Partial Correlation"],
 }
 chance = None#0.5
-show_trend = True
-metric = "Capent Gament Correl"
+show_trend = False
+metric = "Capent Correl Cntl"
 pooled = None#pool_metric_ivw(metric=metric, files=files[:2])#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
 if pooled: files = [{model: {metric: stats} for model, stats in pooled.items()}]
 
