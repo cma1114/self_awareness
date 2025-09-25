@@ -510,11 +510,14 @@ metric_aliases = {
     "Unweighted Confidence": ["unweighted_conf", "Unweighted Confidence (%)"],
     "Weighted Confidence": ["weighted_conf", "Weighted Confidence (%)"],
     "Controls Correl": ["controls_correl", "Multi Partial Correlation"],
+    "Controls Correctness Correl": ["controls_correctness_correl", "Multi-Partial Correlation"],
+    "Correctness Correl SA Cntl": ["is_sa", "Partial correlation"],
+    "Capent Correl SA Cntl": ["capent_correl_sa", "Partial correlation"],
 }
 chance = None#0.5
 show_trend = False
-metric = "Capent Correl Cntl"
-pooled = None#pool_metric_ivw(metric=metric, files=files[:2])#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
+metric = "Self Other Correl"
+pooled = None#pool_metric_ivw(metric=metric, files=files)#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
 if pooled: files = [{model: {metric: stats} for model, stats in pooled.items()}]
 
 fig, ax, df_wide = plot_metric_panels_from_results(
@@ -525,5 +528,5 @@ fig, ax, df_wide = plot_metric_panels_from_results(
     aliases=model_aliases,
     suptitle="",#"Partial correlation between baseline correctness and answer/delegate decision",
     outfile=f"{metric_aliases[metric][0]}_by_model{'_notrend' if not show_trend else ''}{'_pooled' if pooled else ''}.png"
-    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label=metric_aliases[metric][1], show_trend=show_trend, bar_color=None##="#84bdf7"#="#f5b446"#="#2fae2d"='brown'#
+    , ecolor="gray", alpha_err=1.0, chance=chance, metric_label=metric_aliases[metric][1], show_trend=show_trend, bar_color=None##="#A76BA8"#='gray'#="#f5b446"#='brown'#="#84bdf7"#="#2fae2d"#
 )

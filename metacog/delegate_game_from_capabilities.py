@@ -724,7 +724,7 @@ class DelegateGameFromCapabilities(BaseGameClass):
                 if self.is_short_answer:
                     phase_header += "For each question, answer as succinctly as possible or respond with 'T' to let your teammate answer."
                 else:
-                    phase_header += ""############################"For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer. Do NOT output any other text."
+                    phase_header += "For each question, enter your answer (A, B, C, D) or 'T' to let your teammate answer. Do NOT output any other text."
                 
                 # Determine the question text - include full setup with feedback/summary only for first question
 #                question_text = (final_feedback + "\n" if i == 0 else "") + phase_header + "\n" + feedback_text + "\n" + formatted_question + "\n" + prompt
@@ -1193,16 +1193,16 @@ def main():
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "deepseek-chat"#"claude-opus-4-1-20250805"#"claude-sonnet-4-20250514"#"gemini-2.5-flash_think"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gpt-4o-mini"#"gemini-2.5-flash"##'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"gpt-4.1-2025-04-14"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#'gpt-4.1-2025-04-14'#"gpt-4o-2024-08-06"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"deepseek-chat"#"claude-opus-4-1-20250805"#"claude-sonnet-4-20250514"#"gemini-2.5-flash_think"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gpt-4o-mini"#"gemini-2.5-flash"##'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
     N_TRIALS_PHASE1 = 50  # Number of questions for Phase 1 simulation
     N_TRIALS_PHASE2 = 500 # Number of questions for Phase 2
-    TEAMMATE_ACCURACY_PHASE1 = 0.5  # Teammate accuracy for Phase 1
-    TEAMMATE_ACCURACY_PHASE2 = 0.5  # Teammate accuracy for Phase 2
+    TEAMMATE_ACCURACY_PHASE1 = 0.8  # Teammate accuracy for Phase 1
+    TEAMMATE_ACCURACY_PHASE2 = 0.8  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 3#41#714#42#33#2456#  # Random seed for reproducibility
+    SEED = 3#2456#41#714#42#33# # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1212,7 +1212,7 @@ def real_main(DATASET):
     USE_PHASE1_HISTORY = True  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
-    resume_from = None
+    resume_from = None#"delegate_game_logs/gpt-4o-2024-08-06_SimpleMC_50_500_team0.8_temp0.0_1758728315_game_data.json"
 
     # Feedback configuration
     feedback_config = {
@@ -1253,7 +1253,7 @@ def real_main(DATASET):
     In {phasestr}, you will receive feedback on {fbstr}your teammate's performance. Use this feedback to inform your decisions about whether to delegate in phase 2.
     You want to maximize your team's total score. In phase 1, that means answering as best you can. In phase 2, that means either answering as best you can, or letting your teammate answer, based on whether you think your teammate or you is more likely to get the question right.
     """)
-
+# 
 #    Don't be afraid to give an answer if you think you might know it, but try to be strategic about when to delegate to your teammate.
 #    Don't be afraid to give an answer if you think you might know it!
 

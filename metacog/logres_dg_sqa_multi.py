@@ -1083,6 +1083,13 @@ if __name__ == "__main__":
                         res = partial_correlation_on_decision(dv_series=1-df_model['delegate_choice'], iv_series=df_model['s_i_capability'], control_series_list=continuous_controls+categorical_controls)
                         log_output(f"Partial correlation on decision with Correctness, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
 
+                        df_answer_unchanged = df_model[(df_model['answer_changed'] == False) | (df_model['delegate_choice'] == 1)]
+                        continuous_controls_sa = [df_answer_unchanged[t] for t in final_model_terms if t not in ['s_i_capability', 's_i_capability:teammate_skill_ratio', 'teammate_skill_ratio'] and not (isinstance(t, str) and t.startswith('C('))]
+                        categorical_controls_sa = [df_answer_unchanged[t.replace('C(', '').replace(')', '')] for t in final_model_terms if (isinstance(t, str) and t.startswith('C('))]
+                        control_vars_sa = continuous_controls + categorical_controls 
+                        res = partial_correlation_on_decision(dv_series=1-df_answer_unchanged['delegate_choice'], iv_series=df_answer_unchanged['s_i_capability'], control_series_list=control_vars_sa)
+                        log_output(f"Partial correlation on decision with Correctness for same answer, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
                     except Exception as e_full:
                         log_output(f"                    Could not fit Logit on decision with correctness and surface controls: {e_full}", suppress=False)
 
@@ -1106,6 +1113,11 @@ if __name__ == "__main__":
                             except Exception as e_full:
                                 log_output(f"                    Could not fit partial correlation on decision with Correctness, all controls: {e_full}", suppress=False)
                             #log_output(f"res={res}", suppress=False)
+
+                            res = partial_correlation_on_decision(dv_series=1-df_answer_unchanged['delegate_choice'], iv_series=df_answer_unchanged['s_i_capability'], control_series_list=[df_answer_unchanged['o_prob']])
+                            log_output(f"Partial correlation on decision with Correctness for same answer, Stated Other control: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            res = partial_correlation_on_decision(dv_series=1-df_answer_unchanged['delegate_choice'], iv_series=df_answer_unchanged['s_i_capability'], control_series_list=[df_answer_unchanged['o_prob']]+control_vars_sa)
+                            log_output(f"Partial correlation on decision with Correctness for same answer, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
 
                             res = logit_on_decision(pass_decision=1-df_model['delegate_choice'], iv_of_interest=df_model['capabilities_entropy'], control_vars=control_vars + [df_model['o_prob']])
                             ci_lower, ci_upper = res.conf_int().loc['capabilities_entropy']
@@ -1258,15 +1270,17 @@ if __name__ == "__main__":
                                 res_dicts[model_name_part]['capent']['introspection'] = rd
                                 """
                                 #plot_x3_relationships(df_model['sp_prob'], df_model['o_prob'], df_model['capabilities_entropy'], df_model['delegate_choice'], filename=f'x3_relationships_{model_name_part}_{dataset}_{game_type}.png')
-
-                    res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=continuous_controls+categorical_controls)
-                    log_output(f"Partial correlation on decision with surface controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
-                    if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
-                        res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']])
-                        log_output(f"Partial correlation on decision with Stated Other control, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
-                        res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
-                        log_output(f"Partial correlation on decision with all controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
-
+                    try: 
+                        res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=continuous_controls+categorical_controls)
+                        log_output(f"Partial correlation on decision with surface controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                        if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                            res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']])
+                            log_output(f"Partial correlation on decision with Stated Other control, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                            res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['s_i_capability'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
+                            log_output(f"Partial correlation on decision with all controls, controlling for baseline correctness: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                    except Exception as e_full:
+                        log_output(f"                    Could not compute control cues partial correlation on correctness: {e_full}", suppress=False)
+                        
                     if 'capabilities_entropy' in df_model.columns and df_model['capabilities_entropy'].notna().any():
                         log_output(f"\n====================Partial correlation on decision: Capent====================")
                         try:
@@ -1280,8 +1294,17 @@ if __name__ == "__main__":
                                 res = partial_correlation_on_decision(dv_series=df_model['delegate_choice'], iv_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']]+continuous_controls+categorical_controls)
                                 log_output(f"Partial correlation on decision with Capent, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
 
-                            res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
-                            log_output(f"Partial correlation on decision with surface controls: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                            res = partial_correlation_on_decision(dv_series=df_answer_unchanged['delegate_choice'], iv_series=df_answer_unchanged['capabilities_entropy'], control_series_list=continuous_controls_sa+categorical_controls_sa)
+                            log_output(f"Partial correlation on decision with Capent, same answer, surface controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+                            if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
+                                res = partial_correlation_on_decision(dv_series=df_answer_unchanged['delegate_choice'], iv_series=df_answer_unchanged['capabilities_entropy'], control_series_list=[df_answer_unchanged['o_prob']]+continuous_controls_sa+categorical_controls_sa)
+                                log_output(f"Partial correlation on decision with Capent, same answer, all controls: {res['correlation']:.4f} [{res['ci_lower']:.4f}, {res['ci_upper']:.4f}]", suppress=False)
+
+                            try:
+                                res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=continuous_controls+categorical_controls)
+                                log_output(f"Partial correlation on decision with surface controls: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
+                            except Exception as e_full:
+                                log_output(f"                    Could not compute partial correlation on capent with surface controls: {e_full}", suppress=False)
                             if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any():
                                 res = block_partial_controls_given_entropy(dv_series=df_model['delegate_choice'], entropy_series=df_model['capabilities_entropy'], control_series_list=[df_model['o_prob']])
                                 log_output(f"Partial correlation on decision with Stated Other control: {res['R_controls_given_entropy']:.4f} [{res['R_CI'][0]:.4f}, {res['R_CI'][1]:.4f}]", suppress=False)
@@ -1672,19 +1695,33 @@ if __name__ == "__main__":
     with open(f"res_dicts_{qtype}_{rtype}_{game_type}.json", 'w') as f:
         json.dump(res_dicts, f, indent=2)
 
-    summary = summarize_wrong_way(misused_results, alpha=0.05)
-    log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)
-
-
-    potential_misuses = summarize_wrong_wayC(misused_results, alpha=0.05)
-    n_potential = len(potential_misuses)
-    if n_potential > 0:
-        n_significant = potential_misuses['misuse_fdr'].sum()
-        log_output(f"\nPotential misuses tested: {n_potential}; Significant after FDR correction: {n_significant}; Significant misused predictors: ", suppress=False)
-        significant_misuses = potential_misuses[potential_misuses['misuse_fdr']]
-        if len(significant_misuses) > 0:
-            log_output(significant_misuses[['predictor', 'beta_correct', 'beta_delegate', 'p_one_sided_delegate_gt0', 'p_adjusted']], suppress=False)
+    try:
+        summary = summarize_wrong_way(misused_results, alpha=0.05)
+        log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)
+    except Exception as e:
+        log_output(f"Could not summarize misuse results: {e}", suppress=False)
+    
+    try:
+        summary = summarize_wrong_wayB(misused_results, alpha=0.05)
+        log_output(f"\n\n{summary['conclusion']} (k={summary['n_wrong_way']}/{summary['n_candidates']}, expected={summary['expected_by_chance']:.1f}, p={summary['p_value']:.4f})", suppress=False)    
+        from scipy.stats import binomtest
+        p_value = binomtest(summary['n_wrong_way'], n=summary['n_candidates'], p=0.0, alternative='greater')
+        log_output(f"Exact binomial test against 0 chance rate: {p_value}", suppress=False)
+    except Exception as e:
+        log_output(f"Could not summarize misuse results (method B): {e}", suppress=False)
+    
+    try: 
+        potential_misuses = summarize_wrong_wayC(misused_results, alpha=0.05)
+        n_potential = len(potential_misuses)
+        if n_potential > 0:
+            n_significant = potential_misuses['misuse_fdr'].sum()
+            log_output(f"\nPotential misuses tested: {n_potential}; Significant after FDR correction: {n_significant}; Significant misused predictors: ", suppress=False)
+            significant_misuses = potential_misuses[potential_misuses['misuse_fdr']]
+            if len(significant_misuses) > 0:
+                log_output(significant_misuses[['predictor', 'beta_correct', 'beta_delegate', 'p_one_sided_delegate_gt0', 'p_adjusted']], suppress=False)
+            else:
+                log_output("None survived FDR correction", suppress=False)
         else:
-            log_output("None survived FDR correction", suppress=False)
-    else:
-        log_output("\nNo potential misuses found (no predictors with positive baseline and positive delegation effects)", suppress=False)
+            log_output("\nNo potential misuses found (no predictors with positive baseline and positive delegation effects)", suppress=False)
+    except Exception as e:
+        log_output(f"Could not summarize misuse results (method C): {e}", suppress=False)

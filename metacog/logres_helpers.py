@@ -3629,9 +3629,12 @@ def compute_optimal_accuracy_with_introspection(model_correctness, model_confide
         'weighted_confidence_ci': ci_owb,
     }
 
-def block_partial_controls_given_entropy(dv_series, entropy_series, control_series_list, B=2000, alpha=0.05, random_state=None):
+def block_partial_controls_given_entropy(
+    dv_series, entropy_series, control_series_list, B=2000, alpha=0.05, random_state=None
+):
     """
-    How much the surface cues (in aggregate) explain the decision after controlling for entropy.
+    How much the surface cues (in aggregate) explain the decision after controlling for entropy
+    (or a proxy like correctness).
 
     Returns:
       {
@@ -3645,67 +3648,81 @@ def block_partial_controls_given_entropy(dv_series, entropy_series, control_seri
         'n_samples': ...,
         'df1': ...,
         'df2': ...,
-        'partial_R2_CI': (lo, hi) or None,
+        'partial_R2_CI': (lo, hi) or None,          # stratified bootstrap percentile CI
+        'R_CI': (lo, hi) or None                    # stratified bootstrap percentile CI
       }
     """
     import numpy as np
     import pandas as pd
     from sklearn.preprocessing import StandardScaler
-    from scipy import stats
     from numpy.linalg import lstsq
+    from scipy import stats
 
-    # Assemble data frame and align
-    all_data = pd.DataFrame({'dv': dv_series, 'entropy': entropy_series})
-    for i, control in enumerate(control_series_list):
-        col_name = control.name if control.name else f'control_{i}'
-        all_data[col_name] = control
-    all_data = all_data.dropna()
+    eps = 1e-12
+
+    # Assemble and clean
+    all_data = pd.DataFrame({'dv': dv_series, 'ctrl': entropy_series})
+    for i, s in enumerate(control_series_list or []):
+        name = getattr(s, 'name', None) or f'control_{i}'
+        all_data[name] = s
+    all_data = all_data.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
     n = len(all_data)
     if n < 5:
         raise ValueError(f"Not enough samples after removing NaNs: {n}")
 
-    # Build controls matrix (dummy encode categoricals, standardize continuous)
-    control_cols = [c for c in all_data.columns if c not in ['dv', 'entropy']]
-    Xc_list = []
+    # Build surface-cue matrix (dummy encode categoricals, standardize continuous)
+    control_cols = [c for c in all_data.columns if c not in ['dv', 'ctrl']]
+    Xc_parts = []
+    min_count = max(3, int(0.01 * n))  # drop ultra-rare dummy levels
     for col in control_cols:
-        if all_data[col].dtype in ['object', 'category']:
-            dummies = pd.get_dummies(all_data[col], prefix=col, drop_first=True).astype(float)
-            Xc_list.append(dummies)
+        s = all_data[col]
+        if s.dtype.kind in ('O', 'U') or str(s.dtype) == 'category':
+            dummies = pd.get_dummies(s.astype('category'), prefix=col, drop_first=True, dtype=float)
+            # Drop rare levels that cause high leverage/instability
+            keep = [c for c in dummies.columns if dummies[c].sum() >= min_count and (n - dummies[c].sum()) >= min_count]
+            if keep:
+                Xc_parts.append(dummies[keep])
         else:
-            scaler = StandardScaler()
+            x = all_data[[col]].astype(float).values
+            if float(np.std(x, ddof=0)) <= eps:
+                continue
             standardized = pd.DataFrame(
-                scaler.fit_transform(all_data[[col]]),
+                StandardScaler().fit_transform(x),
                 columns=[col],
                 index=all_data.index
             )
-            Xc_list.append(standardized)
-    Xc = pd.concat(Xc_list, axis=1) if Xc_list else pd.DataFrame(index=all_data.index)
+            Xc_parts.append(standardized)
+    Xc = pd.concat(Xc_parts, axis=1).astype(float) if Xc_parts else pd.DataFrame(index=all_data.index)
 
     # Design matrices
-    y = all_data['dv'].values.astype(float)
+    y = all_data['dv'].astype(float).values
+    iv = all_data['ctrl'].astype(float).values.reshape(-1, 1)
     ones = np.ones((n, 1), dtype=float)
-    iv = all_data['entropy'].values.astype(float).reshape(-1, 1)
-
-    X_reduced = np.concatenate([ones, iv], axis=1)             # intercept + entropy
+    X_reduced = np.concatenate([ones, iv], axis=1)  # intercept + control
     if Xc.shape[1] == 0:
-        # No surface cues supplied
+        # No cues: return reduced-model stats
+        beta_red = lstsq(X_reduced, y, rcond=None)[0]
+        yhat_red = X_reduced @ beta_red
+        tss = max(np.sum((y - y.mean())**2), eps)
+        R2_reduced = 1.0 - np.sum((y - yhat_red)**2) / tss
         return {
             'partial_R2_controls_given_entropy': 0.0,
             'R_controls_given_entropy': 0.0,
             'delta_R2': 0.0,
-            'R2_reduced': 1.0 - np.sum((y - X_reduced @ lstsq(X_reduced, y, rcond=None)[0])**2) / np.sum((y - y.mean())**2),
-            'R2_full': None,
-            'F': None,
-            'p_value': None,
-            'n_samples': n,
+            'R2_reduced': float(R2_reduced),
+            'R2_full': float(R2_reduced),
+            'F': np.nan,
+            'p_value': np.nan,
+            'n_samples': int(n),
             'df1': 0,
             'df2': max(n - X_reduced.shape[1], 0),
             'partial_R2_CI': None,
+            'R_CI': None
         }
 
     X_full = np.concatenate([X_reduced, Xc.values.astype(float)], axis=1)
 
-    # OLS fits
+    # OLS fits for point estimates (unchanged semantics)
     beta_red = lstsq(X_reduced, y, rcond=None)[0]
     yhat_red = X_reduced @ beta_red
     rss_red = np.sum((y - yhat_red)**2)
@@ -3714,76 +3731,221 @@ def block_partial_controls_given_entropy(dv_series, entropy_series, control_seri
     yhat_full = X_full @ beta_full
     rss_full = np.sum((y - yhat_full)**2)
 
-    tss = np.sum((y - y.mean())**2)
+    tss = max(np.sum((y - y.mean())**2), eps)
     R2_reduced = 1.0 - rss_red / tss
     R2_full = 1.0 - rss_full / tss
 
-    p = X_full.shape[1] - X_reduced.shape[1]     # number of added controls
-    k_full = X_full.shape[1]
-    df1 = p
-    df2 = n - k_full
+    # Effective dfs by rank (more stable under collinearity/rare dummies)
+    rank_red = np.linalg.matrix_rank(X_reduced)
+    rank_full = np.linalg.matrix_rank(X_full)
+    df1 = int(max(rank_full - rank_red, 0))
+    df2 = int(max(n - rank_full, 0))
 
     delta_R2 = max(R2_full - R2_reduced, 0.0)
-    denom = max(1.0 - R2_reduced, 0.0)
-    partial_R2 = (delta_R2 / denom) if denom > 0 else np.nan
-    R_block = np.sqrt(max(partial_R2, 0.0)) if np.isfinite(partial_R2) else np.nan
+    denom = max(1.0 - R2_reduced, eps)
+    partial_R2 = delta_R2 / denom
+    partial_R2 = float(np.clip(partial_R2, 0.0, 1.0))
+    R_block = float(np.sqrt(partial_R2))
 
-    if df2 > 0 and df1 > 0 and (1 - R2_full) > 0:
-        F = (delta_R2 / df1) / ((1.0 - R2_full) / df2)
-        p_value = 1.0 - stats.f.cdf(F, df1, df2)
+    # Heteroskedasticity-robust (HC3) block test for cues (replaces naive F)
+    q = Xc.shape[1]  # number of added columns (before rank)
+    if df1 > 0 and df2 > 0:
+        X = X_full
+        b = beta_full
+        e = y - yhat_full
+        XtX = X.T @ X
+        XtX_inv = np.linalg.pinv(XtX, rcond=1e-12)
+        # Hat diag: h_i = x_i^T (X'X)^{-1} x_i
+        M = X @ XtX_inv
+        h = np.sum(M * X, axis=1)
+        adj = (e / np.clip(1.0 - h, 1e-8, None))**2
+        meat = X.T @ (adj[:, None] * X)
+        V = XtX_inv @ meat @ XtX_inv  # HC3 covariance
+        # Restrictions: last block (cues) equal zero
+        k_full = X.shape[1]
+        Rm = np.zeros((k_full, k_full), dtype=float)
+        Rm[-q:, -q:] = np.eye(q, dtype=float)
+        R = Rm[-q:, :]  # shape (q, k)
+        Rb = R @ b
+        RVRT = R @ V @ R.T
+        # Use effective q from rank in case of collinearity
+        q_eff = int(np.linalg.matrix_rank(RVRT))
+        try:
+            RVRT_inv = np.linalg.pinv(RVRT, rcond=1e-12)
+            Wald = float(Rb.T @ RVRT_inv @ Rb)
+            F_stat = Wald / max(q_eff, 1)
+            p_val = 1.0 - stats.f.cdf(F_stat, max(q_eff, 1), max(df2, 1))
+        except Exception:
+            F_stat, p_val = np.nan, np.nan
     else:
-        F, p_value = np.nan, np.nan
+        F_stat, p_val = np.nan, np.nan
 
-    # Optional bootstrap CI for partial_R2
-    ci = None
-    if B is not None and B > 0:
+    # Stratified bootstrap for CIs (percentile), preserving class and control mix
+    partial_R2_CI = None
+    R_CI = None
+    if B and B > 0:
         rng = np.random.default_rng(random_state)
-        vals = np.empty(B, dtype=float)
-        idx_all = np.arange(n)
+
+        # Build strata: by DV (if binary) and by control bins (adaptive)
+        dv_vals = all_data['dv'].values
+        is_binary_dv = np.all(np.isin(np.unique(dv_vals), [0, 1])) and len(np.unique(dv_vals)) <= 2
+
+        ctrl_vals = all_data['ctrl'].values
+        # Try 5,4,3,2 bins for control; reduce if any stratum too small
+        def make_bins(qs):
+            try:
+                bins = pd.qcut(ctrl_vals, qs, duplicates='drop')
+                return bins
+            except Exception:
+                return None
+
+        ctrl_bins = None
+        for qbins in (5, 4, 3, 2):
+            ctrl_bins = make_bins(qbins)
+            if ctrl_bins is None:
+                continue
+            # combine with dv to check stratum sizes
+            if is_binary_dv:
+                strata = pd.Series(list(zip(dv_vals.astype(int), pd.Categorical(ctrl_bins).codes)))
+            else:
+                strata = pd.Series(pd.Categorical(ctrl_bins).codes)
+            counts = strata.value_counts()
+            if (counts.min() >= 2) and (counts.size >= 2):
+                break
+            else:
+                ctrl_bins = None
+
+        # Fallbacks if binning fails
+        if ctrl_bins is None:
+            if is_binary_dv:
+                strata = pd.Series(dv_vals.astype(int))
+            else:
+                strata = pd.Series(np.zeros(n, dtype=int))
+        else:
+            if is_binary_dv:
+                strata = pd.Series(list(zip(dv_vals.astype(int), pd.Categorical(ctrl_bins).codes)))
+            else:
+                strata = pd.Series(pd.Categorical(ctrl_bins).codes)
+
+        codes, uniques = pd.factorize(strata, sort=True)
+        indices_by_group = {}
+        for i, code in enumerate(codes):
+            if code == -1:
+                continue
+            indices_by_group.setdefault(code, []).append(i)
+            nonempty = [np.array(idx, dtype=int) for idx in indices_by_group.values() if len(idx) > 0]
+            if len(nonempty) <= 1:
+                # degenerate: fall back to ordinary bootstrap
+                nonempty = [np.arange(n, dtype=int)]
+
+        r2_vals = []
+        r_vals = []
+
         Xc_mat = Xc.values.astype(float)
-        for b in range(B):
-            idx = rng.integers(0, n, size=n)
+
+        for _ in range(int(B)):
+            # Stratified resample: sample within each stratum, preserve counts
+            idx_parts = []
+            for g in nonempty:
+                m = len(g)
+                idx_g = rng.integers(0, m, size=m)
+                idx_parts.append(np.array(g, dtype=int)[idx_g])
+            idx = np.concatenate(idx_parts, axis=0)
+
             y_b = y[idx]
-            Xr_b = np.concatenate([np.ones((n,1)), iv[idx]], axis=1)
-            Xf_b = np.concatenate([Xr_b, Xc_mat[idx]], axis=1)
+            iv_b = iv[idx]
+            Xc_b = Xc_mat[idx]
 
-            # Fit
-            br = lstsq(Xr_b, y_b, rcond=None)[0]
-            yr = Xr_b @ br
-            rr = np.sum((y_b - yr)**2)
+            Xr_b = np.concatenate([np.ones((len(idx), 1)), iv_b], axis=1)
+            Xf_b = np.concatenate([Xr_b, Xc_b], axis=1)
 
-            bf = lstsq(Xf_b, y_b, rcond=None)[0]
-            yf = Xf_b @ bf
-            rf = np.sum((y_b - yf)**2)
+            # Reduced
+            try:
+                br = lstsq(Xr_b, y_b, rcond=None)[0]
+                yr = Xr_b @ br
+                rr = np.sum((y_b - yr)**2)
+            except Exception:
+                continue
+
+            # Full
+            try:
+                bf = lstsq(Xf_b, y_b, rcond=None)[0]
+                yf = Xf_b @ bf
+                rf = np.sum((y_b - yf)**2)
+            except Exception:
+                continue
 
             tt = np.sum((y_b - y_b.mean())**2)
-            R2r = 1.0 - rr/tt
-            R2f = 1.0 - rf/tt
-            dR2 = max(R2f - R2r, 0.0)
-            denom_b = max(1.0 - R2r, 0.0)
-            #vals[b] = (dR2/denom_b) if denom_b > 0 else np.nan
-            partial_R2_b = (dR2 / denom_b) if denom_b > 0 else np.nan
-            vals[b] = np.sqrt(max(partial_R2_b, 0.0)) if np.isfinite(partial_R2_b) else np.nan
+            if tt <= eps:
+                continue
 
-        vals = vals[np.isfinite(vals)]
-        if len(vals) > 0:
-            lo = float(np.quantile(vals, alpha/2))
-            hi = float(np.quantile(vals, 1 - alpha/2))
-            R_ci = (lo, hi)
-            partial_R2_CI = (lo**2, hi**2)
+            R2r = 1.0 - rr / tt
+            R2f = 1.0 - rf / tt
+            dR2 = max(R2f - R2r, 0.0)
+            denom_b = max(1.0 - R2r, eps)
+            pr2_b = dR2 / denom_b
+            if np.isfinite(pr2_b):
+                r2_vals.append(pr2_b)
+                r_vals.append(np.sqrt(max(pr2_b, 0.0)))
+
+        if len(r_vals) > 0:
+            q_lo, q_hi = alpha / 2.0, 1.0 - alpha / 2.0
+            r2_arr = np.array(r2_vals, dtype=float)
+            r_arr = np.array(r_vals, dtype=float)
+            lo_r2 = float(np.quantile(r2_arr, q_lo))
+            hi_r2 = float(np.quantile(r2_arr, q_hi))
+            lo_r = float(np.quantile(r_arr, q_lo))
+            hi_r = float(np.quantile(r_arr, q_hi))
+            partial_R2_CI = (max(0.0, lo_r2), min(1.0, hi_r2))
+            R_CI = (max(0.0, lo_r), min(1.0, hi_r))
+
+    # --- Bootstrap-median point estimate (ad-hoc or global) ---
+    # Apply globally? (set to True to always use bootstrap median when available)
+    APPLY_GLOBALLY = False
+
+    bootstrap_median_point_estimate_used = False
+    ci_containment_applied = False  # if you also kept the earlier "containment" patch
+
+    if B and R_CI is not None and 'r_arr' in locals() and len(r_arr) > 0:
+        # Decide whether to apply ad-hoc
+        apply_ad_hoc = False
+        try:
+            dv_vals = all_data['dv'].values
+            dv_unique = np.unique(dv_vals)
+            is_binary_dv = (dv_unique.size <= 2) and np.all(np.isin(dv_unique, [0, 1]))
+            imbalance = 1.0
+            if is_binary_dv:
+                pos_rate = float(np.mean(dv_vals))
+                imbalance = min(pos_rate, 1.0 - pos_rate)  # minority fraction
+
+            ctrl_vals = all_data['ctrl'].values
+            ctrl_unique = np.unique(ctrl_vals)
+            control_is_near_binary = (ctrl_unique.size <= 3) and np.all(np.isin(ctrl_unique, [0, 1]))
+
+            # Trigger only in the problematic corner: extreme imbalance + (near-)binary control
+            apply_ad_hoc = (imbalance <= 0.10) and control_is_near_binary
+        except Exception:
+            apply_ad_hoc = False
+
+        if APPLY_GLOBALLY or apply_ad_hoc:
+            # Replace point estimate with stratified-bootstrap median
+            R_block = float(np.median(r_arr))
+            partial_R2 = float(R_block ** 2)
+            bootstrap_median_point_estimate_used = True
+
     return {
         'partial_R2_controls_given_entropy': float(partial_R2),
         'R_controls_given_entropy': float(R_block),
         'delta_R2': float(delta_R2),
         'R2_reduced': float(R2_reduced),
         'R2_full': float(R2_full),
-        'F': float(F),
-        'p_value': float(p_value),
+        'F': float(F_stat) if F_stat == F_stat else np.nan,
+        'p_value': float(p_val) if p_val == p_val else np.nan,
         'n_samples': int(n),
         'df1': int(df1),
         'df2': int(df2),
         'partial_R2_CI': partial_R2_CI,
-        'R_CI': R_ci
+        'R_CI': R_CI
     }
 
 def variance_partition_entropy_cues(dv_series, entropy_series, control_series_list, B=2000, alpha=0.05, random_state=None):

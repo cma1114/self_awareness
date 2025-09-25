@@ -277,10 +277,10 @@ def save_summary_data(all_results, filename="final_summary.csv"):
 if __name__ == "__main__":
     all_model_summary_data = []
 
-    dataset = "SimpleQA" #"SimpleMC"#
+    dataset = "SimpleMC"#"SimpleQA" #
     game_type = "sc"
-    sc_version = "_new"  # "_new" or "" or "_neut"
-    suffix = ""  # "_all" or ""
+    sc_version = "_neut"  # "_new" or "" or "_neut"
+    suffix = "_all"  # "_all" or ""
     VERBOSE = False
 
     LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{sc_version}{suffix}.txt"
@@ -792,13 +792,13 @@ if __name__ == "__main__":
                         w_stat, w_p = wilcoxon(df_idea5['game_entropy'], df_idea5['capabilities_entropy'])
                         log_output(f"Wilcoxon (game_entropy vs capabilities_entropy): statistic={w_stat:.2f}, p={w_p:.3g}")
                         
-                        delta_entropy = df_idea5['capabilities_entropy'] - df_idea5['game_entropy']
+                        delta_entropy = df_idea5['game_entropy'] - df_idea5['capabilities_entropy']
                         mean_delta_entropy = delta_entropy.mean()
                         se_delta_entropy = delta_entropy.std(ddof=1) / np.sqrt(len(delta_entropy))
                         ci_low_delta_entropy = mean_delta_entropy - 1.96 * se_delta_entropy
                         ci_up_delta_entropy = mean_delta_entropy + 1.96 * se_delta_entropy
                         log_output(f"Paired t-test (game_entropy vs capabilities_entropy): statistic={t_stat:.2f}, p={t_p:.3g}")
-                        log_output(f"Mean capabilities_entropy-game_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
+                        log_output(f"Mean game_entropy-capabilities_entropy = {mean_delta_entropy:.4f}  [{ci_low_delta_entropy:.4f}, {ci_up_delta_entropy:.4f}] (n={len(delta_entropy)})")
                         summary_data['Idea 5: p-val'] = w_p
                     else:
                         log_output("                  Not enough data for Idea 5 analysis.")

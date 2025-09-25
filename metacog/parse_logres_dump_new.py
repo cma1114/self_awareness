@@ -35,6 +35,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     correctness_coef_cntl2_regex = re.compile(r"Baseline correctness coefficient with surface controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_cntl_regex = re.compile(r"Partial correlation on decision with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Capent, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_correl_sa_cntl_regex = re.compile(r"Partial correlation on decision with Capent, same answer, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    capent_correl_sa_cntl2_regex = re.compile(r"Partial correlation on decision with Capent, same answer, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_correl_prob_cntl_regex = re.compile(r"Partial correlation on decision prob with Capent, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     capent_coef_prob_cntl_regex = re.compile(r"Linres on decision prob with Capent, all controls, standardized: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     pseudor2_cntl_regex = re.compile(r"pseudo-R2, all controls model: ([-\d.]+)")
@@ -51,6 +53,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     topprob_regex = re.compile(r"df_model\[p_i_capability\] mean: ([-\d.]+), std: ([\d.]+)")
     correctness_correl_cntl_regex = re.compile(r"Partial correlation on decision with Correctness, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     correctness_correl_cntl2_regex = re.compile(r"Partial correlation on decision with Correctness, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_correl_sa_cntl_regex = re.compile(r"Partial correlation on decision with Correctness for same answer, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    correctness_correl_sa_cntl2_regex = re.compile(r"Partial correlation on decision with Correctness for same answer, surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     ent_dg_vs_stated_cntl_regex = re.compile(r"Decision Prob minus Stated Prob entropy correlation, all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     confounds_dg_vs_stated_regex = re.compile(r"Influence of surface confounds on game-stated: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     ent_dg_regex = re.compile(r"Partial correlation \(entropy → game\), all controls: ([-\d.]+)")
@@ -64,6 +68,8 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
     weighted_conf_regex = re.compile(r"Weighted confidence: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     controls_correl_regex = re.compile(r"Partial correlation on decision with all controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     controls_correl2_regex = re.compile(r"Partial correlation on decision with surface controls: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    controls_correctness_correl_regex = re.compile(r"Partial correlation on decision with all controls, controlling for baseline correctness: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
+    controls_correctness_correl2_regex = re.compile(r"Partial correlation on decision with surface controls, controlling for baseline correctness: ([-\d.]+)\s*\[([-\d.]+), ([-\d.]+)")
     fp_regex = re.compile(r"FP = ([-\d.]+)")
     fn_regex = re.compile(r"FN = ([-\d.]+)")
 
@@ -262,7 +268,25 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     "controls_correl_ci_high": "Not found",
                     "controls_correl2": "Not found",
                     "controls_correl2_ci_low": "Not found",
-                    "controls_correl2_ci_high": "Not found"
+                    "controls_correl2_ci_high": "Not found",
+                    "controls_correctness_correl": "Not found",
+                    "controls_correctness_correl_ci_low": "Not found",
+                    "controls_correctness_correl_ci_high": "Not found",
+                    "controls_correctness_correl2": "Not found",
+                    "controls_correctness_correl2_ci_low": "Not found",
+                    "controls_correctness_correl2_ci_high": "Not found",
+                    "correctness_correl_sa_cntl": "Not found",
+                    "correctness_correl_sa_cntl_ci_low": "Not found",
+                    "correctness_correl_sa_cntl_ci_high": "Not found",
+                    "correctness_correl_sa_cntl2": "Not found",
+                    "correctness_correl_sa_cntl2_ci_low": "Not found",
+                    "correctness_correl_sa_cntl2_ci_high": "Not found",
+                    "capent_correl_sa_cntl": "Not found",
+                    "capent_correl_sa_cntl_ci_low": "Not found",
+                    "capent_correl_sa_cntl_ci_high": "Not found",
+                    "capent_correl_sa_cntl2": "Not found",
+                    "capent_correl_sa_cntl2_ci_low": "Not found",
+                    "capent_correl_sa_cntl2_ci_high": "Not found"
                 }
                 
                 # Model parsing states
@@ -586,6 +610,48 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                         extracted_info["controls_correl2_ci_high"] = m.group(3)
                         continue
 
+                    m = controls_correctness_correl_regex.search(line)
+                    if m:
+                        extracted_info["controls_correctness_correl"] = m.group(1)
+                        extracted_info["controls_correctness_correl_ci_low"] = m.group(2)
+                        extracted_info["controls_correctness_correl_ci_high"] = m.group(3)
+                        continue
+
+                    m = controls_correctness_correl2_regex.search(line)
+                    if m:
+                        extracted_info["controls_correctness_correl2"] = m.group(1)
+                        extracted_info["controls_correctness_correl2_ci_low"] = m.group(2)
+                        extracted_info["controls_correctness_correl2_ci_high"] = m.group(3)
+                        continue
+
+                    m = correctness_correl_sa_cntl_regex.search(line)
+                    if m:
+                        extracted_info["correctness_correl_sa_cntl"] = m.group(1)
+                        extracted_info["correctness_correl_sa_cntl_ci_low"] = m.group(2)
+                        extracted_info["correctness_correl_sa_cntl_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = correctness_correl_sa_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["correctness_correl_sa_cntl2"] = m.group(1)
+                        extracted_info["correctness_correl_sa_cntl2_ci_low"] = m.group(2)
+                        extracted_info["correctness_correl_sa_cntl2_ci_high"] = m.group(3)
+                        continue
+
+                    m = capent_correl_sa_cntl_regex.search(line)
+                    if m:
+                        extracted_info["capent_correl_sa_cntl"] = m.group(1)
+                        extracted_info["capent_correl_sa_cntl_ci_low"] = m.group(2)
+                        extracted_info["capent_correl_sa_cntl_ci_high"] = m.group(3)
+                        continue
+                    
+                    m = capent_correl_sa_cntl2_regex.search(line)
+                    if m:
+                        extracted_info["capent_correl_sa_cntl2"] = m.group(1)
+                        extracted_info["capent_correl_sa_cntl2_ci_low"] = m.group(2)
+                        extracted_info["capent_correl_sa_cntl2_ci_high"] = m.group(3)
+                        continue
+
                     # Cross-tabulation parsing state machine
                     if not parsing_crosstab and not any([in_model4, in_model46, in_model463, in_model48, in_model7]) and crosstab_title_regex.match(line):
                         parsing_crosstab = True
@@ -766,6 +832,21 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                     extracted_info["controls_correl_ci_low"] = extracted_info["controls_correl2_ci_low"]
                     extracted_info["controls_correl_ci_high"] = extracted_info["controls_correl2_ci_high"]
 
+                if extracted_info["controls_correctness_correl"] == "Not found" and extracted_info["controls_correctness_correl2"] != "Not found":
+                    extracted_info["controls_correctness_correl"] = extracted_info["controls_correctness_correl2"]
+                    extracted_info["controls_correctness_correl_ci_low"] = extracted_info["controls_correctness_correl2_ci_low"]
+                    extracted_info["controls_correctness_correl_ci_high"] = extracted_info["controls_correctness_correl2_ci_high"]
+
+                if extracted_info["correctness_correl_sa_cntl"] == "Not found" and extracted_info["correctness_correl_sa_cntl2"] != "Not found":
+                    extracted_info["correctness_correl_sa_cntl"] = extracted_info["correctness_correl_sa_cntl2"]
+                    extracted_info["correctness_correl_sa_cntl_ci_low"] = extracted_info["correctness_correl_sa_cntl2_ci_low"]
+                    extracted_info["correctness_correl_sa_cntl_ci_high"] = extracted_info["correctness_correl_sa_cntl2_ci_high"]
+
+                if extracted_info["capent_correl_sa_cntl"] == "Not found" and extracted_info["capent_correl_sa_cntl2"] != "Not found":
+                    extracted_info["capent_correl_sa_cntl"] = extracted_info["capent_correl_sa_cntl2"]
+                    extracted_info["capent_correl_sa_cntl_ci_low"] = extracted_info["capent_correl_sa_cntl2_ci_low"]
+                    extracted_info["capent_correl_sa_cntl_ci_high"] = extracted_info["capent_correl_sa_cntl2_ci_high"]
+
                 # Warnings for optional fields
                 if extracted_info["model46_cap_entropy_coef"] == "Not found":
                     pass#print(f"Warning: Model 4.6 capabilities_entropy coefficient not found for {subject_name}")
@@ -843,6 +924,9 @@ def parse_analysis_log(log_content, output_file, target_params, model_list, int_
                 outfile.write(f"  Unweighted Confidence: {extracted_info['unweighted_conf']} [{extracted_info['unweighted_conf_ci_low']}, {extracted_info['unweighted_conf_ci_high']}]\n")
                 outfile.write(f"  Weighted Confidence: {extracted_info['weighted_conf']} [{extracted_info['weighted_conf_ci_low']}, {extracted_info['weighted_conf_ci_high']}]\n")
                 outfile.write(f"  Controls Correl: {extracted_info['controls_correl']} [{extracted_info['controls_correl_ci_low']}, {extracted_info['controls_correl_ci_high']}]\n")
+                outfile.write(f"  Controls Correctness Correl: {extracted_info['controls_correctness_correl']} [{extracted_info['controls_correctness_correl_ci_low']}, {extracted_info['controls_correctness_correl_ci_high']}]\n")
+                outfile.write(f"  Correctness Correl SA Cntl: {extracted_info['correctness_correl_sa_cntl']} [{extracted_info['correctness_correl_sa_cntl_ci_low']}, {extracted_info['correctness_correl_sa_cntl_ci_high']}]\n")
+                outfile.write(f"  Capent Correl SA Cntl: {extracted_info['capent_correl_sa_cntl']} [{extracted_info['capent_correl_sa_cntl_ci_low']}, {extracted_info['capent_correl_sa_cntl_ci_high']}]\n")
                 outfile.write("\n")
 
     print(f"Parsing complete. Output written to {output_file}")
@@ -1099,6 +1183,24 @@ def analyze_parsed_data(input_summary_file):
                     current_subject_info["controls_correl"] = float(m.group(1))
                     current_subject_info["controls_correl_ci_low"] = float(m.group(2))
                     current_subject_info["controls_correl_ci_high"] = float(m.group(3))
+            elif "Controls Correctness Correl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["controls_correctness_correl"] = float(m.group(1))
+                    current_subject_info["controls_correctness_correl_ci_low"] = float(m.group(2))
+                    current_subject_info["controls_correctness_correl_ci_high"] = float(m.group(3))
+            elif "Correctness Correl SA Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["correctness_correl_sa_cntl"] = float(m.group(1))
+                    current_subject_info["correctness_correl_sa_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["correctness_correl_sa_cntl_ci_high"] = float(m.group(3))
+            elif "Capent Correl SA Cntl:" in line:
+                m = re.search(r":\s*([-\d.]+)\s*\[([-\d.]+),\s*([-\d.]+)\]", line)
+                if m:
+                    current_subject_info["capent_correl_sa_cntl"] = float(m.group(1))
+                    current_subject_info["capent_correl_sa_cntl_ci_low"] = float(m.group(2))
+                    current_subject_info["capent_correl_sa_cntl_ci_high"] = float(m.group(3))
 
         if current_subject_info.get("subject_name"):
             all_subject_data.append(current_subject_info)
@@ -1355,7 +1457,16 @@ def analyze_parsed_data(input_summary_file):
             "Weighted_Conf_UB": data.get("weighted_conf_ci_high", np.nan),
             "Controls_Correl": data.get("controls_correl", np.nan),
             "Controls_Correl_LB": data.get("controls_correl_ci_low", np.nan),
-            "Controls_Correl_UB": data.get("controls_correl_ci_high", np.nan)
+            "Controls_Correl_UB": data.get("controls_correl_ci_high", np.nan),
+            "Controls_Correctness_Correl": data.get("controls_correctness_correl", np.nan),
+            "Controls_Correctness_Correl_LB": data.get("controls_correctness_correl_ci_low", np.nan),
+            "Controls_Correctness_Correl_UB": data.get("controls_correctness_correl_ci_high", np.nan),
+            "Correctness_Correl_SA_Cntl": data.get("correctness_correl_sa_cntl", np.nan),
+            "Correctness_Correl_SA_Cntl_LB": data.get("correctness_correl_sa_cntl_ci_low", np.nan),
+            "Correctness_Correl_SA_Cntl_UB": data.get("correctness_correl_sa_cntl_ci_high", np.nan),
+            "Capent_Correl_SA_Cntl": data.get("capent_correl_sa_cntl", np.nan),
+            "Capent_Correl_SA_Cntl_LB": data.get("capent_correl_sa_cntl_ci_low", np.nan),
+            "Capent_Correl_SA_Cntl_UB": data.get("capent_correl_sa_cntl_ci_high", np.nan)
         })
         
     return pd.DataFrame(results)
@@ -1677,7 +1788,7 @@ def plot_results(df_results, subject_order=None, dataset_name="GPQA", int_score_
 if __name__ == "__main__":
     
     game_type = "dg"#"aop" #
-    dataset = "SimpleMC" #"SimpleQA" #"GPSA"#"GPQA"#
+    dataset = "SimpleMC" #"GPQA"#"SimpleQA" #"GPSA"#
     if game_type == "dg":
         target_params = "Feedback_False, Non_Redacted, NoSubjAccOverride, NoSubjGameOverride, NotRandomized, WithHistory, NotFiltered"#
         #if dataset != "GPSA": target_params = target_params.replace(", NoSubjGameOverride", "")
