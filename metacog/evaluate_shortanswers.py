@@ -509,16 +509,19 @@ def main():
     #test_data_file = "./capabilities_test_logs/gpt-4.1-2025-04-14_SimpleQA_500_1751159442_test_data.json"
     #test_data_file = "./delegate_game_logs/gpt-4.1-2025-04-14_SimpleQA_50_500_team0.6_temp0.0_1751166555_game_data.json"
     #test_data_file = "pass_game_logs/claude-sonnet-4-20250514_SimpleQA_noqcnt_nopcnt_noscnt_temp0.0_1751003273_game_data.json"
-    file_list = ["capabilities_test_logs/gemini-2.5-flash_nothink_SimpleQA_500_1758384711_test_data.json"]
+    file_list = ["delegate_game_logs/openai-gpt-5-chat_GPSA_50_500_team0.8_temp0.0_1763179189_game_data.json"]
     for test_data_file in file_list:
         if 'claude' in test_data_file:
             judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "gemini-2.0-flash-001"]#["grok-3-latest", "gemini-2.0-flash-001", "gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "deepseek-chat"]
         elif 'gemini' in test_data_file:
-            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]
+#            judge_models = ["gpt-4o-2024-08-06", "deepseek-chat", "claude-3-5-sonnet-20241022"]
+            judge_models = ["kimi-k2-0905", "deepseek-chat-v3.1", "gpt-4o-2024-08-06"]
         elif 'gpt' in test_data_file:
-            judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gemini-2.0-flash-001"]
+#            judge_models = ["claude-3-5-sonnet-20241022", "deepseek-chat", "gemini-2.0-flash-001"]
+            judge_models = ["kimi-k2-0905", "deepseek-chat-v3.1", "gemini-2.0-flash"]
         else:
-            judge_models = ["gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-001"]
+#            judge_models = ["gpt-4o-2024-08-06", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-001"]
+            judge_models = ["qwen3-235b-a22b-2507", "kimi-k2-0905", "gemini-2.0-flash-001"]
 
         print(f"Evaluating {test_data_file} using models: {judge_models}")
         

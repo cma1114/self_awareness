@@ -364,13 +364,14 @@ def process_file_groups(files_to_process, criteria_chain, model_name_for_log, gr
 # --- Main Analysis Logic ---
 if __name__ == "__main__":
 
-    dataset = "GPQA"#"GPSA"# 
+    dataset = "GPSA"# "GPQA"#
     game_type = "dg"#"aop"#
+    test_suffix="_1"
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
-    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{test_suffix}.txt"
 
 
     print(f"Loading main {dataset} dataset for features...")
@@ -397,7 +398,7 @@ if __name__ == "__main__":
 
     model_game_files = defaultdict(list)
     for game_filename in sorted(os.listdir(game_logs_dir)):
-        if game_filename.endswith(f"_game_data{game_file_suffix}.json") and f"_{dataset}_" in game_filename:
+        if game_filename.endswith(f"_game_data{game_file_suffix}{test_suffix}.json") and f"_{dataset}_" in game_filename:
             model_name_part = game_filename.split(f"_{dataset}_")[0]
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
 
@@ -1059,7 +1060,13 @@ if __name__ == "__main__":
                     if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any() and 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
                         log_output(f"\nCorrelation between Other's Prob and human_difficulty: {df_model['o_prob'].corr(df_model['human_difficulty'])}", suppress=False)
                         log_output(f"\nCorrelation between Other's Prob and Self Prob: {df_model['o_prob'].corr(df_model['sp_prob'])}", suppress=False)
-                        log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                        if 'capabilities_entropy' in df_model:
+                            implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Other Prob: {df_model[implicit_prob_str].corr(df_model['o_prob'])}", suppress=False)
+                            implicit_prob_str = 'capabilities_entropy' #'p_i_capability' # 
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Other Prob: {df_model[implicit_prob_str].corr(df_model['o_prob'])}", suppress=False)
                         df_model['sp_binary'] = (df_model['sp_prob'] >= 0.5).astype(int)
 
                     log_output(f"\n{df_model.groupby('domain_grouped')['delegate_choice'].value_counts(normalize=True)}\n")

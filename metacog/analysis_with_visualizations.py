@@ -516,7 +516,7 @@ metric_aliases = {
 }
 chance = None#0.5
 show_trend = False
-metric = "Self Other Correl"
+metric = "Team Accuracy Lift"
 pooled = None#pool_metric_ivw(metric=metric, files=files)#["analysis_log_multi_logres_dg_gpqa_dg_full_hist_parsed.txt", "analysis_log_multi_logres_dg_simplemc_dg_full_hist_parsed.txt"])
 if pooled: files = [{model: {metric: stats} for model, stats in pooled.items()}]
 

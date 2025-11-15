@@ -23,7 +23,7 @@ CONFIG.set_default_api_key(os.environ.get("NDIF_API_KEY"))
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
 xai_api_key = os.environ.get("XAI_API_KEY")
 deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY")    
-openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
+openrouter_api_key = os.environ.get("SPAR2025_OPENROUTER_KEY")##os.environ.get("OPENROUTER_API_KEY")
 
 from collections import Counter
 from typing import List, Dict, Tuple
@@ -62,7 +62,7 @@ class BaseGameClass:
         if not self.is_human_player:
             if self.subject_name.startswith("claude"):
                 self.provider = "Anthropic"
-            elif "gpt" in self.subject_name or self.subject_name.startswith("o3") or self.subject_name.startswith("o1"):
+            elif 'gpt-5' not in self.subject_name and ("gpt" in self.subject_name or self.subject_name.startswith("o3") or self.subject_name.startswith("o1")):
                 self.provider = "OpenAI"
             elif self.subject_name.startswith("gemini"):
                 self.provider = "Google"
@@ -77,8 +77,10 @@ class BaseGameClass:
 
             if self.provider == "Anthropic": 
                 self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-            elif self.provider == "OpenAI" or self.provider == "OpenRouter":
-                self.client = OpenAI(api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1")####OpenAI()
+            elif self.provider == "OpenAI":# or self.provider == "OpenRouter":
+                self.client = OpenAI()
+            elif self.provider == "OpenRouter":
+                self.client = OpenAI(api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1")####
             elif self.provider == "Google":
                 self.client = genai.Client(vertexai=True, project="gen-lang-client-0693193232", location="us-central1") if 'gemini-1.5' not in self.subject_name else genai.Client(api_key=gemini_api_key)
             elif self.provider == "xAI":
@@ -162,6 +164,7 @@ class BaseGameClass:
                         formatted_messages = message_history
                     else:
                         formatted_messages = copy.deepcopy(message_history)
+                        if len(formatted_messages) > 0: formatted_messages[-1]["content"] = [{"type": "text", "text": formatted_messages[-1]["content"], "cache_control": {"type": "ephemeral"}}]
                         formatted_messages.append(user_msg)
                     #print(f"\nsystem_msg={system_msg}")                     
                     #print(f"\nformatted_messages={formatted_messages}\n")             
@@ -178,13 +181,34 @@ class BaseGameClass:
                     resp = message.content[0].text.strip()
                     return resp, None
                 elif self.provider == "OpenAI" or self.provider == "xAI" or self.provider == "DeepSeek" or self.provider == "OpenRouter":
-                    model_name = "openai/gpt-4.1" if self.subject_name == "gpt-4.1-2025-04-14" else "openai/gpt-4o-2024-08-06" if self.subject_name == "gpt-4o-2024-08-06" else "openai/gpt-4o-mini" if self.subject_name == "gpt-4o-mini" else "openai/gpt-5-chat" if self.subject_name == "openai-gpt-5-chat"  else "qwen/qwen3-235b-a22b-2507" if self.subject_name == "qwen3-235b-a22b-2507" else "deepseek/deepseek-chat" if self.subject_name == "deepseek-chat" else self.subject_name
+                    if self.provider == "OpenRouter":
+                        if self.subject_name == "gpt-4.1-2025-04-14": model_name = "openai/gpt-4.1"
+                        elif self.subject_name=='claude-3-5-sonnet-20241022': model_name = 'anthropic/claude-3.5-sonnet'
+                        elif self.subject_name=='claude-sonnet-4-20250514': model_name = 'anthropic/claude-sonnet-4'
+                        elif self.subject_name=='claude-sonnet-4-5-20250929': model_name = 'anthropic/claude-sonnet-4.5'
+                        elif self.subject_name=='claude-opus-4-1-20250805': model_name = 'anthropic/claude-opus-4.1'
+                        elif self.subject_name=='deepseek-chat': model_name = 'deepseek/deepseek-chat-v3-0324'
+                        else:
+                            if 'gpt-5' not in self.subject_name and (self.subject_name.startswith("gpt-") or self.subject_name.startswith("o3") or self.subject_name.startswith("o1")): prefix = 'openai/' 
+                            elif self.subject_name.startswith("qwen"): prefix = 'qwen/'
+                            elif self.subject_name.startswith("deepseek"): prefix = 'deepseek/'
+                            elif 'mistral' in self.subject_name: prefix = 'mistralai/'
+                            elif 'hermes' in self.subject_name: prefix = 'nousresearch/'
+                            elif 'kimi' in self.subject_name: prefix = 'moonshotai/'
+                            elif 'llama' in self.subject_name: prefix = 'meta-llama/'
+                            elif 'olmo' in self.subject_name: prefix = 'allenai/'
+                            elif 'glm-' in self.subject_name: prefix = 'z-ai/'
+                            else: prefix = ''
+                            model_name = prefix + self.subject_name.replace("_reasoning","").replace("_think","").replace("_nothink","")
+                    else: 
+                        model_name = self.subject_name
                     if keep_appending:
                         if system_msg != "": message_history.append({"role": "system", "content": system_msg})
                         message_history.append(user_msg)
                         formatted_messages = message_history
                     else:
                         formatted_messages = copy.deepcopy(message_history)
+                        if len(formatted_messages) > 0: formatted_messages[-1]["content"] = [{"type": "text", "text": formatted_messages[-1]["content"], "cache_control": {"type": "ephemeral"}}]
                         if system_msg != "": formatted_messages.append({"role": "system", "content": system_msg})
                         formatted_messages.append(user_msg)
                     #print(f"formatted_messages={formatted_messages}")
@@ -197,7 +221,73 @@ class BaseGameClass:
                         **({"top_logprobs": len(options)} if not self.subject_name.startswith("o3") else {}),
                         **({"reasoning_effort": "low"} if 'gpt-5' in self.subject_name else {}),
                         **({"top_p": 1.0} if temp > 0.0 else {}),
-                    )   
+                        **{'extra_body': {
+                            **(
+                                # 1) OpenAI / GPT / o-series → use reasoning_effort
+                                {
+                                    "reasoning_effort": "high"
+                                }
+                                if (
+                                    (
+                                        "openai/" in self.subject_name
+                                        or "gpt-4" in self.subject_name
+                                        or self.subject_name.startswith("o4")
+                                        or self.subject_name.startswith("o3")
+                                    )
+                                    and (
+                                        "_think" in self.subject_name
+                                        or "_reasoning" in self.subject_name
+                                    )
+                                )
+                                # 2) everyone else: explicit thinking → Anthropic-style reasoning object
+                                else {
+                                    "reasoning": {
+                                        "enabled": True,
+                                        "exclude": False,
+                                        "max_tokens": 1024,
+                                    }
+                                }
+                                if (
+                                    "_think" in self.subject_name
+                                    or "_reasoning" in self.subject_name
+                                    or "-r1" in model_name
+                                )
+                                # 3) default-off bucket (your original rule)
+                                else {
+                                    "reasoning": {
+                                        "enabled": False
+                                    }
+                                }
+                                if (
+                                    (
+                                        "claude" in self.subject_name
+                                        or "gpt-oss" in self.subject_name
+                                        or (
+                                            "deepseek" in self.subject_name
+                                            and "v3.1" in self.subject_name
+                                            and "base" not in self.subject_name
+                                        )
+                                    )
+                                    and "_reasoning" not in self.subject_name
+                                )
+                                # 4) otherwise, no extra reasoning field
+                                else {}
+                            ),
+#                            'seed': 42,
+                            'provider': {
+#                                **({"only": ["Chutes"]} if 'v3.1' in self.subject_name else {"only": ["DeepInfra"]} if '-r1' in self.subject_name else {"only": ["Cerebras"]} if 'qwen' in self.subject_name else {}),
+                                'require_parameters': False if 'claude' in self.subject_name or 'gpt-5' in self.subject_name or 'llama-3.1-405' in self.subject_name else True,
+                                "allow_fallbacks": False,
+#                                'quantizations': ['fp8'],
+                            },
+                        }} if self.provider == "OpenRouter" else {}
+                    ) 
+                    if self.provider == "OpenRouter": print(f"Provider that responded: {completion.provider}")
+                    reasoning = getattr(completion.choices[0].message, "reasoning", None)
+                    if reasoning:
+                        self._log("REASONING TRACE:")
+                        self._log(reasoning)
+
                     print(f"completion={completion}") 
                     resp = completion.choices[0].message.content.strip()
                     if 'o3' in self.subject_name or 'gpt-5' in self.subject_name: return resp, None
@@ -416,7 +506,7 @@ class BaseGameClass:
                     delay = min(delay*2,15)
                     attempt -= 1 #don't increase temperature
                 continue
-            if accept_any or resp.upper() in options or options == " ":
+            if accept_any or resp.strip().upper() in options or options == " ":
                 if token_probs: print(token_probs)
                 break
             attempt += 1

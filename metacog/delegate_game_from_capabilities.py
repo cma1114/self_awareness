@@ -1188,12 +1188,12 @@ def main():
     """Main function to run the delegate game from completed results"""
     
     # Model and dataset configuration
-    DATASETS = ["SimpleMC"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
+    DATASETS = ["GPSA"]  # One of: GPQA, SimpleQA, SimpleMC, MMLU, TruthfulQA, GPSA
     for DATASET in DATASETS:
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "gpt-4o-2024-08-06"#"gpt-4.1-2025-04-14"#"deepseek-chat"#"claude-opus-4-1-20250805"#"claude-sonnet-4-20250514"#"gemini-2.5-flash_think"#"grok-3-latest"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gpt-4o-mini"#"gemini-2.5-flash"##'gemini-2.0-flash-001'#"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "deepseek-chat"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gpt-4o-mini"#"grok-3-latest"#"claude-sonnet-4-20250514"#"gpt-4.1-2025-04-14"#"claude-opus-4-1-20250805"#"gemini-2.5-flash_think"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gemini-2.5-flash"##"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
@@ -1202,7 +1202,7 @@ def real_main(DATASET):
     TEAMMATE_ACCURACY_PHASE1 = 0.8  # Teammate accuracy for Phase 1
     TEAMMATE_ACCURACY_PHASE2 = 0.8  # Teammate accuracy for Phase 2
     TEMPERATURE = 0.0  # Temperature for LLM responses
-    SEED = 3#2456#41#714#42#33# # Random seed for reproducibility
+    SEED = 2456#42#3#41#714#33# # Random seed for reproducibility
     FILTERED = False
     
     # Optional settings
@@ -1212,7 +1212,7 @@ def real_main(DATASET):
     USE_PHASE1_HISTORY = True  # Include full Phase 1 history
     REDACT_PHASE1_ANSWERS = False  # Redact subject's Phase 1 answers
     RANDOMIZE_PHASE1_ANSWERS = False if OVERRIDE_SUBJECT_ACCURACY else False  # Randomize subject's Phase 1 answer correctness
-    resume_from = None#"delegate_game_logs/gpt-4o-2024-08-06_SimpleMC_50_500_team0.8_temp0.0_1758728315_game_data.json"
+    resume_from = None#"delegate_game_logs/claude-sonnet-4-20250514_SimpleMC_50_500_team0.6_temp0.0_1763130026_game_data.json"
 
     # Feedback configuration
     feedback_config = {

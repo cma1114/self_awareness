@@ -341,11 +341,12 @@ if __name__ == "__main__":
 
     dataset = "SimpleMC" # "SimpleQA" #
     game_type = "dg" #"aop"#
+    test_suffix="_2"
     output_entropy = False 
     USE_FILTERED_FOR_LOGRES = False #remove items where capabilites and game correctness disagree
     USE_ADJUSTED_FOR_LOGRES = False #use adjusted capabilities for logres
 
-    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}.txt"
+    LOG_FILENAME = f"analysis_log_multi_logres_{game_type}_{dataset.lower()}{test_suffix}.txt"
     print(f"Loading main {dataset} dataset for features...")
     sqa_all_questions = load_and_format_dataset(dataset)
     sqa_feature_lookup = {
@@ -375,7 +376,7 @@ if __name__ == "__main__":
         if hit_files and game_filename not in hit_files:
             continue
 
-        if game_filename.endswith(f"_game_data{game_file_suffix}.json") and f"_{dataset}_" in game_filename:
+        if game_filename.endswith(f"_game_data{game_file_suffix}{test_suffix}.json") and f"_{dataset}_" in game_filename:
             model_name_part = game_filename.split(f"_{dataset}_")[0]
             model_game_files[model_name_part].append(os.path.join(game_logs_dir, game_filename))
 
@@ -405,6 +406,7 @@ if __name__ == "__main__":
     entropy_ofile = f"entropy_{game_type}_npcp_summary.csv"
     for model_name_part, game_files_for_model in model_game_files.items():
         print(f"\nProcessing model: {model_name_part} (total {len(game_files_for_model)} game files)")
+        ###if model_name_part not in ['gpt-4.1-2025-04-14','gemini-2.0-flash-001']: continue
         if not game_files_for_model:
             print(f"  No game files found for model {model_name_part}. Skipping.")
             continue
@@ -991,7 +993,13 @@ if __name__ == "__main__":
 
                     if 'o_prob' in df_model.columns and df_model['o_prob'].notna().any() and 'sp_prob' in df_model.columns and df_model['sp_prob'].notna().any():
                         log_output(f"\nCorrelation between Other's Prob and Self Prob: {df_model['o_prob'].corr(df_model['sp_prob'])}", suppress=False)
-                        log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                        if 'capabilities_entropy' in df_model:
+                            implicit_prob_str = 'p_i_capability' # 'capabilities_entropy' #
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Other Prob: {df_model[implicit_prob_str].corr(df_model['o_prob'])}", suppress=False)
+                            implicit_prob_str = 'capabilities_entropy' #'p_i_capability' # 
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Self Prob: {df_model[implicit_prob_str].corr(df_model['sp_prob'])}", suppress=False)
+                            log_output(f"\nCorrelation between {implicit_prob_str} and Other Prob: {df_model[implicit_prob_str].corr(df_model['o_prob'])}", suppress=False)
                         df_model['sp_binary'] = (df_model['sp_prob'] >= 0.5).astype(int)
 
                     topic_column_for_formula = 'topic_grouped' if 'topic_grouped' in df_model else 'topic'
