@@ -1193,7 +1193,7 @@ def main():
         real_main(DATASET)
 
 def real_main(DATASET):
-    SUBJECT_NAME = "deepseek-chat"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gpt-4o-mini"#"grok-3-latest"#"claude-sonnet-4-20250514"#"gpt-4.1-2025-04-14"#"claude-opus-4-1-20250805"#"gemini-2.5-flash_think"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gemini-2.5-flash"##"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
+    SUBJECT_NAME = "claude-opus-4-1-20250805"#"deepseek-chat"#'gemini-2.0-flash-001'#"gpt-4o-2024-08-06"#"gpt-4o-mini"#"grok-3-latest"#"claude-sonnet-4-20250514"#"gpt-4.1-2025-04-14"#"gemini-2.5-flash_think"#"claude-3-5-sonnet-20241022"#"gemini-2.5-flash-lite_think"#"gemini-2.5-flash"##"claude-3-sonnet-20240229"#"claude-3-haiku-20240307"#"gemini-2.5-flash-preview-04-17"#gemini-1.5-pro"#"meta-llama/Meta-Llama-3.1-405B-Instruct"#"gpt-4-turbo-2024-04-09"#"claude-3-opus-20240229"#"claude-3-7-sonnet-20250219"#
     IS_HUMAN = False
 
     # Game parameters
